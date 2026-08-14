@@ -1,0 +1,11 @@
+---
+import { getUserFromCookies } from '../lib/auth';
+
+// Redirección inteligente según el estado de la sesión
+const user = getUserFromCookies(Astro.cookies);
+if (user) {
+  return Astro.redirect('/dashboard');
+} else {
+  return Astro.redirect('/login');
+}
+---

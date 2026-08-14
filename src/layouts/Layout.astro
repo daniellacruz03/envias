@@ -1,0 +1,43 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { 
+  title = "Portal de Confirmación de Entrega", 
+  description = "Confirma tu ubicación en tiempo real para optimizar la entrega de tu paquete." 
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es" class="h-full bg-slate-900">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    
+    <!-- Open Graph & Meta para vista previa de WhatsApp -->
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/logo.png" />
+    <meta property="og:site_name" content="Envías C.A. Logística" />
+    <meta name="theme-color" content="#0f172a" />
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  </head>
+  <body class="min-h-full flex flex-col justify-center items-center p-4 antialiased text-slate-800 selection:bg-brand-500 selection:text-white relative">
+    <!-- Glow de fondo moderno -->
+    <div class="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(99,102,241,0.25),rgba(15,23,42,0.9))] pointer-events-none"></div>
+
+    <slot />
+  </body>
+</html>

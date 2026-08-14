@@ -1,0 +1,740 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { query } from '../lib/db';
+
+// Extracción de parámetros de URL (SSR)
+const { searchParams } = Astro.url;
+const rawGuia = searchParams.get('guia');
+const guiaId = rawGuia ? rawGuia.trim().toUpperCase() : null;
+
+// Consulta de la guía en PostgreSQL
+let guiaData: any = null;
+let errorNotFound = false;
+
+if (guiaId) {
+  try {
+    const result = await query(`
+      SELECT 
+        id_guia, 
+        destinatario, 
+        telefono_principal, 
+        telefono_secundario, 
+        ciudad_destino, 
+        piezas, 
+        direccion_referencia, 
+        estado, 
+        gps_latitud, 
+        gps_longitud, 
+        gps_confirmado 
+      FROM guias 
+      WHERE id_guia = $1
+    `, [guiaId]);
+
+    if (result.rows.length > 0) {
+      guiaData = result.rows[0];
+    } else {
+      errorNotFound = true;
+    }
+  } catch (err) {
+    console.error('[confirmar.astro SSR DB Error]:', err);
+    errorNotFound = true;
+  }
+} else {
+  errorNotFound = true;
+}
+---
+
+<Layout title={guiaData ? `Confirmar Entrega - Guía #${guiaData.id_guia}` : 'Confirmar Entrega | Envías Logística'}>
+  <!-- Inclusión de Estilos y Script de Leaflet.js -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    is:inline
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <style>
+    /* Ajustes específicos para Leaflet dentro del card */
+    .leaflet-container {
+      font-family: inherit;
+      border-radius: 1rem;
+      z-index: 10;
+    }
+    .tab-active {
+      background-color: #0f172a !important;
+      color: #ffffff !important;
+      border-color: #0f172a !important;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    }
+  </style>
+
+  <main class="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200/80 p-6 sm:p-7 my-auto transition-all duration-300 relative">
+    
+    <!-- Encabezado con Logo y Marca -->
+    <header class="flex flex-col items-center text-center gap-2.5 border-b border-slate-100 pb-5 mb-5">
+      <div class="flex items-center justify-center">
+        <img 
+          src="/logo.png" 
+          alt="Envías C.A." 
+          class="h-9 sm:h-10 w-auto object-contain mix-blend-multiply filter contrast-[1.20] brightness-[0.96]"
+          loading="eager"
+        />
+      </div>
+      <div>
+        <div class="flex items-center justify-center gap-1.5">
+          <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-900 text-white uppercase tracking-wider">
+            Confirmación de Entrega
+          </span>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+            Venezuela
+          </span>
+        </div>
+        <p class="text-xs text-slate-500 mt-1 font-medium">Portal de Autoservicio para Destinatarios</p>
+      </div>
+    </header>
+
+    {errorNotFound ? (
+      <!-- Estado de Error: Guía no encontrada -->
+      <div class="text-center py-8 space-y-4">
+        <div class="w-14 h-14 bg-amber-50 border border-amber-200 text-amber-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div class="space-y-1.5">
+          <h2 class="text-base font-bold text-slate-900">Guía no encontrada</h2>
+          <p class="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed">
+            {rawGuia ? `No encontramos ningún registro para la guía #${rawGuia}.` : 'No se especificó un número de guía válido en el enlace.'}
+          </p>
+        </div>
+        <div class="pt-3">
+          <a
+            href="/"
+            class="inline-flex items-center gap-2 bg-slate-900 hover:bg-black text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer"
+          >
+            <span>Ir al Inicio</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    ) : (
+      <!-- Contenido Principal de Confirmación -->
+      <div id="confirmation-container">
+        
+        <!-- Indicador: Tu número de guía es -->
+        <div class="mb-2 px-1">
+          <p class="text-xs font-bold text-slate-800">Tu número de guía es:</p>
+        </div>
+
+        <!-- Tarjeta de Resumen de la Guía (Solo Lectura) -->
+        <section class="bg-slate-50/90 border border-slate-200/70 rounded-2xl p-4 mb-5 space-y-2.5 shadow-2xs">
+          <div class="flex items-center justify-between border-b border-slate-200/60 pb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-slate-500 font-medium">Guía de Entrega:</span>
+              <span class="font-mono font-extrabold text-slate-900 text-sm tracking-wide">#{guiaData.id_guia}</span>
+            </div>
+            <span class="text-[11px] font-bold bg-white border border-slate-200 px-2.5 py-0.5 rounded-lg text-slate-800 shadow-2xs">
+              {guiaData.piezas || 1} {guiaData.piezas === 1 ? 'Pieza' : 'Piezas'}
+            </span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Destinatario</span>
+              <p class="font-bold text-slate-900 truncate mt-0.5" title={guiaData.destinatario}>{guiaData.destinatario}</p>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Ciudad Destino</span>
+              <p class="font-bold text-slate-900 truncate mt-0.5 flex items-center gap-1.5" title={guiaData.ciudad_destino}>
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>{guiaData.ciudad_destino}</span>
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Selección de Método de Ubicación (Tabs) -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-bold text-slate-800">
+              Selecciona cómo deseas indicar tu ubicación: <span class="text-rose-500">*</span>
+            </label>
+          </div>
+
+          <!-- Botones Selector de Tabs -->
+          <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200/70 text-xs font-semibold">
+            <button
+              type="button"
+              id="tab-btn-gps"
+              class="tab-active py-2 px-2 rounded-xl transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 cursor-pointer text-center text-[11px] sm:text-xs"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+              </svg>
+              <span>GPS Actual</span>
+            </button>
+
+            <button
+              type="button"
+              id="tab-btn-address"
+              class="py-2 px-2 rounded-xl text-slate-600 hover:text-slate-900 transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 cursor-pointer text-center text-[11px] sm:text-xs"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-sky-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              <span>Dirección Escrita</span>
+            </button>
+
+            <button
+              type="button"
+              id="tab-btn-map"
+              class="py-2 px-2 rounded-xl text-slate-600 hover:text-slate-900 transition-all flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 cursor-pointer text-center text-[11px] sm:text-xs"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+              <span>Ver Mapa</span>
+            </button>
+          </div>
+
+          <!-- Contenidos de los Tabs -->
+          <div class="mt-3">
+            
+            <!-- PANEL 1: GPS Nativo -->
+            <div id="tab-panel-gps" class="space-y-3">
+              <button
+                type="button"
+                id="btn-get-gps"
+                class="w-full bg-slate-900 hover:bg-black active:scale-[0.98] text-white font-semibold text-xs sm:text-sm py-3 px-4 rounded-2xl transition-all duration-200 shadow-md shadow-slate-900/10 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                </svg>
+                <span id="gps-btn-text">Usar mi ubicación GPS actual</span>
+              </button>
+              <p class="text-[11px] text-slate-400 text-center font-medium">
+                Tu teléfono o navegador te solicitará permiso para acceder a tu posición satelital.
+              </p>
+            </div>
+
+            <!-- PANEL 2: Dirección Escrita Manual -->
+            <div id="tab-panel-address" class="hidden space-y-2.5">
+              <div class="space-y-1.5">
+                <label for="input-manual-address" class="block text-xs font-semibold text-slate-700">
+                  Escribe tu dirección de entrega:
+                </label>
+                <textarea
+                  id="input-manual-address"
+                  rows="3"
+                  placeholder="Ej: Calle o avenida principal, sector o urbanización, nombre de casa o edificio, piso, apto y punto de referencia..."
+                  class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl p-3 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all resize-none"
+                ></textarea>
+              </div>
+              <p class="text-[11px] text-slate-400 text-center font-medium">
+                Escribe los detalles de tu domicilio para que el repartidor llegue con facilidad.
+              </p>
+            </div>
+
+            <!-- PANEL 3: Mapa Interactivo Leaflet -->
+            <div id="tab-panel-map" class="hidden space-y-2">
+              <div class="w-full h-60 sm:h-64 rounded-2xl border border-slate-200 shadow-inner overflow-hidden relative bg-slate-100">
+                <div id="leaflet-map" class="w-full h-full"></div>
+              </div>
+              <div class="flex items-center justify-between text-[11px] text-slate-500 px-1 font-medium">
+                <span class="flex items-center gap-1.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Haz clic en el mapa para colocar el Pin en tu ubicación exacta</span>
+                </span>
+                <span class="text-slate-400 font-medium">Venezuela</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Feedback Unificado de Estado Listo (Oculto hasta que se elija ubicación) -->
+          <div id="coords-status-card" class="hidden bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-2xl p-3.5 text-xs animate-fadeIn space-y-1 mt-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 font-bold text-emerald-800">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                <span id="coords-source-badge">Ubicación lista</span>
+              </div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200/70 text-emerald-800">Listo</span>
+            </div>
+            <div id="coords-latlng-row" class="hidden flex items-center gap-2 text-[11px] font-mono text-emerald-700 pl-6">
+              <span>Lat: <strong id="coords-lat">--</strong></span>
+              <span>•</span>
+              <span>Lng: <strong id="coords-lng">--</strong></span>
+            </div>
+          </div>
+
+          <!-- Feedback de Error / Advertencia -->
+          <div id="gps-error-card" class="hidden bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl p-3 text-xs animate-fadeIn space-y-1 mt-3">
+            <div class="flex items-center gap-2 font-bold text-rose-700">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-rose-500 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+              <span id="gps-error-title">No se pudo obtener la ubicación</span>
+            </div>
+            <p id="gps-error-desc" class="text-[11px] text-rose-600 leading-snug pl-6">
+              Por favor intenta de nuevo, escribe tu dirección o ubícala en el mapa.
+            </p>
+          </div>
+        </div>
+
+        <!-- Formulario Final de Confirmación -->
+        <form id="gps-form" class="space-y-4 mt-4">
+          
+          <!-- Puntos de Referencia Adicionales (cuando se usa GPS o Mapa) -->
+          <div id="referencias-container" class="space-y-1.5">
+            <label for="referencias" class="block text-xs font-bold text-slate-800">
+              Puntos de referencia adicionales <span class="text-slate-400 font-normal">(opcional)</span>
+            </label>
+            <textarea
+              id="referencias"
+              name="referencias"
+              rows="2"
+              placeholder="Ej: Frente al centro comercial, casa con portón negro..."
+              class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl p-3 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all resize-none"
+            ></textarea>
+          </div>
+
+          <!-- Botón de Confirmación -->
+          <div class="pt-1">
+            <button
+              type="submit"
+              id="btn-submit-confirmation"
+              disabled
+              class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-bold text-xs sm:text-sm py-3.5 px-4 rounded-2xl transition-all duration-200 active:scale-[0.98] shadow-lg shadow-emerald-600/10 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Confirmar Entrega</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </button>
+            <p id="submit-hint" class="text-[10px] text-slate-400 text-center mt-2 font-medium">
+              Indica tu ubicación mediante GPS, dirección escrita o en el mapa para confirmar.
+            </p>
+          </div>
+        </form>
+
+      </div>
+
+      <!-- Pantalla de Éxito Final (Celebratoria) -->
+      <div id="success-screen" class="hidden text-center py-6 space-y-4 animate-fadeIn">
+        <div class="w-16 h-16 bg-emerald-100 border-2 border-emerald-500 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/20">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-9 h-9" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+
+        <div class="space-y-1.5">
+          <h2 class="text-lg font-extrabold text-slate-900">¡Ubicación Confirmada con Éxito!</h2>
+          <p class="text-xs text-slate-600 max-w-xs mx-auto leading-relaxed">
+            Tu información de entrega ha sido registrada correctamente para llevar tu paquete sin retrasos a tu puerta.
+          </p>
+        </div>
+
+        <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-xs space-y-2 max-w-xs mx-auto text-left">
+          <div class="flex items-center justify-between text-slate-600 border-b border-slate-200/60 pb-1.5">
+            <span>Guía:</span>
+            <span class="font-mono font-bold text-slate-900">#{guiaData.id_guia}</span>
+          </div>
+          <div class="flex items-center justify-between text-slate-600">
+            <span>Destinatario:</span>
+            <span class="font-bold text-slate-900">{guiaData.destinatario}</span>
+          </div>
+          <div class="flex items-center justify-between text-slate-600">
+            <span>Ciudad:</span>
+            <span class="font-bold text-slate-900">{guiaData.ciudad_destino}, Venezuela</span>
+          </div>
+        </div>
+
+        <div class="pt-3">
+          <p class="text-[11px] text-slate-400 font-medium">Gracias por confiar en Envías Logística.</p>
+        </div>
+      </div>
+    )}
+
+    <!-- Pie de página -->
+    <footer class="mt-6 pt-4 border-t border-slate-100 text-center">
+      <p class="text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <span>Envías C.A. • Cobertura Nacional en Venezuela</span>
+      </p>
+    </footer>
+  </main>
+</Layout>
+
+<script define:vars={{ guiaData }}>
+  if (guiaData) {
+    let currentCoords = null;
+    let isSubmitting = false;
+    let currentActiveTab = 'gps';
+
+    // Instancias de Leaflet
+    let leafletMap = null;
+    let leafletMarker = null;
+
+    // Coordenadas generales centradas en el mapa de Venezuela
+    const VENEZUELA_CENTER = [7.8500, -66.0000];
+    const VENEZUELA_ZOOM = 6;
+
+    // Elementos del DOM
+    const tabBtnGps = document.getElementById('tab-btn-gps');
+    const tabBtnAddress = document.getElementById('tab-btn-address');
+    const tabBtnMap = document.getElementById('tab-btn-map');
+
+    const tabPanelGps = document.getElementById('tab-panel-gps');
+    const tabPanelAddress = document.getElementById('tab-panel-address');
+    const tabPanelMap = document.getElementById('tab-panel-map');
+
+    const btnGetGps = document.getElementById('btn-get-gps');
+    const gpsBtnText = document.getElementById('gps-btn-text');
+
+    const inputManualAddress = document.getElementById('input-manual-address');
+    const referenciasContainer = document.getElementById('referencias-container');
+
+    const coordsStatusCard = document.getElementById('coords-status-card');
+    const coordsSourceBadge = document.getElementById('coords-source-badge');
+    const coordsLatlngRow = document.getElementById('coords-latlng-row');
+    const coordsLat = document.getElementById('coords-lat');
+    const coordsLng = document.getElementById('coords-lng');
+
+    const gpsErrorCard = document.getElementById('gps-error-card');
+    const gpsErrorTitle = document.getElementById('gps-error-title');
+    const gpsErrorDesc = document.getElementById('gps-error-desc');
+
+    const referenciasInput = document.getElementById('referencias');
+    const btnSubmit = document.getElementById('btn-submit-confirmation');
+    const submitHint = document.getElementById('submit-hint');
+    const gpsForm = document.getElementById('gps-form');
+    const confirmationContainer = document.getElementById('confirmation-container');
+    const successScreen = document.getElementById('success-screen');
+
+    // ==========================================
+    // GESTIÓN DE TABS
+    // ==========================================
+    function switchTab(activeTab) {
+      currentActiveTab = activeTab;
+      const tabs = [
+        { btn: tabBtnGps, panel: tabPanelGps, id: 'gps' },
+        { btn: tabBtnAddress, panel: tabPanelAddress, id: 'address' },
+        { btn: tabBtnMap, panel: tabPanelMap, id: 'map' }
+      ];
+
+      tabs.forEach(t => {
+        if (t.id === activeTab) {
+          t.btn?.classList.add('tab-active');
+          t.btn?.classList.remove('text-slate-600');
+          t.panel?.classList.remove('hidden');
+        } else {
+          t.btn?.classList.remove('tab-active');
+          t.btn?.classList.add('text-slate-600');
+          t.panel?.classList.add('hidden');
+        }
+      });
+
+      if (activeTab === 'address') {
+        referenciasContainer?.classList.add('hidden');
+        validateManualAddress();
+      } else {
+        referenciasContainer?.classList.remove('hidden');
+        if (currentCoords) {
+          enableSubmit(coordsSourceBadge?.textContent || 'Ubicación lista');
+        } else {
+          disableSubmit();
+        }
+      }
+
+      if (activeTab === 'map') {
+        initOrUpdateMap();
+      }
+    }
+
+    tabBtnGps?.addEventListener('click', () => switchTab('gps'));
+    tabBtnAddress?.addEventListener('click', () => switchTab('address'));
+    tabBtnMap?.addEventListener('click', () => switchTab('map'));
+
+    // ==========================================
+    // MÉTODO 1: GPS NATIVO
+    // ==========================================
+    btnGetGps?.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        showError('Geolocalización no disponible', 'Tu navegador o dispositivo no soporta GPS.');
+        return;
+      }
+
+      hideError();
+      if (gpsBtnText) gpsBtnText.textContent = 'Obteniendo señal GPS...';
+      btnGetGps.disabled = true;
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          updateCoordsState(lat, lng, 'Ubicación GPS satelital');
+          if (gpsBtnText) gpsBtnText.textContent = 'Ubicación GPS Capturada';
+          btnGetGps.disabled = false;
+        },
+        (error) => {
+          btnGetGps.disabled = false;
+          if (gpsBtnText) gpsBtnText.textContent = 'Reintentar capturar GPS';
+
+          let title = 'Error al obtener ubicación';
+          let desc = 'Por favor activa el GPS y concede permisos a tu navegador.';
+          if (error.code === error.PERMISSION_DENIED) {
+            title = 'Permiso GPS Denegado';
+            desc = 'Debes otorgar permiso de ubicación en los ajustes de tu navegador o dispositivo para continuar con esta opción.';
+          } else if (error.code === error.TIMEOUT) {
+            title = 'Tiempo agotado';
+            desc = 'No se pudo obtener señal satelital a tiempo. Prueba de nuevo o escribe tu dirección.';
+          }
+          showError(title, desc);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      );
+    });
+
+    // ==========================================
+    // MÉTODO 2: DIRECCIÓN ESCRITA MANUAL
+    // ==========================================
+    function validateManualAddress() {
+      const text = inputManualAddress?.value?.trim() || '';
+      if (text.length >= 4) {
+        enableSubmit('Dirección escrita registrada');
+        if (coordsStatusCard) {
+          coordsStatusCard.classList.remove('hidden');
+          if (coordsSourceBadge) coordsSourceBadge.textContent = 'Dirección lista para guardar';
+          if (coordsLatlngRow) coordsLatlngRow.classList.add('hidden');
+        }
+      } else {
+        if (!currentCoords) {
+          disableSubmit();
+          coordsStatusCard?.classList.add('hidden');
+        }
+      }
+    }
+
+    inputManualAddress?.addEventListener('input', validateManualAddress);
+
+    // ==========================================
+    // MÉTODO 3: MAPA INTERACTIVO (LEAFLET.JS - VENEZUELA SIN PIN INICIAL)
+    // ==========================================
+    function initOrUpdateMap() {
+      if (typeof window.L === 'undefined') {
+        setTimeout(initOrUpdateMap, 150);
+        return;
+      }
+
+      const mapContainer = document.getElementById('leaflet-map');
+      if (!mapContainer) return;
+
+      const customIcon = window.L.icon({
+        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+
+      if (!leafletMap) {
+        // Inicializa el mapa mostrando toda Venezuela con zoom 6 y sin ningún pin colocado
+        leafletMap = window.L.map('leaflet-map', {
+          zoomControl: true,
+          attributionControl: false
+        }).setView(VENEZUELA_CENTER, VENEZUELA_ZOOM);
+
+        window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19
+        }).addTo(leafletMap);
+
+        // Al hacer clic en el mapa, se crea o mueve el pin
+        leafletMap.on('click', (e) => {
+          const lat = e.latlng.lat;
+          const lng = e.latlng.lng;
+
+          if (!leafletMarker) {
+            leafletMarker = window.L.marker([lat, lng], {
+              draggable: true,
+              icon: customIcon
+            }).addTo(leafletMap);
+
+            leafletMarker.on('dragend', (ev) => {
+              const latlng = ev.target.getLatLng();
+              updateCoordsState(latlng.lat, latlng.lng, 'Pin fijado en el mapa');
+            });
+          } else {
+            leafletMarker.setLatLng([lat, lng]);
+          }
+
+          updateCoordsState(lat, lng, 'Pin fijado en el mapa');
+        });
+      } else {
+        // Si ya había coordenadas fijadas por GPS o clic anterior, sincronizar pin
+        if (currentCoords) {
+          if (!leafletMarker) {
+            leafletMarker = window.L.marker([currentCoords.latitude, currentCoords.longitude], {
+              draggable: true,
+              icon: customIcon
+            }).addTo(leafletMap);
+
+            leafletMarker.on('dragend', (ev) => {
+              const latlng = ev.target.getLatLng();
+              updateCoordsState(latlng.lat, latlng.lng, 'Pin fijado en el mapa');
+            });
+          } else {
+            leafletMarker.setLatLng([currentCoords.latitude, currentCoords.longitude]);
+          }
+          leafletMap.setView([currentCoords.latitude, currentCoords.longitude], 14);
+        }
+      }
+
+      setTimeout(() => {
+        if (leafletMap) leafletMap.invalidateSize();
+      }, 200);
+    }
+
+    // ==========================================
+    // SINCRONIZADOR GLOBAL DE ESTADO
+    // ==========================================
+    function updateCoordsState(lat, lng, sourceLabel) {
+      currentCoords = { latitude: lat, longitude: lng };
+
+      if (coordsLat) coordsLat.textContent = lat.toFixed(6);
+      if (coordsLng) coordsLng.textContent = lng.toFixed(6);
+      if (coordsSourceBadge && sourceLabel) coordsSourceBadge.textContent = sourceLabel;
+
+      coordsStatusCard?.classList.remove('hidden');
+      coordsLatlngRow?.classList.remove('hidden');
+      hideError();
+
+      if (leafletMarker) {
+        leafletMarker.setLatLng([lat, lng]);
+      }
+      if (leafletMap) {
+        leafletMap.setView([lat, lng], 14);
+      }
+
+      enableSubmit(sourceLabel);
+    }
+
+    function enableSubmit(sourceLabel) {
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+      }
+      if (submitHint) {
+        submitHint.textContent = 'Información lista. Presiona "Confirmar Entrega" para finalizar.';
+        submitHint.classList.remove('text-slate-400');
+        submitHint.classList.add('text-emerald-600', 'font-semibold');
+      }
+    }
+
+    function disableSubmit() {
+      if (btnSubmit) {
+        btnSubmit.disabled = true;
+      }
+      if (submitHint) {
+        submitHint.textContent = 'Indica tu ubicación mediante GPS, dirección escrita o en el mapa para confirmar.';
+        submitHint.classList.remove('text-emerald-600', 'font-semibold');
+        submitHint.classList.add('text-slate-400');
+      }
+    }
+
+    function showError(title, desc) {
+      if (gpsErrorTitle) gpsErrorTitle.textContent = title;
+      if (gpsErrorDesc) gpsErrorDesc.textContent = desc;
+      gpsErrorCard?.classList.remove('hidden');
+    }
+
+    function hideError() {
+      gpsErrorCard?.classList.add('hidden');
+    }
+
+    // ==========================================
+    // ENVÍO FINAL (SUBMIT)
+    // ==========================================
+    gpsForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (isSubmitting) return;
+
+      const manualAddress = inputManualAddress?.value?.trim() || '';
+      const additionalRefs = referenciasInput?.value?.trim() || '';
+
+      const finalAddress = currentActiveTab === 'address'
+        ? (manualAddress || additionalRefs)
+        : (additionalRefs || manualAddress);
+
+      if (!currentCoords && !finalAddress) {
+        showError('Faltan datos', 'Por favor ingresa tu dirección o ubica tu posición en el mapa antes de confirmar.');
+        return;
+      }
+
+      isSubmitting = true;
+      btnSubmit.disabled = true;
+      const originalSubmitText = btnSubmit.innerHTML;
+      btnSubmit.innerHTML = `
+        <svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>Guardando confirmación...</span>
+      `;
+
+      const payload = {
+        id_guia: guiaData.id_guia,
+        latitud: currentCoords ? currentCoords.latitude : null,
+        longitud: currentCoords ? currentCoords.longitude : null,
+        direccion_referencia: finalAddress || undefined
+      };
+
+      try {
+        const res = await fetch('/api/confirmar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const json = await res.json();
+
+        if (res.ok && json.success) {
+          confirmationContainer?.classList.add('hidden');
+          successScreen?.classList.remove('hidden');
+        } else {
+          showError('Error al guardar', json.message || 'No se pudo guardar la confirmación en el servidor.');
+          btnSubmit.disabled = false;
+          btnSubmit.innerHTML = originalSubmitText;
+          isSubmitting = false;
+        }
+      } catch (err) {
+        console.error('Error al confirmar ubicación:', err);
+        showError('Error de conexión', 'Hubo un fallo en la conexión con el servidor. Por favor reintenta.');
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = originalSubmitText;
+        isSubmitting = false;
+      }
+    });
+  }
+</script>

@@ -1,0 +1,917 @@
+---
+import '../styles/global.css';
+import { getUserFromCookies } from '../lib/auth';
+
+// Protección de Ruta: Validar sesión activa en SSR
+const currentUser = getUserFromCookies(Astro.cookies);
+if (!currentUser) {
+  return Astro.redirect('/login');
+}
+
+const title = "Envías | Logística Central - Panel Operativo";
+
+// Iniciales del usuario para el avatar
+const userInitials = currentUser.nombre
+  ? currentUser.nombre.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+  : 'US';
+---
+
+<!doctype html>
+<html lang="es" class="h-full bg-slate-50/50">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    
+    <style>
+      body {
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      }
+      /* Custom scrollbar para la tabla */
+      .custom-scrollbar::-webkit-scrollbar {
+        height: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f8fafc;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 9999px;
+      }
+    </style>
+  </head>
+  <body class="min-h-full flex flex-col text-slate-800 bg-[#F8FAFC] antialiased selection:bg-slate-900 selection:text-white">
+    
+    <!-- ========================================== -->
+    <!-- 1. BARRA SUPERIOR (HEADER CORPORATIVO)     -->
+    <!-- ========================================== -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <!-- Logo & Marca -->
+        <div class="flex items-center gap-3">
+          <img 
+            src="/logo.png" 
+            alt="Envías C.A." 
+            class="h-8 sm:h-9 w-auto object-contain mix-blend-multiply filter contrast-[1.20] brightness-[0.96]"
+            loading="eager"
+          />
+          <div class="border-l border-slate-200 pl-3">
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-900 text-white tracking-wider uppercase">Central</span>
+              <span class="text-xs font-semibold text-slate-700 hidden sm:inline">Logística</span>
+            </div>
+            <p class="text-[11px] text-slate-400 font-medium">Panel de Despacho y Envíos</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estado Operativo y Perfil -->
+      <div class="flex items-center gap-3 sm:gap-6">
+        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50/80 border border-emerald-200/60 text-xs font-semibold text-emerald-700">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          Panel Operativo Activo
+        </div>
+
+        <div class="h-4 w-px bg-slate-200 hidden sm:block"></div>
+
+        <!-- Usuario Conectado y Cerrar Sesión -->
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+              {userInitials}
+            </div>
+            <div class="hidden sm:block text-left">
+              <p class="text-xs font-bold text-slate-900 leading-tight">{currentUser.nombre}</p>
+              <p class="text-[10px] text-slate-400 font-medium">{currentUser.rol === 'Logistica' ? 'Logística Central' : currentUser.rol}</p>
+            </div>
+          </div>
+
+          <a
+            href="/api/auth/logout"
+            title="Cerrar Sesión"
+            class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span class="hidden md:inline">Salir</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========================================== -->
+    <!-- CONTENIDO PRINCIPAL                        -->
+    <!-- ========================================== -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+      
+      <!-- Métricas Rápidas (KPIs) -->
+      <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+          <p class="text-xs font-medium text-slate-500">Total de Guías</p>
+          <p id="kpi-total" class="text-2xl font-extrabold text-slate-900 mt-1">0</p>
+        </div>
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+          <p class="text-xs font-medium text-slate-500">Por Contactar</p>
+          <p id="kpi-contactar" class="text-2xl font-extrabold text-amber-600 mt-1">0</p>
+        </div>
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+          <p class="text-xs font-medium text-slate-500">En Ruta / Tránsito</p>
+          <p id="kpi-ruta" class="text-2xl font-extrabold text-indigo-600 mt-1">0</p>
+        </div>
+        <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+          <p class="text-xs font-medium text-slate-500">GPS Confirmado</p>
+          <p id="kpi-gps" class="text-2xl font-extrabold text-emerald-600 mt-1">0</p>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 2. FORMULARIO DE CARGA RÁPIDA DE GUÍAS     -->
+      <!-- ========================================== -->
+      <section class="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-sm">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+          <div>
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Carga Rápida de Envíos
+            </h2>
+            <p class="text-xs text-slate-500">Ingresa los datos para generar la orden y habilitar el enlace de WhatsApp</p>
+          </div>
+          <span class="text-[11px] font-medium text-slate-400 hidden sm:inline">Entrada ágil por teclado</span>
+        </div>
+
+        <form id="new-shipment-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5" autocomplete="off">
+          
+          <!-- Número de Guía -->
+          <div class="lg:col-span-1 space-y-1">
+            <label for="input-guia" class="block text-xs font-semibold text-slate-700">
+              N° Guía <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="input-guia"
+              required
+              placeholder="Ej: 98215"
+              class="w-full font-mono text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all uppercase"
+            />
+          </div>
+
+          <!-- Nombre y Apellido -->
+          <div class="lg:col-span-2 space-y-1">
+            <label for="input-destinatario" class="block text-xs font-semibold text-slate-700">
+              Destinatario <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="input-destinatario"
+              required
+              placeholder="Nombre y Apellido completo"
+              class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+            />
+          </div>
+
+          <!-- Teléfono / WhatsApp Principal -->
+          <div class="lg:col-span-1 space-y-1">
+            <label for="input-telefono" class="block text-xs font-semibold text-slate-700">
+              Teléfono (WhatsApp) <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="tel"
+              id="input-telefono"
+              required
+              placeholder="Ej: 3001234567"
+              class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+            />
+          </div>
+
+          <!-- Teléfono Secundario / Alternativo (Opcional) -->
+          <div class="lg:col-span-1 space-y-1">
+            <label for="input-telefono-2" class="block text-xs font-semibold text-slate-700">
+              Teléfono 2 <span class="text-slate-400 font-normal">(Opcional)</span>
+            </label>
+            <input
+              type="tel"
+              id="input-telefono-2"
+              placeholder="Ej: 3109876543"
+              class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+            />
+          </div>
+
+          <!-- Ciudad Destino -->
+          <div class="lg:col-span-1 space-y-1">
+            <label for="input-ciudad" class="block text-xs font-semibold text-slate-700">
+              Ciudad Destino <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="input-ciudad"
+              required
+              placeholder="Ej: Medellín"
+              class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+            />
+          </div>
+
+          <!-- N° Piezas -->
+          <div class="lg:col-span-1 space-y-1">
+            <label for="input-piezas" class="block text-xs font-semibold text-slate-700">
+              Piezas <span class="text-rose-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="input-piezas"
+              required
+              min="1"
+              value="1"
+              class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+            />
+          </div>
+
+          <!-- Dirección / Referencias -->
+          <div class="sm:col-span-2 lg:col-span-3 space-y-1">
+            <label for="input-direccion" class="block text-xs font-semibold text-slate-700">
+              Dirección Inicial / Referencias <span class="text-slate-400 font-normal">(Opcional)</span>
+            </label>
+            <input
+              type="text"
+              id="input-direccion"
+              placeholder="Ej: Calle 10 # 43E-22, apto 402"
+              class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+            />
+          </div>
+
+          <!-- Botón de Envío -->
+          <div class="sm:col-span-2 lg:col-span-2 flex items-end">
+            <button
+              type="submit"
+              class="w-full bg-slate-900 hover:bg-black text-white font-semibold text-xs py-2.5 px-4 rounded-xl transition-all duration-200 active:scale-[0.98] shadow-sm flex items-center justify-center gap-2 h-[41px] cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Registrar Guía</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 3. TABLERO Y TABLA DE CONTROL              -->
+      <!-- ========================================== -->
+      <section class="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+        
+        <!-- Barra de Herramientas (Filtros y Búsqueda) -->
+        <div class="p-4 sm:p-5 border-b border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/40">
+          <div class="flex items-center gap-2">
+            <h3 class="text-sm font-bold text-slate-900">Envíos Registrados</h3>
+            <span id="filtered-count-badge" class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-200/70 text-slate-700">
+              0 guías
+            </span>
+          </div>
+
+          <!-- Filtros -->
+          <div class="flex flex-wrap items-center gap-2.5">
+            <!-- Buscador -->
+            <div class="relative min-w-[200px] flex-1 sm:flex-none">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                id="search-input"
+                placeholder="Buscar por guía o nombre..."
+                class="w-full text-xs bg-white border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+              />
+            </div>
+
+            <!-- Filtro por Ciudad -->
+            <select
+              id="filter-ciudad"
+              aria-label="Filtrar por ciudad"
+              class="text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer"
+            >
+              <option value="ALL">Todas las Ciudades</option>
+            </select>
+
+            <!-- Filtro por Estado -->
+            <select
+              id="filter-estado"
+              aria-label="Filtrar por estado de entrega"
+              class="text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer"
+            >
+              <option value="ALL">Todos los Estados</option>
+              <option value="Por contactar">Por contactar</option>
+              <option value="En ruta">En ruta</option>
+              <option value="Entregado">Entregado</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tabla Responsiva -->
+        <div class="overflow-x-auto custom-scrollbar">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="bg-slate-50/80 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <th class="py-3 px-4">Guía & Piezas</th>
+                <th class="py-3 px-4">Destinatario</th>
+                <th class="py-3 px-4">Ciudad Destino</th>
+                <th class="py-3 px-4">Estado Envío</th>
+                <th class="py-3 px-4">Ubicación GPS</th>
+                <th class="py-3 px-4">Asignar Chofer</th>
+                <th class="py-3 px-4 text-right">Acciones Rápidas</th>
+              </tr>
+            </thead>
+            <tbody id="shipments-table-body" class="divide-y divide-slate-100 bg-white">
+              <!-- Las filas se renderizan dinámicamente mediante JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Estado Vacío -->
+        <div id="empty-state" class="hidden p-12 text-center flex flex-col items-center justify-center gap-3">
+          <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            </svg>
+          </div>
+          <p class="text-sm font-semibold text-slate-800">No se encontraron envíos</p>
+          <p class="text-xs text-slate-400 max-w-xs">No hay registros que coincidan con los filtros o aún no se han registrado guías.</p>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ========================================== -->
+    <!-- NOTIFICACIONES TOAST FLOTANTES             -->
+    <!-- ========================================== -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ========================================== -->
+    <!-- 4. LÓGICA DEL CLIENTE (CONECTADA A API DB) -->
+    <!-- ========================================== -->
+    <script>
+      interface Driver {
+        id: number;
+        nombre: string;
+        telefono: string;
+        rol: string;
+      }
+
+      interface GuiaRow {
+        id_guia: string;
+        destinatario: string;
+        telefono_principal: string;
+        telefono_secundario?: string | null;
+        ciudad_destino: string;
+        piezas: number;
+        direccion_referencia?: string | null;
+        estado: 'Por contactar' | 'En ruta' | 'Entregado';
+        gps_latitud?: number | null;
+        gps_longitud?: number | null;
+        gps_confirmado: boolean;
+        chofer_asignado_id?: number | null;
+        created_at: string;
+        chofer_nombre?: string | null;
+        chofer_telefono?: string | null;
+      }
+
+      // Estado en cliente sincronizado con PostgreSQL
+      let shipments: GuiaRow[] = [];
+      let drivers: Driver[] = [];
+      let isLoading = true;
+
+      // Elementos del DOM
+      const form = document.getElementById('new-shipment-form') as HTMLFormElement;
+      const tableBody = document.getElementById('shipments-table-body') as HTMLElement;
+      const searchInput = document.getElementById('search-input') as HTMLInputElement;
+      const filterCiudad = document.getElementById('filter-ciudad') as HTMLSelectElement;
+      const filterEstado = document.getElementById('filter-estado') as HTMLSelectElement;
+      const filteredCountBadge = document.getElementById('filtered-count-badge') as HTMLElement;
+      const emptyState = document.getElementById('empty-state') as HTMLElement;
+
+      // KPIs
+      const kpiTotal = document.getElementById('kpi-total') as HTMLElement;
+      const kpiContactar = document.getElementById('kpi-contactar') as HTMLElement;
+      const kpiRuta = document.getElementById('kpi-ruta') as HTMLElement;
+      const kpiGps = document.getElementById('kpi-gps') as HTMLElement;
+
+      // Carga Inicial desde PostgreSQL
+      async function init() {
+        attachEvents();
+        renderLoading();
+        await loadData();
+      }
+
+      function renderLoading() {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="7" class="py-12 text-center text-slate-400">
+              <div class="flex items-center justify-center gap-2.5">
+                <svg class="animate-spin w-4 h-4 text-slate-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-xs font-medium">Conectando con PostgreSQL en Railway...</span>
+              </div>
+            </td>
+          </tr>
+        `;
+      }
+
+      async function loadData() {
+        try {
+          const [guiasRes, choferesRes] = await Promise.all([
+            fetch('/api/guias'),
+            fetch('/api/choferes')
+          ]);
+
+          const guiasJson = await guiasRes.json();
+          const choferesJson = await choferesRes.json();
+
+          if (guiasJson.success) {
+            shipments = guiasJson.data || [];
+          } else {
+            showToast('Error al cargar guías desde la base de datos', 'error');
+          }
+
+          if (choferesJson.success) {
+            drivers = choferesJson.data || [];
+          }
+
+          isLoading = false;
+          populateCityFilter();
+          renderTable();
+        } catch (err: any) {
+          isLoading = false;
+          console.error('Error al conectar con la API:', err);
+          showToast('Error de red al consultar la base de datos', 'error');
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="7" class="py-8 text-center text-rose-500 text-xs">
+                No se pudo conectar con la base de datos. Verifica tu conexión a internet o la variable DATABASE_URL.
+              </td>
+            </tr>
+          `;
+        }
+      }
+
+      // Llenar filtro de ciudades
+      function populateCityFilter() {
+        const currentVal = filterCiudad.value;
+        const uniqueCities = Array.from(new Set(shipments.map(s => s.ciudad_destino).filter(Boolean))).sort();
+        
+        filterCiudad.innerHTML = '<option value="ALL">Todas las Ciudades</option>';
+        uniqueCities.forEach(city => {
+          const opt = document.createElement('option');
+          opt.value = city;
+          opt.textContent = city;
+          filterCiudad.appendChild(opt);
+        });
+
+        if (uniqueCities.includes(currentVal)) {
+          filterCiudad.value = currentVal;
+        }
+      }
+
+      // Actualizar contadores KPI
+      function updateKPIs() {
+        if (!kpiTotal) return;
+        kpiTotal.textContent = shipments.length.toString();
+        kpiContactar.textContent = shipments.filter(s => s.estado === 'Por contactar').length.toString();
+        kpiRuta.textContent = shipments.filter(s => s.estado === 'En ruta').length.toString();
+        kpiGps.textContent = shipments.filter(s => s.gps_confirmado === true).length.toString();
+      }
+
+      // Render de la Tabla con Filtros
+      function renderTable() {
+        if (isLoading) return;
+
+        const query = searchInput.value.toLowerCase().trim();
+        const cityFilter = filterCiudad.value;
+        const statusFilter = filterEstado.value;
+
+        const filtered = shipments.filter(item => {
+          const matchQuery = (item.id_guia && item.id_guia.toLowerCase().includes(query)) || 
+                             (item.destinatario && item.destinatario.toLowerCase().includes(query)) ||
+                             (item.telefono_principal && item.telefono_principal.includes(query)) ||
+                             (item.telefono_secundario && item.telefono_secundario.includes(query));
+          const matchCity = cityFilter === 'ALL' || item.ciudad_destino === cityFilter;
+          const matchStatus = statusFilter === 'ALL' || item.estado === statusFilter;
+
+          return matchQuery && matchCity && matchStatus;
+        });
+
+        filteredCountBadge.textContent = `${filtered.length} de ${shipments.length} guías`;
+        updateKPIs();
+
+        if (filtered.length === 0) {
+          tableBody.innerHTML = '';
+          emptyState.classList.remove('hidden');
+          return;
+        }
+
+        emptyState.classList.add('hidden');
+        tableBody.innerHTML = filtered.map(item => createRowHTML(item)).join('');
+      }
+
+      // Generación del HTML de cada fila
+      function createRowHTML(item: GuiaRow): string {
+        let badgeColor = 'bg-slate-100 text-slate-700 border-slate-200';
+        if (item.estado === 'Por contactar') badgeColor = 'bg-amber-50 text-amber-700 border-amber-200/80';
+        if (item.estado === 'En ruta') badgeColor = 'bg-indigo-50 text-indigo-700 border-indigo-200/80';
+        if (item.estado === 'Entregado') badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200/80';
+
+        const isGpsConfirmed = item.gps_confirmado === true;
+        let gpsCellHtml = '';
+        if (isGpsConfirmed && item.gps_latitud && item.gps_longitud) {
+          gpsCellHtml = `
+            <a
+              href="https://www.google.com/maps?q=${item.gps_latitud},${item.gps_longitud}"
+              target="_blank"
+              title="Abrir coordenadas en Google Maps (${item.gps_latitud}, ${item.gps_longitud})"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 transition-colors group cursor-pointer"
+            >
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Confirmada</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-emerald-600 opacity-70 group-hover:opacity-100 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+          `;
+        } else if (isGpsConfirmed) {
+          gpsCellHtml = `
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span>Confirmada</span>
+            </span>
+          `;
+        } else {
+          gpsCellHtml = `
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border bg-slate-100 text-slate-500 border-slate-200">
+              <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+              <span>Pendiente</span>
+            </span>
+          `;
+        }
+
+        // Opciones de choferes dinámicas desde PostgreSQL
+        const driverOptions = `
+          <option value="">Sin Asignar</option>
+          ${drivers.map(driver => `
+            <option value="${driver.id}" ${item.chofer_asignado_id === driver.id ? 'selected' : ''}>
+              ${driver.nombre}
+            </option>
+          `).join('')}
+        `;
+
+        return `
+          <tr class="hover:bg-slate-50/70 transition-colors group">
+            <!-- Guía & Piezas -->
+            <td class="py-3.5 px-4">
+              <div class="flex items-center gap-2">
+                <a href="/confirmar?guia=${encodeURIComponent(item.id_guia)}" target="_blank" title="Abrir portal del cliente" class="font-mono font-bold text-slate-900 hover:text-indigo-600 underline-offset-2 hover:underline">
+                  #${item.id_guia}
+                </a>
+              </div>
+              <span class="text-[11px] text-slate-400 font-medium">${item.piezas || 1} ${item.piezas === 1 ? 'pieza' : 'piezas'}</span>
+            </td>
+
+            <!-- Destinatario -->
+            <td class="py-3.5 px-4">
+              <p class="font-bold text-slate-900 leading-snug">${item.destinatario}</p>
+              <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
+                <span class="text-[11px] text-slate-500 font-mono">${item.telefono_principal}</span>
+                ${item.telefono_secundario ? `<span class="text-[10px] text-slate-400 font-mono bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60" title="Teléfono Alternativo">Alt: ${item.telefono_secundario}</span>` : ''}
+              </div>
+            </td>
+
+            <!-- Ciudad -->
+            <td class="py-3.5 px-4">
+              <span class="font-medium text-slate-800">${item.ciudad_destino}</span>
+              ${item.direccion_referencia ? `<p class="text-[10px] text-slate-400 truncate max-w-[140px]" title="${item.direccion_referencia}">${item.direccion_referencia}</p>` : ''}
+            </td>
+
+            <!-- Estado Envío -->
+            <td class="py-3.5 px-4">
+              <select
+                onchange="window.updateShipmentStatus('${item.id_guia}', this.value)"
+                class="text-[11px] font-semibold px-2.5 py-1 rounded-lg border ${badgeColor} focus:outline-none cursor-pointer"
+              >
+                <option value="Por contactar" ${item.estado === 'Por contactar' ? 'selected' : ''}>Por contactar</option>
+                <option value="En ruta" ${item.estado === 'En ruta' ? 'selected' : ''}>En ruta</option>
+                <option value="Entregado" ${item.estado === 'Entregado' ? 'selected' : ''}>Entregado</option>
+              </select>
+            </td>
+
+            <!-- Ubicación GPS -->
+            <td class="py-3.5 px-4">
+              ${gpsCellHtml}
+            </td>
+
+            <!-- Asignar Chofer -->
+            <td class="py-3.5 px-4">
+              <select
+                onchange="window.updateShipmentDriver('${item.id_guia}', this.value)"
+                class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-slate-700 focus:outline-none focus:bg-white focus:border-slate-900 transition-all cursor-pointer max-w-[150px] truncate"
+              >
+                ${driverOptions}
+              </select>
+            </td>
+
+            <!-- Acciones Rápidas -->
+            <td class="py-3.5 px-4 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <!-- Botón WhatsApp -->
+                <button
+                  type="button"
+                  onclick="window.sendWhatsApp('${item.id_guia}')"
+                  title="Enviar enlace por WhatsApp"
+                  class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-[11px] px-3 py-1.5 rounded-xl transition-all shadow-sm cursor-pointer"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                  </svg>
+                  <span>WhatsApp</span>
+                </button>
+
+                <!-- Botón Eliminar -->
+                <button
+                  type="button"
+                  onclick="window.deleteShipment('${item.id_guia}')"
+                  title="Eliminar guía"
+                  class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }
+
+      // Eventos del Formulario y Filtros
+      let eventsAttached = false;
+      let isSubmitting = false;
+
+      function attachEvents() {
+        if (eventsAttached) return;
+        eventsAttached = true;
+
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          if (isSubmitting) return;
+
+          const guiaInput = document.getElementById('input-guia') as HTMLInputElement;
+          const destInput = document.getElementById('input-destinatario') as HTMLInputElement;
+          const telInput = document.getElementById('input-telefono') as HTMLInputElement;
+          const tel2Input = document.getElementById('input-telefono-2') as HTMLInputElement;
+          const ciudadInput = document.getElementById('input-ciudad') as HTMLInputElement;
+          const piezasInput = document.getElementById('input-piezas') as HTMLInputElement;
+          const dirInput = document.getElementById('input-direccion') as HTMLInputElement;
+          const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+
+          const id_guia = guiaInput.value.trim().toUpperCase();
+
+          // Bloqueo de envío múltiple
+          isSubmitting = true;
+          submitBtn.disabled = true;
+          const originalBtnContent = submitBtn.innerHTML;
+          submitBtn.innerHTML = `
+            <svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Guardando en BD...</span>
+          `;
+
+          // Payload para PostgreSQL
+          const payload = {
+            id_guia,
+            destinatario: destInput.value.trim(),
+            telefono_principal: telInput.value.trim(),
+            telefono_secundario: tel2Input.value.trim() || undefined,
+            ciudad_destino: ciudadInput.value.trim(),
+            piezas: parseInt(piezasInput.value, 10) || 1,
+            direccion_referencia: dirInput.value.trim() || undefined
+          };
+
+          try {
+            const res = await fetch('/api/guias', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+
+            const json = await res.json();
+
+            if (res.ok && json.success) {
+              // Agregar al estado local
+              shipments.unshift(json.data);
+
+              form.reset();
+              piezasInput.value = '1';
+              guiaInput.focus();
+
+              populateCityFilter();
+              renderTable();
+              showToast(`Guía #${id_guia} guardada en PostgreSQL`, 'success');
+            } else {
+              showToast(json.message || 'Error al guardar la guía', 'error');
+            }
+          } catch (err: any) {
+            console.error('Error al registrar guía:', err);
+            showToast('Error de conexión con el servidor', 'error');
+          } finally {
+            isSubmitting = false;
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnContent;
+          }
+        });
+
+        searchInput.addEventListener('input', renderTable);
+        filterCiudad.addEventListener('change', renderTable);
+        filterEstado.addEventListener('change', renderTable);
+      }
+
+      // Métodos globales para interactividad en tabla (window)
+      (window as any).updateShipmentStatus = async (id_guia: string, newStatus: GuiaRow['estado']) => {
+        try {
+          const res = await fetch(`/api/guias/${encodeURIComponent(id_guia)}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estado: newStatus })
+          });
+
+          const json = await res.json();
+          if (res.ok && json.success) {
+            const item = shipments.find(s => s.id_guia === id_guia);
+            if (item) {
+              item.estado = newStatus;
+              renderTable();
+              showToast(`Estado de guía #${id_guia} actualizado a: ${newStatus}`, 'info');
+            }
+          } else {
+            showToast(json.message || 'Error al actualizar el estado', 'error');
+          }
+        } catch (err) {
+          showToast('Error de red al actualizar estado', 'error');
+        }
+      };
+
+      (window as any).updateShipmentDriver = async (id_guia: string, driverIdStr: string) => {
+        try {
+          const chofer_id = driverIdStr ? parseInt(driverIdStr, 10) : null;
+          const res = await fetch(`/api/guias/${encodeURIComponent(id_guia)}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chofer_asignado_id: chofer_id })
+          });
+
+          const json = await res.json();
+          if (res.ok && json.success) {
+            const item = shipments.find(s => s.id_guia === id_guia);
+            if (item) {
+              item.chofer_asignado_id = chofer_id;
+              const assignedDriver = drivers.find(d => d.id === chofer_id);
+              item.chofer_nombre = assignedDriver ? assignedDriver.nombre : null;
+              showToast(`Chofer asignado para #${id_guia}: ${assignedDriver ? assignedDriver.nombre : 'Sin Asignar'}`, 'info');
+            }
+          } else {
+            showToast(json.message || 'Error al asignar chofer', 'error');
+          }
+        } catch (err) {
+          showToast('Error de red al asignar chofer', 'error');
+        }
+      };
+
+      (window as any).deleteShipment = async (id_guia: string) => {
+        if (!confirm(`¿Estás seguro de eliminar la guía #${id_guia} de PostgreSQL?`)) return;
+
+        try {
+          const res = await fetch(`/api/guias/${encodeURIComponent(id_guia)}`, {
+            method: 'DELETE'
+          });
+
+          const json = await res.json();
+          if (res.ok && json.success) {
+            shipments = shipments.filter(s => s.id_guia !== id_guia);
+            populateCityFilter();
+            renderTable();
+            showToast(`Guía #${id_guia} eliminada de la base de datos`, 'info');
+          } else {
+            showToast(json.message || 'Error al eliminar la guía', 'error');
+          }
+        } catch (err) {
+          showToast('Error de red al eliminar la guía', 'error');
+        }
+      };
+
+      // Formateador de números de teléfono para WhatsApp en Venezuela (+58)
+      function formatVenezuelaPhone(rawPhone: string): string {
+        let clean = rawPhone.replace(/\D/g, '');
+        if (clean.startsWith('58')) return clean;
+        if (clean.startsWith('0')) clean = clean.substring(1);
+        return '58' + clean;
+      }
+
+      // Formatear nombres a Title Case (ej. "daniel lacruz" -> "Daniel Lacruz")
+      function toTitleCase(str: string): string {
+        if (!str) return '';
+        return str
+          .toLowerCase()
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+      }
+
+      // Acción de WhatsApp con plantilla oficial de alta confianza
+      (window as any).sendWhatsApp = (id_guia: string) => {
+        const item = shipments.find(s => s.id_guia === id_guia);
+        if (!item) return;
+
+        const phoneFormatted = formatVenezuelaPhone(item.telefono_principal);
+        const host = window.location.origin;
+        const customerUrl = `${host}/confirmar?guia=${encodeURIComponent(item.id_guia)}`;
+        const customerName = toTitleCase(item.destinatario);
+        const city = item.ciudad_destino || 'su localidad';
+        const piecesText = (item.piezas || 1) === 1 ? '1 pieza' : `${item.piezas} piezas`;
+
+        const message = 
+`*ENVÍAS C.A. | Notificación de Despacho*
+
+Estimado(a) *${customerName}*,
+
+Le informamos que su paquete con *Guía #${item.id_guia}* (${piecesText}) se encuentra en proceso de entrega hacia *${city}*.
+
+Para asegurar una entrega puntual y sin contratiempos, por favor confirme su punto de entrega en nuestro portal oficial:
+${customerUrl}
+
+_Envías C.A. • Transporte y Logística Nacional_`;
+
+        const whatsappUrl = `https://wa.me/${phoneFormatted}?text=${encodeURIComponent(message)}`;
+
+        window.open(whatsappUrl, '_blank');
+        showToast(`Abriendo WhatsApp para guía #${item.id_guia}...`, 'success');
+      };
+
+      // Helper para Toasts visuales sin emojis
+      function showToast(message: string, type: 'success' | 'info' | 'error' = 'info') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.className = `px-4 py-3 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2.5 border transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto ${
+          type === 'success' ? 'bg-slate-900 text-white border-slate-800' :
+          type === 'error' ? 'bg-rose-600 text-white border-rose-700' :
+          'bg-white text-slate-800 border-slate-200 shadow-slate-900/10'
+        }`;
+
+        let iconSvg = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-sky-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        `;
+        if (type === 'success') {
+          iconSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+          `;
+        }
+        if (type === 'error') {
+          iconSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          `;
+        }
+
+        toast.innerHTML = `${iconSvg} <span>${message}</span>`;
+        container.appendChild(toast);
+
+        requestAnimationFrame(() => {
+          toast.classList.remove('translate-y-2', 'opacity-0');
+        });
+
+        setTimeout(() => {
+          toast.classList.add('translate-y-2', 'opacity-0');
+          setTimeout(() => toast.remove(), 300);
+        }, 3500);
+      }
+
+      init();
+    </script>
+  </body>
+</html>
