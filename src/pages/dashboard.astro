@@ -311,6 +311,7 @@ const userInitials = currentUser.nombre
             >
               <option value="ALL">Todos los Estados</option>
               <option value="Por contactar">Por contactar</option>
+              <option value="Contactado">Contactado</option>
               <option value="En ruta">En ruta</option>
               <option value="Entregado">Entregado</option>
             </select>
@@ -375,7 +376,7 @@ const userInitials = currentUser.nombre
         ciudad_destino: string;
         piezas: number;
         direccion_referencia?: string | null;
-        estado: 'Por contactar' | 'En ruta' | 'Entregado';
+        estado: 'Por contactar' | 'Contactado' | 'En ruta' | 'Entregado';
         gps_latitud?: number | null;
         gps_longitud?: number | null;
         gps_confirmado: boolean;
@@ -581,6 +582,7 @@ const userInitials = currentUser.nombre
       function createRowHTML(item: GuiaRow): string {
         let badgeColor = 'bg-slate-100 text-slate-700 border-slate-200';
         if (item.estado === 'Por contactar') badgeColor = 'bg-amber-50 text-amber-700 border-amber-200/80';
+        if (item.estado === 'Contactado') badgeColor = 'bg-sky-50 text-sky-700 border-sky-200/80';
         if (item.estado === 'En ruta') badgeColor = 'bg-indigo-50 text-indigo-700 border-indigo-200/80';
         if (item.estado === 'Entregado') badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200/80';
 
@@ -661,6 +663,7 @@ const userInitials = currentUser.nombre
                 class="text-[11px] font-semibold px-2.5 py-1 rounded-lg border ${badgeColor} focus:outline-none cursor-pointer"
               >
                 <option value="Por contactar" ${item.estado === 'Por contactar' ? 'selected' : ''}>Por contactar</option>
+                <option value="Contactado" ${item.estado === 'Contactado' ? 'selected' : ''}>Contactado</option>
                 <option value="En ruta" ${item.estado === 'En ruta' ? 'selected' : ''}>En ruta</option>
                 <option value="Entregado" ${item.estado === 'Entregado' ? 'selected' : ''}>Entregado</option>
               </select>
@@ -892,8 +895,8 @@ const userInitials = currentUser.nombre
           .join(' ');
       }
 
-      // Acción de WhatsApp con plantilla oficial de alta confianza
-      (window as any).sendWhatsApp = (id_guia: string) => {
+      // Acción de WhatsApp con plantilla oficial y cambio automático a "Contactado"
+      (window as any).sendWhatsApp = async (id_guia: string) => {
         const item = shipments.find(s => s.id_guia === id_guia);
         if (!item) return;
 
@@ -920,6 +923,11 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
         window.open(whatsappUrl, '_blank');
         showToast(`Abriendo WhatsApp para guía #${item.id_guia}...`, 'success');
+
+        // Si estaba "Por contactar", pasar automáticamente a "Contactado"
+        if (item.estado === 'Por contactar') {
+          await (window as any).updateShipmentStatus(item.id_guia, 'Contactado');
+        }
       };
 
       // Helper para Toasts visuales sin emojis
