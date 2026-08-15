@@ -405,11 +405,16 @@ const userInitials = currentUser.nombre
       const kpiRuta = document.getElementById('kpi-ruta') as HTMLElement;
       const kpiGps = document.getElementById('kpi-gps') as HTMLElement;
 
-      // Carga Inicial desde PostgreSQL
+      // Carga Inicial desde PostgreSQL y sincronización en vivo
       async function init() {
         attachEvents();
         renderLoading();
         await loadData();
+
+        // Polling automático cada 3.5 segundos en segundo plano para Live Sync
+        setInterval(() => {
+          silentRefresh();
+        }, 3500);
       }
 
       function renderLoading() {
@@ -462,6 +467,54 @@ const userInitials = currentUser.nombre
               </td>
             </tr>
           `;
+        }
+      }
+
+      // Sincronización automática silenciosa en tiempo real
+      async function silentRefresh() {
+        if (isSubmitting || isLoading) return;
+        try {
+          const res = await fetch('/api/guias');
+          const json = await res.json();
+          if (res.ok && json.success && Array.isArray(json.data)) {
+            const newShipments: GuiaRow[] = json.data;
+            
+            // Detectar cambios en guías, estados o confirmaciones de GPS
+            let hasChanges = false;
+            if (newShipments.length !== shipments.length) {
+              hasChanges = true;
+            } else {
+              for (let i = 0; i < newShipments.length; i++) {
+                const current = shipments.find(s => s.id_guia === newShipments[i].id_guia);
+                if (!current) {
+                  hasChanges = true;
+                  break;
+                }
+                // Si el cliente acaba de confirmar su ubicación GPS
+                if (!current.gps_confirmado && newShipments[i].gps_confirmado) {
+                  showToast(`Ubicación GPS confirmada por el cliente para la guía #${newShipments[i].id_guia}`, 'success');
+                  hasChanges = true;
+                  break;
+                }
+                if (
+                  current.estado !== newShipments[i].estado ||
+                  current.chofer_asignado_id !== newShipments[i].chofer_asignado_id ||
+                  current.direccion_referencia !== newShipments[i].direccion_referencia
+                ) {
+                  hasChanges = true;
+                  break;
+                }
+              }
+            }
+
+            if (hasChanges) {
+              shipments = newShipments;
+              populateCityFilter();
+              renderTable();
+            }
+          }
+        } catch (err) {
+          // Error silencioso de red sin interrumpir al usuario
         }
       }
 
@@ -818,12 +871,15 @@ const userInitials = currentUser.nombre
         }
       };
 
-      // Formateador de números de teléfono para WhatsApp en Venezuela (+58)
-      function formatVenezuelaPhone(rawPhone: string): string {
-        let clean = rawPhone.replace(/\D/g, '');
-        if (clean.startsWith('58')) return clean;
-        if (clean.startsWith('0')) clean = clean.substring(1);
-        return '58' + clean;
+      // Formateador universal de números de teléfono para WhatsApp (compatible con cualquier país)
+      function formatPhoneForWhatsApp(rawPhone: string): string {
+        let trimmed = rawPhone.trim();
+        let clean = trimmed.replace(/\D/g, '');
+        // Si el usuario escribe formato local con 0 inicial (ej: 04141234567), se convierte a 58
+        if (trimmed.startsWith('0')) {
+          clean = '58' + clean.replace(/^0+/, '');
+        }
+        return clean;
       }
 
       // Formatear nombres a Title Case (ej. "daniel lacruz" -> "Daniel Lacruz")
@@ -841,7 +897,7 @@ const userInitials = currentUser.nombre
         const item = shipments.find(s => s.id_guia === id_guia);
         if (!item) return;
 
-        const phoneFormatted = formatVenezuelaPhone(item.telefono_principal);
+        const phoneFormatted = formatPhoneForWhatsApp(item.telefono_principal);
         const host = window.location.origin;
         const customerUrl = `${host}/confirmar?guia=${encodeURIComponent(item.id_guia)}`;
         const customerName = toTitleCase(item.destinatario);
