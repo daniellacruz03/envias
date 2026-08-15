@@ -55,7 +55,8 @@ if (currentUser) {
             id="email"
             name="email"
             required
-            placeholder="admin@envias.com"
+            placeholder="correo@envias.com"
+            autocomplete="username"
             class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-3.5 py-3 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
           />
         </div>
@@ -78,6 +79,7 @@ if (currentUser) {
             name="password"
             required
             placeholder="••••••••"
+            autocomplete="current-password"
             class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-10 py-3 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
           />
           <button
@@ -112,45 +114,6 @@ if (currentUser) {
       </div>
     </form>
 
-    <!-- Credenciales Rápidas para Pruebas -->
-    <div class="mt-6 pt-5 border-t border-slate-100 space-y-2.5">
-      <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-center">Credenciales de Acceso</p>
-      <div class="grid grid-cols-2 gap-2 text-left">
-        <button
-          type="button"
-          id="btn-fill-admin"
-          class="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/70 text-[11px] transition-colors cursor-pointer flex items-start gap-2"
-        >
-          <div class="w-6 h-6 rounded-lg bg-slate-200/80 text-slate-700 flex items-center justify-center shrink-0 mt-0.5">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </div>
-          <div class="truncate">
-            <span class="font-bold text-slate-800 block">Logística</span>
-            <span class="text-slate-500 font-mono block text-[10px] truncate">admin@envias.com</span>
-          </div>
-        </button>
-
-        <button
-          type="button"
-          id="btn-fill-chofer"
-          class="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200/70 text-[11px] transition-colors cursor-pointer flex items-start gap-2"
-        >
-          <div class="w-6 h-6 rounded-lg bg-slate-200/80 text-slate-700 flex items-center justify-center shrink-0 mt-0.5">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-            </svg>
-          </div>
-          <div class="truncate">
-            <span class="font-bold text-slate-800 block">Chofer</span>
-            <span class="text-slate-500 font-mono block text-[10px] truncate">carlos@envias.com</span>
-          </div>
-        </button>
-      </div>
-    </div>
-
     <!-- Pie de página -->
     <footer class="mt-6 text-center">
       <p class="text-[11px] text-slate-400">
@@ -172,9 +135,6 @@ if (currentUser) {
   const eyeOpen = document.getElementById('eye-open') as HTMLElement;
   const eyeClosed = document.getElementById('eye-closed') as HTMLElement;
 
-  const btnFillAdmin = document.getElementById('btn-fill-admin') as HTMLButtonElement;
-  const btnFillChofer = document.getElementById('btn-fill-chofer') as HTMLButtonElement;
-
   // Toggle mostrar contraseña
   togglePwdBtn?.addEventListener('click', () => {
     if (passwordInput.type === 'password') {
@@ -188,18 +148,9 @@ if (currentUser) {
     }
   });
 
-  // Botones de autocompletado para pruebas
-  btnFillAdmin?.addEventListener('click', () => {
-    emailInput.value = 'admin@envias.com';
-    passwordInput.focus();
-    errorBanner?.classList.add('hidden');
-  });
-
-  btnFillChofer?.addEventListener('click', () => {
-    emailInput.value = 'carlos@envias.com';
-    passwordInput.focus();
-    errorBanner?.classList.add('hidden');
-  });
+  // Limpiar campos al cargar
+  if (emailInput) emailInput.value = '';
+  if (passwordInput) passwordInput.value = '';
 
   // Enviar Login
   form?.addEventListener('submit', async (e) => {
