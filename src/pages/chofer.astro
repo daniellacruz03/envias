@@ -54,8 +54,9 @@ const guiasResult = await query(`
       WHEN g.estado = 'En ruta' THEN 1
       WHEN g.estado = 'Contactado' THEN 2
       WHEN g.estado = 'Por contactar' THEN 3
-      WHEN g.estado = 'Entregado' THEN 4
-      ELSE 5
+      WHEN g.estado = 'No entregado' THEN 4
+      WHEN g.estado = 'Entregado' THEN 5
+      ELSE 6
     END,
     NULLIF(g.orden_ruta, 0) ASC NULLS LAST,
     g.created_at DESC
@@ -63,8 +64,9 @@ const guiasResult = await query(`
 
 const initialGuias = guiasResult.rows;
 const totalInitial = initialGuias.length;
-const pendientesInitial = initialGuias.filter(g => g.estado !== 'Entregado').length;
+const noEntregadosInitial = initialGuias.filter(g => g.estado === 'No entregado').length;
 const entregadosInitial = initialGuias.filter(g => g.estado === 'Entregado').length;
+const pendientesInitial = initialGuias.filter(g => g.estado !== 'Entregado' && g.estado !== 'No entregado').length;
 const porcentajeInitial = totalInitial > 0 ? Math.round((entregadosInitial / totalInitial) * 100) : 0;
 
 // Extraer ciudades únicas para filtro
@@ -226,18 +228,22 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         </div>
 
         <!-- Mini Badges de Conteo -->
-        <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-100 text-slate-600">
-          <div class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-            <span>Pendientes: <b class="text-slate-900" id="stat-pendientes">{pendientesInitial}</b></span>
+        <div class="grid grid-cols-4 gap-1 text-center text-[11px] pt-1.5 border-t border-slate-100 text-slate-600">
+          <div class="p-1 rounded-lg bg-amber-50/80 border border-amber-200/60">
+            <span class="block text-[10px] text-amber-700 font-bold uppercase">Pendientes</span>
+            <b class="text-amber-900 text-xs" id="stat-pendientes">{pendientesInitial}</b>
           </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>Entregadas: <b class="text-slate-900" id="stat-entregados">{entregadosInitial}</b></span>
+          <div class="p-1 rounded-lg bg-emerald-50/80 border border-emerald-200/60">
+            <span class="block text-[10px] text-emerald-700 font-bold uppercase">Entregadas</span>
+            <b class="text-emerald-900 text-xs" id="stat-entregados">{entregadosInitial}</b>
           </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-            <span>Total: <b class="text-slate-900" id="stat-total">{totalInitial}</b></span>
+          <div class="p-1 rounded-lg bg-rose-50/80 border border-rose-200/60">
+            <span class="block text-[10px] text-rose-700 font-bold uppercase">No entregó</span>
+            <b class="text-rose-900 text-xs" id="stat-no-entregados">{noEntregadosInitial}</b>
+          </div>
+          <div class="p-1 rounded-lg bg-slate-100 border border-slate-200/60">
+            <span class="block text-[10px] text-slate-500 font-bold uppercase">Total</span>
+            <b class="text-slate-900 text-xs" id="stat-total">{totalInitial}</b>
           </div>
         </div>
 
@@ -351,34 +357,44 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           )}
         </div>
 
-        <!-- Segmented Control de Pestañas (En Ruta / Entregados / Todos) -->
-        <div class="grid grid-cols-3 p-1 bg-slate-200/70 rounded-xl border border-slate-200/80 text-xs">
+        <!-- Segmented Control de Pestañas (Pendientes / Entregados / No Entregados / Todos) -->
+        <div class="grid grid-cols-4 p-1 bg-slate-200/70 rounded-xl border border-slate-200/80 text-xs gap-0.5">
           <button 
             id="tab-pendientes"
-            class="py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs cursor-pointer"
+            class="py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs cursor-pointer"
           >
             <span>Pendientes</span>
-            <span class="px-1.5 py-0.2 rounded-full bg-slate-900 text-white text-[10px]" id="badge-tab-pendientes">
+            <span class="px-1.5 py-0.2 rounded-full bg-slate-900 text-white text-[9px]" id="badge-tab-pendientes">
               {pendientesInitial}
             </span>
           </button>
 
           <button 
             id="tab-entregados"
-            class="py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer"
+            class="py-2 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer"
           >
             <span>Entregados</span>
-            <span class="px-1.5 py-0.2 rounded-full bg-slate-300 text-slate-700 text-[10px]" id="badge-tab-entregados">
+            <span class="px-1.5 py-0.2 rounded-full bg-slate-300 text-slate-700 text-[9px]" id="badge-tab-entregados">
               {entregadosInitial}
             </span>
           </button>
 
           <button 
+            id="tab-no-entregados"
+            class="py-2 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer"
+          >
+            <span>No entregó</span>
+            <span class="px-1.5 py-0.2 rounded-full bg-rose-200 text-rose-800 text-[9px]" id="badge-tab-no-entregados">
+              {noEntregadosInitial}
+            </span>
+          </button>
+
+          <button 
             id="tab-todos"
-            class="py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer"
+            class="py-2 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer"
           >
             <span>Todos</span>
-            <span class="px-1.5 py-0.2 rounded-full bg-slate-300 text-slate-700 text-[10px]" id="badge-tab-todos">
+            <span class="px-1.5 py-0.2 rounded-full bg-slate-300 text-slate-700 text-[9px]" id="badge-tab-todos">
               {totalInitial}
             </span>
           </button>
@@ -412,19 +428,22 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
     <!-- 6. MODAL / BOTTOM SHEET DE ENTREGA         -->
     <!-- ========================================== -->
     <div id="delivery-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-end sm:items-center justify-center p-0 sm:p-4 transition-all">
-      <div class="w-full sm:max-w-md bg-white border border-slate-200 rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 animate-fadeIn">
+      <div class="w-full sm:max-w-md bg-white border border-slate-200 rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 animate-fadeIn max-h-[92vh] overflow-y-auto">
         
         <!-- Cabecera modal -->
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
           <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div id="modal-header-icon-container" class="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 transition-colors">
+              <svg id="modal-header-icon-success" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <svg id="modal-header-icon-incident" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-rose-600 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
             <div>
-              <h3 class="text-sm font-bold text-slate-900">Confirmar Entrega Realizada</h3>
-              <p class="text-[11px] text-slate-500" id="modal-guia-code">Parada #--- &bull; Guía #---</p>
+              <h3 class="text-sm font-bold text-slate-900" id="modal-title-text">Confirmar Entrega Realizada</h3>
+              <p class="text-[11px] text-slate-500 font-medium" id="modal-guia-code">Parada #--- • Guía #---</p>
             </div>
           </div>
           <button id="modal-close-btn" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
@@ -434,72 +453,147 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           </button>
         </div>
 
+        <!-- Selector de Modo (Entrega Exitosa vs No se pudo entregar) -->
+        <div class="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl gap-1 border border-slate-200/60">
+          <button
+            type="button"
+            id="modal-tab-success-btn"
+            class="py-2 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 shadow-xs cursor-pointer"
+          >
+            <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            <span>Entrega Exitosa</span>
+          </button>
+
+          <button
+            type="button"
+            id="modal-tab-incident-btn"
+            class="py-2 px-2 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 cursor-pointer"
+          >
+            <svg class="w-3.5 h-3.5 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            <span>No se pudo entregar</span>
+          </button>
+        </div>
+
         <!-- Info del Destinatario -->
-        <div class="bg-slate-50 rounded-2xl p-3.5 border border-slate-200/80 space-y-1 text-xs">
+        <div class="bg-slate-50 rounded-2xl p-3 border border-slate-200/80 space-y-0.5 text-xs">
           <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Destinatario</p>
           <p class="font-bold text-slate-900 text-sm" id="modal-destinatario">---</p>
           <p class="text-slate-500 text-xs" id="modal-direccion">---</p>
         </div>
 
-        <!-- Campo Obligatorio: Foto Comprobante de Entrega -->
-        <div class="space-y-1.5">
-          <div class="flex items-center justify-between">
-            <label class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span>Foto Comprobante <span class="text-rose-500">* (Obligatorio)</span></span>
-            </label>
-            <span id="photo-size-badge" class="hidden text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">Optimizado</span>
-          </div>
-
-          <div id="dropzone-photo" class="border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-2xl p-3 text-center cursor-pointer transition-all bg-slate-50 hover:bg-slate-100/70">
-            <input type="file" id="modal-photo-input" accept="image/*" capture="environment" class="hidden" />
-            
-            <!-- Vista inicial sin foto -->
-            <div id="photo-placeholder" class="py-2.5 space-y-1">
-              <div class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-1 shadow-2xs">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <!-- ========================================== -->
+        <!-- PANEL A: ENTREGA EXITOSA                   -->
+        <!-- ========================================== -->
+        <div id="modal-panel-success" class="space-y-3.5">
+          <!-- Campo Obligatorio: Foto Comprobante de Entrega -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-              </div>
-              <p class="text-xs font-bold text-slate-800">Tomar foto o subir comprobante</p>
-              <p class="text-[10px] text-slate-400">Toca aquí para abrir la cámara o seleccionar imagen</p>
+                <span>Foto Comprobante <span class="text-rose-500">* (Obligatorio)</span></span>
+              </label>
+              <span id="photo-size-badge" class="hidden text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">Optimizado</span>
             </div>
 
-            <!-- Vista previa optimizada -->
-            <div id="photo-preview-container" class="hidden space-y-2">
-              <img id="photo-preview-img" class="w-full max-h-40 object-contain rounded-xl border border-slate-200 bg-white" alt="Comprobante" />
-              <div class="flex items-center justify-between px-1 text-[11px]">
-                <span class="text-emerald-700 font-bold flex items-center gap-1">
-                  <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                  <span id="photo-status-text">Comprobante optimizado</span>
-                </span>
-                <button type="button" id="btn-retake-photo" class="text-rose-600 hover:text-rose-700 font-bold underline cursor-pointer text-xs">
-                  Cambiar foto
-                </button>
+            <div id="dropzone-photo" class="border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-2xl p-3 text-center cursor-pointer transition-all bg-slate-50 hover:bg-slate-100/70">
+              <input type="file" id="modal-photo-input" accept="image/*" capture="environment" class="hidden" />
+              
+              <!-- Vista inicial sin foto -->
+              <div id="photo-placeholder" class="py-2 space-y-1">
+                <div class="w-9 h-9 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-1 shadow-2xs">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <p class="text-xs font-bold text-slate-800">Tomar foto o subir comprobante</p>
+                <p class="text-[10px] text-slate-400">Toca aquí para abrir la cámara o seleccionar imagen</p>
+              </div>
+
+              <!-- Vista previa optimizada -->
+              <div id="photo-preview-container" class="hidden space-y-2">
+                <img id="photo-preview-img" class="w-full max-h-36 object-contain rounded-xl border border-slate-200 bg-white" alt="Comprobante" />
+                <div class="flex items-center justify-between px-1 text-[11px]">
+                  <span class="text-emerald-700 font-bold flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span id="photo-status-text">Comprobante optimizado</span>
+                  </span>
+                  <button type="button" id="btn-retake-photo" class="text-rose-600 hover:text-rose-700 font-bold underline cursor-pointer text-xs">
+                    Cambiar foto
+                  </button>
+                </div>
               </div>
             </div>
           </div>
+
+          <!-- Campo Opcional: Recibido por -->
+          <div class="space-y-1.5">
+            <label for="modal-recibido-por" class="block text-xs font-semibold text-slate-700">
+              ¿Quién recibió el paquete? <span class="text-slate-400 font-normal">(Opcional)</span>
+            </label>
+            <input 
+              type="text" 
+              id="modal-recibido-por" 
+              placeholder="Ej: Titular / Vigilancia / Familiar (C.I. 12.345.678)"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
+            />
+          </div>
         </div>
 
-        <!-- Campo Opcional: Recibido por -->
-        <div class="space-y-1.5">
-          <label for="modal-recibido-por" class="block text-xs font-semibold text-slate-700">
-            ¿Quién recibió el paquete? <span class="text-slate-400 font-normal">(Opcional)</span>
-          </label>
-          <input 
-            type="text" 
-            id="modal-recibido-por" 
-            placeholder="Ej: Titular / Vigilancia / Familiar (C.I. 12.345.678)"
-            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
-          />
+        <!-- ========================================== -->
+        <!-- PANEL B: NO SE PUDO ENTREGAR (INCIDENCIA)  -->
+        <!-- ========================================== -->
+        <div id="modal-panel-incident" class="hidden space-y-3">
+          <div class="bg-rose-50/60 border border-rose-200 rounded-2xl p-3 space-y-2 text-xs">
+            <label class="block text-xs font-bold text-rose-900 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <span>Selecciona el motivo:</span>
+            </label>
+
+            <!-- Opciones rápidas de motivo -->
+            <div class="space-y-1.5" id="incident-reasons-container">
+              <label class="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-rose-200/80 cursor-pointer hover:bg-rose-100/50 transition-colors">
+                <input type="radio" name="incident-reason" value="No contesta llamadas / Teléfono apagado" checked class="accent-rose-600 text-rose-600" />
+                <span class="text-xs font-semibold text-slate-800">No contesta llamadas / Teléfono apagado</span>
+              </label>
+              <label class="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-rose-200/80 cursor-pointer hover:bg-rose-100/50 transition-colors">
+                <input type="radio" name="incident-reason" value="Cliente ausente en la dirección" class="accent-rose-600 text-rose-600" />
+                <span class="text-xs font-semibold text-slate-800">Cliente ausente en la dirección</span>
+              </label>
+              <label class="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-rose-200/80 cursor-pointer hover:bg-rose-100/50 transition-colors">
+                <input type="radio" name="incident-reason" value="Cliente rechazó el paquete" class="accent-rose-600 text-rose-600" />
+                <span class="text-xs font-semibold text-slate-800">Cliente rechazó el paquete</span>
+              </label>
+              <label class="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-rose-200/80 cursor-pointer hover:bg-rose-100/50 transition-colors">
+                <input type="radio" name="incident-reason" value="Dirección no encontrada / Inaccesible" class="accent-rose-600 text-rose-600" />
+                <span class="text-xs font-semibold text-slate-800">Dirección no encontrada / Inaccesible</span>
+              </label>
+              <label class="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-rose-200/80 cursor-pointer hover:bg-rose-100/50 transition-colors">
+                <input type="radio" name="incident-reason" value="Reprogramado para otro momento" class="accent-rose-600 text-rose-600" />
+                <span class="text-xs font-semibold text-slate-800">Reprogramado para otro momento</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Nota adicional -->
+          <div class="space-y-1">
+            <label for="modal-incident-note" class="block text-xs font-semibold text-slate-700">
+              Observación o detalle <span class="text-slate-400 font-normal">(Opcional)</span>
+            </label>
+            <input 
+              type="text" 
+              id="modal-incident-note" 
+              placeholder="Ej: Se tocó el timbre a las 3:15 PM y nadie respondió"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+            />
+          </div>
         </div>
 
         <!-- Botones de Acción -->
-        <div class="grid grid-cols-2 gap-2.5 pt-2">
+        <div class="grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-100">
           <button 
             id="modal-cancel-btn"
             type="button" 
@@ -508,6 +602,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
             Cancelar
           </button>
 
+          <!-- Botón Confirmar Entrega (Modo Exitoso) -->
           <button 
             id="modal-confirm-btn"
             type="button"
@@ -518,6 +613,16 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
             <span>Confirmar Entrega</span>
+          </button>
+
+          <!-- Botón Registrar Incidencia (Modo No Entregado) -->
+          <button 
+            id="modal-incident-submit-btn"
+            type="button"
+            class="hidden py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-rose-900/10 transition-all cursor-pointer"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            <span>Registrar No Entregado</span>
           </button>
         </div>
 
@@ -552,10 +657,11 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
     <script define:vars={{ initialGuias, targetChoferId }}>
       let currentChoferId = targetChoferId;
       let guiasData = initialGuias || [];
-      let activeTab = 'pendientes'; // 'pendientes' | 'entregados' | 'todos'
+      let activeTab = 'pendientes'; // 'pendientes' | 'entregados' | 'no_entregados' | 'todos'
       let searchQuery = '';
       let selectedCity = '';
       let activeModalGuiaId = null;
+      let modalDeliveryMode = 'success'; // 'success' | 'incident'
 
       // Leaflet Map State
       let map = null;
@@ -574,21 +680,23 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
       
       const tabPendientes = document.getElementById('tab-pendientes');
       const tabEntregados = document.getElementById('tab-entregados');
+      const tabNoEntregados = document.getElementById('tab-no-entregados');
       const tabTodos = document.getElementById('tab-todos');
       
       const badgeTabPendientes = document.getElementById('badge-tab-pendientes');
       const badgeTabEntregados = document.getElementById('badge-tab-entregados');
+      const badgeTabNoEntregados = document.getElementById('badge-tab-no-entregados');
       const badgeTabTodos = document.getElementById('badge-tab-todos');
 
       const statPendientes = document.getElementById('stat-pendientes');
       const statEntregados = document.getElementById('stat-entregados');
+      const statNoEntregados = document.getElementById('stat-no-entregados');
       const statTotal = document.getElementById('stat-total');
       const progressText = document.getElementById('progress-text');
       const progressBarFill = document.getElementById('progress-bar-fill');
       
       const refreshBtn = document.getElementById('refresh-btn');
       const refreshIcon = document.getElementById('refresh-icon');
-      const driverSelectSwitch = document.getElementById('driver-select-switch');
 
       const mapWrapper = document.getElementById('map-wrapper');
       const toggleMapBtn = document.getElementById('toggle-map-btn');
@@ -603,10 +711,21 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
       const modalCloseBtn = document.getElementById('modal-close-btn');
       const modalCancelBtn = document.getElementById('modal-cancel-btn');
       const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+      const modalIncidentSubmitBtn = document.getElementById('modal-incident-submit-btn');
       const modalGuiaCode = document.getElementById('modal-guia-code');
       const modalDestinatario = document.getElementById('modal-destinatario');
       const modalDireccion = document.getElementById('modal-direccion');
       const modalRecibidoPor = document.getElementById('modal-recibido-por');
+      const modalIncidentNote = document.getElementById('modal-incident-note');
+
+      const modalTabSuccessBtn = document.getElementById('modal-tab-success-btn');
+      const modalTabIncidentBtn = document.getElementById('modal-tab-incident-btn');
+      const modalPanelSuccess = document.getElementById('modal-panel-success');
+      const modalPanelIncident = document.getElementById('modal-panel-incident');
+      const modalTitleText = document.getElementById('modal-title-text');
+      const modalHeaderIconSuccess = document.getElementById('modal-header-icon-success');
+      const modalHeaderIconIncident = document.getElementById('modal-header-icon-incident');
+      const modalHeaderIconContainer = document.getElementById('modal-header-icon-container');
 
       // Photo Upload & Compression Elements
       const dropzonePhoto = document.getElementById('dropzone-photo');
@@ -648,22 +767,18 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
       function initMap() {
         if (typeof L === 'undefined') return;
 
-        // Centro inicial por defecto (Venezuela)
         map = L.map('route-map', {
           zoomControl: false,
           attributionControl: false
         }).setView([7.8500, -66.0000], 6);
 
-        // Tile layer limpio corporativo (CartoDB Positron / OSM)
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
           maxZoom: 19,
           subdomains: 'abcd'
         }).addTo(map);
 
-        // Control de zoom en esquina superior derecha
         L.control.zoom({ position: 'topright' }).addTo(map);
 
-        // Detectar si el chofer interactúa manualmente para no resetear su vista
         map.on('zoomstart', () => { userHasInteractedWithMap = true; });
         map.on('dragstart', () => { userHasInteractedWithMap = true; });
 
@@ -672,7 +787,6 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
       }
 
       // 3. Actualizar Marcadores y Polilínea en el Mapa
-      // Diccionario de Coordenadas de Sedes y Ciudades de Venezuela
       const VENEZUELA_COORDS = {
         'barquisimeto': [10.0808, -69.3756],
         'sede principal barquisimeto': [10.0808, -69.3756],
@@ -681,7 +795,6 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         'el tocuyo': [9.7872, -69.7928],
         'quibor': [9.9286, -69.6201],
         'caracas': [10.4934, -66.9299],
-        'sede caracas': [10.4934, -66.9299],
         'chacao': [10.4925, -66.8530],
         'baruta': [10.4344, -66.8744],
         'el hatillo': [10.4267, -66.8258],
@@ -691,7 +804,6 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         'guarenas': [10.4681, -66.6172],
         'guatire': [10.4722, -66.5414],
         'merida': [8.5738, -71.1851],
-        'sede merida': [8.5738, -71.1851],
         'timotes': [8.9833, -70.7333],
         'apartaderos': [8.8000, -70.8500],
         'paramo': [8.8000, -70.8500],
@@ -750,240 +862,117 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         'porlamar': [10.9577, -63.8697]
       };
 
-      function resolveLocationCoords(locName) {
-        if (!locName) return null;
-        const clean = locName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-
-        if (clean.includes('barquisimeto')) return VENEZUELA_COORDS['barquisimeto'];
-        if (clean.includes('caracas')) return VENEZUELA_COORDS['caracas'];
-        if (clean.includes('merida')) return VENEZUELA_COORDS['merida'];
-        if (clean.includes('vigia')) return VENEZUELA_COORDS['el vigia'];
-        if (clean.includes('valencia')) return VENEZUELA_COORDS['valencia'];
-        if (clean.includes('maracaibo')) return VENEZUELA_COORDS['maracaibo'];
-        if (clean.includes('san cristobal')) return VENEZUELA_COORDS['san cristobal'];
-        if (clean.includes('maracay')) return VENEZUELA_COORDS['maracay'];
-        if (clean.includes('barinas')) return VENEZUELA_COORDS['barinas'];
-        if (clean.includes('valera')) return VENEZUELA_COORDS['valera'];
-        if (clean.includes('trujillo')) return VENEZUELA_COORDS['trujillo'];
-        if (clean.includes('acarigua')) return VENEZUELA_COORDS['acarigua'];
-        if (clean.includes('guanare')) return VENEZUELA_COORDS['guanare'];
-        if (clean.includes('san felipe') || clean.includes('yaritagua')) return VENEZUELA_COORDS['san felipe'];
-        if (clean.includes('punto fijo') || clean.includes('coro')) return VENEZUELA_COORDS['coro'];
-        if (clean.includes('puerto la cruz') || clean.includes('barcelona') || clean.includes('lecheria')) return VENEZUELA_COORDS['puerto la cruz'];
-        if (clean.includes('guayana') || clean.includes('puerto ordaz') || clean.includes('bolivar')) return VENEZUELA_COORDS['ciudad guayana'];
-        if (clean.includes('maturin')) return VENEZUELA_COORDS['maturin'];
-        if (clean.includes('cumana')) return VENEZUELA_COORDS['cumana'];
-        if (clean.includes('san juan de los morros')) return VENEZUELA_COORDS['san juan de los morros'];
-        if (clean.includes('apure')) return VENEZUELA_COORDS['san fernando de apure'];
-        if (clean.includes('la guaira') || clean.includes('maiquetia')) return VENEZUELA_COORDS['la guaira'];
-        if (clean.includes('porlamar') || clean.includes('margarita')) return VENEZUELA_COORDS['porlamar'];
-
+      function parseLocationCoords(text) {
+        if (!text) return null;
+        const normalized = text.toLowerCase().trim();
+        const match = normalized.match(/(-?\d{1,2}\.\d{3,})[,\s]+(-?\d{2,3}\.\d{3,})/);
+        if (match) {
+          return [parseFloat(match[1]), parseFloat(match[2])];
+        }
         for (const [key, coords] of Object.entries(VENEZUELA_COORDS)) {
-          if (clean.includes(key)) return coords;
+          if (normalized.includes(key)) {
+            return coords;
+          }
         }
         return null;
       }
 
-      // 3. Actualizar Marcadores y Polilínea en el Mapa
       function updateMapMarkers(forceFitBounds = false) {
         if (!map || !markersLayer) return;
 
         markersLayer.clearLayers();
-        if (routePolyline) {
-          map.removeLayer(routePolyline);
-          routePolyline = null;
-        }
-
         const latLngs = [];
 
-        // 1. Punto de Salida / Origen (ej. Sede Principal Barquisimeto)
-        const originName = (guiasData.length > 0 && guiasData[0].ruta_origen) || 'Sede Principal Barquisimeto';
-        const originCoords = resolveLocationCoords(originName);
+        // 1. Origen / Salida (Pin Azul)
+        const firstWithRoute = guiasData.find(g => g.ruta_origen);
+        const originCoords = firstWithRoute?.ruta_origen ? parseLocationCoords(firstWithRoute.ruta_origen) : [10.0808, -69.3756];
 
         if (originCoords) {
-          latLngs.push(originCoords);
-
-          const startPinHtml = `
-            <div class="relative flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 border-2 border-white shadow-xl text-white text-[10px] font-black transition-transform hover:scale-110">
-              <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              <div class="absolute -bottom-4 bg-slate-900 text-white text-[9px] px-1 py-0.2 rounded font-extrabold shadow-sm whitespace-nowrap">SALIDA</div>
+          const startHtml = `
+            <div class="relative flex items-center justify-center w-7 h-7 rounded-full bg-indigo-600 border-2 border-white shadow-md text-white text-[10px] font-black">
+              S
             </div>
           `;
-
-          const startIcon = L.divIcon({
-            html: startPinHtml,
-            className: 'custom-start-icon',
-            iconSize: [32, 32],
-            iconAnchor: [16, 16],
-            popupAnchor: [0, -16]
-          });
-
-          const startMarker = L.marker(originCoords, { icon: startIcon });
-          startMarker.bindPopup(`
-            <div class="space-y-1 min-w-[150px]">
-              <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-900 text-white">PUNTO DE SALIDA</span>
-              <p class="text-xs font-bold text-slate-900">${originName}</p>
-            </div>
-          `);
-          markersLayer.addLayer(startMarker);
+          const startIcon = L.divIcon({ html: startHtml, className: 'start-pin', iconSize: [28, 28], iconAnchor: [14, 14] });
+          L.marker(originCoords, { icon: startIcon }).addTo(markersLayer)
+            .bindPopup(`<b>Punto de Salida:</b><br>${firstWithRoute?.ruta_origen || 'Sede Principal Barquisimeto'}`);
+          latLngs.push(originCoords);
         }
 
-        // 2. Paradas de Entrega de los Clientes
-        guiasData.forEach((guia, index) => {
-          const stopNumber = index + 1;
-          const hasCoords = Boolean(guia.gps_confirmado && guia.gps_latitud && guia.gps_longitud);
-          
-          if (hasCoords) {
+        // 2. Paradas de Entrega Numeradas
+        guiasData.forEach((guia, idx) => {
+          if (guia.gps_confirmado && guia.gps_latitud && guia.gps_longitud) {
             const lat = Number(guia.gps_latitud);
             const lng = Number(guia.gps_longitud);
             const isEntregado = guia.estado === 'Entregado';
-
+            const isNoEntregado = guia.estado === 'No entregado';
             latLngs.push([lat, lng]);
 
-            // Custom HTML Pin estilo Spoke / Amazon Flex
-            const markerHtml = `
-              <div class="relative flex items-center justify-center w-8 h-8 rounded-full ${
-                isEntregado 
-                  ? 'bg-emerald-600 border-2 border-white shadow-md text-white' 
-                  : 'bg-indigo-600 border-2 border-white shadow-lg text-white'
-              } text-xs font-black transition-transform hover:scale-110">
-                <span>${stopNumber}</span>
-                ${isEntregado ? `
-                  <div class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full border border-white flex items-center justify-center text-white">
-                    <svg class="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                  </div>
-                ` : ''}
+            const stopNum = guia.orden_ruta || (idx + 1);
+
+            let pinBg = 'bg-slate-900 border-emerald-400 text-emerald-300';
+            if (isEntregado) pinBg = 'bg-emerald-600 border-white text-white';
+            else if (isNoEntregado) pinBg = 'bg-rose-600 border-white text-white';
+
+            const pinHtml = `
+              <div class="relative flex items-center justify-center w-7 h-7 rounded-full ${pinBg} border-2 shadow-md text-[10px] font-extrabold cursor-pointer">
+                ${isEntregado ? '✓' : (isNoEntregado ? '✕' : stopNum)}
               </div>
             `;
+            const icon = L.divIcon({ html: pinHtml, className: 'stop-pin', iconSize: [28, 28], iconAnchor: [14, 14] });
 
-            const customIcon = L.divIcon({
-              html: markerHtml,
-              className: 'custom-stop-icon',
-              iconSize: [32, 32],
-              iconAnchor: [16, 16],
-              popupAnchor: [0, -16]
-            });
-
-            const marker = L.marker([lat, lng], { icon: customIcon });
-
-            // Popup con acciones rápidas
-            const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-            const popupHtml = `
-              <div class="space-y-1.5 min-w-[180px]">
-                <div class="flex items-center justify-between gap-1 border-b border-slate-100 pb-1">
-                  <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700">Parada #${stopNumber}</span>
-                  <span class="text-[10px] font-mono font-bold text-slate-500">#${guia.id_guia}</span>
+            const marker = L.marker([lat, lng], { icon }).addTo(markersLayer);
+            marker.bindPopup(`
+              <div class="p-1 space-y-1 text-xs">
+                <div class="flex items-center gap-1.5">
+                  <span class="font-mono font-bold text-slate-900">#${guia.id_guia}</span>
+                  <span class="px-1.5 py-0.2 rounded text-[10px] font-bold ${isEntregado ? 'bg-emerald-100 text-emerald-800' : (isNoEntregado ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-700')}">
+                    ${isEntregado ? 'Entregado' : (isNoEntregado ? 'No entregado' : `Parada #${stopNum}`)}
+                  </span>
                 </div>
-                <p class="text-xs font-bold text-slate-900">${guia.destinatario}</p>
-                <p class="text-[11px] text-slate-500 leading-snug">${guia.direccion_referencia || guia.ciudad_destino}</p>
-                <a href="${navUrl}" target="_blank" class="mt-1 w-full py-1.5 px-2.5 rounded-lg bg-slate-900 text-white text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-xs">
-                  <span>Navegar GPS</span>
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                </a>
+                <p class="font-bold text-slate-800">${guia.destinatario}</p>
+                <p class="text-slate-500 text-[11px]">${guia.direccion_referencia || guia.ciudad_destino}</p>
               </div>
-            `;
-
-            marker.bindPopup(popupHtml);
-            markersLayer.addLayer(marker);
+            `);
           }
         });
 
-        // 3. Punto de Destino / Retorno (si aplica)
-        const destinoName = (guiasData.length > 0 && guiasData[0].ruta_destino) || 'Retorno a Sede Principal Barquisimeto';
-        const isUltimaParada = destinoName.toLowerCase().includes('ultima parada') || destinoName.toLowerCase().includes('sin retorno');
-        
-        if (!isUltimaParada) {
-          const destCoords = resolveLocationCoords(destinoName);
-          if (destCoords) {
-            latLngs.push(destCoords);
+        // 3. Trazado de Ruta
+        if (latLngs.length >= 2) {
+          if (routePolyline) map.removeLayer(routePolyline);
 
-            const destPinHtml = `
-              <div class="relative flex items-center justify-center w-8 h-8 rounded-full bg-slate-900 border-2 border-white shadow-xl text-white text-[10px] font-black transition-transform hover:scale-110">
-                <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                <div class="absolute -bottom-4 bg-emerald-700 text-white text-[9px] px-1 py-0.2 rounded font-extrabold shadow-sm whitespace-nowrap">RETORNO</div>
-              </div>
-            `;
-
-            const destIcon = L.divIcon({
-              html: destPinHtml,
-              className: 'custom-dest-icon',
-              iconSize: [32, 32],
-              iconAnchor: [16, 16],
-              popupAnchor: [0, -16]
-            });
-
-            const destMarker = L.marker(destCoords, { icon: destIcon });
-            destMarker.bindPopup(`
-              <div class="space-y-1 min-w-[150px]">
-                <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-700 text-white">PUNTO DE RETORNO</span>
-                <p class="text-xs font-bold text-slate-900">${destinoName}</p>
-              </div>
-            `);
-            markersLayer.addLayer(destMarker);
-          }
-        }
-
-        // Verificar si la ruta va de Barquisimeto/Trujillo hacia Mérida para asegurar el paso por el Páramo (Troncal 7)
-        const isBqtoMerida = (originName.toLowerCase().includes('barquisimeto') || originName.toLowerCase().includes('lara') || originName.toLowerCase().includes('trujillo') || originName.toLowerCase().includes('valera')) && destinoName.toLowerCase().includes('merida');
-        const hasVigiaStop = guiasData.some(g => (g.ciudad_destino || '').toLowerCase().includes('vigia') || (g.direccion_referencia || '').toLowerCase().includes('vigia'));
-
-        let routingLatLngs = [...latLngs];
-        if (isBqtoMerida && !hasVigiaStop && routingLatLngs.length >= 2) {
-          // Insertar waypoint estratégico del Páramo de Mucuchíes / Apartaderos antes del destino final de Mérida
-          const paramoCoords = VENEZUELA_COORDS['apartaderos'] || [8.8000, -70.8500];
-          const lastIdx = routingLatLngs.length - 1;
-          routingLatLngs.splice(lastIdx, 0, paramoCoords);
-        }
-
-        // Trazo de ruta real por carreteras (OSRM Driving Engine)
-        if (routingLatLngs.length > 1) {
-          const coordinatesQuery = routingLatLngs.map(pt => `${pt[1]},${pt[0]}`).join(';');
-          const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${coordinatesQuery}?overview=full&geometries=geojson`;
-
-          if (routeInfoPill && routeDistanceText) {
-            routeDistanceText.textContent = 'Calculando ruta por carretera...';
-            routeInfoPill.classList.remove('hidden');
-          }
+          const osrmCoords = latLngs.map(pt => `${pt[1]},${pt[0]}`).join(';');
+          const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${osrmCoords}?overview=full&geometries=geojson`;
 
           fetch(osrmUrl)
             .then(res => res.json())
             .then(data => {
-              if (data && data.code === 'Ok' && data.routes && data.routes.length > 0) {
+              if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
                 const route = data.routes[0];
-                const roadCoordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
-                
-                if (routePolyline) {
-                  map.removeLayer(routePolyline);
-                }
+                const distanceKm = (route.distance / 1000).toFixed(1);
+                const durationMinutes = Math.round(route.duration / 60);
+                const hours = Math.floor(durationMinutes / 60);
+                const mins = durationMinutes % 60;
+                const durationFormatted = hours > 0 ? `${hours}h ${mins}m` : `${mins} min`;
 
-                // Línea de ruta real que sigue autopistas y carreteras
-                routePolyline = L.polyline(roadCoordinates, {
+                const geojsonCoords = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+                if (routePolyline) map.removeLayer(routePolyline);
+                routePolyline = L.polyline(geojsonCoords, {
                   color: '#4f46e5',
-                  weight: 5,
-                  opacity: 0.9,
+                  weight: 4,
+                  opacity: 0.85,
                   lineCap: 'round',
                   lineJoin: 'round'
                 }).addTo(map);
 
-                // Distancia y tiempo en carretera
-                const distanceKm = (route.distance / 1000).toFixed(0);
-                const durationMinutes = Math.round(route.duration / 60);
-                const durationFormatted = durationMinutes >= 60 
-                  ? `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`
-                  : `${durationMinutes} min`;
-
                 if (routeInfoPill && routeDistanceText) {
-                  routeDistanceText.textContent = `${distanceKm} km en carretera (Vía El Páramo) • ~${durationFormatted}`;
+                  routeDistanceText.textContent = `${distanceKm} km en carretera • ~${durationFormatted}`;
                   routeInfoPill.innerHTML = `
                     <span class="flex h-2 w-2 relative">
                       <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                       <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
                     </span>
-                    <span>${distanceKm} km (Vía El Páramo) • ~${durationFormatted}</span>
+                    <span>${distanceKm} km • ~${durationFormatted}</span>
                   `;
                   routeInfoPill.classList.remove('hidden');
                 }
@@ -999,7 +988,6 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           if (routeInfoPill) routeInfoPill.classList.add('hidden');
         }
 
-        // Auto-encuadre de marcadores solo si se solicita o en carga inicial
         if (latLngs.length > 0 && (forceFitBounds || !userHasInteractedWithMap)) {
           map.fitBounds(latLngs, { padding: [40, 40], maxZoom: 15 });
         }
@@ -1022,12 +1010,14 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
       function renderCards() {
         const query = searchQuery.trim().toLowerCase();
         
-        let filtered = guiasData.filter((guia, index) => {
+        let filtered = guiasData.filter((guia) => {
           const isEntregado = guia.estado === 'Entregado';
+          const isNoEntregado = guia.estado === 'No entregado';
           
           let matchTab = true;
-          if (activeTab === 'pendientes') matchTab = !isEntregado;
+          if (activeTab === 'pendientes') matchTab = (!isEntregado && !isNoEntregado);
           else if (activeTab === 'entregados') matchTab = isEntregado;
+          else if (activeTab === 'no_entregados') matchTab = isNoEntregado;
 
           if (!matchTab) return false;
 
@@ -1050,6 +1040,9 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           if (activeTab === 'pendientes') {
             emptyTitle.textContent = '¡Sin paradas pendientes!';
             emptyDesc.textContent = 'Todas las entregas han sido completadas o no hay paquetes en ruta.';
+          } else if (activeTab === 'no_entregados') {
+            emptyTitle.textContent = '¡Sin incidencias!';
+            emptyDesc.textContent = 'No hay entregas reportadas como fallidas o no contestadas.';
           } else {
             emptyTitle.textContent = 'Sin entregas en este filtro';
             emptyDesc.textContent = 'No se encontraron paradas que coincidan con la búsqueda.';
@@ -1058,21 +1051,19 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           emptyState.classList.add('hidden');
 
           filtered.forEach(guia => {
-            // Posición real en la lista completa (Parada #X)
             const stopNumber = guiasData.findIndex(g => g.id_guia === guia.id_guia) + 1;
             const isGpsConfirmed = Boolean(guia.gps_confirmado);
             const hasCoordinates = Boolean(isGpsConfirmed && guia.gps_latitud && guia.gps_longitud);
             const lat = guia.gps_latitud;
             const lng = guia.gps_longitud;
             const isEntregado = guia.estado === 'Entregado';
+            const isNoEntregado = guia.estado === 'No entregado';
             const portalUrl = `${window.location.origin}/confirmar?guia=${guia.id_guia}`;
 
-            // URL de Navegación
             const navUrl = hasCoordinates 
               ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
               : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((guia.direccion_referencia || '') + ' ' + (guia.ciudad_destino || ''))}`;
 
-            // URL de WhatsApp
             const waPhone = formatPhoneForWhatsApp(guia.telefono_principal);
             const waMessage = isGpsConfirmed
               ? encodeURIComponent(`Hola *${guia.destinatario}*, le escribe su chofer de *Envías C.A.* Ya tengo su ubicación confirmada y voy en camino con su paquete *#${guia.id_guia}* (${guia.piezas || 1} pieza/s). ¿Se encuentra disponible en su dirección?`)
@@ -1080,29 +1071,49 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
             
             const waUrl = waPhone ? `https://wa.me/${waPhone}?text=${waMessage}` : '#';
 
+            let cardBorder = 'border-slate-200/90 hover:border-slate-300';
+            if (isEntregado) cardBorder = 'border-slate-200/60 opacity-80';
+            else if (isNoEntregado) cardBorder = 'border-rose-200/90 bg-rose-50/20';
+
             const card = document.createElement('article');
-            card.className = `bg-white rounded-2xl border ${isEntregado ? 'border-slate-200/60 opacity-80' : 'border-slate-200/90 hover:border-slate-300'} p-4 shadow-sm space-y-3 transition-all`;
+            card.className = `bg-white rounded-2xl border ${cardBorder} p-4 shadow-sm space-y-3 transition-all`;
+
+            let badgeCircle = 'bg-slate-900 text-white';
+            if (isEntregado) badgeCircle = 'bg-emerald-600 text-white';
+            else if (isNoEntregado) badgeCircle = 'bg-rose-600 text-white';
+
+            let badgeStatusHtml = `
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
+                Parada #${guia.orden_ruta || stopNumber}
+              </span>
+            `;
+            if (isEntregado) {
+              badgeStatusHtml = `
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  Entregado
+                </span>
+              `;
+            } else if (isNoEntregado) {
+              badgeStatusHtml = `
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200">
+                  No entregó
+                </span>
+              `;
+            }
 
             card.innerHTML = `
-              <!-- Cabecera de la Tarjeta con Badge de Parada -->
+              <!-- Cabecera de la Tarjeta -->
               <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
                 <div class="flex items-center gap-2.5">
-                  <!-- Círculo Número de Parada (Spoke style) -->
-                  <div class="w-8 h-8 rounded-full ${isEntregado ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-white'} flex items-center justify-center font-extrabold text-xs shrink-0 shadow-xs">
-                    ${isEntregado ? '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>' : (guia.orden_ruta || stopNumber)}
+                  <div class="w-8 h-8 rounded-full ${badgeCircle} flex items-center justify-center font-extrabold text-xs shrink-0 shadow-xs">
+                    ${isEntregado ? '✓' : (isNoEntregado ? '✕' : (guia.orden_ruta || stopNumber))}
                   </div>
                   <div>
                     <div class="flex items-center gap-2">
                       <span class="text-xs font-extrabold text-slate-900 font-mono">#${guia.id_guia}</span>
-                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                        isEntregado 
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                          : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                      }">
-                        ${isEntregado ? 'Entregado' : `Parada #${guia.orden_ruta || stopNumber}`}
-                      </span>
+                      ${badgeStatusHtml}
                     </div>
-                    <p class="text-[11px] text-slate-500 font-medium">${guia.piezas || 1} pieza(s) &bull; ${guia.ciudad_destino || 'Sin ciudad'}</p>
+                    <p class="text-[11px] text-slate-500 font-medium">${guia.piezas || 1} pieza(s) • ${guia.ciudad_destino || 'Sin ciudad'}</p>
                   </div>
                 </div>
 
@@ -1132,7 +1143,28 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
                   <p class="text-sm font-bold text-slate-900">${guia.destinatario}</p>
                 </div>
 
-                ${isGpsConfirmed ? `
+                ${isNoEntregado ? `
+                  <div class="bg-rose-50/70 rounded-xl p-3 border border-rose-200/90 space-y-1">
+                    <div class="flex items-start gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-rose-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <div class="min-w-0 flex-1">
+                        <p class="text-[10px] uppercase font-bold text-rose-800 tracking-wider">Intento Fallido Registrado</p>
+                        <p class="font-medium text-slate-800 text-xs mt-0.5">${guia.recibido_por || 'Cliente ausente / No contesta llamadas'}</p>
+                        ${guia.comprobante_url ? `
+                          <button 
+                            type="button" 
+                            onclick="window.openLightbox('${guia.comprobante_url}', 'Evidencia de Intento Fallido', '${guia.destinatario.replace(/'/g, "\\'")} - #${guia.id_guia}')"
+                            class="text-[11px] text-indigo-600 hover:text-indigo-800 font-bold underline mt-1.5 block cursor-pointer"
+                          >
+                            Ver foto de evidencia adjunta
+                          </button>
+                        ` : ''}
+                      </div>
+                    </div>
+                  </div>
+                ` : (isGpsConfirmed ? `
                   <div class="bg-emerald-50/40 rounded-xl p-3 border border-emerald-200/70 space-y-1">
                     <div class="flex items-start gap-2">
                       <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1145,7 +1177,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
                           ${guia.direccion_referencia || 'Ubicación satelital GPS registrada'}
                         </p>
                         <p class="text-[11px] text-slate-500 mt-1">
-                          <span class="font-semibold text-slate-700">${guia.ciudad_destino}</span> &bull; Telf: ${guia.telefono_principal}
+                          <span class="font-semibold text-slate-700">${guia.ciudad_destino}</span> • Telf: ${guia.telefono_principal}
                         </p>
                       </div>
                     </div>
@@ -1169,14 +1201,13 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
                       </div>
                     </div>
                   </div>
-                `}
+                `)}
               </div>
 
-              <!-- BOTONES DE ACCIÓN RÁPIDA (SPARK/SPOKE STYLE) -->
+              <!-- BOTONES DE ACCIÓN RÁPIDA -->
               <div class="space-y-2 pt-1">
                 
                 ${isGpsConfirmed ? `
-                  <!-- Botón 1-Toque: Navegar Satelital -->
                   <a 
                     href="${navUrl}" 
                     target="_blank" 
@@ -1189,7 +1220,6 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
                     <span>${hasCoordinates ? 'Navegar con GPS Exacto' : 'Navegar a Dirección'}</span>
                   </a>
                 ` : `
-                  <!-- Botón Pedir Ubicación -->
                   <a 
                     href="${waUrl}" 
                     target="_blank" 
@@ -1204,7 +1234,6 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
                 `}
 
                 <div class="grid grid-cols-2 gap-2">
-                  <!-- Botón Llamar -->
                   <a 
                     href="tel:${guia.telefono_principal}"
                     class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-all tap-active"
@@ -1215,7 +1244,6 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
                     <span>Llamar</span>
                   </a>
 
-                  <!-- Botón WhatsApp -->
                   <a 
                     href="${waUrl}"
                     target="_blank"
@@ -1229,16 +1257,16 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
                   </a>
                 </div>
 
-                <!-- Botón de Marcar Entregado o Ver Comprobante -->
+                <!-- Botón de Marcar Entregado / Incidencia -->
                 ${!isEntregado ? `
                   <button 
                     onclick="window.openDeliveryModal('${guia.id_guia}', '${guia.destinatario.replace(/'/g, "\\'")}', '${(guia.direccion_referencia || '').replace(/'/g, "\\'")}', ${stopNumber})"
-                    class="w-full mt-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer tap-active"
+                    class="w-full mt-1 py-3 px-4 rounded-xl ${isNoEntregado ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-600 hover:bg-emerald-700'} active:scale-[0.98] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer tap-active"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>Confirmar Entrega (Foto Obligatoria)</span>
+                    <span>${isNoEntregado ? 'Reintentar / Confirmar Entrega' : 'Confirmar Entrega o Reportar'}</span>
                   </button>
                 ` : `
                   <div class="space-y-2 mt-1">
@@ -1280,22 +1308,24 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
       // 5. Actualizar KPIs y Contadores
       function updateStats() {
         const total = guiasData.length;
-        const pendientes = guiasData.filter(g => g.estado !== 'Entregado').length;
+        const noEntregados = guiasData.filter(g => g.estado === 'No entregado').length;
         const entregados = guiasData.filter(g => g.estado === 'Entregado').length;
+        const pendientes = guiasData.filter(g => g.estado !== 'Entregado' && g.estado !== 'No entregado').length;
         const porcentaje = total > 0 ? Math.round((entregados / total) * 100) : 0;
 
-        statPendientes.textContent = pendientes;
-        statEntregados.textContent = entregados;
-        statTotal.textContent = total;
+        if (statPendientes) statPendientes.textContent = pendientes;
+        if (statEntregados) statEntregados.textContent = entregados;
+        if (statNoEntregados) statNoEntregados.textContent = noEntregados;
+        if (statTotal) statTotal.textContent = total;
         
-        badgeTabPendientes.textContent = pendientes;
-        badgeTabEntregados.textContent = entregados;
-        badgeTabTodos.textContent = total;
+        if (badgeTabPendientes) badgeTabPendientes.textContent = pendientes;
+        if (badgeTabEntregados) badgeTabEntregados.textContent = entregados;
+        if (badgeTabNoEntregados) badgeTabNoEntregados.textContent = noEntregados;
+        if (badgeTabTodos) badgeTabTodos.textContent = total;
         
-        progressText.textContent = `${entregados} de ${total} paradas (${porcentaje}%)`;
-        progressBarFill.style.width = `${porcentaje}%`;
+        if (progressText) progressText.textContent = `${entregados} de ${total} paradas (${porcentaje}%)`;
+        if (progressBarFill) progressBarFill.style.width = `${porcentaje}%`;
 
-        // Actualizar banner de itinerario si hay origen y destino
         const activeWithRoute = guiasData.find(g => g.ruta_origen || g.ruta_destino);
         const routeStartText = document.getElementById('route-start-text');
         const routeEndText = document.getElementById('route-end-text');
@@ -1314,7 +1344,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
       // ==========================================
       // OPTIMIZACIÓN Y COMPRESIÓN DE FOTO EN CANVAS
       // ==========================================
-      async function compressImage(file, maxWidth = 1200, maxHeight = 1200, quality = 0.75) {
+      function compressImage(file, maxWidth = 1280, maxHeight = 1280, quality = 0.75) {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = (e) => {
@@ -1331,7 +1361,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
               } else {
                 if (height > maxHeight) {
                   width = Math.round((width * maxHeight) / height);
-                  height = maxHeight;
+                  maxHeight = maxHeight;
                 }
               }
 
@@ -1343,7 +1373,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
 
               canvas.toBlob((blob) => {
                 if (blob) {
-                  const optimizedFile = new File([blob], `comprobante_${Date.now()}.jpg`, {
+                  const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
                     type: 'image/jpeg',
                     lastModified: Date.now()
                   });
@@ -1396,7 +1426,6 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           photoSizeBadge.textContent = `${result.sizeKb} KB`;
           photoSizeBadge.classList.remove('hidden');
 
-          // Habilitar confirmación de entrega
           modalConfirmBtn.disabled = false;
         } catch (err) {
           console.error('Error al optimizar imagen:', err);
@@ -1415,13 +1444,46 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         if (modalConfirmBtn) modalConfirmBtn.disabled = true;
       }
 
+      // Modal Mode Management (Success vs Incident)
+      function setModalMode(mode) {
+        modalDeliveryMode = mode;
+        if (mode === 'success') {
+          if (modalTabSuccessBtn) modalTabSuccessBtn.className = 'py-2 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 shadow-xs cursor-pointer';
+          if (modalTabIncidentBtn) modalTabIncidentBtn.className = 'py-2 px-2 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 cursor-pointer';
+          modalPanelSuccess?.classList.remove('hidden');
+          modalPanelIncident?.classList.add('hidden');
+          modalConfirmBtn?.classList.remove('hidden');
+          modalIncidentSubmitBtn?.classList.add('hidden');
+          if (modalTitleText) modalTitleText.textContent = 'Confirmar Entrega Realizada';
+          modalHeaderIconSuccess?.classList.remove('hidden');
+          modalHeaderIconIncident?.classList.add('hidden');
+          if (modalHeaderIconContainer) modalHeaderIconContainer.className = 'w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 transition-colors';
+        } else {
+          if (modalTabIncidentBtn) modalTabIncidentBtn.className = 'py-2 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-rose-900 shadow-xs cursor-pointer';
+          if (modalTabSuccessBtn) modalTabSuccessBtn.className = 'py-2 px-2 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 cursor-pointer';
+          modalPanelSuccess?.classList.add('hidden');
+          modalPanelIncident?.classList.remove('hidden');
+          modalConfirmBtn?.classList.add('hidden');
+          modalIncidentSubmitBtn?.classList.remove('hidden');
+          if (modalTitleText) modalTitleText.textContent = 'Reportar No Entregado';
+          modalHeaderIconSuccess?.classList.add('hidden');
+          modalHeaderIconIncident?.classList.remove('hidden');
+          if (modalHeaderIconContainer) modalHeaderIconContainer.className = 'w-9 h-9 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 transition-colors';
+        }
+      }
+
+      modalTabSuccessBtn?.addEventListener('click', () => setModalMode('success'));
+      modalTabIncidentBtn?.addEventListener('click', () => setModalMode('incident'));
+
       // 6. Modal de Entrega (Bottom Sheet)
       window.openDeliveryModal = function(idGuia, destinatario, direccion, stopNumber) {
         activeModalGuiaId = idGuia;
-        modalGuiaCode.textContent = `Parada #${stopNumber} &bull; Guía #${idGuia}`;
-        modalDestinatario.textContent = destinatario;
-        modalDireccion.textContent = direccion || 'Ubicación confirmada';
-        modalRecibidoPor.value = '';
+        if (modalGuiaCode) modalGuiaCode.textContent = `Parada #${stopNumber} • Guía #${idGuia}`;
+        if (modalDestinatario) modalDestinatario.textContent = destinatario;
+        if (modalDireccion) modalDireccion.textContent = direccion || 'Ubicación confirmada';
+        if (modalRecibidoPor) modalRecibidoPor.value = '';
+        if (modalIncidentNote) modalIncidentNote.value = '';
+        setModalMode('success');
         resetPhotoState();
         deliveryModal.classList.remove('hidden');
         deliveryModal.classList.add('flex');
@@ -1434,8 +1496,8 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         resetPhotoState();
       }
 
-      modalCloseBtn.addEventListener('click', closeModal);
-      modalCancelBtn.addEventListener('click', closeModal);
+      modalCloseBtn?.addEventListener('click', closeModal);
+      modalCancelBtn?.addEventListener('click', closeModal);
 
       // Lightbox para ver fotos
       window.openLightbox = function(imgUrl, title, info) {
@@ -1460,8 +1522,8 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         }
       });
 
-      // Confirmar Entrega (Envío con FormData a /api/chofer/entregar)
-      modalConfirmBtn.addEventListener('click', async () => {
+      // Confirmar Entrega Exitosa
+      modalConfirmBtn?.addEventListener('click', async () => {
         if (!activeModalGuiaId) return;
 
         if (!currentCompressedFile) {
@@ -1482,6 +1544,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         try {
           const formData = new FormData();
           formData.append('id_guia', activeModalGuiaId);
+          formData.append('tipo_resultado', 'entregado');
           formData.append('recibido_por', modalRecibidoPor?.value?.trim() || '');
           formData.append('foto', currentCompressedFile);
 
@@ -1493,7 +1556,6 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           const data = await res.json();
 
           if (res.ok && data.success) {
-            // Actualizar localmente
             const index = guiasData.findIndex(g => g.id_guia === activeModalGuiaId);
             if (index !== -1) {
               guiasData[index].estado = 'Entregado';
@@ -1517,6 +1579,67 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         }
       });
 
+      // Confirmar Reporte de Incidencia / No Entregado
+      modalIncidentSubmitBtn?.addEventListener('click', async () => {
+        if (!activeModalGuiaId) return;
+
+        const selectedRadio = document.querySelector('input[name="incident-reason"]:checked');
+        const reason = selectedRadio ? selectedRadio.value : 'No contesta llamadas / Teléfono apagado';
+        const note = modalIncidentNote?.value?.trim() || '';
+
+        modalIncidentSubmitBtn.disabled = true;
+        const originalBtnHtml = modalIncidentSubmitBtn.innerHTML;
+        modalIncidentSubmitBtn.innerHTML = `
+          <svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>Guardando reporte...</span>
+        `;
+
+        try {
+          const formData = new FormData();
+          formData.append('id_guia', activeModalGuiaId);
+          formData.append('tipo_resultado', 'no_entregado');
+          formData.append('motivo_no_entrega', reason);
+          formData.append('nota_adicional', note);
+          if (currentCompressedFile) {
+            formData.append('foto', currentCompressedFile);
+          }
+
+          const res = await fetch('/api/chofer/entregar', {
+            method: 'POST',
+            body: formData
+          });
+
+          const data = await res.json();
+
+          if (res.ok && data.success) {
+            const index = guiasData.findIndex(g => g.id_guia === activeModalGuiaId);
+            if (index !== -1) {
+              guiasData[index].estado = 'No entregado';
+              guiasData[index].recibido_por = data.data.recibido_por;
+              if (data.data.comprobante_url) {
+                guiasData[index].comprobante_url = data.data.comprobante_url;
+              }
+            }
+            closeModal();
+            renderCards();
+            updateMapMarkers();
+            showToast('¡Incidencia registrada correctamente!', 'info');
+          } else {
+            showToast(data.message || 'Error al registrar incidencia', 'error');
+            modalIncidentSubmitBtn.disabled = false;
+            modalIncidentSubmitBtn.innerHTML = originalBtnHtml;
+          }
+        } catch (err) {
+          console.error('Error reportando no entrega:', err);
+          showToast('Error de conexión al reportar incidencia', 'error');
+          modalIncidentSubmitBtn.disabled = false;
+          modalIncidentSubmitBtn.innerHTML = originalBtnHtml;
+        }
+      });
+
       // 7. Toast Notifications
       function showToast(msg, type = 'info') {
         toastMessage.textContent = msg;
@@ -1535,32 +1658,44 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
       }
 
       // 8. Control de Pestañas
-      tabPendientes.addEventListener('click', () => {
+      function resetTabStyles() {
+        const inactiveClass = 'py-2 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer';
+        if (tabPendientes) tabPendientes.className = inactiveClass;
+        if (tabEntregados) tabEntregados.className = inactiveClass;
+        if (tabNoEntregados) tabNoEntregados.className = inactiveClass;
+        if (tabTodos) tabTodos.className = inactiveClass;
+      }
+
+      tabPendientes?.addEventListener('click', () => {
         activeTab = 'pendientes';
-        tabPendientes.className = 'py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs cursor-pointer';
-        tabEntregados.className = 'py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer';
-        tabTodos.className = 'py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer';
+        resetTabStyles();
+        tabPendientes.className = 'py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs cursor-pointer';
         renderCards();
       });
 
-      tabEntregados.addEventListener('click', () => {
+      tabEntregados?.addEventListener('click', () => {
         activeTab = 'entregados';
-        tabEntregados.className = 'py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs cursor-pointer';
-        tabPendientes.className = 'py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer';
-        tabTodos.className = 'py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer';
+        resetTabStyles();
+        tabEntregados.className = 'py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs cursor-pointer';
         renderCards();
       });
 
-      tabTodos.addEventListener('click', () => {
+      tabNoEntregados?.addEventListener('click', () => {
+        activeTab = 'no_entregados';
+        resetTabStyles();
+        tabNoEntregados.className = 'py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-rose-900 shadow-xs cursor-pointer';
+        renderCards();
+      });
+
+      tabTodos?.addEventListener('click', () => {
         activeTab = 'todos';
-        tabTodos.className = 'py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs cursor-pointer';
-        tabPendientes.className = 'py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer';
-        tabEntregados.className = 'py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer';
+        resetTabStyles();
+        tabTodos.className = 'py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs cursor-pointer';
         renderCards();
       });
 
       // 9. Buscador y Filtro de Ciudad
-      searchInput.addEventListener('input', (e) => {
+      searchInput?.addEventListener('input', (e) => {
         searchQuery = e.target.value;
         renderCards();
       });
@@ -1570,8 +1705,8 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         renderCards();
       });
 
-      // 10. Toggle Colapsar / Expandir Mapa
-      toggleMapBtn.addEventListener('click', () => {
+      // 10. Toggle y Re-centrado del Mapa
+      toggleMapBtn?.addEventListener('click', () => {
         isMapVisible = !isMapVisible;
         if (isMapVisible) {
           mapWrapper.classList.remove('hidden');
@@ -1587,8 +1722,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         }
       });
 
-      // Re-centrar mapa manualmente
-      recenterMapBtn.addEventListener('click', () => {
+      recenterMapBtn?.addEventListener('click', () => {
         userHasInteractedWithMap = false;
         updateMapMarkers(true);
         showToast('Vista ajustada a toda la ruta', 'info');
@@ -1596,7 +1730,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
 
       // 11. Live Sync en Segundo Plano (cada 4.5 segundos)
       async function fetchLatestGuias(isManual = false) {
-        if (isManual) {
+        if (isManual && refreshIcon) {
           refreshIcon.classList.add('animate-spin');
         }
 
@@ -1611,7 +1745,6 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
             if (data.success && Array.isArray(data.data)) {
               guiasData = data.data;
               renderCards();
-              // No forzar fitBounds en polling para no resetear el zoom manual del chofer
               updateMapMarkers(isManual);
               if (isManual) {
                 showToast('Hoja de ruta actualizada', 'info');
@@ -1621,7 +1754,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         } catch (err) {
           console.warn('[LiveSync Chofer Error]:', err);
         } finally {
-          if (isManual) {
+          if (isManual && refreshIcon) {
             setTimeout(() => {
               refreshIcon.classList.remove('animate-spin');
             }, 600);
@@ -1633,18 +1766,16 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         fetchLatestGuias(true);
       });
 
-      // Protección contra bfcache (si el usuario cierra sesión y pulsa "Atrás" en el navegador)
       window.addEventListener('pageshow', (event) => {
         if (event.persisted) {
           window.location.reload();
         }
       });
 
-      // Iniciar mapa y renders
+      // Inicialización
       initMap();
       renderCards();
 
-      // Intervalo de Live Sync
       setInterval(() => {
         fetchLatestGuias(false);
       }, 4500);

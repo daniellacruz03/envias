@@ -31,7 +31,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // 2. Procesar FormData
     const formData = await request.formData();
     const id_guia = (formData.get('id_guia') || '').toString().trim().toUpperCase();
+    const tipo_resultado = (formData.get('tipo_resultado') || 'entregado').toString().trim(); // 'entregado' | 'no_entregado'
+    const motivo_no_entrega = (formData.get('motivo_no_entrega') || '').toString().trim();
     const recibido_por = (formData.get('recibido_por') || '').toString().trim();
+    const nota_adicional = (formData.get('nota_adicional') || '').toString().trim();
     const foto = formData.get('foto') as File | null;
 
     if (!id_guia) {
@@ -44,43 +47,57 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    if (!foto || !(foto instanceof File) || foto.size === 0) {
-      return new Response(JSON.stringify({
-        success: false,
-        message: 'La foto del comprobante de entrega es obligatoria sin excepción.'
-      }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    let publicUrl: string | null = null;
+
+    // Procesar foto si fue adjuntada
+    if (foto && foto instanceof File && foto.size > 0) {
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'comprobantes');
+      await fs.mkdir(uploadDir, { recursive: true });
+
+      const extension = foto.type.includes('png') ? 'png' : (foto.type.includes('webp') ? 'webp' : 'jpg');
+      const cleanId = id_guia.replace(/[^A-Z0-9_-]/gi, '');
+      const fileName = `comprobante_${cleanId}_${Date.now()}.${extension}`;
+      const filePath = path.join(uploadDir, fileName);
+
+      const arrayBuffer = await foto.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      await fs.writeFile(filePath, buffer);
+      publicUrl = `/uploads/comprobantes/${fileName}`;
     }
 
-    // 3. Crear directorio de almacenamiento si no existe
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'comprobantes');
-    await fs.mkdir(uploadDir, { recursive: true });
+    let nuevoEstado = 'Entregado';
+    let campoRecibido: string | null = null;
 
-    // 4. Generar nombre de archivo único y guardar
-    const extension = foto.type.includes('png') ? 'png' : (foto.type.includes('webp') ? 'webp' : 'jpg');
-    const cleanId = id_guia.replace(/[^A-Z0-9_-]/gi, '');
-    const fileName = `comprobante_${cleanId}_${Date.now()}.${extension}`;
-    const filePath = path.join(uploadDir, fileName);
-
-    const arrayBuffer = await foto.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    await fs.writeFile(filePath, buffer);
-
-    const publicUrl = `/uploads/comprobantes/${fileName}`;
+    if (tipo_resultado === 'no_entregado') {
+      nuevoEstado = 'No entregado';
+      const motivoFinal = motivo_no_entrega || 'Cliente ausente / No contesta';
+      campoRecibido = `[No entregado]: ${motivoFinal}${nota_adicional ? ` (${nota_adicional})` : ''}`;
+    } else {
+      // Para entrega exitosa, la foto es obligatoria
+      if (!publicUrl) {
+        return new Response(JSON.stringify({
+          success: false,
+          message: 'La foto del comprobante de entrega es obligatoria para confirmar la entrega.'
+        }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      nuevoEstado = 'Entregado';
+      campoRecibido = recibido_por || null;
+    }
 
     // 5. Actualizar en PostgreSQL
     const updateResult = await query(`
       UPDATE guias
       SET 
-        estado = 'Entregado',
-        comprobante_url = $1,
-        recibido_por = $2
-      WHERE id_guia = $3
+        estado = $1,
+        comprobante_url = COALESCE($2, comprobante_url),
+        recibido_por = $3
+      WHERE id_guia = $4
       RETURNING *
-    `, [publicUrl, recibido_por || null, id_guia]);
+    `, [nuevoEstado, publicUrl, campoRecibido, id_guia]);
 
     if (updateResult.rowCount === 0) {
       return new Response(JSON.stringify({
@@ -94,16 +111,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const guiaActualizada = updateResult.rows[0];
 
-    console.log('[ENTREGA CONFIRMADA]:', {
+    console.log('[PROCESO DE ENTREGA]:', {
       id_guia,
+      estado: nuevoEstado,
       chofer_id: user.id,
       comprobante_url: publicUrl,
-      peso_bytes: buffer.length
+      detalle: campoRecibido
     });
 
     return new Response(JSON.stringify({
       success: true,
-      message: 'Entrega confirmada y comprobante guardado con éxito.',
+      message: nuevoEstado === 'Entregado' ? 'Entrega confirmada y comprobante guardado con éxito.' : 'Incidencia registrada: guía marcada como No entregado.',
       data: guiaActualizada
     }), {
       status: 200,
