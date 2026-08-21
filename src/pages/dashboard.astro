@@ -2496,16 +2496,43 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           updateClearBtn();
           inputEl.focus();
           updateDropdown('');
+          onSelectCallback('');
         });
       }
 
-      // Inicializar Autocompletado para Inicio y Cierre
+      // Reaccionar inmediatamente cuando cambia el Punto de Origen / Salida
+      function onOriginLocationChanged(autoOptimize: boolean = true) {
+        if (autoOptimize && plannedStops.length > 1) {
+          const withGPS = plannedStops.filter(g => g.gps_confirmado && g.gps_latitud && g.gps_longitud);
+          if (withGPS.length >= 2) {
+            (window as any).optimizeRouteStopsByGPS(false);
+            return;
+          }
+        }
+        renderRoutePlannerStops();
+      }
+
+      // Reaccionar inmediatamente cuando cambia el Punto de Destino / Cierre
+      function onDestinationLocationChanged() {
+        renderRoutePlannerStops();
+      }
+
+      // Inicializar Autocompletado para Inicio y Cierre con reactividad total
       setupAutocomplete(plannerStartInput, startAutocompleteDropdown, btnClearStartInput, (val) => {
-        // Callback al seleccionar origen
+        onOriginLocationChanged(true);
       });
 
       setupAutocomplete(plannerEndInput, endAutocompleteDropdown, btnClearEndInput, (val) => {
-        // Callback al seleccionar destino
+        onDestinationLocationChanged();
+      });
+
+      // Escuchar cambios directos o tipeo en los campos de entrada
+      plannerStartInput?.addEventListener('change', () => {
+        onOriginLocationChanged(true);
+      });
+
+      plannerEndInput?.addEventListener('change', () => {
+        onDestinationLocationChanged();
       });
 
       // Cerrar dropdowns si se hace clic afuera
@@ -2524,6 +2551,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           plannerStartInput.value = locationName;
           if (btnClearStartInput) btnClearStartInput.classList.remove('hidden');
           startAutocompleteDropdown?.classList.add('hidden');
+          onOriginLocationChanged(true);
         }
       };
 
@@ -2532,6 +2560,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           plannerEndInput.value = locationName;
           if (btnClearEndInput) btnClearEndInput.classList.remove('hidden');
           endAutocompleteDropdown?.classList.add('hidden');
+          onDestinationLocationChanged();
         }
       };
 
@@ -2618,6 +2647,13 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
       function getEndCoordinates(): { lat: number, lon: number, label: string } {
         const val = plannerEndInput?.value?.trim() || '';
+        if (val.toLowerCase().includes('ultima parada') || val.toLowerCase().includes('sin retorno') || val.toLowerCase().includes('en destino')) {
+          const gpsStops = plannedStops.filter(g => g.gps_confirmado && g.gps_latitud && g.gps_longitud);
+          if (gpsStops.length > 0) {
+            const last = gpsStops[gpsStops.length - 1];
+            return { lat: Number(last.gps_latitud), lon: Number(last.gps_longitud), label: 'Última Parada de Entrega' };
+          }
+        }
         const parsed = typeof parseUniversalLocation === 'function' ? parseUniversalLocation(val) : null;
         if (parsed) return parsed;
         return { lat: 10.0808, lon: -69.3756, label: 'Retorno a Sede Principal Barquisimeto' };
@@ -2956,9 +2992,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       }
 
       // Optimizar Secuencia de Paradas por Jerarquía de Cercanía desde el Punto de Salida (TSP)
-      (window as any).optimizeRouteStopsByGPS = () => {
+      (window as any).optimizeRouteStopsByGPS = (showNotification: boolean = true) => {
         if (plannedStops.length <= 1) {
-          showToast('Agrega más paradas para calcular la jerarquía de la ruta', 'info');
+          if (showNotification) showToast('Agrega más paradas para calcular la jerarquía de la ruta', 'info');
           return;
         }
 
@@ -2966,7 +3002,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         const withoutGPS = plannedStops.filter(g => !g.gps_confirmado || !g.gps_latitud || !g.gps_longitud);
 
         if (withGPS.length < 2) {
-          showToast('Se necesitan al menos 2 paradas con GPS confirmado para auto-optimizar', 'info');
+          if (showNotification) showToast('Se necesitan al menos 2 paradas con GPS confirmado para auto-optimizar', 'info');
+          renderRoutePlannerStops();
           return;
         }
 
@@ -3004,7 +3041,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         // Unir paradas optimizadas + paradas sin GPS al final
         plannedStops = [...optimized, ...withoutGPS];
         renderRoutePlannerStops();
-        showToast(`¡Secuencia ordenada por cercanía partiendo desde ${start.label}!`, 'success');
+        if (showNotification) {
+          showToast(`¡Secuencia ordenada por cercanía partiendo desde ${start.label}!`, 'success');
+        }
       };
 
       // Guardar y Despachar Ruta al Chofer
@@ -3153,10 +3192,18 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       const VENEZUELA_COORDS_MAP: Record<string, [number, number]> = {
         'barquisimeto': [10.0808, -69.3756],
         'sede principal barquisimeto': [10.0808, -69.3756],
+        'sede barquisimeto': [10.0808, -69.3756],
+        'principal barquisimeto': [10.0808, -69.3756],
+        'retorno barquisimeto': [10.0808, -69.3756],
+        'retorno a sede principal barquisimeto': [10.0808, -69.3756],
         'caracas': [10.4934, -66.9299],
         'sede caracas': [10.4934, -66.9299],
+        'retorno caracas': [10.4934, -66.9299],
+        'retorno a sede caracas': [10.4934, -66.9299],
         'merida': [8.5738, -71.1851],
         'sede merida': [8.5738, -71.1851],
+        'retorno merida': [8.5738, -71.1851],
+        'retorno a sede merida': [8.5738, -71.1851],
         'timotes': [8.9833, -70.7333],
         'apartaderos': [8.8000, -70.8500],
         'paramo': [8.8000, -70.8500],
@@ -3506,8 +3553,10 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       mapPickerConfirmBtn?.addEventListener('click', () => {
         if (currentPickerMode === 'start') {
           plannerStartInput.value = selectedPickerLabel;
+          onOriginLocationChanged(true);
         } else {
           plannerEndInput.value = selectedPickerLabel;
+          onDestinationLocationChanged();
         }
         closeMapPicker();
         showToast(`Ubicación seleccionada en el mapa: ${selectedPickerLabel}`, 'success');
