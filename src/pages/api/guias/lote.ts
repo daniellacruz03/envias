@@ -100,7 +100,7 @@ export const POST: APIRoute = async ({ request }) => {
     // Obtener las guías actualizadas con datos del chofer
     const updatedIds = result.rows.map((r: any) => r.id_guia);
     
-    let fullGuiasResult = { rows: [] };
+    let fullGuiasResult: any = { rows: [] };
     if (updatedIds.length > 0) {
       fullGuiasResult = await query(`
         SELECT 
