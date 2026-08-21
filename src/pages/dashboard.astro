@@ -539,10 +539,8 @@ const userInitials = currentUser.nombre
 
             <!-- Chips rápidos de Sedes -->
             <div class="flex items-center gap-1.5 flex-wrap pt-0.5 text-[10px]">
-              <span class="text-slate-400 font-medium">Sedes Oficiales:</span>
-              <button type="button" onclick="window.selectStartLocation('Sede Principal Barquisimeto')" class="px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-800 hover:bg-indigo-100 font-bold cursor-pointer transition-colors">Principal Barquisimeto</button>
-              <button type="button" onclick="window.selectStartLocation('Sede Caracas')" class="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold cursor-pointer transition-colors">Sede Caracas</button>
-              <button type="button" onclick="window.selectStartLocation('Sede Mérida')" class="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold cursor-pointer transition-colors">Sede Mérida</button>
+              <span class="text-slate-400 font-medium">Sede Oficial:</span>
+              <button type="button" onclick="window.selectStartLocation('Sede Principal Barquisimeto')" class="px-2.5 py-1 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-800 hover:bg-indigo-100 font-bold cursor-pointer transition-colors">Sede Principal Barquisimeto (Zona Ind. II)</button>
             </div>
           </div>
 
@@ -681,10 +679,8 @@ const userInitials = currentUser.nombre
             <!-- Chips rápidos de Cierre -->
             <div class="flex items-center gap-1.5 flex-wrap pt-0.5 text-[10px]">
               <span class="text-slate-400 font-medium">Sugerencias:</span>
-              <button type="button" onclick="window.selectEndLocation('Última Parada de Entrega (En Destino)')" class="px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100 font-bold cursor-pointer transition-colors">Última Parada</button>
-              <button type="button" onclick="window.selectEndLocation('Retorno a Sede Principal Barquisimeto')" class="px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-800 hover:bg-indigo-100 font-bold cursor-pointer transition-colors">Retorno Barquisimeto</button>
-              <button type="button" onclick="window.selectEndLocation('Retorno a Sede Caracas')" class="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-semibold cursor-pointer transition-colors">Retorno Caracas</button>
-              <button type="button" onclick="window.selectEndLocation('Retorno a Sede Mérida')" class="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-semibold cursor-pointer transition-colors">Retorno Mérida</button>
+              <button type="button" onclick="window.selectEndLocation('Última Parada de Entrega (En Destino)')" class="px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100 font-bold cursor-pointer transition-colors">Última Parada</button>
+              <button type="button" onclick="window.selectEndLocation('Retorno a Sede Principal Barquisimeto')" class="px-2.5 py-1 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-800 hover:bg-indigo-100 font-bold cursor-pointer transition-colors">Retorno Barquisimeto</button>
             </div>
           </div>
 
@@ -2491,8 +2487,6 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       const VENEZUELA_LOCATIONS = [
         // Sedes Principales y Especiales
         { name: 'Sede Principal Barquisimeto', state: 'Estado Lara', category: 'Sede Principal / Hub Central', isHub: true },
-        { name: 'Sede Caracas', state: 'Distrito Capital', category: 'Sede Regional', isHub: true },
-        { name: 'Sede Mérida', state: 'Estado Mérida', category: 'Sede Regional', isHub: true },
         { name: 'Última Parada de Entrega (En Destino)', state: 'Sin Retorno / Cierre en Ruta', category: 'Destino Final', isSpecial: true },
 
         // Lara

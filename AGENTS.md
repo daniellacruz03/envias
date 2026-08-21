@@ -2,10 +2,7 @@
 
 ## Contexto Clave
 - **Empresa:** Envías C.A. (Logística y entregas en Venezuela).
-- **Sedes Oficiales (Coordenadas Exactas de Google Maps):**
-  - **Sede Principal / Hub Central Barquisimeto (Estado Lara):** Calle 6, Zona Industrial II (`Lat: 10.0808, Lon: -69.3756`).
-  - **Sede Caracas (Distrito Capital):** Quinta Crespo / San Martín (`Lat: 10.4934, Lon: -66.9299`).
-  - **Sede Mérida (Estado Mérida):** Sector La Parroquia / Av. Los Próceres (`Lat: 8.5738, Lon: -71.1851`).
+- **Sede Principal / Hub Central Barquisimeto (Estado Lara):** Calle 6, Zona Industrial II (`Lat: 10.0808, Lon: -69.3756`).
 - **Regla Visual:** CERO EMOJIS. Usar únicamente SVG limpios.
 - **Producción:** Desplegado en Railway con PostgreSQL: `https://envias-production.up.railway.app`.
 - **GitHub:** `https://github.com/daniellacruz03/envias.git`.

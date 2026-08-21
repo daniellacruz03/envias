@@ -14,8 +14,6 @@ Este documento contiene todo el conocimiento contextual, arquitectura, decisione
 - **Actividad:** Logística, despacho, encomiendas y entregas de última milla a nivel nacional en Venezuela.
 ## 2. Red de Sedes e Infraestructura Satelital
 - **Sede Principal / Hub Central Barquisimeto (Estado Lara):** Calle 6, Zona Industrial II (`Lat: 10.0808, Lon: -69.3756`).
-- **Sede Caracas (Distrito Capital):** Quinta Crespo / San Martín (`Lat: 10.4934, Lon: -66.9299`).
-- **Sede Mérida (Estado Mérida):** Sector La Parroquia / Av. Los Próceres (`Lat: 8.5738, Lon: -71.1851`).
 - **Puntos de Cierre / Destino:** Cualquier ciudad o zona de Venezuela, retorno a sedes oficiales o culminación en la última parada de entrega. SVGs limpios corporativos.ales SVG limpios, modernos y profesionales (Tailwind CSS / Heroicons).
 - **Alcance Geografico:** Venezuela. Todos los mapas (Leaflet.js) abren centrados en el mapa de Venezuela (`[7.8500, -66.0000]`, zoom: 6) sin pines precargados.
 - **Formato Telefonico Universal:** Acepta codigos internacionales (`+1`, `+57`, `+34`, `+58`, etc.). Si se ingresa un formato nacional venezolano con `0` inicial (ej. `0414...`), se normaliza a `58414...` para WhatsApp.
