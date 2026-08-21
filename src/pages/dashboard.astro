@@ -885,6 +885,251 @@ const userInitials = currentUser.nombre
       let currentViewMode: 'table' | 'cities' | 'drivers' = 'table';
       let expandedCities: Record<string, boolean> = {};
 
+      // ==========================================
+      // MOTOR GEOESPACIAL Y COORDENADAS DE VENEZUELA (HOISTED GLOBAL)
+      // ==========================================
+      function normalizeText(str: string): string {
+        return (str || '')
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .trim();
+      }
+
+      function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+        const R = 6371; // Radio de la Tierra en km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = 
+          Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+          Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+      }
+
+      const VENEZUELA_COORDS_MAP: Record<string, [number, number]> = {
+        'barquisimeto': [10.0808, -69.3756],
+        'sede principal barquisimeto': [10.0808, -69.3756],
+        'sede barquisimeto': [10.0808, -69.3756],
+        'principal barquisimeto': [10.0808, -69.3756],
+        'retorno barquisimeto': [10.0808, -69.3756],
+        'retorno a sede principal barquisimeto': [10.0808, -69.3756],
+        'caracas': [10.4934, -66.9299],
+        'sede caracas': [10.4934, -66.9299],
+        'retorno caracas': [10.4934, -66.9299],
+        'retorno a sede caracas': [10.4934, -66.9299],
+        'merida': [8.5738, -71.1851],
+        'sede merida': [8.5738, -71.1851],
+        'retorno merida': [8.5738, -71.1851],
+        'retorno a sede merida': [8.5738, -71.1851],
+        'timotes': [8.9833, -70.7333],
+        'apartaderos': [8.8000, -70.8500],
+        'paramo': [8.8000, -70.8500],
+        'el paramo': [8.8000, -70.8500],
+        'mucuchies': [8.7500, -70.9167],
+        'tabay': [8.6350, -71.0720],
+        'el vigia': [8.6250, -71.6500],
+        'cabudare': [10.0333, -69.2667],
+        'carora': [10.1755, -70.0827],
+        'valencia': [10.1620, -68.0077],
+        'maracaibo': [10.6544, -71.6385],
+        'maracay': [10.2469, -67.5958],
+        'barinas': [8.6226, -70.2075],
+        'san cristobal': [7.7669, -72.2250],
+        'valera': [9.3178, -70.6036],
+        'trujillo': [9.3664, -70.4356],
+        'acarigua': [9.5545, -69.2006],
+        'guanare': [9.0439, -69.7421],
+        'san felipe': [10.3397, -68.7425],
+        'coro': [11.4045, -69.6734],
+        'punto fijo': [11.6956, -70.1996],
+        'puerto la cruz': [10.2138, -64.6320],
+        'maturin': [9.7469, -63.1832],
+        'cumana': [10.4536, -64.1750]
+      };
+
+      const OLC_ALPHABET = '23456789CFGHJMPQRVWX';
+
+      function encodeOLC(lat: number, lng: number, codeLength: number = 10): string {
+        let adjustedLat = Math.min(Math.max(lat, -90), 90) + 90;
+        let adjustedLng = Math.min(Math.max(lng, -180), 180) + 180;
+        let code = '';
+        let latVal = 20;
+        let lngVal = 20;
+
+        for (let i = 0; i < codeLength / 2; i++) {
+          const latDigit = Math.floor(adjustedLat / latVal);
+          const lngDigit = Math.floor(adjustedLng / lngVal);
+          adjustedLat -= latDigit * latVal;
+          adjustedLng -= lngDigit * lngVal;
+          latVal /= 20;
+          lngVal /= 20;
+          code += OLC_ALPHABET.charAt(latDigit) + OLC_ALPHABET.charAt(lngDigit);
+          if (i === 3) code += '+';
+        }
+        return code;
+      }
+
+      function decodeFullOLC(code: string): { lat: number, lng: number } | null {
+        const clean = code.toUpperCase().replace('+', '').replace(/\s+/g, '');
+        if (clean.length < 8) return null;
+        let lat = -90;
+        let lng = -180;
+        let latRes = 20;
+        let lngRes = 20;
+
+        for (let i = 0; i < Math.min(clean.length, 10); i += 2) {
+          const latDigit = OLC_ALPHABET.indexOf(clean[i]);
+          const lngDigit = OLC_ALPHABET.indexOf(clean[i + 1]);
+          if (latDigit === -1 || lngDigit === -1) return null;
+          latRes /= 20;
+          lngRes /= 20;
+          lat += latDigit * latRes * 20;
+          lng += lngDigit * lngRes * 20;
+        }
+        lat += latRes / 2;
+        lng += lngRes / 2;
+        return { lat, lng };
+      }
+
+      function decodeShortOLC(shortCode: string, refLat: number = 10.0, refLng: number = -69.0): { lat: number, lng: number } | null {
+        const clean = shortCode.toUpperCase().replace('+', '').replace(/\s+/g, '');
+        let bestCoords: { lat: number, lng: number } | null = null;
+        let minDiff = Infinity;
+
+        for (let c1 of '78') {
+          for (let c2 of '67') {
+            for (let c3 of OLC_ALPHABET) {
+              for (let c4 of OLC_ALPHABET) {
+                const full = `${c1}${c2}${c3}${c4}${clean}`;
+                const decoded = decodeFullOLC(full);
+                if (decoded) {
+                  const diff = Math.abs(decoded.lat - refLat) + Math.abs(decoded.lng - refLng);
+                  if (diff < minDiff) {
+                    minDiff = diff;
+                    bestCoords = decoded;
+                  }
+                }
+              }
+            }
+          }
+        }
+        return bestCoords;
+      }
+
+      function findClosestCity(lat: number, lon: number): string {
+        let closestName = 'Ubicación Personalizada';
+        let minDistance = Infinity;
+
+        for (const [name, coords] of Object.entries(VENEZUELA_COORDS_MAP)) {
+          const dist = calculateDistance(lat, lon, coords[0], coords[1]);
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestName = name.charAt(0).toUpperCase() + name.slice(1);
+          }
+        }
+
+        if (minDistance < 25) {
+          return `${closestName} (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+        }
+        return `GPS (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+      }
+
+      function parseUniversalLocation(input: string): { lat: number, lon: number, label: string } | null {
+        if (!input) return null;
+        const trimmed = input.trim();
+        const normalized = normalizeText(trimmed);
+
+        // 1. Coordenadas directas: "10.0808, -69.3756"
+        const coordMatch = trimmed.match(/(-?\d{1,2}\.\d{3,})[,\s;]+(-?\d{2,3}\.\d{3,})/);
+        if (coordMatch) {
+          const lat = parseFloat(coordMatch[1]);
+          const lon = parseFloat(coordMatch[2]);
+          return { lat, lon, label: findClosestCity(lat, lon) };
+        }
+
+        // 2. Enlace de Google Maps con @ o /place/
+        const urlCoordMatch = trimmed.match(/[@/](-?\d{1,2}\.\d{3,}),(-?\d{2,3}\.\d{3,})/);
+        if (urlCoordMatch) {
+          const lat = parseFloat(urlCoordMatch[1]);
+          const lon = parseFloat(urlCoordMatch[2]);
+          return { lat, lon, label: findClosestCity(lat, lon) };
+        }
+
+        // 3. Código OLC Completo
+        const fullOlcMatch = trimmed.match(/([23456789CFGHJMPQRVWX]{8}\+[23456789CFGHJMPQRVWX]{2,3})/i);
+        if (fullOlcMatch) {
+          const decoded = decodeFullOLC(fullOlcMatch[1]);
+          if (decoded) {
+            return { lat: decoded.lat, lon: decoded.lng, label: findClosestCity(decoded.lat, decoded.lng) };
+          }
+        }
+
+        // 4. Código OLC Corto
+        const shortOlcMatch = trimmed.match(/([23456789CFGHJMPQRVWX]{4,7}\+[23456789CFGHJMPQRVWX]{2,3})/i);
+        if (shortOlcMatch) {
+          const shortCode = shortOlcMatch[1];
+          let refLat = 10.0808;
+          let refLon = -69.3756;
+
+          for (const [key, coords] of Object.entries(VENEZUELA_COORDS_MAP)) {
+            if (normalized.includes(key)) {
+              refLat = coords[0];
+              refLon = coords[1];
+              break;
+            }
+          }
+
+          const decoded = decodeShortOLC(shortCode, refLat, refLon);
+          if (decoded) {
+            return { lat: decoded.lat, lon: decoded.lng, label: findClosestCity(decoded.lat, decoded.lng) };
+          }
+        }
+
+        // 5. Sedes oficiales reconocidas de forma prioritaria
+        if (normalized.includes('barquisimeto') || normalized.includes('lara') || normalized.includes('principal')) {
+          return { lat: 10.0808, lon: -69.3756, label: 'Sede Principal Barquisimeto' };
+        }
+        if (normalized.includes('caracas') || normalized.includes('capital')) {
+          return { lat: 10.4934, lon: -66.9299, label: 'Sede Caracas' };
+        }
+        if (normalized.includes('merida')) {
+          return { lat: 8.5738, lon: -71.1851, label: 'Sede Mérida' };
+        }
+
+        // 6. Otras ciudades en diccionario
+        for (const [key, coords] of Object.entries(VENEZUELA_COORDS_MAP)) {
+          if (key.includes(normalized) || normalized.includes(key)) {
+            return { lat: coords[0], lon: coords[1], label: key.charAt(0).toUpperCase() + key.slice(1) };
+          }
+        }
+
+        return null;
+      }
+
+      function getStartCoordinates(): { lat: number, lon: number, label: string } {
+        const val = plannerStartInput?.value?.trim() || '';
+        const parsed = parseUniversalLocation(val);
+        if (parsed) return parsed;
+        return { lat: 10.0808, lon: -69.3756, label: 'Sede Principal Barquisimeto' };
+      }
+
+      function getEndCoordinates(): { lat: number, lon: number, label: string } {
+        const val = plannerEndInput?.value?.trim() || '';
+        const norm = normalizeText(val);
+        if (norm.includes('ultima parada') || norm.includes('sin retorno') || norm.includes('en destino')) {
+          const gpsStops = plannedStops.filter(g => g.gps_confirmado && g.gps_latitud && g.gps_longitud);
+          if (gpsStops.length > 0) {
+            const last = gpsStops[gpsStops.length - 1];
+            return { lat: Number(last.gps_latitud), lon: Number(last.gps_longitud), label: 'Última Parada de Entrega' };
+          }
+        }
+        const parsed = parseUniversalLocation(val);
+        if (parsed) return parsed;
+        return { lat: 10.0808, lon: -69.3756, label: 'Retorno a Sede Principal Barquisimeto' };
+      }
+
       // Elementos del DOM
       const form = document.getElementById('new-shipment-form') as HTMLFormElement;
       const tableBody = document.getElementById('shipments-table-body') as HTMLElement;
@@ -2502,19 +2747,29 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
       // Reaccionar inmediatamente cuando cambia el Punto de Origen / Salida
       function onOriginLocationChanged(autoOptimize: boolean = true) {
+        const start = getStartCoordinates();
         if (autoOptimize && plannedStops.length > 1) {
           const withGPS = plannedStops.filter(g => g.gps_confirmado && g.gps_latitud && g.gps_longitud);
           if (withGPS.length >= 2) {
-            (window as any).optimizeRouteStopsByGPS(false);
+            (window as any).optimizeRouteStopsByGPS(true);
             return;
           }
         }
         renderRoutePlannerStops();
+        if (isPlannerRouteMapVisible) {
+          drawPlannerRouteMap();
+        }
+        showToast(`Sede de salida establecida: ${start.label}`, 'info');
       }
 
       // Reaccionar inmediatamente cuando cambia el Punto de Destino / Cierre
       function onDestinationLocationChanged() {
         renderRoutePlannerStops();
+        if (isPlannerRouteMapVisible) {
+          drawPlannerRouteMap();
+        }
+        const end = getEndCoordinates();
+        showToast(`Destino establecido: ${end.label}`, 'info');
       }
 
       // Inicializar Autocompletado para Inicio y Cierre con reactividad total
@@ -2527,8 +2782,20 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       });
 
       // Escuchar cambios directos o tipeo en los campos de entrada
+      plannerStartInput?.addEventListener('input', () => {
+        const val = plannerStartInput.value.trim();
+        const parsed = parseUniversalLocation(val);
+        if (parsed) onOriginLocationChanged(true);
+      });
+
       plannerStartInput?.addEventListener('change', () => {
         onOriginLocationChanged(true);
+      });
+
+      plannerEndInput?.addEventListener('input', () => {
+        const val = plannerEndInput.value.trim();
+        const parsed = parseUniversalLocation(val);
+        if (parsed) onDestinationLocationChanged();
       });
 
       plannerEndInput?.addEventListener('change', () => {
@@ -2636,28 +2903,6 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
       plannerCloseBtn?.addEventListener('click', closeRoutePlannerModal);
       plannerCancelBtn?.addEventListener('click', closeRoutePlannerModal);
-
-      // Helpers para obtener coordenadas de inicio y fin
-      function getStartCoordinates(): { lat: number, lon: number, label: string } {
-        const val = plannerStartInput?.value?.trim() || '';
-        const parsed = typeof parseUniversalLocation === 'function' ? parseUniversalLocation(val) : null;
-        if (parsed) return parsed;
-        return { lat: 10.0808, lon: -69.3756, label: 'Sede Principal Barquisimeto' };
-      }
-
-      function getEndCoordinates(): { lat: number, lon: number, label: string } {
-        const val = plannerEndInput?.value?.trim() || '';
-        if (val.toLowerCase().includes('ultima parada') || val.toLowerCase().includes('sin retorno') || val.toLowerCase().includes('en destino')) {
-          const gpsStops = plannedStops.filter(g => g.gps_confirmado && g.gps_latitud && g.gps_longitud);
-          if (gpsStops.length > 0) {
-            const last = gpsStops[gpsStops.length - 1];
-            return { lat: Number(last.gps_latitud), lon: Number(last.gps_longitud), label: 'Última Parada de Entrega' };
-          }
-        }
-        const parsed = typeof parseUniversalLocation === 'function' ? parseUniversalLocation(val) : null;
-        if (parsed) return parsed;
-        return { lat: 10.0808, lon: -69.3756, label: 'Retorno a Sede Principal Barquisimeto' };
-      }
 
       function updateRouteMetrics(totalKm: number) {
         const kmEl = document.getElementById('planner-total-km');
@@ -3187,207 +3432,6 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       let currentPickerMode: 'start' | 'end' = 'start';
       let selectedPickerCoords = [10.0808, -69.3756]; // Default Barquisimeto
       let selectedPickerLabel = 'Sede Principal Barquisimeto';
-
-      // Diccionario de Coordenadas de Sedes y Ciudades de Venezuela
-      const VENEZUELA_COORDS_MAP: Record<string, [number, number]> = {
-        'barquisimeto': [10.0808, -69.3756],
-        'sede principal barquisimeto': [10.0808, -69.3756],
-        'sede barquisimeto': [10.0808, -69.3756],
-        'principal barquisimeto': [10.0808, -69.3756],
-        'retorno barquisimeto': [10.0808, -69.3756],
-        'retorno a sede principal barquisimeto': [10.0808, -69.3756],
-        'caracas': [10.4934, -66.9299],
-        'sede caracas': [10.4934, -66.9299],
-        'retorno caracas': [10.4934, -66.9299],
-        'retorno a sede caracas': [10.4934, -66.9299],
-        'merida': [8.5738, -71.1851],
-        'sede merida': [8.5738, -71.1851],
-        'retorno merida': [8.5738, -71.1851],
-        'retorno a sede merida': [8.5738, -71.1851],
-        'timotes': [8.9833, -70.7333],
-        'apartaderos': [8.8000, -70.8500],
-        'paramo': [8.8000, -70.8500],
-        'el paramo': [8.8000, -70.8500],
-        'mucuchies': [8.7500, -70.9167],
-        'tabay': [8.6350, -71.0720],
-        'el vigia': [8.6250, -71.6500],
-        'cabudare': [10.0333, -69.2667],
-        'carora': [10.1755, -70.0827],
-        'valencia': [10.1620, -68.0077],
-        'maracaibo': [10.6544, -71.6385],
-        'maracay': [10.2469, -67.5958],
-        'barinas': [8.6226, -70.2075],
-        'san cristobal': [7.7669, -72.2250],
-        'valera': [9.3178, -70.6036],
-        'trujillo': [9.3664, -70.4356],
-        'acarigua': [9.5545, -69.2006],
-        'guanare': [9.0439, -69.7421],
-        'san felipe': [10.3397, -68.7425],
-        'coro': [11.4045, -69.6734],
-        'punto fijo': [11.6956, -70.1996],
-        'puerto la cruz': [10.2138, -64.6320],
-        'maturin': [9.7469, -63.1832],
-        'cumana': [10.4536, -64.1750]
-      };
-
-      // ==========================================
-      // MOTOR OPEN LOCATION CODE (PLUS CODE / OLC)
-      // ==========================================
-      const OLC_ALPHABET = '23456789CFGHJMPQRVWX';
-
-      function encodeOLC(lat: number, lng: number, codeLength: number = 10): string {
-        let adjustedLat = Math.min(Math.max(lat, -90), 90) + 90;
-        let adjustedLng = Math.min(Math.max(lng, -180), 180) + 180;
-
-        let code = '';
-        let latVal = 20;
-        let lngVal = 20;
-
-        for (let i = 0; i < codeLength / 2; i++) {
-          const latDigit = Math.floor(adjustedLat / latVal);
-          const lngDigit = Math.floor(adjustedLng / lngVal);
-          adjustedLat -= latDigit * latVal;
-          adjustedLng -= lngDigit * lngVal;
-          latVal /= 20;
-          lngVal /= 20;
-          code += OLC_ALPHABET.charAt(latDigit) + OLC_ALPHABET.charAt(lngDigit);
-          if (i === 3) code += '+';
-        }
-
-        return code;
-      }
-
-      function decodeFullOLC(code: string): { lat: number, lng: number } | null {
-        const clean = code.toUpperCase().replace('+', '').replace(/\s+/g, '');
-        if (clean.length < 8) return null;
-
-        let lat = -90;
-        let lng = -180;
-        let latRes = 20;
-        let lngRes = 20;
-
-        for (let i = 0; i < Math.min(clean.length, 10); i += 2) {
-          const latDigit = OLC_ALPHABET.indexOf(clean[i]);
-          const lngDigit = OLC_ALPHABET.indexOf(clean[i + 1]);
-          if (latDigit === -1 || lngDigit === -1) return null;
-
-          latRes /= 20;
-          lngRes /= 20;
-          lat += latDigit * latRes * 20;
-          lng += lngDigit * lngRes * 20;
-        }
-
-        lat += latRes / 2;
-        lng += lngRes / 2;
-
-        return { lat, lng };
-      }
-
-      function decodeShortOLC(shortCode: string, refLat: number = 10.0, refLng: number = -69.0): { lat: number, lng: number } | null {
-        const clean = shortCode.toUpperCase().replace('+', '').replace(/\s+/g, '');
-        let bestCoords: { lat: number, lng: number } | null = null;
-        let minDiff = Infinity;
-
-        for (let c1 of '78') {
-          for (let c2 of '67') {
-            for (let c3 of OLC_ALPHABET) {
-              for (let c4 of OLC_ALPHABET) {
-                const full = `${c1}${c2}${c3}${c4}${clean}`;
-                const decoded = decodeFullOLC(full);
-                if (decoded) {
-                  const diff = Math.abs(decoded.lat - refLat) + Math.abs(decoded.lng - refLng);
-                  if (diff < minDiff) {
-                    minDiff = diff;
-                    bestCoords = decoded;
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        return bestCoords;
-      }
-
-      function parseUniversalLocation(input: string): { lat: number, lon: number, label: string } | null {
-        if (!input) return null;
-        const trimmed = input.trim();
-
-        // 1. Coordenadas directas: "10.0808, -69.3756" ó "10.0808 -69.3756" ó "10.0808; -69.3756"
-        const coordMatch = trimmed.match(/(-?\d{1,2}\.\d{3,})[,\s;]+(-?\d{2,3}\.\d{3,})/);
-        if (coordMatch) {
-          const lat = parseFloat(coordMatch[1]);
-          const lon = parseFloat(coordMatch[2]);
-          return { lat, lon, label: findClosestCity(lat, lon) };
-        }
-
-        // 2. Enlace de Google Maps con @ o /place/
-        const urlCoordMatch = trimmed.match(/[@/](-?\d{1,2}\.\d{3,}),(-?\d{2,3}\.\d{3,})/);
-        if (urlCoordMatch) {
-          const lat = parseFloat(urlCoordMatch[1]);
-          const lon = parseFloat(urlCoordMatch[2]);
-          return { lat, lon, label: findClosestCity(lat, lon) };
-        }
-
-        // 3. Código OLC Completo (8+ caracteres con +): ej "772MF3VC+93G"
-        const fullOlcMatch = trimmed.match(/([23456789CFGHJMPQRVWX]{8}\+[23456789CFGHJMPQRVWX]{2,3})/i);
-        if (fullOlcMatch) {
-          const decoded = decodeFullOLC(fullOlcMatch[1]);
-          if (decoded) {
-            return { lat: decoded.lat, lon: decoded.lng, label: findClosestCity(decoded.lat, decoded.lng) };
-          }
-        }
-
-        // 4. Código OLC Corto (4-7 caracteres con +): ej "F3VC+93G Caracas"
-        const shortOlcMatch = trimmed.match(/([23456789CFGHJMPQRVWX]{4,7}\+[23456789CFGHJMPQRVWX]{2,3})/i);
-        if (shortOlcMatch) {
-          const shortCode = shortOlcMatch[1];
-          let refLat = 10.0808;
-          let refLon = -69.3756;
-
-          const lower = trimmed.toLowerCase();
-          for (const [key, coords] of Object.entries(VENEZUELA_COORDS_MAP)) {
-            if (lower.includes(key)) {
-              refLat = coords[0];
-              refLon = coords[1];
-              break;
-            }
-          }
-
-          const decoded = decodeShortOLC(shortCode, refLat, refLon);
-          if (decoded) {
-            return { lat: decoded.lat, lon: decoded.lng, label: findClosestCity(decoded.lat, decoded.lng) };
-          }
-        }
-
-        // 5. Nombre de ciudad en el diccionario
-        const lower = trimmed.toLowerCase();
-        for (const [key, coords] of Object.entries(VENEZUELA_COORDS_MAP)) {
-          if (key.includes(lower) || lower.includes(key)) {
-            return { lat: coords[0], lon: coords[1], label: key.charAt(0).toUpperCase() + key.slice(1) };
-          }
-        }
-
-        return null;
-      }
-
-      function findClosestCity(lat: number, lon: number): string {
-        let closestName = 'Ubicación Personalizada';
-        let minDistance = Infinity;
-
-        for (const [name, coords] of Object.entries(VENEZUELA_COORDS_MAP)) {
-          const dist = calculateDistance(lat, lon, coords[0], coords[1]);
-          if (dist < minDistance) {
-            minDistance = dist;
-            closestName = name.charAt(0).toUpperCase() + name.slice(1);
-          }
-        }
-
-        if (minDistance < 25) {
-          return `${closestName} (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
-        }
-        return `GPS (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
-      }
 
       function initPickerMap() {
         if (pickerMap || typeof (window as any).L === 'undefined') return;
