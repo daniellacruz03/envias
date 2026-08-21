@@ -88,8 +88,7 @@ Las credenciales estan almacenadas en la tabla `usuarios` de PostgreSQL en Railw
 - **Mapa Interactivo de Hoja de Ruta Satelital (Leaflet.js + OSRM):**
   - Traza la ruta real por autopistas y carreteras conectando: **Punto de Salida / Origen** (ej. *Sede Principal Barquisimeto*) $\rightarrow$ **Parada #1** $\rightarrow$ **Parada #2** $\rightarrow$ **Parada #3** $\rightarrow$ **Punto de Retorno / Cierre**.
   - **Fijación Inteligente de Zoom:** Los sondeos de Live Sync automáticos (cada 4.5s) ya **no resetean ni alejan el zoom** si el chofer está interactuando o acercándose manualmente al mapa. Botón flotante para re-centrar la ruta completa a demanda.
-  - **Navegación Integral en Google Maps (Multi-Paradas):** Botón maestro *"Abrir Hoja de Ruta Completa en Google Maps"* que precarga el itinerario completo con todos sus waypoints ordenados directamente en la app de Google Maps oficial con tráfico en vivo y asistencia por voz paso a paso.
-  - **Navegación Satelital 1-Toque Individual:** Botón en cada tarjeta para navegar directo a una parada específica.
+  - **Navegación Satelital 1-Toque Individual:** Cada tarjeta de parada despachada cuenta con su botón directo para navegar a las coordenadas exactas del cliente en Google Maps / Waze, siguiendo la jerarquía secuencial ordenada (Parada #1, Parada #2, etc.).
 - **Confirmación con Comprobante Obligatorio:** Captura de foto con cámara o galería, compresión cliente en Canvas (JPEG 75%, máx 1200px) y subida a `/api/chofer/entregar`.
 - **Live Sync en Segundo Plano:** Sondeo silencioso cada 4.5 segundos (`silentRefresh()`).
 
