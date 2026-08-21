@@ -2,18 +2,26 @@
 import Layout from '../layouts/Layout.astro';
 import { getUserFromCookies } from '../lib/auth';
 
-// Si ya está autenticado, redirigir directamente al Dashboard
+// Si ya está autenticado, redirigir según su rol
 const currentUser = getUserFromCookies(Astro.cookies);
 if (currentUser) {
+  if (currentUser.rol === 'Chofer') {
+    return Astro.redirect('/chofer');
+  }
   return Astro.redirect('/dashboard');
 }
+
+// Encabezados anti-caché
+Astro.response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+Astro.response.headers.set('Pragma', 'no-cache');
+Astro.response.headers.set('Expires', '0');
 ---
 
-<Layout title="Iniciar Sesión | Envías - Logística Central" description="Acceso al portal administrativo y operativo de Envías.">
-  <main class="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200/80 p-7 sm:p-9 my-auto transition-all duration-300 relative">
+<Layout title="Envías C.A. | Rastreo de Envíos y Portal Operativo" description="Rastrea tu guía nacional en tiempo real o accede al sistema logístico de Envías C.A.">
+  <main class="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200/80 p-6 sm:p-9 my-auto transition-all duration-300 relative">
     
     <!-- Encabezado con Logo y Marca -->
-    <header class="flex flex-col items-center text-center gap-3 border-b border-slate-100 pb-6 mb-6">
+    <header class="flex flex-col items-center text-center gap-2 border-b border-slate-100 pb-5 mb-5">
       <div class="flex items-center justify-center">
         <img 
           src="/logo.png" 
@@ -23,108 +31,291 @@ if (currentUser) {
         />
       </div>
       <div>
-        <div class="flex items-center justify-center gap-2 mt-1">
-          <span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-900 text-white uppercase tracking-wider">Acceso Operativo</span>
-        </div>
-        <p class="text-xs text-slate-500 mt-1.5">Control Central y Despacho de Envíos</p>
+        <p class="text-xs text-slate-500 font-medium">Transporte, Despacho y Logística Nacional</p>
+      </div>
+
+      <!-- Selector de Modo / Pestañas Principales (Rastrear vs Iniciar Sesión) -->
+      <div class="w-full grid grid-cols-2 p-1 bg-slate-100 rounded-2xl gap-1 mt-2">
+        <button
+          type="button"
+          id="tab-btn-tracking"
+          class="py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 bg-slate-900 text-white shadow-xs cursor-pointer"
+        >
+          <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <span>Rastrear Envío</span>
+        </button>
+
+        <button
+          type="button"
+          id="tab-btn-login"
+          class="py-2.5 px-3 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 transition-all flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+          </svg>
+          <span>Acceso Operativo</span>
+        </button>
       </div>
     </header>
 
-    <!-- Banner de Error Dinámico -->
-    <div id="error-banner" class="hidden bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl p-3.5 mb-5 text-xs flex items-start gap-2.5 animate-fadeIn">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-      </svg>
-      <span id="error-message" class="font-medium leading-relaxed">Credenciales incorrectas</span>
-    </div>
-
-    <!-- Formulario de Autenticación -->
-    <form id="login-form" class="space-y-4" autocomplete="on">
+    <!-- ========================================== -->
+    <!-- SECCIÓN 1: BUSCADOR PÚBLICO DE GUÍAS      -->
+    <!-- ========================================== -->
+    <section id="tracking-section" class="space-y-4 animate-fadeIn">
       
-      <!-- Campo: Email o Teléfono -->
-      <div class="space-y-1.5">
-        <label for="email" class="block text-xs font-semibold text-slate-700">
-          Correo Electrónico o Teléfono
-        </label>
-        <div class="relative">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.206" />
-          </svg>
-          <input
-            type="text"
-            id="email"
-            name="email"
-            required
-            placeholder="correo@envias.com"
-            autocomplete="username"
-            class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-3.5 py-3 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
-          />
+      <!-- Formulario de Búsqueda de Guía -->
+      <form id="tracking-form" class="space-y-3">
+        <div class="space-y-1.5">
+          <label for="tracking-input" class="block text-xs font-bold text-slate-700">
+            Número de Guía o Código de Envío
+          </label>
+          <div class="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <input
+              type="text"
+              id="tracking-input"
+              required
+              placeholder="Ej: 982001, 104523, 752011..."
+              class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-9 py-3 text-slate-900 font-mono font-bold placeholder:font-sans placeholder:font-normal placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
+            />
+            <button
+              type="button"
+              id="btn-clear-tracking"
+              class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+              title="Limpiar"
+            >
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
         </div>
+
+        <!-- Botón de Búsqueda -->
+        <button
+          type="submit"
+          id="tracking-submit-btn"
+          class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm py-3.5 px-4 rounded-2xl transition-all duration-200 active:scale-[0.98] shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <span>Consultar Estado del Envío</span>
+        </button>
+      </form>
+
+      <!-- Mensaje de Error / No Encontrado -->
+      <div id="tracking-error" class="hidden bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl p-3.5 text-xs flex items-start gap-2.5 animate-fadeIn">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+        <span id="tracking-error-msg" class="font-medium leading-relaxed">No se encontró información para el número de guía ingresado.</span>
       </div>
 
-      <!-- Campo: Contraseña -->
-      <div class="space-y-1.5">
-        <div class="flex items-center justify-between">
-          <label for="password" class="block text-xs font-semibold text-slate-700">
-            Contraseña
-          </label>
+      <!-- Tarjeta de Resultados en Tiempo Real -->
+      <div id="tracking-result-card" class="hidden border border-slate-200/90 rounded-2xl bg-slate-50/70 p-4 space-y-3.5 shadow-sm animate-fadeIn">
+        
+        <!-- Cabecera del Resultado -->
+        <div class="flex items-center justify-between border-b border-slate-200/60 pb-3">
+          <div>
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Número de Guía</span>
+            <h3 class="text-sm font-extrabold font-mono text-slate-900" id="result-guide-id">#982001</h3>
+          </div>
+          <span id="result-status-badge" class="px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
+            <!-- Badge Dinámico -->
+          </span>
         </div>
-        <div class="relative">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            required
-            placeholder="••••••••"
-            autocomplete="current-password"
-            class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-10 py-3 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
-          />
-          <button
-            type="button"
-            id="toggle-pwd-btn"
-            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
-            title="Mostrar u ocultar contraseña"
-          >
-            <svg id="eye-open" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+
+        <!-- Línea de Progreso Visual del Envío -->
+        <div class="space-y-2 py-1">
+          <p class="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Etapa del Paquete:</p>
+          <div class="grid grid-cols-4 gap-1.5 text-center">
+            
+            <div id="step-1" class="p-2 rounded-xl bg-white border border-slate-200 space-y-1">
+              <div class="w-5 h-5 mx-auto rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-[10px] font-extrabold">1</div>
+              <p class="text-[10px] font-bold text-slate-800 leading-tight">Almacén</p>
+            </div>
+
+            <div id="step-2" class="p-2 rounded-xl bg-white border border-slate-200 space-y-1">
+              <div class="w-5 h-5 mx-auto rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px] font-extrabold">2</div>
+              <p class="text-[10px] font-bold text-slate-500 leading-tight">Coordinado</p>
+            </div>
+
+            <div id="step-3" class="p-2 rounded-xl bg-white border border-slate-200 space-y-1">
+              <div class="w-5 h-5 mx-auto rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px] font-extrabold">3</div>
+              <p class="text-[10px] font-bold text-slate-500 leading-tight">En Ruta</p>
+            </div>
+
+            <div id="step-4" class="p-2 rounded-xl bg-white border border-slate-200 space-y-1">
+              <div class="w-5 h-5 mx-auto rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px] font-extrabold">4</div>
+              <p class="text-[10px] font-bold text-slate-500 leading-tight">Entregado</p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Detalle de la Guía -->
+        <div class="bg-white rounded-xl p-3 border border-slate-200/80 space-y-2 text-xs">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <span class="text-[10px] text-slate-400 block font-semibold">Destinatario:</span>
+              <span class="font-bold text-slate-800" id="result-recipient">---</span>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 block font-semibold">Ciudad Destino:</span>
+              <span class="font-bold text-slate-800" id="result-city">---</span>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 block font-semibold">Total Piezas:</span>
+              <span class="font-bold text-slate-800" id="result-pieces">---</span>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 block font-semibold">Ubicación GPS:</span>
+              <span class="font-bold text-slate-800" id="result-gps-status">---</span>
+            </div>
+          </div>
+
+          <div id="result-notes-container" class="pt-1.5 border-t border-slate-100">
+            <span class="text-[10px] text-slate-400 block font-semibold">Referencia de Entrega:</span>
+            <p class="text-[11px] text-slate-600" id="result-address">---</p>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECCIÓN 2: FORMULARIO DE ACCESO OPERATIVO  -->
+    <!-- ========================================== -->
+    <section id="login-section" class="hidden space-y-4 animate-fadeIn">
+      
+      <!-- Banner de Error Dinámico -->
+      <div id="error-banner" class="hidden bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl p-3.5 text-xs flex items-start gap-2.5 animate-fadeIn">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+        <span id="error-message" class="font-medium leading-relaxed">Credenciales incorrectas</span>
+      </div>
+
+      <form id="login-form" class="space-y-4" autocomplete="on">
+        
+        <!-- Campo: Email o Teléfono -->
+        <div class="space-y-1.5">
+          <label for="email" class="block text-xs font-semibold text-slate-700">
+            Correo Electrónico o Teléfono
+          </label>
+          <div class="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.206" />
             </svg>
-            <svg id="eye-closed" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+            <input
+              type="text"
+              id="email"
+              name="email"
+              required
+              placeholder="correo@envias.com"
+              autocomplete="username"
+              class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-3.5 py-3 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+            />
+          </div>
+        </div>
+
+        <!-- Campo: Contraseña -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <label for="password" class="block text-xs font-semibold text-slate-700">
+              Contraseña
+            </label>
+          </div>
+          <div class="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              placeholder="••••••••"
+              autocomplete="current-password"
+              class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-10 py-3 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+            />
+            <button
+              type="button"
+              id="toggle-pwd-btn"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+              title="Mostrar u ocultar contraseña"
+            >
+              <svg id="eye-open" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <svg id="eye-closed" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Botón Principal de Inicio de Sesión -->
+        <div class="pt-2">
+          <button
+            type="submit"
+            id="submit-btn"
+            class="w-full bg-slate-900 hover:bg-black text-white font-semibold text-xs sm:text-sm py-3.5 px-4 rounded-2xl transition-all duration-200 active:scale-[0.98] shadow-lg shadow-slate-900/10 flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span>Iniciar Sesión</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>
           </button>
         </div>
-      </div>
-
-      <!-- Botón Principal de Inicio de Sesión -->
-      <div class="pt-2">
-        <button
-          type="submit"
-          id="submit-btn"
-          class="w-full bg-slate-900 hover:bg-black text-white font-semibold text-xs sm:text-sm py-3.5 px-4 rounded-2xl transition-all duration-200 active:scale-[0.98] shadow-lg shadow-slate-900/10 flex items-center justify-center gap-2 cursor-pointer"
-        >
-          <span>Iniciar Sesión</span>
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-          </svg>
-        </button>
-      </div>
-    </form>
+      </form>
+    </section>
 
     <!-- Pie de página -->
-    <footer class="mt-6 text-center">
+    <footer class="mt-6 text-center border-t border-slate-100 pt-4">
       <p class="text-[11px] text-slate-400">
-        Sistema seguro conectado a PostgreSQL en Railway
+        Envías C.A. &bull; Hub Central: Barquisimeto &bull; Sedes: Caracas y Mérida
       </p>
     </footer>
   </main>
 </Layout>
 
 <script>
-  const form = document.getElementById('login-form') as HTMLFormElement;
+  // Elementos de Pestañas
+  const tabBtnTracking = document.getElementById('tab-btn-tracking') as HTMLButtonElement;
+  const tabBtnLogin = document.getElementById('tab-btn-login') as HTMLButtonElement;
+  const trackingSection = document.getElementById('tracking-section') as HTMLElement;
+  const loginSection = document.getElementById('login-section') as HTMLElement;
+
+  // Elementos de Rastreo
+  const trackingForm = document.getElementById('tracking-form') as HTMLFormElement;
+  const trackingInput = document.getElementById('tracking-input') as HTMLInputElement;
+  const trackingSubmitBtn = document.getElementById('tracking-submit-btn') as HTMLButtonElement;
+  const btnClearTracking = document.getElementById('btn-clear-tracking') as HTMLButtonElement;
+  const trackingError = document.getElementById('tracking-error') as HTMLElement;
+  const trackingErrorMsg = document.getElementById('tracking-error-msg') as HTMLElement;
+  const trackingResultCard = document.getElementById('tracking-result-card') as HTMLElement;
+
+  const resultGuideId = document.getElementById('result-guide-id') as HTMLElement;
+  const resultStatusBadge = document.getElementById('result-status-badge') as HTMLElement;
+  const resultRecipient = document.getElementById('result-recipient') as HTMLElement;
+  const resultCity = document.getElementById('result-city') as HTMLElement;
+  const resultPieces = document.getElementById('result-pieces') as HTMLElement;
+  const resultGpsStatus = document.getElementById('result-gps-status') as HTMLElement;
+  const resultAddress = document.getElementById('result-address') as HTMLElement;
+
+  const step1 = document.getElementById('step-1') as HTMLElement;
+  const step2 = document.getElementById('step-2') as HTMLElement;
+  const step3 = document.getElementById('step-3') as HTMLElement;
+  const step4 = document.getElementById('step-4') as HTMLElement;
+
+  // Elementos de Login
+  const loginForm = document.getElementById('login-form') as HTMLFormElement;
   const emailInput = document.getElementById('email') as HTMLInputElement;
   const passwordInput = document.getElementById('password') as HTMLInputElement;
   const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
@@ -134,6 +325,153 @@ if (currentUser) {
   const togglePwdBtn = document.getElementById('toggle-pwd-btn') as HTMLButtonElement;
   const eyeOpen = document.getElementById('eye-open') as HTMLElement;
   const eyeClosed = document.getElementById('eye-closed') as HTMLElement;
+
+  // Control de Cambio de Pestaña
+  tabBtnTracking?.addEventListener('click', () => {
+    tabBtnTracking.className = 'py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 bg-slate-900 text-white shadow-xs cursor-pointer';
+    tabBtnLogin.className = 'py-2.5 px-3 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 transition-all flex items-center justify-center gap-2 cursor-pointer';
+    trackingSection.classList.remove('hidden');
+    loginSection.classList.add('hidden');
+    trackingInput?.focus();
+  });
+
+  tabBtnLogin?.addEventListener('click', () => {
+    tabBtnLogin.className = 'py-2.5 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 bg-slate-900 text-white shadow-xs cursor-pointer';
+    tabBtnTracking.className = 'py-2.5 px-3 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 transition-all flex items-center justify-center gap-2 cursor-pointer';
+    loginSection.classList.remove('hidden');
+    trackingSection.classList.add('hidden');
+    emailInput?.focus();
+  });
+
+  // Limpiar input de rastreo
+  trackingInput?.addEventListener('input', () => {
+    if (trackingInput.value.trim().length > 0) {
+      btnClearTracking?.classList.remove('hidden');
+    } else {
+      btnClearTracking?.classList.add('hidden');
+    }
+  });
+
+  btnClearTracking?.addEventListener('click', () => {
+    trackingInput.value = '';
+    btnClearTracking.classList.add('hidden');
+    trackingResultCard.classList.add('hidden');
+    trackingError.classList.add('hidden');
+    trackingInput.focus();
+  });
+
+  // Consultar Guía Pública (Sin Credenciales)
+  trackingForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    trackingError?.classList.add('hidden');
+    trackingResultCard?.classList.add('hidden');
+
+    const idGuia = trackingInput.value.trim().toUpperCase();
+    if (!idGuia) return;
+
+    trackingSubmitBtn.disabled = true;
+    const originalBtnContent = trackingSubmitBtn.innerHTML;
+    trackingSubmitBtn.innerHTML = `
+      <svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      <span>Buscando en Base de Datos...</span>
+    `;
+
+    try {
+      const res = await fetch(`/api/guias/${encodeURIComponent(idGuia)}`);
+      const json = await res.json();
+
+      if (res.ok && json.success && json.data) {
+        const guia = json.data;
+        renderTrackingResult(guia);
+      } else {
+        if (trackingErrorMsg) trackingErrorMsg.textContent = json.message || `No se encontró la guía #${idGuia}. Verifica el número e intenta de nuevo.`;
+        trackingError?.classList.remove('hidden');
+      }
+    } catch (err) {
+      console.error('Error tracking:', err);
+      if (trackingErrorMsg) trackingErrorMsg.textContent = 'Error de conexión con el servidor. Intenta de nuevo.';
+      trackingError?.classList.remove('hidden');
+    } finally {
+      trackingSubmitBtn.disabled = false;
+      trackingSubmitBtn.innerHTML = originalBtnContent;
+    }
+  });
+
+  function renderTrackingResult(guia: any) {
+    if (!trackingResultCard) return;
+
+    resultGuideId.textContent = `#${guia.id_guia}`;
+    resultRecipient.textContent = guia.destinatario || 'Cliente Envías';
+    resultCity.textContent = guia.ciudad_destino || 'Venezuela';
+    resultPieces.textContent = `${guia.piezas || 1} pieza(s)`;
+    resultAddress.textContent = guia.direccion_referencia || 'Dirección registrada en el despacho';
+
+    // Estado GPS
+    if (guia.gps_confirmado) {
+      resultGpsStatus.innerHTML = `
+        <span class="text-emerald-700 font-bold flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Confirmada por Satélite</span>
+        </span>
+      `;
+    } else {
+      resultGpsStatus.innerHTML = `
+        <span class="text-amber-600 font-bold flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+          <span>Pendiente de Confirmar</span>
+        </span>
+      `;
+    }
+
+    // Badge de Estado y Stepper
+    resetStepper();
+    const status = guia.estado || 'Por contactar';
+
+    if (status === 'Por contactar') {
+      resultStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200';
+      resultStatusBadge.textContent = 'En Almacén / Por Contactar';
+      highlightStep(step1);
+    } else if (status === 'Contactado') {
+      resultStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-800 border border-indigo-200';
+      resultStatusBadge.textContent = 'Coordinando Entrega';
+      highlightStep(step1);
+      highlightStep(step2);
+    } else if (status === 'En ruta') {
+      resultStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-sky-50 text-sky-800 border border-sky-200';
+      resultStatusBadge.textContent = `En Ruta con ${guia.chofer_nombre || 'Chofer'}`;
+      highlightStep(step1);
+      highlightStep(step2);
+      highlightStep(step3);
+    } else if (status === 'Entregado') {
+      resultStatusBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200';
+      resultStatusBadge.textContent = 'Entregado con Éxito';
+      highlightStep(step1);
+      highlightStep(step2);
+      highlightStep(step3);
+      highlightStep(step4);
+    }
+
+    trackingResultCard.classList.remove('hidden');
+  }
+
+  function resetStepper() {
+    [step1, step2, step3, step4].forEach(step => {
+      if (!step) return;
+      step.className = 'p-2 rounded-xl bg-white border border-slate-200 space-y-1 opacity-50';
+      const badge = step.querySelector('div');
+      if (badge) badge.className = 'w-5 h-5 mx-auto rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-[10px] font-extrabold';
+    });
+  }
+
+  function highlightStep(step: HTMLElement | null) {
+    if (!step) return;
+    step.className = 'p-2 rounded-xl bg-white border border-indigo-200 shadow-xs space-y-1 opacity-100';
+    const badge = step.querySelector('div');
+    if (badge) badge.className = 'w-5 h-5 mx-auto rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-extrabold';
+  }
 
   // Toggle mostrar contraseña
   togglePwdBtn?.addEventListener('click', () => {
@@ -153,7 +491,7 @@ if (currentUser) {
   if (passwordInput) passwordInput.value = '';
 
   // Enviar Login
-  form?.addEventListener('submit', async (e) => {
+  loginForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorBanner?.classList.add('hidden');
 
@@ -187,7 +525,7 @@ if (currentUser) {
       if (res.ok && data.ok) {
         // Redirigir según el rol del usuario
         if (data.user?.rol === 'Chofer') {
-          window.location.href = '/dashboard';
+          window.location.href = '/chofer';
         } else {
           window.location.href = '/dashboard';
         }
@@ -207,4 +545,11 @@ if (currentUser) {
     if (errorMessage) errorMessage.textContent = msg;
     errorBanner?.classList.remove('hidden');
   }
+
+  // Protección contra bfcache (si el usuario cierra sesión y pulsa "Atrás" en el navegador)
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+      window.location.reload();
+    }
+  });
 </script>

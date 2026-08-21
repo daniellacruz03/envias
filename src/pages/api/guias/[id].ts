@@ -26,6 +26,8 @@ export const GET: APIRoute = async ({ params }) => {
         g.gps_longitud,
         g.gps_confirmado,
         g.chofer_asignado_id,
+        g.comprobante_url,
+        g.recibido_por,
         g.created_at,
         u.nombre AS chofer_nombre,
         u.telefono AS chofer_telefono

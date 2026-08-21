@@ -23,6 +23,7 @@ export const POST: APIRoute = async ({ request }) => {
     const longitud = data.longitud !== undefined && data.longitud !== null ? Number(data.longitud) : (data.longitude !== undefined && data.longitude !== null ? Number(data.longitude) : null);
     const rawRef = data.direccion_referencia !== undefined ? data.direccion_referencia : data.referencias;
     const direccion_referencia = rawRef && typeof rawRef === 'string' ? rawRef.trim() : null;
+    const hora_disponible = data.hora_disponible && typeof data.hora_disponible === 'string' ? data.hora_disponible.trim() : null;
 
     if (!id_guia) {
       return new Response(
@@ -38,17 +39,18 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Actualizar en PostgreSQL (si tiene GPS marca gps_confirmado = true)
+    // Actualizar en PostgreSQL marcando gps_confirmado = true
     const updateResult = await query(`
       UPDATE guias
       SET 
         gps_latitud = COALESCE($1, gps_latitud),
         gps_longitud = COALESCE($2, gps_longitud),
-        gps_confirmado = CASE WHEN $1 IS NOT NULL THEN true ELSE gps_confirmado END,
-        direccion_referencia = COALESCE($3, direccion_referencia)
+        gps_confirmado = true,
+        direccion_referencia = COALESCE($3, direccion_referencia),
+        hora_disponible = COALESCE($5, hora_disponible)
       WHERE id_guia = $4
       RETURNING *
-    `, [latitud, longitud, direccion_referencia, id_guia]);
+    `, [latitud, longitud, direccion_referencia, id_guia, hora_disponible]);
 
     if (updateResult.rowCount === 0) {
       return new Response(
@@ -62,6 +64,7 @@ export const POST: APIRoute = async ({ request }) => {
       latitud,
       longitud,
       referencias: direccion_referencia,
+      hora_disponible,
       recibidoEn: new Date().toISOString()
     });
 
