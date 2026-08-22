@@ -978,37 +978,40 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
 
       // Hero inputs (pantalla de bienvenida)
       scanCameraInput?.addEventListener('change', (e) => {
-        const files = (e.target as HTMLInputElement).files;
-        if (files && files.length > 0) {
+        const input = e.target as HTMLInputElement;
+        // Clonar a Array ANTES de cualquier reset para que Canvas pueda leerlos
+        const files = input.files ? Array.from(input.files) : [];
+        if (files.length > 0) {
           currentScanTargetMode = 'hero';
-          handleScanFiles(Array.from(files));
-          (e.target as HTMLInputElement).value = '';
+          // NO resetear aquí: handleScanFiles es async y lee los File objects.
+          // El reset ocurre al final de handleScanFiles().
+          handleScanFiles(files);
         }
       });
       scanGalleryInput?.addEventListener('change', (e) => {
-        const files = (e.target as HTMLInputElement).files;
-        if (files && files.length > 0) {
+        const input = e.target as HTMLInputElement;
+        const files = input.files ? Array.from(input.files) : [];
+        if (files.length > 0) {
           currentScanTargetMode = 'hero';
-          handleScanFiles(Array.from(files));
-          (e.target as HTMLInputElement).value = '';
+          handleScanFiles(files);
         }
       });
 
       // Modal inputs (modal #scan-modal)
       scanModalCameraInput?.addEventListener('change', (e) => {
-        const files = (e.target as HTMLInputElement).files;
-        if (files && files.length > 0) {
+        const input = e.target as HTMLInputElement;
+        const files = input.files ? Array.from(input.files) : [];
+        if (files.length > 0) {
           currentScanTargetMode = 'modal';
-          handleScanFiles(Array.from(files));
-          (e.target as HTMLInputElement).value = '';
+          handleScanFiles(files);
         }
       });
       scanModalGalleryInput?.addEventListener('change', (e) => {
-        const files = (e.target as HTMLInputElement).files;
-        if (files && files.length > 0) {
+        const input = e.target as HTMLInputElement;
+        const files = input.files ? Array.from(input.files) : [];
+        if (files.length > 0) {
           currentScanTargetMode = 'modal';
-          handleScanFiles(Array.from(files));
-          (e.target as HTMLInputElement).value = '';
+          handleScanFiles(files);
         }
       });
 
@@ -1770,7 +1773,9 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
               if (overlay) {
                 overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
               }
-              showToast(data.message || 'No se pudo guardar la guía en el servidor', 'error');
+              const errMsg = `HTTP ${res.status}: ${data.message || 'Error desconocido'}`;
+              console.error('[Escaneo API Error]:', errMsg, data);
+              showToast(errMsg, 'error');
             }
           } catch(err: any) {
             console.error('Error subiendo foto de guía:', err);
