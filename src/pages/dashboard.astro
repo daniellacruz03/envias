@@ -1240,6 +1240,10 @@ const userInitials = currentUser.nombre
       let isLoading = true;
       let currentViewMode: 'table' | 'cities' | 'drivers' | 'escaneos' = 'table';
       let expandedCities: Record<string, boolean> = {};
+      let escaneosData: any[] = [];
+      let drawerFotosFlat: any[] = []; // lista plana de fotos para navegar
+      let drawerCurrentIndex = 0;
+      let activeEscaneoId: number | null = null;
 
       // ==========================================
       // MOTOR GEOESPACIAL Y COORDENADAS DE VENEZUELA (HOISTED GLOBAL)
@@ -2837,11 +2841,6 @@ const userInitials = currentUser.nombre
         // ============================================
         // MÓDULO DE REVISIÓN DE GUÍAS ESCANEADAS
         // ============================================
-        let escaneosData: any[] = [];
-        let drawerFotosFlat: any[] = []; // lista plana de fotos para navegar
-        let drawerCurrentIndex = 0;
-        let activeEscaneoId: number | null = null;
-
         async function loadAndRenderEscaneos() {
           const loadingEl = document.getElementById('escaneos-loading') as HTMLElement;
           const listEl = document.getElementById('escaneos-list') as HTMLElement;

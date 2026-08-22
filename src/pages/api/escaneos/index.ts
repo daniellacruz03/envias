@@ -25,6 +25,7 @@ export const GET: APIRoute = async ({ cookies }) => {
         ge.lote_id,
         ge.chofer_id,
         ge.foto_url,
+        ge.foto_base64,
         ge.estado,
         ge.created_at,
         u.nombre AS chofer_nombre,
@@ -51,7 +52,8 @@ export const GET: APIRoute = async ({ cookies }) => {
         };
       }
       const lote = lotesMap[row.lote_id];
-      lote.fotos.push({ id: row.id, foto_url: row.foto_url, estado: row.estado, created_at: row.created_at });
+      const fotoUrl = row.foto_base64 || row.foto_url;
+      lote.fotos.push({ id: row.id, foto_url: fotoUrl, estado: row.estado, created_at: row.created_at });
       lote.total++;
       if (row.estado === 'pendiente') lote.pendientes++;
       else if (row.estado === 'procesado') lote.procesadas++;
@@ -72,8 +74,8 @@ export const GET: APIRoute = async ({ cookies }) => {
   }
 };
 
-// POST /api/escaneos — Recibe foto del chofer
-// FormData: { foto: File, lote_id: string }
+// POST /api/escaneos — Recibe foto del chofer o logística
+// FormData: { foto?: File, foto_base64?: string, lote_id: string }
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     const user = getUserFromCookies(cookies);
@@ -82,63 +84,57 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         status: 401, headers: { 'Content-Type': 'application/json' }
       });
     }
-    if (user.rol !== 'Chofer') {
-      return new Response(JSON.stringify({ success: false, message: 'Solo los choferes pueden subir guias.' }), {
-        status: 403, headers: { 'Content-Type': 'application/json' }
-      });
-    }
 
     const formData = await request.formData();
     const foto = formData.get('foto') as File | null;
-    const lote_id = (formData.get('lote_id') || '').toString().trim();
+    let foto_base64 = (formData.get('foto_base64') || '').toString().trim();
+    const lote_id = (formData.get('lote_id') || '').toString().trim() || `lote_${Date.now()}`;
 
-    if (!foto || !(foto instanceof File) || foto.size === 0) {
-      return new Response(JSON.stringify({ success: false, message: 'No se recibio ninguna foto.' }), {
+    let publicUrl = '';
+
+    if (foto && foto instanceof File && foto.size > 0) {
+      const extension = foto.type.includes('png') ? 'png' : (foto.type.includes('webp') ? 'webp' : 'jpg');
+      const fileName = `escaneo_${user.id}_${Date.now()}.${extension}`;
+      publicUrl = `/uploads/escaneos/${fileName}`;
+
+      const arrayBuffer = await foto.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+
+      if (!foto_base64) {
+        const mimeType = extension === 'png' ? 'image/png' : (extension === 'webp' ? 'image/webp' : 'image/jpeg');
+        foto_base64 = `data:${mimeType};base64,${buffer.toString('base64')}`;
+      }
+
+      // Guardado local opcional a prueba de fallos
+      try {
+        const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'escaneos');
+        await fs.mkdir(uploadDir, { recursive: true });
+        await fs.writeFile(path.join(uploadDir, fileName), buffer);
+      } catch (fsErr) {
+        console.warn('[FS Warning]: No se pudo escribir a disco local, usando base64 en BD.', fsErr);
+      }
+    }
+
+    if (!foto_base64) {
+      return new Response(JSON.stringify({ success: false, message: 'No se recibió ninguna imagen válida.' }), {
         status: 400, headers: { 'Content-Type': 'application/json' }
       });
     }
-    if (!lote_id) {
-      return new Response(JSON.stringify({ success: false, message: 'El identificador de lote es obligatorio.' }), {
-        status: 400, headers: { 'Content-Type': 'application/json' }
-      });
+
+    if (!publicUrl) {
+      publicUrl = foto_base64;
     }
-
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'escaneos');
-    await fs.mkdir(uploadDir, { recursive: true });
-
-    // También asegurar carpeta en dist/client/uploads si existe
-    const distUploadDir = path.join(process.cwd(), 'dist', 'client', 'uploads', 'escaneos');
-    try { await fs.mkdir(distUploadDir, { recursive: true }); } catch {}
-
-    const extension = foto.type.includes('png') ? 'png' : (foto.type.includes('webp') ? 'webp' : 'jpg');
-    const fileName = `escaneo_${user.id}_${Date.now()}.${extension}`;
-    const filePath = path.join(uploadDir, fileName);
-
-    const arrayBuffer = await foto.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    await fs.writeFile(filePath, buffer);
-
-    try {
-      const distFilePath = path.join(distUploadDir, fileName);
-      await fs.writeFile(distFilePath, buffer);
-    } catch {}
-
-    const base64Data = buffer.toString('base64');
-    const mimeType = extension === 'png' ? 'image/png' : (extension === 'webp' ? 'image/webp' : 'image/jpeg');
-    const fotoBase64 = `data:${mimeType};base64,${base64Data}`;
-
-    const publicUrl = `/uploads/escaneos/${fileName}`;
 
     const insertResult = await query(`
       INSERT INTO guias_escaneos (lote_id, chofer_id, foto_url, foto_base64, estado, created_at)
       VALUES ($1, $2, $3, $4, 'pendiente', NOW())
       RETURNING id, lote_id, chofer_id, foto_url, estado, created_at
-    `, [lote_id, user.id, publicUrl, fotoBase64]);
+    `, [lote_id, user.id, publicUrl, foto_base64]);
 
     const escaneo = insertResult.rows[0];
-    console.log('[ESCANEO SUBIDO]:', { id: escaneo.id, chofer: user.nombre, lote_id, fileName });
+    console.log('[ESCANEO SUBIDO OK]:', { id: escaneo.id, usuario: user.nombre, lote_id });
 
-    return new Response(JSON.stringify({ success: true, message: 'Foto de guia recibida correctamente.', data: escaneo }), {
+    return new Response(JSON.stringify({ success: true, message: 'Foto de guía guardada correctamente.', data: escaneo }), {
       status: 201, headers: { 'Content-Type': 'application/json' }
     });
   } catch (error: any) {

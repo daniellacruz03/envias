@@ -2104,7 +2104,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
               method: 'POST',
               body: formData
             });
-            const data = await res.json();
+            const data = await res.json().catch(() => ({ success: false, message: 'Error de conexión con el servidor.' }));
 
             const overlay = document.getElementById(`scan-thumb-overlay-${itemIndex}`);
             if (res.ok && data.success) {
@@ -2119,14 +2119,16 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
               if (overlay) {
                 overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
               }
+              showToast(data.message || 'No se pudo guardar la guía', 'error');
             }
-          } catch(err) {
+          } catch(err: any) {
             console.error('Error subiendo foto de guía:', err);
             const overlay = document.getElementById(`scan-thumb-overlay-${itemIndex}`);
             thumbDiv.classList.replace('border-slate-200', 'border-rose-400');
             if (overlay) {
               overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
             }
+            showToast('Error al procesar la imagen: ' + (err.message || 'desconocido'), 'error');
           }
 
           processed++;
