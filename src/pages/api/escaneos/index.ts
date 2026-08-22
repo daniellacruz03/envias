@@ -1,4 +1,4 @@
-﻿import type { APIRoute } from 'astro';
+import type { APIRoute } from 'astro';
 import { query } from '../../../lib/db';
 import { getUserFromCookies } from '../../../lib/auth';
 import fs from 'fs/promises';
@@ -106,6 +106,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'escaneos');
     await fs.mkdir(uploadDir, { recursive: true });
 
+    // También asegurar carpeta en dist/client/uploads si existe
+    const distUploadDir = path.join(process.cwd(), 'dist', 'client', 'uploads', 'escaneos');
+    try { await fs.mkdir(distUploadDir, { recursive: true }); } catch {}
+
     const extension = foto.type.includes('png') ? 'png' : (foto.type.includes('webp') ? 'webp' : 'jpg');
     const fileName = `escaneo_${user.id}_${Date.now()}.${extension}`;
     const filePath = path.join(uploadDir, fileName);
@@ -114,13 +118,22 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const buffer = Buffer.from(arrayBuffer);
     await fs.writeFile(filePath, buffer);
 
+    try {
+      const distFilePath = path.join(distUploadDir, fileName);
+      await fs.writeFile(distFilePath, buffer);
+    } catch {}
+
+    const base64Data = buffer.toString('base64');
+    const mimeType = extension === 'png' ? 'image/png' : (extension === 'webp' ? 'image/webp' : 'image/jpeg');
+    const fotoBase64 = `data:${mimeType};base64,${base64Data}`;
+
     const publicUrl = `/uploads/escaneos/${fileName}`;
 
     const insertResult = await query(`
-      INSERT INTO guias_escaneos (lote_id, chofer_id, foto_url, estado, created_at)
-      VALUES ($1, $2, $3, 'pendiente', NOW())
+      INSERT INTO guias_escaneos (lote_id, chofer_id, foto_url, foto_base64, estado, created_at)
+      VALUES ($1, $2, $3, $4, 'pendiente', NOW())
       RETURNING id, lote_id, chofer_id, foto_url, estado, created_at
-    `, [lote_id, user.id, publicUrl]);
+    `, [lote_id, user.id, publicUrl, fotoBase64]);
 
     const escaneo = insertResult.rows[0];
     console.log('[ESCANEO SUBIDO]:', { id: escaneo.id, chofer: user.nombre, lote_id, fileName });

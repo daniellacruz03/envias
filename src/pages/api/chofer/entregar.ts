@@ -48,11 +48,15 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     let publicUrl: string | null = null;
+    let comprobanteBase64: string | null = null;
 
     // Procesar foto si fue adjuntada
     if (foto && foto instanceof File && foto.size > 0) {
       const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'comprobantes');
       await fs.mkdir(uploadDir, { recursive: true });
+
+      const distUploadDir = path.join(process.cwd(), 'dist', 'client', 'uploads', 'comprobantes');
+      try { await fs.mkdir(distUploadDir, { recursive: true }); } catch {}
 
       const extension = foto.type.includes('png') ? 'png' : (foto.type.includes('webp') ? 'webp' : 'jpg');
       const cleanId = id_guia.replace(/[^A-Z0-9_-]/gi, '');
@@ -63,7 +67,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       const buffer = Buffer.from(arrayBuffer);
 
       await fs.writeFile(filePath, buffer);
+      try { await fs.writeFile(path.join(distUploadDir, fileName), buffer); } catch {}
+
       publicUrl = `/uploads/comprobantes/${fileName}`;
+      const mimeType = extension === 'png' ? 'image/png' : (extension === 'webp' ? 'image/webp' : 'image/jpeg');
+      comprobanteBase64 = `data:${mimeType};base64,${buffer.toString('base64')}`;
     }
 
     let nuevoEstado = 'Entregado';
@@ -94,10 +102,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       SET 
         estado = $1,
         comprobante_url = COALESCE($2, comprobante_url),
-        recibido_por = $3
-      WHERE id_guia = $4
+        comprobante_base64 = COALESCE($3, comprobante_base64),
+        recibido_por = $4
+      WHERE id_guia = $5
       RETURNING *
-    `, [nuevoEstado, publicUrl, campoRecibido, id_guia]);
+    `, [nuevoEstado, publicUrl, comprobanteBase64, campoRecibido, id_guia]);
 
     if (updateResult.rowCount === 0) {
       return new Response(JSON.stringify({

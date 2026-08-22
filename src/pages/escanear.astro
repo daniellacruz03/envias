@@ -1,4 +1,4 @@
----
+﻿---
 import '../styles/global.css';
 import { getUserFromCookies } from '../lib/auth';
 import { query } from '../lib/db';
@@ -34,7 +34,7 @@ for (const row of escaneosResult.rows) {
 const lotesHistorial = Object.values(lotesMap).slice(0, 5);
 
 const totalPendientes = lotesHistorial.reduce((acc: number, l: any) => acc + l.pendientes, 0);
-const title = `Cargar Guias | ${currentUser.nombre} - Envias C.A.`;
+const title = `Cargar Guías | ${currentUser.nombre} - Envías C.A.`;
 ---
 
 <!doctype html>
@@ -49,86 +49,107 @@ const title = `Cargar Guias | ${currentUser.nombre} - Envias C.A.`;
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <style>
       body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; }
-      .upload-zone { transition: all 0.2s ease; }
-      .upload-zone:active { transform: scale(0.98); }
+      .tap-active:active { transform: scale(0.97); }
       .thumb-item { animation: fadeIn 0.25s ease; }
       @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-      .progress-bar { transition: width 0.4s ease; }
+      .progress-bar { transition: width 0.3s ease; }
     </style>
   </head>
-  <body class="min-h-full flex flex-col text-slate-800 bg-[#F8FAFC] antialiased">
+  <body class="min-h-full flex flex-col text-slate-800 bg-[#F8FAFC] antialiased pb-12">
 
     <!-- HEADER -->
-    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3.5 flex items-center justify-between">
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3 flex items-center justify-between shadow-xs">
       <div class="flex items-center gap-3">
-        <a href="/chofer" class="p-2 -ml-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors">
+        <a href="/chofer" class="p-2 -ml-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors tap-active" title="Volver a mi Hoja de Ruta">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
           </svg>
         </a>
         <div>
-          <h1 class="text-sm font-bold text-slate-900 leading-tight">Cargar Guias del Dia</h1>
+          <h1 class="text-sm font-bold text-slate-900 leading-tight">Cargar Guías del Día</h1>
           <p class="text-[11px] text-slate-500 font-medium">{currentUser.nombre}</p>
         </div>
       </div>
-      {totalPendientes > 0 && (
-        <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-          {totalPendientes} en revision
-        </span>
-      )}
+      <div class="flex items-center gap-2">
+        {totalPendientes > 0 && (
+          <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+            {totalPendientes} en revisión
+          </span>
+        )}
+      </div>
     </header>
 
-    <main class="flex-1 px-4 py-5 space-y-5 max-w-lg mx-auto w-full">
+    <main class="flex-1 px-4 py-4 space-y-4 max-w-lg mx-auto w-full">
 
-      <!-- ZONA DE CARGA -->
-      <section class="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
-        <div class="p-4 border-b border-slate-100">
-          <h2 class="text-sm font-bold text-slate-900">Nueva Carga de Guias</h2>
-          <p class="text-[11px] text-slate-500 mt-0.5">Fotografía las guías físicas una por una. Cada foto se comprime automáticamente.</p>
+      <!-- TARJETA PRINCIPAL: OPCIONES DE CAPTURA -->
+      <section class="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden p-4 space-y-3">
+        <div>
+          <h2 class="text-sm font-bold text-slate-900">Elegir Método de Carga</h2>
+          <p class="text-[11px] text-slate-500 mt-0.5">Toma fotos directamente con tu cámara o sube varias desde tu galería.</p>
         </div>
 
-        <!-- Botón Principal de Carga -->
-        <div class="p-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <!-- OPCIÓN 1: CÁMARA DIRECTA (1 A 1) -->
           <button
-            id="btn-select-photo"
+            id="btn-open-camera"
             type="button"
-            class="upload-zone w-full border-2 border-dashed border-slate-200 hover:border-slate-400 bg-slate-50/60 hover:bg-slate-50 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all"
+            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 shadow-sm transition-all cursor-pointer text-center"
           >
-            <div class="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center shadow-md">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
             </div>
-            <div class="text-center">
-              <p class="text-sm font-bold text-slate-900">Tomar Foto / Elegir de Galeria</p>
-              <p class="text-xs text-slate-500 mt-0.5">Puedes seleccionar varias a la vez</p>
+            <div>
+              <p class="text-xs font-bold">Tomar Foto con Cámara</p>
+              <p class="text-[10px] text-slate-300 font-medium">Abre la cámara directo</p>
             </div>
           </button>
-          <input type="file" id="photo-input" accept="image/*" multiple class="hidden" />
+          <!-- Input exclusivo para cámara nativa -->
+          <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden" />
+
+          <!-- OPCIÓN 2: GALERÍA MÚLTIPLE (LOTE) -->
+          <button
+            id="btn-open-gallery"
+            type="button"
+            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer text-center"
+          >
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-bold text-slate-900">Elegir de Galería</p>
+              <p class="text-[10px] text-slate-500 font-medium">Selecciona varias fotos</p>
+            </div>
+          </button>
+          <!-- Input para selección múltiple de galería -->
+          <input type="file" id="gallery-input" accept="image/*" multiple class="hidden" />
         </div>
 
-        <!-- Barra de Progreso (oculta hasta que hay carga activa) -->
-        <div id="progress-section" class="hidden px-4 pb-4 space-y-2">
+        <!-- BARRA DE PROGRESO DE SUBIDA -->
+        <div id="progress-section" class="hidden pt-2 space-y-2">
           <div class="flex items-center justify-between text-xs font-semibold text-slate-700">
-            <span id="progress-label">Preparando...</span>
+            <span id="progress-label">Comprimiendo y subiendo...</span>
             <span id="progress-counter" class="font-mono text-slate-500">0 / 0</span>
           </div>
           <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
             <div id="progress-bar" class="progress-bar h-full rounded-full bg-slate-900" style="width: 0%"></div>
           </div>
-          <p id="progress-detail" class="text-[11px] text-slate-400"></p>
+          <p id="progress-detail" class="text-[11px] text-slate-400 truncate"></p>
         </div>
 
-        <!-- Resumen del lote actual -->
-        <div id="lote-summary" class="hidden px-4 pb-4">
-          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between">
+        <!-- RESUMEN DEL LOTE ACTUAL -->
+        <div id="lote-summary" class="hidden pt-2">
+          <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between">
             <div>
-              <p class="text-xs font-bold text-slate-900" id="summary-title">Lote cargado</p>
-              <p class="text-[11px] text-slate-500 mt-0.5" id="summary-detail"></p>
+              <p class="text-xs font-bold text-emerald-950" id="summary-title">Guías subidas exitosamente</p>
+              <p class="text-[11px] text-emerald-700 mt-0.5" id="summary-detail">Logística las revisará para agregarlas a tu ruta.</p>
             </div>
-            <div id="summary-icon" class="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center">
-              <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="w-8 h-8 rounded-xl bg-emerald-200/80 flex items-center justify-center shrink-0">
+              <svg class="w-4 h-4 text-emerald-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
               </svg>
             </div>
@@ -136,19 +157,27 @@ const title = `Cargar Guias | ${currentUser.nombre} - Envias C.A.`;
         </div>
       </section>
 
-      <!-- GALERIA DE FOTOS DEL LOTE ACTUAL -->
+      <!-- GALERÍA DE FOTOS SUBIDAS EN ESTA SESIÓN -->
       <section id="gallery-section" class="hidden bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
         <div class="p-4 border-b border-slate-100 flex items-center justify-between">
           <div>
             <h2 class="text-sm font-bold text-slate-900">Fotos de este Lote</h2>
             <p id="gallery-count" class="text-[11px] text-slate-500 mt-0.5">0 fotos</p>
           </div>
-          <button id="btn-add-more" type="button" class="text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-colors cursor-pointer">
-            + Agregar mas
-          </button>
+          <div class="flex items-center gap-1.5">
+            <button id="btn-add-camera" type="button" class="tap-active text-xs font-bold text-white bg-slate-900 hover:bg-black px-2.5 py-1.5 rounded-xl transition-colors cursor-pointer flex items-center gap-1">
+              <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+              </svg>
+              <span>+ Cámara</span>
+            </button>
+            <button id="btn-add-gallery" type="button" class="tap-active text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 rounded-xl transition-colors cursor-pointer">
+              + Galería
+            </button>
+          </div>
         </div>
-        <div id="gallery-grid" class="p-3 grid grid-cols-3 gap-2">
-          <!-- Miniaturas se insertan aqui por JS -->
+        <div id="gallery-grid" class="p-3 grid grid-cols-3 sm:grid-cols-4 gap-2">
+          <!-- Miniaturas se insertan aquí por JS -->
         </div>
       </section>
 
@@ -197,23 +226,23 @@ const title = `Cargar Guias | ${currentUser.nombre} - Envias C.A.`;
         </section>
       )}
 
-      <!-- Botón Volver a Hoja de Ruta -->
+      <!-- BOTÓN VOLVER A HOJA DE RUTA -->
       <div class="pt-2">
         <a
           href="/chofer"
-          class="w-full py-3.5 px-4 rounded-2xl bg-slate-900 hover:bg-black active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all text-center"
+          class="tap-active w-full py-3.5 px-4 rounded-2xl bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all text-center"
         >
           <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
           </svg>
-          <span>Ir a mi Hoja de Ruta</span>
+          <span>Ir a mi Hoja de Ruta de Entregas</span>
         </a>
       </div>
 
-      <!-- Info del proceso -->
-      <div class="px-1 pb-8 space-y-1.5 text-[11px] text-slate-400 text-center">
-        <p>Las fotos se comprimen automaticamente a ~80 KB antes de enviarse.</p>
-        <p>Logistica revisara tus guias y las agregara a tu hoja de ruta.</p>
+      <!-- INFO DEL PROCESO -->
+      <div class="px-1 pb-4 space-y-1.5 text-[11px] text-slate-400 text-center">
+        <p>Las fotos se comprimen automáticamente a ~80 KB antes de enviarse.</p>
+        <p>Logística revisará tus guías y las agregará a tu hoja de ruta.</p>
       </div>
 
     </main>
@@ -226,7 +255,7 @@ const title = `Cargar Guias | ${currentUser.nombre} - Envias C.A.`;
       const MAX_HEIGHT = 1600;
       const JPEG_QUALITY = 0.75;
 
-      // Generar lote_id unico para esta sesion del dia
+      // Generar lote_id único para esta sesión del día
       const now = new Date();
       const pad = (n: number) => n.toString().padStart(2, '0');
       const loteId = `chofer_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
@@ -235,14 +264,17 @@ const title = `Cargar Guias | ${currentUser.nombre} - Envias C.A.`;
       let uploadedCount = 0;
       let failedCount = 0;
       let isUploading = false;
-      const currentLoteFotos: { dataUrl: string; estado: 'ok' | 'error' | 'subiendo' }[] = [];
 
       // ============================================
       // ELEMENTOS DEL DOM
       // ============================================
-      const btnSelect = document.getElementById('btn-select-photo') as HTMLButtonElement;
-      const btnAddMore = document.getElementById('btn-add-more') as HTMLButtonElement;
-      const photoInput = document.getElementById('photo-input') as HTMLInputElement;
+      const btnOpenCamera = document.getElementById('btn-open-camera') as HTMLButtonElement;
+      const btnOpenGallery = document.getElementById('btn-open-gallery') as HTMLButtonElement;
+      const btnAddCamera = document.getElementById('btn-add-camera') as HTMLButtonElement;
+      const btnAddGallery = document.getElementById('btn-add-gallery') as HTMLButtonElement;
+      const cameraInput = document.getElementById('camera-input') as HTMLInputElement;
+      const galleryInput = document.getElementById('gallery-input') as HTMLInputElement;
+
       const progressSection = document.getElementById('progress-section') as HTMLElement;
       const progressLabel = document.getElementById('progress-label') as HTMLElement;
       const progressCounter = document.getElementById('progress-counter') as HTMLElement;
@@ -256,9 +288,9 @@ const title = `Cargar Guias | ${currentUser.nombre} - Envias C.A.`;
       const galleryCount = document.getElementById('gallery-count') as HTMLElement;
 
       // ============================================
-      // COMPRESION DE IMAGEN (CANVAS)
+      // COMPRESIÓN DE IMAGEN (CANVAS)
       // ============================================
-      function compressImage(file: File): Promise<File> {
+      function compressImage(file: File): Promise<{ compressedFile: File, base64: string }> {
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = (e) => {
@@ -267,16 +299,19 @@ const title = `Cargar Guias | ${currentUser.nombre} - Envias C.A.`;
               let w = img.width;
               let h = img.height;
               if (w > MAX_WIDTH) { h = Math.round(h * MAX_WIDTH / w); w = MAX_WIDTH; }
-              if (h > MAX_HEIGHT) { w = Math.round(w * MAX_HEIGHT / h); h = MAX_HEIGHT; }
+              if (h > MAX_HEIGHT) { h = Math.round(h * MAX_HEIGHT / h); h = MAX_HEIGHT; }
 
               const canvas = document.createElement('canvas');
               canvas.width = w; canvas.height = h;
               const ctx = canvas.getContext('2d')!;
               ctx.drawImage(img, 0, 0, w, h);
 
+              const base64 = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+
               canvas.toBlob((blob) => {
                 if (!blob) { reject(new Error('Fallo al comprimir')); return; }
-                resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { type: 'image/jpeg', lastModified: Date.now() }));
+                const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { type: 'image/jpeg', lastModified: Date.now() });
+                resolve({ compressedFile, base64 });
               }, 'image/jpeg', JPEG_QUALITY);
             };
             img.onerror = reject;
@@ -297,7 +332,7 @@ const title = `Cargar Guias | ${currentUser.nombre} - Envias C.A.`;
       }
 
       // ============================================
-      // AGREGAR MINIATURA A LA GALERIA
+      // AGREGAR MINIATURA A LA GALERÍA
       // ============================================
       function addThumb(dataUrl: string, index: number) {
         const div = document.createElement('div');
@@ -322,7 +357,7 @@ const title = `Cargar Guias | ${currentUser.nombre} - Envias C.A.`;
         const thumb = document.getElementById(`thumb-${index}`);
         if (overlay) {
           overlay.innerHTML = `<svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>`;
-          setTimeout(() => { overlay?.classList.add('opacity-0'); }, 800);
+          setTimeout(() => { overlay?.classList.add('opacity-0'); }, 700);
         }
         if (thumb) thumb.classList.replace('border-slate-200', 'border-emerald-400');
       }
@@ -359,9 +394,9 @@ const title = `Cargar Guias | ${currentUser.nombre} - Envias C.A.`;
           const globalIndex = startIndex + i;
           const totalGlobal = startIndex + totalInBatch;
 
-          progressLabel.textContent = `Subiendo guia ${uploadedCount + failedCount + 1}...`;
+          progressLabel.textContent = `Subiendo guía ${uploadedCount + failedCount + 1}...`;
           progressCounter.textContent = `${uploadedCount + failedCount + 1} / ${totalGlobal}`;
-          progressDetail.textContent = `Comprimiendo ${file.name}...`;
+          progressDetail.textContent = `Comprimiendo ${file.name || 'foto'}...`;
 
           let dataUrl = '';
           try {
@@ -372,9 +407,11 @@ const title = `Cargar Guias | ${currentUser.nombre} - Envias C.A.`;
 
           try {
             progressDetail.textContent = `Enviando al servidor...`;
-            const compressed = await compressImage(file);
+            const { compressedFile, base64 } = await compressImage(file);
+
             const formData = new FormData();
-            formData.append('foto', compressed);
+            formData.append('foto', compressedFile);
+            formData.append('foto_base64', base64);
             formData.append('lote_id', loteId);
 
             const res = await fetch('/api/escaneos', { method: 'POST', body: formData });
@@ -408,27 +445,34 @@ const title = `Cargar Guias | ${currentUser.nombre} - Envias C.A.`;
 
         loteSummary.classList.remove('hidden');
         summaryTitle.textContent = failedCount === 0
-          ? `${uploadedCount} guias subidas correctamente`
+          ? `${uploadedCount} guías subidas correctamente`
           : `${uploadedCount} subidas, ${failedCount} con error`;
-        summaryDetail.textContent = 'Logistica las revisara y las agregara a tu hoja de ruta.';
-        if (failedCount > 0) {
-          const icon = document.getElementById('summary-icon')!;
-          icon.className = 'w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center';
-          icon.innerHTML = `<svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`;
-        }
+        summaryDetail.textContent = 'Logística las revisará y las agregará a tu hoja de ruta.';
       }
 
       // ============================================
-      // EVENTOS
+      // EVENTOS DE DISPARO
       // ============================================
-      btnSelect.addEventListener('click', () => photoInput.click());
-      btnAddMore.addEventListener('click', () => photoInput.click());
+      btnOpenCamera?.addEventListener('click', () => cameraInput.click());
+      btnAddCamera?.addEventListener('click', () => cameraInput.click());
 
-      photoInput.addEventListener('change', async (e) => {
+      btnOpenGallery?.addEventListener('click', () => galleryInput.click());
+      btnAddGallery?.addEventListener('click', () => galleryInput.click());
+
+      // Manejar foto tomada desde cámara
+      cameraInput?.addEventListener('change', (e) => {
         const files = Array.from((e.target as HTMLInputElement).files || []);
         if (files.length === 0) return;
-        photoInput.value = '';
+        cameraInput.value = '';
+        uploadQueue.push(...files);
+        processQueue();
+      });
 
+      // Manejar fotos seleccionadas desde galería
+      galleryInput?.addEventListener('change', (e) => {
+        const files = Array.from((e.target as HTMLInputElement).files || []);
+        if (files.length === 0) return;
+        galleryInput.value = '';
         uploadQueue.push(...files);
         processQueue();
       });
