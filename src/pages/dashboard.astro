@@ -1321,13 +1321,27 @@ const userInitials = currentUser.nombre
 
       async function loadData() {
         try {
-          const [guiasRes, choferesRes] = await Promise.all([
+          const [guiasRes, choferesRes, escaneosRes] = await Promise.all([
             fetch('/api/guias'),
-            fetch('/api/choferes')
+            fetch('/api/choferes'),
+            fetch('/api/escaneos')
           ]);
 
           const guiasJson = await guiasRes.json();
           const choferesJson = await choferesRes.json();
+          try {
+            const escaneosJson = await escaneosRes.json();
+            const totalPend = escaneosJson.totalPendientes || 0;
+            if (escaneosCountPill) {
+              if (totalPend > 0) {
+                escaneosCountPill.textContent = totalPend.toString();
+                escaneosCountPill.classList.remove('hidden');
+                escaneosCountPill.className = 'text-[10px] bg-amber-400 text-white px-1.5 py-0.2 rounded-full font-bold';
+              } else {
+                escaneosCountPill.classList.add('hidden');
+              }
+            }
+          } catch(e) {}
 
           if (guiasJson.success) {
             shipments = guiasJson.data || [];
@@ -1360,6 +1374,7 @@ const userInitials = currentUser.nombre
       async function silentRefresh() {
         if (isSubmitting || isLoading) return;
         try {
+          // 1. Sincronizar guías
           const res = await fetch('/api/guias');
           const json = await res.json();
           if (res.ok && json.success && Array.isArray(json.data)) {
@@ -1400,6 +1415,25 @@ const userInitials = currentUser.nombre
               renderViews();
             }
           }
+
+          // 2. Sincronizar badge de escaneos y lista si está activa la vista
+          try {
+            const escRes = await fetch('/api/escaneos');
+            if (escRes.ok) {
+              const escData = await escRes.json();
+              const totalPend = escData.totalPendientes || 0;
+              if (escaneosCountPill) {
+                if (totalPend > 0) {
+                  escaneosCountPill.textContent = totalPend.toString();
+                  escaneosCountPill.classList.remove('hidden');
+                  escaneosCountPill.className = 'text-[10px] bg-amber-400 text-white px-1.5 py-0.2 rounded-full font-bold';
+                } else {
+                  escaneosCountPill.classList.add('hidden');
+                }
+              }
+            }
+          } catch(e) {}
+
         } catch (err) {
           // Error silencioso de red sin interrumpir al usuario
         }

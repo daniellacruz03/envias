@@ -1,11 +1,11 @@
-﻿---
+---
 import '../styles/global.css';
 import { getUserFromCookies } from '../lib/auth';
 import { query } from '../lib/db';
 
 const currentUser = getUserFromCookies(Astro.cookies);
 if (!currentUser) return Astro.redirect('/login');
-if (currentUser.rol !== 'Chofer') return Astro.redirect('/chofer');
+if (currentUser.rol !== 'Chofer') return Astro.redirect('/dashboard');
 
 Astro.response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
 Astro.response.headers.set('Pragma', 'no-cache');
@@ -197,8 +197,21 @@ const title = `Cargar Guias | ${currentUser.nombre} - Envias C.A.`;
         </section>
       )}
 
+      <!-- Botón Volver a Hoja de Ruta -->
+      <div class="pt-2">
+        <a
+          href="/chofer"
+          class="w-full py-3.5 px-4 rounded-2xl bg-slate-900 hover:bg-black active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all text-center"
+        >
+          <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
+          <span>Ir a mi Hoja de Ruta</span>
+        </a>
+      </div>
+
       <!-- Info del proceso -->
-      <div class="px-1 pb-8 space-y-2 text-[11px] text-slate-400 text-center">
+      <div class="px-1 pb-8 space-y-1.5 text-[11px] text-slate-400 text-center">
         <p>Las fotos se comprimen automaticamente a ~80 KB antes de enviarse.</p>
         <p>Logistica revisara tus guias y las agregara a tu hoja de ruta.</p>
       </div>
