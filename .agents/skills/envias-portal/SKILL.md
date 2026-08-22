@@ -242,6 +242,7 @@ created_at TIMESTAMP
 - **CDN iconos del mapa:** `raw.githubusercontent.com/pointhi/leaflet-color-markers` para marcadores de colores.
 - **Geofencing client-side:** Catalogo de ciudades y poligonos vectoriales se pasan al cliente mediante `define:vars` en el `<script>` de `confirmar.astro`.
 - **id_guia es TEXT:** El campo en PostgreSQL es tipo TEXT, no autoincremental. El usuario lo ingresa manualmente (ej. 551236). El API hace `trim().toUpperCase()` antes de guardar.
+- **Empresas / Couriers Aliados:** Columna `empresa TEXT` en `guias` y `guias_escaneos`. Catálogo de 18 empresas integradas: Troop, Crazy cargo, Cargo King, JJ, Greymar, Ajbp, Global jats, Su descarga, Rima cargo, Dina cargo, Send logístics, Alas cargo, Aexpress, Priority, Alpi, Venexcargo, DBL, 2BC. Soportado en registro manual, drawer de escaneo y filtro de vistas.
 
 ---
 
