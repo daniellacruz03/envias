@@ -236,40 +236,40 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
 
         <!-- Opciones de Captura Directa -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-          <!-- Botón 1: Cámara Directa -->
-          <button
-            type="button"
+          <!-- Botón 1: Cámara Directa con Label Nativo -->
+          <label
+            for="scan-camera-input"
             id="btn-no-routes-camera"
-            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 shadow-sm transition-all cursor-pointer text-center"
+            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 shadow-sm transition-all cursor-pointer text-center select-none active:scale-[0.98]"
           >
-            <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
+            <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400 pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
             </div>
-            <div>
+            <div class="pointer-events-none">
               <p class="text-xs font-bold">Tomar Foto con Cámara</p>
               <p class="text-[10px] text-slate-300">Disparo 1 a 1</p>
             </div>
-          </button>
+          </label>
 
-          <!-- Botón 2: Galería Múltiple -->
-          <button
-            type="button"
+          <!-- Botón 2: Galería Múltiple con Label Nativo -->
+          <label
+            for="scan-gallery-input"
             id="btn-no-routes-gallery"
-            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer text-center"
+            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer text-center select-none active:scale-[0.98]"
           >
-            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
             </div>
-            <div>
+            <div class="pointer-events-none">
               <p class="text-xs font-bold">Elegir de Galería</p>
               <p class="text-[10px] text-slate-500">Seleccionar varias fotos</p>
             </div>
-          </button>
+          </label>
         </div>
 
         <!-- Contenedor de Progreso y Miniaturas de Subida en Vivo -->
@@ -512,6 +512,8 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
       <!-- Inputs ocultos para carga de fotos de escaneo -->
       <input type="file" id="scan-camera-input" accept="image/*" capture="environment" class="hidden" />
       <input type="file" id="scan-gallery-input" accept="image/*" multiple class="hidden" />
+
+    </main>
 
     <!-- ========================================== -->
     <!-- 6. MODAL / BOTTOM SHEET DE ENTREGA         -->
@@ -761,38 +763,38 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
 
         <!-- Opciones de Captura -->
         <div class="grid grid-cols-2 gap-2.5">
-          <button
-            type="button"
+          <label
+            for="scan-camera-input"
             id="modal-btn-camera"
-            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 shadow-sm transition-all cursor-pointer text-center"
+            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 shadow-sm transition-all cursor-pointer text-center select-none active:scale-[0.98]"
           >
-            <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
+            <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400 pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
             </div>
-            <div>
+            <div class="pointer-events-none">
               <p class="text-xs font-bold">Usar Cámara</p>
               <p class="text-[9px] text-slate-300">Foto directa</p>
             </div>
-          </button>
+          </label>
 
-          <button
-            type="button"
+          <label
+            for="scan-gallery-input"
             id="modal-btn-gallery"
-            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer text-center"
+            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer text-center select-none active:scale-[0.98]"
           >
-            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
             </div>
-            <div>
+            <div class="pointer-events-none">
               <p class="text-xs font-bold">Galería</p>
               <p class="text-[9px] text-slate-500">Múltiples fotos</p>
             </div>
-          </button>
+          </label>
         </div>
 
         <!-- Progreso y Galería de este modal -->
@@ -937,27 +939,38 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         return cleaned;
       }
 
-      // 2. Inicializar Mapa Leaflet
+      // 2. Inicializar Mapa Leaflet de forma segura
       function initMap() {
-        if (typeof L === 'undefined') return;
+        try {
+          if (typeof L === 'undefined') return;
+          const mapEl = document.getElementById('route-map');
+          if (!mapEl) return;
 
-        map = L.map('route-map', {
-          zoomControl: false,
-          attributionControl: false
-        }).setView([7.8500, -66.0000], 6);
+          if (map) {
+            map.invalidateSize();
+            return;
+          }
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          maxZoom: 19,
-          subdomains: 'abcd'
-        }).addTo(map);
+          map = L.map('route-map', {
+            zoomControl: false,
+            attributionControl: false
+          }).setView([7.8500, -66.0000], 6);
 
-        L.control.zoom({ position: 'topright' }).addTo(map);
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19,
+            subdomains: 'abcd'
+          }).addTo(map);
 
-        map.on('zoomstart', () => { userHasInteractedWithMap = true; });
-        map.on('dragstart', () => { userHasInteractedWithMap = true; });
+          L.control.zoom({ position: 'topright' }).addTo(map);
 
-        markersLayer = L.layerGroup().addTo(map);
-        updateMapMarkers(true);
+          map.on('zoomstart', () => { userHasInteractedWithMap = true; });
+          map.on('dragstart', () => { userHasInteractedWithMap = true; });
+
+          markersLayer = L.layerGroup().addTo(map);
+          updateMapMarkers(true);
+        } catch (err) {
+          console.warn('[Leaflet Init Safe Catch]:', err);
+        }
       }
 
       // 3. Actualizar Marcadores y Polilínea en el Mapa
@@ -1548,7 +1561,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
               } else {
                 if (height > maxHeight) {
                   width = Math.round((width * maxHeight) / height);
-                  maxHeight = maxHeight;
+                  height = maxHeight;
                 }
               }
 
@@ -2009,7 +2022,6 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
       }
 
       btnHeaderScan?.addEventListener('click', () => {
-        currentScanTargetMode = 'modal';
         openScanModal();
       });
 
@@ -2018,29 +2030,10 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         if (e.target === scanModal) closeScanModal();
       });
 
-      btnNoRoutesCamera?.addEventListener('click', () => {
-        currentScanTargetMode = 'hero';
-        scanCameraInput.click();
-      });
-
-      btnNoRoutesGallery?.addEventListener('click', () => {
-        currentScanTargetMode = 'hero';
-        scanGalleryInput.click();
-      });
-
-      modalBtnCamera?.addEventListener('click', () => {
-        currentScanTargetMode = 'modal';
-        scanCameraInput.click();
-      });
-
-      modalBtnGallery?.addEventListener('click', () => {
-        currentScanTargetMode = 'modal';
-        scanGalleryInput.click();
-      });
-
       scanCameraInput?.addEventListener('change', (e) => {
         const files = (e.target as HTMLInputElement).files;
         if (files && files.length > 0) {
+          currentScanTargetMode = (scanModal && !scanModal.classList.contains('hidden')) ? 'modal' : 'hero';
           handleScanFiles(Array.from(files));
         }
         scanCameraInput.value = '';
@@ -2049,6 +2042,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
       scanGalleryInput?.addEventListener('change', (e) => {
         const files = (e.target as HTMLInputElement).files;
         if (files && files.length > 0) {
+          currentScanTargetMode = (scanModal && !scanModal.classList.contains('hidden')) ? 'modal' : 'hero';
           handleScanFiles(Array.from(files));
         }
         scanGalleryInput.value = '';
