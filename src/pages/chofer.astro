@@ -9,12 +9,11 @@ if (!currentUser) {
   return Astro.redirect('/login');
 }
 
-// Si el usuario NO es Chofer (ej. Logística o Admin), redirigir a su portal central
 if (currentUser.rol !== 'Chofer') {
   return Astro.redirect('/dashboard');
 }
 
-// Encabezados anti-caché para impedir que al pulsar "Atrás" se vea la sesión cerrada
+// Encabezados anti-caché
 Astro.response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
 Astro.response.headers.set('Pragma', 'no-cache');
 Astro.response.headers.set('Expires', '0');
@@ -50,57 +49,38 @@ const guiasResult = await query(`
   LEFT JOIN usuarios u ON g.chofer_asignado_id = u.id
   WHERE g.chofer_asignado_id = $1
   ORDER BY 
-    CASE 
-      WHEN g.estado = 'En ruta' THEN 1
-      WHEN g.estado = 'Contactado' THEN 2
-      WHEN g.estado = 'Por contactar' THEN 3
-      WHEN g.estado = 'No entregado' THEN 4
-      WHEN g.estado = 'Entregado' THEN 5
-      ELSE 6
-    END,
-    NULLIF(g.orden_ruta, 0) ASC NULLS LAST,
+    CASE WHEN g.orden_ruta IS NOT NULL AND g.orden_ruta > 0 THEN g.orden_ruta ELSE 999999 END ASC,
     g.created_at DESC
 `, [targetChoferId]);
 
 const initialGuias = guiasResult.rows;
+
+// Métricas iniciales
 const totalInitial = initialGuias.length;
-const noEntregadosInitial = initialGuias.filter(g => g.estado === 'No entregado').length;
 const entregadosInitial = initialGuias.filter(g => g.estado === 'Entregado').length;
+const noEntregadosInitial = initialGuias.filter(g => g.estado === 'No entregado').length;
 const pendientesInitial = initialGuias.filter(g => g.estado !== 'Entregado' && g.estado !== 'No entregado').length;
 const porcentajeInitial = totalInitial > 0 ? Math.round((entregadosInitial / totalInitial) * 100) : 0;
 
-// Extraer ciudades únicas para filtro
-const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino).filter(Boolean)));
-
-const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
+const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino).filter(Boolean))).sort();
 ---
 
 <!doctype html>
-<html lang="es" class="h-full bg-[#F8FAFC]">
+<html lang="es" class="h-full bg-slate-100">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>{title}</title>
+    <title>Envías | Hoja de Ruta - {targetChoferNombre}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    
-    <!-- Google Fonts: Plus Jakarta Sans -->
+
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
-    <!-- Leaflet.js CSS y JS -->
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-      crossorigin=""
-    />
-    <script
-      is:inline
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-      crossorigin=""
-    ></script>
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 
     <style>
       body {
@@ -108,95 +88,73 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         -webkit-tap-highlight-color: transparent;
       }
       .tap-active:active {
-        transform: scale(0.98);
+        transform: scale(0.97);
       }
-      /* Custom map popup styling */
-      .leaflet-popup-content-wrapper {
-        border-radius: 1rem;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-        padding: 0.25rem;
-        border: 1px solid #e2e8f0;
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
       }
-      .leaflet-popup-content {
-        margin: 0.75rem 0.85rem;
-        font-family: 'Plus Jakarta Sans', sans-serif;
-      }
-      .custom-stop-icon {
-        background: transparent;
-        border: none;
+      .animate-fadeIn {
+        animation: fadeIn 0.2s ease-out forwards;
       }
     </style>
   </head>
-
-  <body class="min-h-full bg-[#F8FAFC] text-slate-800 pb-24 antialiased selection:bg-slate-900 selection:text-white relative">
+  <body class="min-h-full flex flex-col text-slate-800 antialiased selection:bg-slate-900 selection:text-white pb-12">
 
     <!-- ========================================== -->
-    <!-- 1. CABECERA DE TURNO (STICKY COMPACTA)     -->
+    <!-- 1. ENCABEZADO MÓVIL PRINCIPAL               -->
     <!-- ========================================== -->
-    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-2.5 shadow-xs">
-      <div class="max-w-2xl mx-auto flex items-center justify-between gap-3">
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 px-4 py-2.5 shadow-2xs">
+      <div class="max-w-2xl mx-auto flex items-center justify-between gap-2">
         
-        <!-- Identidad Chofer -->
+        <!-- Logo y Chofer -->
         <div class="flex items-center gap-2.5 min-w-0">
           <img 
             src="/logo.png" 
             alt="Envías C.A." 
-            class="h-7 w-auto object-contain mix-blend-multiply filter contrast-[1.20] brightness-[0.96] shrink-0"
-            loading="eager"
+            class="h-7 w-auto object-contain mix-blend-multiply shrink-0" 
           />
-          <div class="border-l border-slate-200 pl-2.5 min-w-0">
+          <div class="min-w-0">
             <div class="flex items-center gap-1.5">
-              <h1 class="text-xs sm:text-sm font-bold text-slate-900 leading-tight truncate" id="driver-name-display">
-                {targetChoferNombre}
-              </h1>
-              <span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shrink-0">
+              <h1 class="text-xs font-extrabold text-slate-900 truncate leading-tight">{targetChoferNombre}</h1>
+              <span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold shrink-0 border border-emerald-200/60">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                En ruta
+                <span>En ruta</span>
               </span>
             </div>
-            <p class="text-[10px] text-slate-400 font-medium">Hoja de Ruta Digital &bull; Envías</p>
+            <p class="text-[10px] text-slate-400 font-medium truncate">Hoja de Ruta Digital &bull; Env&iacute;as</p>
           </div>
         </div>
 
-        <!-- Acciones Header -->
+        <!-- Acciones rápidas -->
         <div class="flex items-center gap-1.5 shrink-0">
-          {currentUser.rol !== 'Chofer' && (
-            <a 
-              href="/dashboard" 
-              class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-semibold flex items-center gap-1 transition-colors"
-              title="Volver a Logística Central"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              <span class="hidden sm:inline">Central</span>
-            </a>
-          )}
-
-          <!-- Botón Cargar Guías del Día -->
+          <!-- Botón Escanear Guías (Abre Modal de Escaneo) -->
           <button
-            id="btn-header-scan"
             type="button"
-            class="relative p-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 transition-colors tap-active cursor-pointer"
-            title="Cargar guías físicas del día"
+            id="btn-header-scan"
+            class="p-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 transition-all tap-active cursor-pointer"
+            title="Escanear fotos de guías"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </button>
 
+          <!-- Botón Refrescar Ruta -->
           <button 
+            type="button"
             id="refresh-btn"
-            class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-200/80 transition-colors tap-active cursor-pointer"
-            title="Sincronizar paradas"
+            class="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 transition-all tap-active cursor-pointer"
+            title="Sincronizar ruta"
           >
             <svg id="refresh-icon" xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
 
-          <a 
+          <!-- Botón Cerrar Sesión -->
+          <a
             href="/api/auth/logout"
             class="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200/60 transition-colors tap-active"
             title="Cerrar sesión"
@@ -211,15 +169,15 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
     </header>
 
     <!-- ========================================== -->
-    <!-- 2. CONTENEDOR PRINCIPAL MOBILE-FIRST       -->
+    <!-- 2. CONTENIDO PRINCIPAL                      -->
     <!-- ========================================== -->
-    <main class="max-w-2xl mx-auto px-4 pt-3.5 space-y-3.5">
+    <main class="max-w-2xl mx-auto px-4 pt-3.5 space-y-3.5 w-full">
 
       <!-- ========================================== -->
-      <!-- VISTA A: SIN RUTAS ASIGNADAS (BIENVENIDA + ESCANER DIRECTO) -->
+      <!-- VISTA A: SIN RUTAS ASIGNADAS (BIENVENIDA)   -->
       <!-- ========================================== -->
       <div id="no-routes-container" class={`bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-7 shadow-sm text-center space-y-5 animate-fadeIn ${totalInitial === 0 ? '' : 'hidden'}`}>
-        <!-- Icono de bienvenida -->
+        <!-- Icono -->
         <div class="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center mx-auto shadow-xs">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -227,38 +185,20 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         </div>
 
         <div>
-          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">¡Hola, {targetChoferNombre}!</h2>
-          <p class="text-sm font-bold text-slate-700 mt-1">Aún no tienes rutas asignadas</p>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">&iexcl;Hola, {targetChoferNombre}!</h2>
+          <p class="text-sm font-bold text-slate-700 mt-1">A&uacute;n no tienes rutas asignadas</p>
           <p class="text-xs text-slate-500 max-w-md mx-auto mt-1.5 leading-relaxed">
-            Mientras el equipo de Logística organiza tu despacho, puedes escanear y cargar aquí las guías físicas que recibiste en el almacén.
+            Mientras Log&iacute;stica organiza tu despacho, puedes escanear y cargar aqu&iacute; las gu&iacute;as f&iacute;sicas que recibiste en el almac&eacute;n.
           </p>
         </div>
 
-        <!-- Inputs de archivo: fuera del flujo visual, vinculados por for/id -->
-        <!-- Posicionados off-screen: iOS y Android los tratan como visibles (no hay bug de change event) -->
-        <input
-          type="file"
-          id="scan-camera-input"
-          accept="image/*"
-          capture="environment"
-          style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;"
-        />
-        <input
-          type="file"
-          id="scan-gallery-input"
-          accept="image/*"
-          multiple
-          style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;"
-        />
+        <!-- Inputs de archivo off-screen nativos -->
+        <input type="file" id="hero-camera-input" accept="image/*" capture="environment" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;" />
+        <input type="file" id="hero-gallery-input" accept="image/*" multiple style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;" />
 
-        <!-- Botones visuales: simples labels vinculados a los inputs por for/id -->
+        <!-- Botones de Captura Directa -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-
-          <label
-            for="scan-camera-input"
-            id="btn-hero-camera"
-            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 shadow-sm transition-all cursor-pointer text-center select-none active:scale-[0.98] block"
-          >
+          <label for="hero-camera-input" class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 shadow-sm transition-all cursor-pointer text-center select-none block">
             <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
@@ -266,59 +206,52 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
               </svg>
             </div>
             <div>
-              <p class="text-xs font-bold">Tomar Foto con Cámara</p>
+              <p class="text-xs font-bold">Tomar Foto con C&aacute;mara</p>
               <p class="text-[10px] text-slate-300">Disparo 1 a 1</p>
             </div>
           </label>
 
-          <label
-            for="scan-gallery-input"
-            id="btn-hero-gallery"
-            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer text-center select-none active:scale-[0.98] block"
-          >
+          <label for="hero-gallery-input" class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer text-center select-none block">
             <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
             </div>
             <div>
-              <p class="text-xs font-bold">Elegir de Galería</p>
+              <p class="text-xs font-bold">Elegir de Galer&iacute;a</p>
               <p class="text-[10px] text-slate-500">Seleccionar varias fotos</p>
             </div>
           </label>
-
         </div>
 
-        <!-- Contenedor de Progreso y Miniaturas de Subida en Vivo -->
-        <div id="chofer-scan-live-section" class="hidden space-y-3 pt-2 text-left">
-          <!-- Barra de Progreso -->
-          <div id="chofer-progress-box" class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-2">
+        <!-- Barra de Progreso y Miniaturas de Subida en Vivo (Hero) -->
+        <div id="hero-scan-live-section" class="hidden space-y-3 pt-2 text-left">
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-2">
             <div class="flex items-center justify-between text-xs">
-              <span id="chofer-progress-label" class="font-bold text-slate-800">Comprimiendo y subiendo...</span>
-              <span id="chofer-progress-count" class="font-mono font-bold text-indigo-600">0 / 0</span>
+              <span id="hero-progress-label" class="font-bold text-slate-800">Comprimiendo y subiendo...</span>
+              <span id="hero-progress-count" class="font-mono font-bold text-indigo-600">0 / 0</span>
             </div>
             <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-              <div id="chofer-progress-bar" class="bg-indigo-600 h-full rounded-full transition-all duration-200" style="width: 0%"></div>
+              <div id="hero-progress-bar" class="bg-indigo-600 h-full rounded-full transition-all duration-200" style="width: 0%"></div>
             </div>
           </div>
 
-          <!-- Miniaturas subidas -->
           <div class="space-y-1.5">
             <div class="flex items-center justify-between">
-              <p class="text-xs font-bold text-slate-700">Guías cargadas en esta sesión</p>
-              <span id="chofer-gallery-count" class="text-[11px] font-bold text-indigo-600"></span>
+              <p class="text-xs font-bold text-slate-700">Gu&iacute;as cargadas en esta sesi&oacute;n</p>
+              <span id="hero-gallery-count" class="text-[11px] font-bold text-indigo-600"></span>
             </div>
-            <div id="chofer-gallery-grid" class="grid grid-cols-4 sm:grid-cols-6 gap-2"></div>
+            <div id="hero-gallery-grid" class="grid grid-cols-4 sm:grid-cols-6 gap-2"></div>
           </div>
         </div>
       </div>
 
       <!-- ========================================== -->
-      <!-- VISTA B: CON RUTAS ASIGNADAS (MAPA, STATS, PARADAS) -->
+      <!-- VISTA B: CON RUTAS ASIGNADAS (MAPA, CARDS) -->
       <!-- ========================================== -->
       <div id="active-routes-container" class={`space-y-3.5 ${totalInitial > 0 ? '' : 'hidden'}`}>
 
-        <!-- TARJETA COMPACTA DE PROGRESO DE RUTA -->
+        <!-- Tarjeta de Progreso de Ruta -->
         <section class="bg-white rounded-2xl border border-slate-200/80 p-3.5 shadow-sm">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-2">
@@ -343,7 +276,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
             ></div>
           </div>
 
-          <!-- Mini Badges de Conteo -->
+          <!-- Badges de Conteo -->
           <div class="grid grid-cols-4 gap-1 text-center text-[11px] pt-1.5 border-t border-slate-100 text-slate-600">
             <div class="p-1 rounded-lg bg-amber-50/80 border border-amber-200/60">
               <span class="block text-[10px] text-amber-700 font-bold uppercase">Pendientes</span>
@@ -354,7 +287,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
               <b class="text-emerald-900 text-xs" id="stat-entregados">{entregadosInitial}</b>
             </div>
             <div class="p-1 rounded-lg bg-rose-50/80 border border-rose-200/60">
-              <span class="block text-[10px] text-rose-700 font-bold uppercase">No entregó</span>
+              <span class="block text-[10px] text-rose-700 font-bold uppercase">No entreg&oacute;</span>
               <b class="text-rose-900 text-xs" id="stat-no-entregados">{noEntregadosInitial}</b>
             </div>
             <div class="p-1 rounded-lg bg-slate-100 border border-slate-200/60">
@@ -363,7 +296,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
             </div>
           </div>
 
-          <!-- Banner de Itinerario de Ruta Planificada (Spoke Style) -->
+          <!-- Banner de Itinerario Spoke -->
           <div id="route-itinerary-banner" class="mt-2 bg-slate-900 text-white rounded-xl p-3 shadow-sm space-y-1.5 border border-slate-800">
             <div class="flex items-center justify-between text-xs">
               <span class="text-[10px] uppercase tracking-wider font-extrabold text-indigo-400 flex items-center gap-1">
@@ -386,7 +319,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           </div>
         </section>
 
-        <!-- MAPA INTERACTIVO DE HOJA DE RUTA -->
+        <!-- Mapa Interactivo de Paradas -->
         <section class="space-y-2">
           <div class="flex items-center justify-between px-1">
             <div class="flex items-center gap-1.5">
@@ -398,6 +331,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
             </div>
             
             <button 
+              type="button"
               id="toggle-map-btn" 
               class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
             >
@@ -411,21 +345,11 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           <div id="map-wrapper" class="relative rounded-2xl overflow-hidden border border-slate-200/90 shadow-sm bg-slate-100 transition-all duration-300">
             <div id="route-map" class="h-64 sm:h-80 w-full z-10"></div>
             
-            <div 
-              id="route-info-pill" 
-              class="hidden absolute top-3 left-3 z-20 bg-white/95 backdrop-blur-xs border border-slate-200/90 px-3 py-1.5 rounded-xl shadow-md text-[11px] font-bold text-slate-800 flex items-center gap-1.5 animate-fadeIn"
-            >
-              <span class="flex h-2 w-2 relative">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-600"></span>
-              </span>
-              <span id="route-distance-text">Calculando ruta por carretera...</span>
-            </div>
-
             <button 
+              type="button"
               id="recenter-map-btn"
               class="absolute bottom-3 right-3 z-20 p-2.5 rounded-xl bg-white/95 text-slate-800 border border-slate-200 shadow-md hover:bg-white transition-all tap-active cursor-pointer"
-              title="Ajustar vista a todas las paradas"
+              title="Ajustar vista"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
@@ -434,7 +358,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           </div>
         </section>
 
-        <!-- BARRA DE FILTROS & BÚSQUEDA -->
+        <!-- Filtros y Pestañas -->
         <section class="space-y-2 pt-1">
           <div class="flex items-center gap-2">
             <div class="relative flex-1">
@@ -462,9 +386,10 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
             )}
           </div>
 
-          <!-- Segmented Control de Pestañas -->
+          <!-- Tabs Segmentadas -->
           <div class="grid grid-cols-4 p-1 bg-slate-200/70 rounded-xl border border-slate-200/80 text-xs gap-0.5">
             <button 
+              type="button"
               id="tab-pendientes"
               class="py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs cursor-pointer"
             >
@@ -475,6 +400,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
             </button>
 
             <button 
+              type="button"
               id="tab-entregados"
               class="py-2 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer"
             >
@@ -485,16 +411,18 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
             </button>
 
             <button 
+              type="button"
               id="tab-no-entregados"
               class="py-2 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer"
             >
-              <span>No entregó</span>
+              <span>No entreg&oacute;</span>
               <span class="px-1.5 py-0.2 rounded-full bg-rose-200 text-rose-800 text-[9px]" id="badge-tab-no-entregados">
                 {noEntregadosInitial}
               </span>
             </button>
 
             <button 
+              type="button"
               id="tab-todos"
               class="py-2 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer"
             >
@@ -506,21 +434,21 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           </div>
         </section>
 
-        <!-- LISTA DE PARADAS SECUENCIALES (CARDS) -->
+        <!-- Lista de Tarjetas de Paradas -->
         <section id="cards-container" class="space-y-3">
-          <!-- Generado dinámicamente con JavaScript -->
+          <!-- Se llena dinámicamente por JavaScript -->
         </section>
 
-        <!-- ESTADO VACÍO EN FILTRO -->
+        <!-- Estado Vacío en Filtros -->
         <div id="empty-state" class="hidden bg-white rounded-2xl border border-slate-200/80 p-8 text-center my-6 shadow-sm animate-fadeIn">
           <div class="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center mx-auto mb-2.5">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h3 class="text-sm font-bold text-slate-900 mb-1" id="empty-title">¡Sin paradas en este filtro!</h3>
+          <h3 class="text-sm font-bold text-slate-900 mb-1" id="empty-title">&iexcl;Sin paradas en este filtro!</h3>
           <p class="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed" id="empty-desc">
-            No hay entregas que coincidan con la búsqueda o el estado seleccionado.
+            No hay entregas que coincidan con la b&uacute;squeda o el estado seleccionado.
           </p>
         </div>
 
@@ -529,244 +457,22 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
     </main>
 
     <!-- ========================================== -->
-    <!-- 6. MODAL / BOTTOM SHEET DE ENTREGA         -->
+    <!-- 3. MODAL DE ESCANEO (ACCESIBLE DESDE HEADER) -->
     <!-- ========================================== -->
-    <div id="delivery-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-end sm:items-center justify-center p-0 sm:p-4 transition-all">
-      <div class="w-full sm:max-w-md bg-white border border-slate-200 rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 animate-fadeIn max-h-[92vh] overflow-y-auto">
+    <div id="scan-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="w-full sm:max-w-md bg-white border border-slate-200 rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl space-y-4 animate-fadeIn">
         
-        <!-- Cabecera modal -->
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
-          <div class="flex items-center gap-2.5">
-            <div id="modal-header-icon-container" class="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 transition-colors">
-              <svg id="modal-header-icon-success" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-              <svg id="modal-header-icon-incident" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-rose-600 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-sm font-bold text-slate-900" id="modal-title-text">Confirmar Entrega Realizada</h3>
-              <p class="text-[11px] text-slate-500 font-medium" id="modal-guia-code">Parada #--- • Guía #---</p>
-            </div>
-          </div>
-          <button id="modal-close-btn" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <!-- Selector de Modo (Entrega Exitosa vs No se pudo entregar) -->
-        <div class="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl gap-1 border border-slate-200/60">
-          <button
-            type="button"
-            id="modal-tab-success-btn"
-            class="py-2 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 shadow-xs cursor-pointer"
-          >
-            <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-            <span>Entrega Exitosa</span>
-          </button>
-
-          <button
-            type="button"
-            id="modal-tab-incident-btn"
-            class="py-2 px-2 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 cursor-pointer"
-          >
-            <svg class="w-3.5 h-3.5 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-            <span>No se pudo entregar</span>
-          </button>
-        </div>
-
-        <!-- Info del Destinatario -->
-        <div class="bg-slate-50 rounded-2xl p-3 border border-slate-200/80 space-y-0.5 text-xs">
-          <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Destinatario</p>
-          <p class="font-bold text-slate-900 text-sm" id="modal-destinatario">---</p>
-          <p class="text-slate-500 text-xs" id="modal-direccion">---</p>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- PANEL A: ENTREGA EXITOSA                   -->
-        <!-- ========================================== -->
-        <div id="modal-panel-success" class="space-y-3.5">
-          <!-- Campo Obligatorio: Foto Comprobante de Entrega -->
-          <div class="space-y-1.5">
-            <div class="flex items-center justify-between">
-              <label class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span>Foto Comprobante <span class="text-rose-500">* (Obligatorio)</span></span>
-              </label>
-              <span id="photo-size-badge" class="hidden text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">Optimizado</span>
-            </div>
-
-            <div id="dropzone-photo" class="border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-2xl p-3 text-center cursor-pointer transition-all bg-slate-50 hover:bg-slate-100/70">
-              <input type="file" id="modal-photo-input" accept="image/*" capture="environment" class="hidden" />
-              
-              <!-- Vista inicial sin foto -->
-              <div id="photo-placeholder" class="py-2 space-y-1">
-                <div class="w-9 h-9 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-1 shadow-2xs">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <p class="text-xs font-bold text-slate-800">Tomar foto o subir comprobante</p>
-                <p class="text-[10px] text-slate-400">Toca aquí para abrir la cámara o seleccionar imagen</p>
-              </div>
-
-              <!-- Vista previa optimizada -->
-              <div id="photo-preview-container" class="hidden space-y-2">
-                <img id="photo-preview-img" class="w-full max-h-36 object-contain rounded-xl border border-slate-200 bg-white" alt="Comprobante" />
-                <div class="flex items-center justify-between px-1 text-[11px]">
-                  <span class="text-emerald-700 font-bold flex items-center gap-1">
-                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                    <span id="photo-status-text">Comprobante optimizado</span>
-                  </span>
-                  <button type="button" id="btn-retake-photo" class="text-rose-600 hover:text-rose-700 font-bold underline cursor-pointer text-xs">
-                    Cambiar foto
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Campo Opcional: Recibido por -->
-          <div class="space-y-1.5">
-            <label for="modal-recibido-por" class="block text-xs font-semibold text-slate-700">
-              ¿Quién recibió el paquete? <span class="text-slate-400 font-normal">(Opcional)</span>
-            </label>
-            <input 
-              type="text" 
-              id="modal-recibido-por" 
-              placeholder="Ej: Titular / Vigilancia / Familiar (C.I. 12.345.678)"
-              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
-            />
-          </div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- PANEL B: NO SE PUDO ENTREGAR (INCIDENCIA)  -->
-        <!-- ========================================== -->
-        <div id="modal-panel-incident" class="hidden space-y-3">
-          <div class="bg-rose-50/60 border border-rose-200 rounded-2xl p-3 space-y-2 text-xs">
-            <label class="block text-xs font-bold text-rose-900 flex items-center gap-1.5">
-              <svg class="w-4 h-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-              <span>Selecciona el motivo:</span>
-            </label>
-
-            <!-- Opciones rápidas de motivo -->
-            <div class="space-y-1.5" id="incident-reasons-container">
-              <label class="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-rose-200/80 cursor-pointer hover:bg-rose-100/50 transition-colors">
-                <input type="radio" name="incident-reason" value="No contesta llamadas / Teléfono apagado" checked class="accent-rose-600 text-rose-600" />
-                <span class="text-xs font-semibold text-slate-800">No contesta llamadas / Teléfono apagado</span>
-              </label>
-              <label class="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-rose-200/80 cursor-pointer hover:bg-rose-100/50 transition-colors">
-                <input type="radio" name="incident-reason" value="Cliente ausente en la dirección" class="accent-rose-600 text-rose-600" />
-                <span class="text-xs font-semibold text-slate-800">Cliente ausente en la dirección</span>
-              </label>
-              <label class="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-rose-200/80 cursor-pointer hover:bg-rose-100/50 transition-colors">
-                <input type="radio" name="incident-reason" value="Cliente rechazó el paquete" class="accent-rose-600 text-rose-600" />
-                <span class="text-xs font-semibold text-slate-800">Cliente rechazó el paquete</span>
-              </label>
-              <label class="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-rose-200/80 cursor-pointer hover:bg-rose-100/50 transition-colors">
-                <input type="radio" name="incident-reason" value="Dirección no encontrada / Inaccesible" class="accent-rose-600 text-rose-600" />
-                <span class="text-xs font-semibold text-slate-800">Dirección no encontrada / Inaccesible</span>
-              </label>
-              <label class="flex items-center gap-2.5 p-2 rounded-xl bg-white border border-rose-200/80 cursor-pointer hover:bg-rose-100/50 transition-colors">
-                <input type="radio" name="incident-reason" value="Reprogramado para otro momento" class="accent-rose-600 text-rose-600" />
-                <span class="text-xs font-semibold text-slate-800">Reprogramado para otro momento</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Nota adicional -->
-          <div class="space-y-1">
-            <label for="modal-incident-note" class="block text-xs font-semibold text-slate-700">
-              Observación o detalle <span class="text-slate-400 font-normal">(Opcional)</span>
-            </label>
-            <input 
-              type="text" 
-              id="modal-incident-note" 
-              placeholder="Ej: Se tocó el timbre a las 3:15 PM y nadie respondió"
-              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
-            />
-          </div>
-        </div>
-
-        <!-- Botones de Acción -->
-        <div class="grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-100">
-          <button 
-            id="modal-cancel-btn"
-            type="button" 
-            class="py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
-          >
-            Cancelar
-          </button>
-
-          <!-- Botón Confirmar Entrega (Modo Exitoso) -->
-          <button 
-            id="modal-confirm-btn"
-            type="button"
-            disabled
-            class="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed active:scale-[0.98] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/10 transition-all cursor-pointer"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <span>Confirmar Entrega</span>
-          </button>
-
-          <!-- Botón Registrar Incidencia (Modo No Entregado) -->
-          <button 
-            id="modal-incident-submit-btn"
-            type="button"
-            class="hidden py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-lg shadow-rose-900/10 transition-all cursor-pointer"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-            <span>Registrar No Entregado</span>
-          </button>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- Modal Lightbox para ver Comprobante en Grande -->
-    <div id="lightbox-modal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm hidden items-center justify-center p-4 transition-all">
-      <div class="relative max-w-lg w-full bg-white rounded-3xl p-5 shadow-2xl space-y-3 animate-fadeIn">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
-          <h3 class="text-xs font-bold text-slate-900" id="lightbox-title">Comprobante de Entrega</h3>
-          <button id="lightbox-close-btn" class="p-1 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-        <div class="rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center max-h-[60vh]">
-          <img id="lightbox-img" class="w-full h-auto max-h-[60vh] object-contain" alt="Comprobante de Entrega" />
-        </div>
-        <p class="text-[11px] text-slate-500 text-center" id="lightbox-info"></p>
-      </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- MODAL DE ESCANEO / CARGA DE GUÍAS FÍSICAS  -->
-    <!-- ========================================== -->
-    <div id="scan-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-end sm:items-center justify-center p-0 sm:p-4 transition-all">
-      <div class="w-full sm:max-w-md bg-white border border-slate-200 rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 animate-fadeIn max-h-[92vh] overflow-y-auto">
-        
-        <!-- Cabecera modal escaneo -->
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div class="flex items-center gap-2.5">
             <div class="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
             </div>
             <div>
-              <h3 class="text-sm font-bold text-slate-900">Cargar Guías Físicas</h3>
-              <p class="text-[11px] text-slate-500">Toma fotos o sube desde la galería</p>
+              <h3 class="text-sm font-bold text-slate-900">Escanear Gu&iacute;as F&iacute;sicas</h3>
+              <p class="text-[11px] text-slate-500 font-medium">Carga fotos para enviar a Log&iacute;stica</p>
             </div>
           </div>
           <button id="scan-modal-close-btn" type="button" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
@@ -774,29 +480,12 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           </button>
         </div>
 
-        <!-- Inputs off-screen para el modal de escaneo -->
-        <input
-          type="file"
-          id="scan-modal-camera-input"
-          accept="image/*"
-          capture="environment"
-          style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;"
-        />
-        <input
-          type="file"
-          id="scan-modal-gallery-input"
-          accept="image/*"
-          multiple
-          style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;"
-        />
+        <!-- Inputs off-screen para el modal -->
+        <input type="file" id="modal-scan-camera-input" accept="image/*" capture="environment" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;" />
+        <input type="file" id="modal-scan-gallery-input" accept="image/*" multiple style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;" />
 
-        <!-- Opciones de Captura -->
         <div class="grid grid-cols-2 gap-2.5">
-
-          <label
-            for="scan-modal-camera-input"
-            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 shadow-sm transition-all cursor-pointer text-center select-none active:scale-[0.98] block"
-          >
+          <label for="modal-scan-camera-input" class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 shadow-sm transition-all cursor-pointer text-center select-none block">
             <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
@@ -809,10 +498,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
             </div>
           </label>
 
-          <label
-            for="scan-modal-gallery-input"
-            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer text-center select-none active:scale-[0.98] block"
-          >
+          <label for="modal-scan-gallery-input" class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer text-center select-none block">
             <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -823,14 +509,13 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
               <p class="text-[9px] text-slate-500">M&uacute;ltiples fotos</p>
             </div>
           </label>
-
         </div>
 
-        <!-- Progreso y Galería de este modal -->
+        <!-- Progreso y Galería del Modal -->
         <div id="modal-scan-live-section" class="hidden space-y-3 pt-1 text-left">
           <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2">
             <div class="flex items-center justify-between text-xs">
-              <span id="modal-progress-label" class="font-bold text-slate-800">Subiendo guías...</span>
+              <span id="modal-progress-label" class="font-bold text-slate-800">Subiendo gu&iacute;as...</span>
               <span id="modal-progress-count" class="font-mono font-bold text-indigo-600">0 / 0</span>
             </div>
             <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
@@ -850,197 +535,259 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
       </div>
     </div>
 
-    <!-- TOAST NOTIFICATION FLOTANTE -->
+    <!-- ========================================== -->
+    <!-- 4. MODAL DE CONFIRMACIÓN DE ENTREGA         -->
+    <!-- ========================================== -->
+    <div id="delivery-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-end sm:items-center justify-center p-0 sm:p-4">
+      <div class="w-full sm:max-w-md bg-white border border-slate-200 rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 animate-fadeIn max-h-[92vh] overflow-y-auto">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div id="modal-header-icon-container" class="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+              <svg id="modal-header-icon-success" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <svg id="modal-header-icon-incident" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-rose-600 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900" id="modal-title-text">Confirmar Entrega Realizada</h3>
+              <p class="text-[11px] text-slate-500 font-medium" id="modal-guia-code">Parada #--- &bull; Gu&iacute;a #---</p>
+            </div>
+          </div>
+          <button id="modal-close-btn" type="button" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <!-- Selector de Modo -->
+        <div class="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl gap-1 border border-slate-200/60">
+          <button
+            type="button"
+            id="modal-tab-success-btn"
+            class="py-2 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 shadow-xs cursor-pointer"
+          >
+            <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            <span>Entrega Exitosa</span>
+          </button>
+
+          <button
+            type="button"
+            id="modal-tab-incident-btn"
+            class="py-2 px-2 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 cursor-pointer"
+          >
+            <svg class="w-3.5 h-3.5 text-rose-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            <span>No se pudo entregar</span>
+          </button>
+        </div>
+
+        <!-- Info Destinatario -->
+        <div class="bg-slate-50 rounded-2xl p-3 border border-slate-200/80 space-y-0.5 text-xs">
+          <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Destinatario</p>
+          <p class="font-bold text-slate-900 text-sm" id="modal-destinatario">---</p>
+          <p class="text-slate-500 text-xs" id="modal-direccion">---</p>
+        </div>
+
+        <!-- PANEL A: ENTREGA EXITOSA -->
+        <div id="modal-panel-success" class="space-y-3.5">
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Foto Comprobante <span class="text-rose-500">* (Obligatorio)</span></span>
+              </label>
+              <span id="photo-size-badge" class="hidden text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">Optimizado</span>
+            </div>
+
+            <!-- Input off-screen para foto de comprobante -->
+            <input type="file" id="modal-delivery-photo-input" accept="image/*" capture="environment" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;" />
+
+            <label for="modal-delivery-photo-input" id="dropzone-delivery-photo" class="border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-2xl p-3 text-center cursor-pointer transition-all bg-slate-50 hover:bg-slate-100/70 block">
+              <div id="photo-placeholder" class="py-2 space-y-1">
+                <div class="w-9 h-9 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-1 shadow-2xs">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <p class="text-xs font-bold text-slate-800">Tomar foto o subir comprobante</p>
+                <p class="text-[10px] text-slate-400">Toca aqu&iacute; para abrir la c&aacute;mara</p>
+              </div>
+
+              <div id="photo-preview-container" class="hidden space-y-2">
+                <img id="photo-preview-img" class="w-full max-h-36 object-contain rounded-xl border border-slate-200 bg-white" alt="Comprobante" />
+                <div class="flex items-center justify-between px-1 text-[11px]">
+                  <span class="text-emerald-700 font-bold flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span id="photo-status-text">Comprobante optimizado</span>
+                  </span>
+                  <span class="text-rose-600 font-bold underline text-xs">Cambiar foto</span>
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="modal-recibido-por" class="block text-xs font-semibold text-slate-700">
+              &iquest;Qui&eacute;n recibi&oacute; el paquete? <span class="text-slate-400 font-normal">(Opcional)</span>
+            </label>
+            <input 
+              type="text" 
+              id="modal-recibido-por" 
+              placeholder="Ej: Titular / Vigilancia / Familiar (C.I. 12.345.678)"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
+            />
+          </div>
+        </div>
+
+        <!-- PANEL B: INCIDENCIA -->
+        <div id="modal-panel-incident" class="hidden space-y-3">
+          <div class="bg-rose-50/60 border border-rose-200 rounded-2xl p-3 space-y-2 text-xs">
+            <label class="block text-xs font-bold text-rose-900 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <span>Selecciona el motivo:</span>
+            </label>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5" id="incident-reasons-grid">
+              <button type="button" data-reason="Dirección incorrecta / Incompleta" class="incident-opt p-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-left font-semibold text-[11px] hover:border-rose-300 hover:bg-rose-50/50 transition-all cursor-pointer">
+                Direcci&oacute;n incorrecta / Incompleta
+              </button>
+              <button type="button" data-reason="Cliente no atiende llamadas" class="incident-opt p-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-left font-semibold text-[11px] hover:border-rose-300 hover:bg-rose-50/50 transition-all cursor-pointer">
+                Cliente no atiende llamadas
+              </button>
+              <button type="button" data-reason="Cliente ausente en domicilio" class="incident-opt p-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-left font-semibold text-[11px] hover:border-rose-300 hover:bg-rose-50/50 transition-all cursor-pointer">
+                Cliente ausente en domicilio
+              </button>
+              <button type="button" data-reason="Paquete rechazado por cliente" class="incident-opt p-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-left font-semibold text-[11px] hover:border-rose-300 hover:bg-rose-50/50 transition-all cursor-pointer">
+                Paquete rechazado por cliente
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="modal-incident-note" class="block text-xs font-semibold text-slate-700">
+              Observaci&oacute;n detallada <span class="text-rose-500">*</span>
+            </label>
+            <textarea 
+              id="modal-incident-note" 
+              rows="2" 
+              placeholder="Explica qué sucedió para que Logística tome acciones..."
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/10 focus:border-rose-500"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="flex items-center gap-2 pt-2 border-t border-slate-100">
+          <button 
+            type="button" 
+            id="modal-cancel-btn" 
+            class="flex-1 py-3 px-4 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer text-center"
+          >
+            Cancelar
+          </button>
+          
+          <button 
+            type="button" 
+            id="modal-confirm-btn" 
+            disabled
+            class="flex-1 py-3 px-4 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+            <span>Confirmar Entrega</span>
+          </button>
+
+          <button 
+            type="button" 
+            id="modal-incident-submit-btn" 
+            class="hidden flex-1 py-3 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+          >
+            <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            <span>Guardar Incidencia</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 5. LIGHTBOX VISOR DE FOTOS CON ZOOM         -->
+    <!-- ========================================== -->
+    <div id="lightbox-modal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md hidden items-center justify-center p-4">
+      <div class="relative max-w-lg w-full bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl p-4 space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+          <div>
+            <h4 class="text-xs font-bold text-white" id="lightbox-title">Comprobante</h4>
+            <p class="text-[10px] text-slate-400" id="lightbox-info"></p>
+          </div>
+          <button type="button" id="lightbox-close-btn" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 cursor-pointer">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="flex items-center justify-center max-h-[70vh] overflow-hidden rounded-2xl bg-black">
+          <img id="lightbox-img" src="" alt="Comprobante" class="max-h-[68vh] w-auto object-contain rounded-xl" />
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 6. TOAST FLOTANTE                           -->
+    <!-- ========================================== -->
     <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2 hidden transition-all duration-300">
       <span id="toast-icon"></span>
       <span id="toast-message">Mensaje</span>
     </div>
 
     <!-- ========================================== -->
-    <!-- 7. SCRIPT CLIENTE (LEAFLET + REACTIVIDAD)  -->
+    <!-- 7. SCRIPT CLIENTE DESACOPLADO Y MODULAR    -->
     <!-- ========================================== -->
     <script define:vars={{ initialGuias, targetChoferId }}>
+      // ----------------------------------------------------
+      // ESTADO GLOBAL
+      // ----------------------------------------------------
       let currentChoferId = targetChoferId;
       let guiasData = initialGuias || [];
-      let activeTab = 'pendientes'; // 'pendientes' | 'entregados' | 'no_entregados' | 'todos'
+      let activeTab = 'pendientes';
       let searchQuery = '';
       let selectedCity = '';
       let activeModalGuiaId = null;
-      let modalDeliveryMode = 'success'; // 'success' | 'incident'
-
-      // Leaflet Map State
-      let map = null;
-      let markersLayer = null;
-      let routePolyline = null;
-      let isMapVisible = true;
-      let userHasInteractedWithMap = false;
-
-      // Elementos DOM
-      const cardsContainer = document.getElementById('cards-container');
-      const emptyState = document.getElementById('empty-state');
-      const emptyTitle = document.getElementById('empty-title');
-      const emptyDesc = document.getElementById('empty-desc');
-      const searchInput = document.getElementById('search-input');
-      const cityFilter = document.getElementById('city-filter');
-      
-      const tabPendientes = document.getElementById('tab-pendientes');
-      const tabEntregados = document.getElementById('tab-entregados');
-      const tabNoEntregados = document.getElementById('tab-no-entregados');
-      const tabTodos = document.getElementById('tab-todos');
-      
-      const badgeTabPendientes = document.getElementById('badge-tab-pendientes');
-      const badgeTabEntregados = document.getElementById('badge-tab-entregados');
-      const badgeTabNoEntregados = document.getElementById('badge-tab-no-entregados');
-      const badgeTabTodos = document.getElementById('badge-tab-todos');
-
-      const statPendientes = document.getElementById('stat-pendientes');
-      const statEntregados = document.getElementById('stat-entregados');
-      const statNoEntregados = document.getElementById('stat-no-entregados');
-      const statTotal = document.getElementById('stat-total');
-      const progressText = document.getElementById('progress-text');
-      const progressBarFill = document.getElementById('progress-bar-fill');
-      
-      const refreshBtn = document.getElementById('refresh-btn');
-      const refreshIcon = document.getElementById('refresh-icon');
-
-      const mapWrapper = document.getElementById('map-wrapper');
-      const toggleMapBtn = document.getElementById('toggle-map-btn');
-      const toggleMapText = document.getElementById('toggle-map-text');
-      const toggleMapIcon = document.getElementById('toggle-map-icon');
-      const recenterMapBtn = document.getElementById('recenter-map-btn');
-      const routeInfoPill = document.getElementById('route-info-pill');
-      const routeDistanceText = document.getElementById('route-distance-text');
-
-      // Modal Elements
-      const deliveryModal = document.getElementById('delivery-modal');
-      const modalCloseBtn = document.getElementById('modal-close-btn');
-      const modalCancelBtn = document.getElementById('modal-cancel-btn');
-      const modalConfirmBtn = document.getElementById('modal-confirm-btn');
-      const modalIncidentSubmitBtn = document.getElementById('modal-incident-submit-btn');
-      const modalGuiaCode = document.getElementById('modal-guia-code');
-      const modalDestinatario = document.getElementById('modal-destinatario');
-      const modalDireccion = document.getElementById('modal-direccion');
-      const modalRecibidoPor = document.getElementById('modal-recibido-por');
-      const modalIncidentNote = document.getElementById('modal-incident-note');
-
-      const modalTabSuccessBtn = document.getElementById('modal-tab-success-btn');
-      const modalTabIncidentBtn = document.getElementById('modal-tab-incident-btn');
-      const modalPanelSuccess = document.getElementById('modal-panel-success');
-      const modalPanelIncident = document.getElementById('modal-panel-incident');
-      const modalTitleText = document.getElementById('modal-title-text');
-      const modalHeaderIconSuccess = document.getElementById('modal-header-icon-success');
-      const modalHeaderIconIncident = document.getElementById('modal-header-icon-incident');
-      const modalHeaderIconContainer = document.getElementById('modal-header-icon-container');
-
-      // Photo Upload & Compression Elements
-      const dropzonePhoto = document.getElementById('dropzone-photo');
-      const modalPhotoInput = document.getElementById('modal-photo-input');
-      const photoPlaceholder = document.getElementById('photo-placeholder');
-      const photoPreviewContainer = document.getElementById('photo-preview-container');
-      const photoPreviewImg = document.getElementById('photo-preview-img');
-      const photoSizeBadge = document.getElementById('photo-size-badge');
-      const photoStatusText = document.getElementById('photo-status-text');
-      const btnRetakePhoto = document.getElementById('btn-retake-photo');
-
-      // Lightbox Elements
-      const lightboxModal = document.getElementById('lightbox-modal');
-      const lightboxCloseBtn = document.getElementById('lightbox-close-btn');
-      const lightboxImg = document.getElementById('lightbox-img');
-      const lightboxTitle = document.getElementById('lightbox-title');
-      const lightboxInfo = document.getElementById('lightbox-info');
-
-      let currentCompressedFile = null;
-
-      // Toast Elements
-      const toast = document.getElementById('toast');
-      const toastIcon = document.getElementById('toast-icon');
-      const toastMessage = document.getElementById('toast-message');
-
-      // Listeners de inputs de escaneo (hero + modal)
-      const scanCameraInput = document.getElementById('scan-camera-input') as HTMLInputElement;
-      const scanGalleryInput = document.getElementById('scan-gallery-input') as HTMLInputElement;
-      const scanModalCameraInput = document.getElementById('scan-modal-camera-input') as HTMLInputElement;
-      const scanModalGalleryInput = document.getElementById('scan-modal-gallery-input') as HTMLInputElement;
-      const scanModal = document.getElementById('scan-modal');
-      const scanModalCloseBtn = document.getElementById('scan-modal-close-btn');
-
-      const choferScanLiveSection = document.getElementById('chofer-scan-live-section');
-      const choferProgressBar = document.getElementById('chofer-progress-bar');
-      const choferProgressLabel = document.getElementById('chofer-progress-label');
-      const choferProgressCount = document.getElementById('chofer-progress-count');
-      const choferGalleryGrid = document.getElementById('chofer-gallery-grid');
-      const choferGalleryCount = document.getElementById('chofer-gallery-count');
-
-      const modalScanLiveSection = document.getElementById('modal-scan-live-section');
-      const modalProgressBar = document.getElementById('modal-progress-bar');
-      const modalProgressLabel = document.getElementById('modal-progress-label');
-      const modalProgressCount = document.getElementById('modal-progress-count');
-      const modalGalleryGrid = document.getElementById('modal-gallery-grid');
-      const modalGalleryCount = document.getElementById('modal-gallery-count');
-
-      let currentScanTargetMode = 'hero';
+      let modalDeliveryMode = 'success';
+      let currentCompressedBlob = null;
       let sessionScannedCount = 0;
 
-      function openScanModal() {
-        scanModal?.classList.remove('hidden');
-        scanModal?.classList.add('flex');
-        document.body.style.overflow = 'hidden';
+      // Elementos Toast
+      const toastEl = document.getElementById('toast');
+      const toastIconEl = document.getElementById('toast-icon');
+      const toastMsgEl = document.getElementById('toast-message');
+      let toastTimeout = null;
+
+      function showToast(message, type = 'info') {
+        if (!toastEl || !toastMsgEl) return;
+        if (toastTimeout) clearTimeout(toastTimeout);
+
+        toastMsgEl.textContent = message;
+        if (type === 'success') {
+          toastEl.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2 animate-fadeIn';
+          if (toastIconEl) toastIconEl.innerHTML = '<svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>';
+        } else if (type === 'error') {
+          toastEl.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-rose-600 text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2 animate-fadeIn';
+          if (toastIconEl) toastIconEl.innerHTML = '<svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>';
+        } else {
+          toastEl.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2 animate-fadeIn';
+          if (toastIconEl) toastIconEl.innerHTML = '<svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+        }
+
+        toastEl.classList.remove('hidden');
+        toastTimeout = setTimeout(() => {
+          toastEl?.classList.add('hidden');
+        }, 4000);
       }
-      function closeScanModal() {
-        scanModal?.classList.add('hidden');
-        scanModal?.classList.remove('flex');
-        document.body.style.overflow = '';
-      }
 
-      scanModalCloseBtn?.addEventListener('click', closeScanModal);
-      scanModal?.addEventListener('click', (e) => {
-        if (e.target === scanModal) closeScanModal();
-      });
-
-      // Hero inputs (pantalla de bienvenida)
-      scanCameraInput?.addEventListener('change', (e) => {
-        const input = e.target as HTMLInputElement;
-        // Clonar a Array ANTES de cualquier reset para que Canvas pueda leerlos
-        const files = input.files ? Array.from(input.files) : [];
-        if (files.length > 0) {
-          currentScanTargetMode = 'hero';
-          // NO resetear aquí: handleScanFiles es async y lee los File objects.
-          // El reset ocurre al final de handleScanFiles().
-          handleScanFiles(files);
-        }
-      });
-      scanGalleryInput?.addEventListener('change', (e) => {
-        const input = e.target as HTMLInputElement;
-        const files = input.files ? Array.from(input.files) : [];
-        if (files.length > 0) {
-          currentScanTargetMode = 'hero';
-          handleScanFiles(files);
-        }
-      });
-
-      // Modal inputs (modal #scan-modal)
-      scanModalCameraInput?.addEventListener('change', (e) => {
-        const input = e.target as HTMLInputElement;
-        const files = input.files ? Array.from(input.files) : [];
-        if (files.length > 0) {
-          currentScanTargetMode = 'modal';
-          handleScanFiles(files);
-        }
-      });
-      scanModalGalleryInput?.addEventListener('change', (e) => {
-        const input = e.target as HTMLInputElement;
-        const files = input.files ? Array.from(input.files) : [];
-        if (files.length > 0) {
-          currentScanTargetMode = 'modal';
-          handleScanFiles(files);
-        }
-      });
-
-      // Botón de cámara del encabezado -> abre scan-modal
-      const btnHeaderScan = document.getElementById('btn-header-scan');
-      btnHeaderScan?.addEventListener('click', openScanModal);
-
-      // 1. Normalización de teléfono para WhatsApp
       function formatPhoneForWhatsApp(phone) {
         if (!phone) return '';
         let cleaned = phone.replace(/[^0-9]/g, '');
@@ -1052,616 +799,14 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         return cleaned;
       }
 
-      // 2. Inicializar Mapa Leaflet de forma segura
-      function initMap() {
-        try {
-          if (typeof L === 'undefined') return;
-          const mapEl = document.getElementById('route-map');
-          if (!mapEl) return;
-
-          if (map) {
-            map.invalidateSize();
-            return;
-          }
-
-          map = L.map('route-map', {
-            zoomControl: false,
-            attributionControl: false
-          }).setView([7.8500, -66.0000], 6);
-
-          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19,
-            subdomains: 'abcd'
-          }).addTo(map);
-
-          L.control.zoom({ position: 'topright' }).addTo(map);
-
-          map.on('zoomstart', () => { userHasInteractedWithMap = true; });
-          map.on('dragstart', () => { userHasInteractedWithMap = true; });
-
-          markersLayer = L.layerGroup().addTo(map);
-          updateMapMarkers(true);
-        } catch (err) {
-          console.warn('[Leaflet Init Safe Catch]:', err);
-        }
-      }
-
-      // 3. Actualizar Marcadores y Polilínea en el Mapa
-      const VENEZUELA_COORDS = {
-        'barquisimeto': [10.0808, -69.3756],
-        'sede principal barquisimeto': [10.0808, -69.3756],
-        'cabudare': [10.0333, -69.2667],
-        'carora': [10.1755, -70.0827],
-        'el tocuyo': [9.7872, -69.7928],
-        'quibor': [9.9286, -69.6201],
-        'caracas': [10.4934, -66.9299],
-        'chacao': [10.4925, -66.8530],
-        'baruta': [10.4344, -66.8744],
-        'el hatillo': [10.4267, -66.8258],
-        'petare': [10.4789, -66.8094],
-        'catia': [10.5186, -66.9442],
-        'los teques': [10.3444, -67.0428],
-        'guarenas': [10.4681, -66.6172],
-        'guatire': [10.4722, -66.5414],
-        'merida': [8.5738, -71.1851],
-        'timotes': [8.9833, -70.7333],
-        'apartaderos': [8.8000, -70.8500],
-        'paramo': [8.8000, -70.8500],
-        'el paramo': [8.8000, -70.8500],
-        'mucuchies': [8.7500, -70.9167],
-        'santo domingo': [8.8600, -70.6800],
-        'tabay': [8.6350, -71.0720],
-        'el vigia': [8.6250, -71.6500],
-        'ejido': [8.5475, -71.2425],
-        'tovar': [8.3375, -71.7583],
-        'lagunillas': [8.5147, -71.3911],
-        'san cristobal': [7.7669, -72.2250],
-        'tariba': [7.8186, -72.2242],
-        'rubio': [7.7058, -72.3556],
-        'san antonio': [7.8147, -72.4439],
-        'la grita': [8.1342, -71.9844],
-        'maracaibo': [10.6544, -71.6385],
-        'san francisco': [10.5753, -71.6586],
-        'cabimas': [10.3986, -71.4428],
-        'ciudad ojeda': [10.2036, -71.3117],
-        'valencia': [10.1620, -68.0077],
-        'naguanagua': [10.2544, -68.0125],
-        'san diego': [10.2589, -67.9547],
-        'puerto cabello': [10.4731, -68.0125],
-        'maracay': [10.2469, -67.5958],
-        'turmero': [10.2289, -67.4744],
-        'cagua': [10.1864, -67.4594],
-        'la victoria': [10.2269, -67.3314],
-        'barinas': [8.6226, -70.2075],
-        'socopo': [8.2347, -70.7686],
-        'valera': [9.3178, -70.6036],
-        'trujillo': [9.3664, -70.4356],
-        'bocono': [9.2500, -70.2667],
-        'acarigua': [9.5545, -69.2006],
-        'araure': [9.5603, -69.2147],
-        'guanare': [9.0439, -69.7421],
-        'san felipe': [10.3397, -68.7425],
-        'yaritagua': [10.0811, -69.1239],
-        'chivacoa': [10.1606, -68.8953],
-        'punto fijo': [11.6956, -70.1996],
-        'coro': [11.4045, -69.6734],
-        'barcelona': [10.1362, -64.6862],
-        'puerto la cruz': [10.2138, -64.6328],
-        'lecheria': [10.1919, -64.6908],
-        'el tigre': [8.8875, -64.2458],
-        'ciudad guayana': [8.3533, -62.6467],
-        'puerto ordaz': [8.3533, -62.6467],
-        'ciudad bolivar': [8.1292, -63.5408],
-        'maturin': [9.7469, -63.1832],
-        'cumana': [10.4536, -64.1750],
-        'san juan de los morros': [9.9115, -67.3538],
-        'calabozo': [8.9242, -67.4294],
-        'san fernando de apure': [7.8939, -67.4724],
-        'la guaira': [10.6019, -66.9328],
-        'maiquetia': [10.6006, -66.9567],
-        'porlamar': [10.9577, -63.8697]
-      };
-
-      function parseLocationCoords(text) {
-        if (!text) return null;
-        const normalized = text.toLowerCase().trim();
-        const match = normalized.match(/(-?\d{1,2}\.\d{3,})[,\s]+(-?\d{2,3}\.\d{3,})/);
-        if (match) {
-          return [parseFloat(match[1]), parseFloat(match[2])];
-        }
-        for (const [key, coords] of Object.entries(VENEZUELA_COORDS)) {
-          if (normalized.includes(key)) {
-            return coords;
-          }
-        }
-        return null;
-      }
-
-      function updateMapMarkers(forceFitBounds = false) {
-        if (!map || !markersLayer) return;
-
-        markersLayer.clearLayers();
-        const latLngs = [];
-
-        // 1. Origen / Salida (Pin Azul)
-        const firstWithRoute = guiasData.find(g => g.ruta_origen);
-        const originCoords = firstWithRoute?.ruta_origen ? parseLocationCoords(firstWithRoute.ruta_origen) : [10.0808, -69.3756];
-
-        if (originCoords) {
-          const startHtml = `
-            <div class="relative flex items-center justify-center w-7 h-7 rounded-full bg-indigo-600 border-2 border-white shadow-md text-white text-[10px] font-black">
-              S
-            </div>
-          `;
-          const startIcon = L.divIcon({ html: startHtml, className: 'start-pin', iconSize: [28, 28], iconAnchor: [14, 14] });
-          L.marker(originCoords, { icon: startIcon }).addTo(markersLayer)
-            .bindPopup(`<b>Punto de Salida:</b><br>${firstWithRoute?.ruta_origen || 'Sede Principal Barquisimeto'}`);
-          latLngs.push(originCoords);
-        }
-
-        // 2. Paradas de Entrega Numeradas
-        guiasData.forEach((guia, idx) => {
-          if (guia.gps_confirmado && guia.gps_latitud && guia.gps_longitud) {
-            const lat = Number(guia.gps_latitud);
-            const lng = Number(guia.gps_longitud);
-            const isEntregado = guia.estado === 'Entregado';
-            const isNoEntregado = guia.estado === 'No entregado';
-            latLngs.push([lat, lng]);
-
-            const stopNum = guia.orden_ruta || (idx + 1);
-
-            let pinBg = 'bg-slate-900 border-emerald-400 text-emerald-300';
-            if (isEntregado) pinBg = 'bg-emerald-600 border-white text-white';
-            else if (isNoEntregado) pinBg = 'bg-rose-600 border-white text-white';
-
-            const pinHtml = `
-              <div class="relative flex items-center justify-center w-7 h-7 rounded-full ${pinBg} border-2 shadow-md text-[10px] font-extrabold cursor-pointer">
-                ${isEntregado ? '✓' : (isNoEntregado ? '✕' : stopNum)}
-              </div>
-            `;
-            const icon = L.divIcon({ html: pinHtml, className: 'stop-pin', iconSize: [28, 28], iconAnchor: [14, 14] });
-
-            const marker = L.marker([lat, lng], { icon }).addTo(markersLayer);
-            marker.bindPopup(`
-              <div class="p-1 space-y-1 text-xs">
-                <div class="flex items-center gap-1.5">
-                  <span class="font-mono font-bold text-slate-900">#${guia.id_guia}</span>
-                  <span class="px-1.5 py-0.2 rounded text-[10px] font-bold ${isEntregado ? 'bg-emerald-100 text-emerald-800' : (isNoEntregado ? 'bg-rose-100 text-rose-800' : 'bg-slate-100 text-slate-700')}">
-                    ${isEntregado ? 'Entregado' : (isNoEntregado ? 'No entregado' : `Parada #${stopNum}`)}
-                  </span>
-                </div>
-                <p class="font-bold text-slate-800">${guia.destinatario}</p>
-                <p class="text-slate-500 text-[11px]">${guia.direccion_referencia || guia.ciudad_destino}</p>
-              </div>
-            `);
-          }
-        });
-
-        // 3. Trazado de Ruta
-        if (latLngs.length >= 2) {
-          if (routePolyline) map.removeLayer(routePolyline);
-
-          const osrmCoords = latLngs.map(pt => `${pt[1]},${pt[0]}`).join(';');
-          const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${osrmCoords}?overview=full&geometries=geojson`;
-
-          fetch(osrmUrl)
-            .then(res => res.json())
-            .then(data => {
-              if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
-                const route = data.routes[0];
-                const distanceKm = (route.distance / 1000).toFixed(1);
-                const durationMinutes = Math.round(route.duration / 60);
-                const hours = Math.floor(durationMinutes / 60);
-                const mins = durationMinutes % 60;
-                const durationFormatted = hours > 0 ? `${hours}h ${mins}m` : `${mins} min`;
-
-                const geojsonCoords = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
-                if (routePolyline) map.removeLayer(routePolyline);
-                routePolyline = L.polyline(geojsonCoords, {
-                  color: '#4f46e5',
-                  weight: 4,
-                  opacity: 0.85,
-                  lineCap: 'round',
-                  lineJoin: 'round'
-                }).addTo(map);
-
-                if (routeInfoPill && routeDistanceText) {
-                  routeDistanceText.textContent = `${distanceKm} km en carretera • ~${durationFormatted}`;
-                  routeInfoPill.innerHTML = `
-                    <span class="flex h-2 w-2 relative">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-600"></span>
-                    </span>
-                    <span>${distanceKm} km • ~${durationFormatted}</span>
-                  `;
-                  routeInfoPill.classList.remove('hidden');
-                }
-              } else {
-                drawFallbackPolyline(latLngs);
-              }
-            })
-            .catch(err => {
-              console.warn('[OSRM Routing Fallback]:', err);
-              drawFallbackPolyline(latLngs);
-            });
-        } else {
-          if (routeInfoPill) routeInfoPill.classList.add('hidden');
-        }
-
-        if (latLngs.length > 0 && (forceFitBounds || !userHasInteractedWithMap)) {
-          map.fitBounds(latLngs, { padding: [40, 40], maxZoom: 15 });
-        }
-      }
-
-      function drawFallbackPolyline(latLngs) {
-        if (routePolyline) map.removeLayer(routePolyline);
-        routePolyline = L.polyline(latLngs, {
-          color: '#4f46e5',
-          weight: 3.5,
-          opacity: 0.75,
-          dashArray: '6, 8',
-          lineCap: 'round',
-          lineJoin: 'round'
-        }).addTo(map);
-        if (routeInfoPill) routeInfoPill.classList.add('hidden');
-      }
-
-      // 4. Renderizar Tarjetas de Entrega Secuenciales
-      function renderCards() {
-        const noRoutesContainer = document.getElementById('no-routes-container');
-        const activeRoutesContainer = document.getElementById('active-routes-container');
-
-        if (guiasData.length === 0) {
-          noRoutesContainer?.classList.remove('hidden');
-          activeRoutesContainer?.classList.add('hidden');
-          updateStats();
-          return;
-        } else {
-          noRoutesContainer?.classList.add('hidden');
-          activeRoutesContainer?.classList.remove('hidden');
-        }
-
-        const query = searchQuery.trim().toLowerCase();
-        
-        let filtered = guiasData.filter((guia) => {
-          const isEntregado = guia.estado === 'Entregado';
-          const isNoEntregado = guia.estado === 'No entregado';
-          
-          let matchTab = true;
-          if (activeTab === 'pendientes') matchTab = (!isEntregado && !isNoEntregado);
-          else if (activeTab === 'entregados') matchTab = isEntregado;
-          else if (activeTab === 'no_entregados') matchTab = isNoEntregado;
-
-          if (!matchTab) return false;
-
-          if (selectedCity && guia.ciudad_destino !== selectedCity) return false;
-          
-          if (query) {
-            const id = (guia.id_guia || '').toLowerCase();
-            const dest = (guia.destinatario || '').toLowerCase();
-            const ciudad = (guia.ciudad_destino || '').toLowerCase();
-            const dir = (guia.direccion_referencia || '').toLowerCase();
-            return id.includes(query) || dest.includes(query) || ciudad.includes(query) || dir.includes(query);
-          }
-          return true;
-        });
-
-        cardsContainer.innerHTML = '';
-
-        if (filtered.length === 0) {
-          emptyState.classList.remove('hidden');
-          if (activeTab === 'pendientes') {
-            emptyTitle.textContent = '¡Sin paradas pendientes!';
-            emptyDesc.textContent = 'Todas las entregas han sido completadas o no hay paquetes en ruta.';
-          } else if (activeTab === 'no_entregados') {
-            emptyTitle.textContent = '¡Sin incidencias!';
-            emptyDesc.textContent = 'No hay entregas reportadas como fallidas o no contestadas.';
-          } else {
-            emptyTitle.textContent = 'Sin entregas en este filtro';
-            emptyDesc.textContent = 'No se encontraron paradas que coincidan con la búsqueda.';
-          }
-        } else {
-          emptyState.classList.add('hidden');
-
-          filtered.forEach(guia => {
-            const stopNumber = guiasData.findIndex(g => g.id_guia === guia.id_guia) + 1;
-            const isGpsConfirmed = Boolean(guia.gps_confirmado);
-            const hasCoordinates = Boolean(isGpsConfirmed && guia.gps_latitud && guia.gps_longitud);
-            const lat = guia.gps_latitud;
-            const lng = guia.gps_longitud;
-            const isEntregado = guia.estado === 'Entregado';
-            const isNoEntregado = guia.estado === 'No entregado';
-            const portalUrl = `${window.location.origin}/confirmar?guia=${guia.id_guia}`;
-
-            const navUrl = hasCoordinates 
-              ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
-              : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((guia.direccion_referencia || '') + ' ' + (guia.ciudad_destino || ''))}`;
-
-            const waPhone = formatPhoneForWhatsApp(guia.telefono_principal);
-            const waMessage = isGpsConfirmed
-              ? encodeURIComponent(`Hola *${guia.destinatario}*, le escribe su chofer de *Envías C.A.* Ya tengo su ubicación confirmada y voy en camino con su paquete *#${guia.id_guia}* (${guia.piezas || 1} pieza/s). ¿Se encuentra disponible en su dirección?`)
-              : encodeURIComponent(`Hola *${guia.destinatario}*, le escribe su chofer de *Envías C.A.* Para poder coordinar y llevar su paquete *#${guia.id_guia}*, por favor confirme su ubicación y dirección exacta en el siguiente enlace:\n\n${portalUrl}`);
-            
-            const waUrl = waPhone ? `https://wa.me/${waPhone}?text=${waMessage}` : '#';
-
-            let cardBorder = 'border-slate-200/90 hover:border-slate-300';
-            if (isEntregado) cardBorder = 'border-slate-200/60 opacity-80';
-            else if (isNoEntregado) cardBorder = 'border-rose-200/90 bg-rose-50/20';
-
-            const card = document.createElement('article');
-            card.className = `bg-white rounded-2xl border ${cardBorder} p-4 shadow-sm space-y-3 transition-all`;
-
-            let badgeCircle = 'bg-slate-900 text-white';
-            if (isEntregado) badgeCircle = 'bg-emerald-600 text-white';
-            else if (isNoEntregado) badgeCircle = 'bg-rose-600 text-white';
-
-            let badgeStatusHtml = `
-              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
-                Parada #${guia.orden_ruta || stopNumber}
-              </span>
-            `;
-            if (isEntregado) {
-              badgeStatusHtml = `
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Entregado
-                </span>
-              `;
-            } else if (isNoEntregado) {
-              badgeStatusHtml = `
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200">
-                  No entregó
-                </span>
-              `;
-            }
-
-            card.innerHTML = `
-              <!-- Cabecera de la Tarjeta -->
-              <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
-                <div class="flex items-center gap-2.5">
-                  <div class="w-8 h-8 rounded-full ${badgeCircle} flex items-center justify-center font-extrabold text-xs shrink-0 shadow-xs">
-                    ${isEntregado ? '✓' : (isNoEntregado ? '✕' : (guia.orden_ruta || stopNumber))}
-                  </div>
-                  <div>
-                    <div class="flex items-center gap-2">
-                      <span class="text-xs font-extrabold text-slate-900 font-mono">#${guia.id_guia}</span>
-                      ${badgeStatusHtml}
-                    </div>
-                    <p class="text-[11px] text-slate-500 font-medium">${guia.piezas || 1} pieza(s) • ${guia.ciudad_destino || 'Sin ciudad'}</p>
-                  </div>
-                </div>
-
-                <!-- Badge de Estado GPS -->
-                ${isGpsConfirmed ? `
-                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    GPS Confirmado
-                  </span>
-                ` : `
-                  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/80 shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Esperando Ubicación
-                  </span>
-                `}
-              </div>
-
-              <!-- Destinatario & Ubicación -->
-              <div class="space-y-1.5 text-xs">
-                <div>
-                  <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Destinatario</p>
-                  <p class="text-sm font-bold text-slate-900">${guia.destinatario}</p>
-                </div>
-
-                ${isNoEntregado ? `
-                  <div class="bg-rose-50/70 rounded-xl p-3 border border-rose-200/90 space-y-1">
-                    <div class="flex items-start gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-rose-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                      <div class="min-w-0 flex-1">
-                        <p class="text-[10px] uppercase font-bold text-rose-800 tracking-wider">Intento Fallido Registrado</p>
-                        <p class="font-medium text-slate-800 text-xs mt-0.5">${guia.recibido_por || 'Cliente ausente / No contesta llamadas'}</p>
-                        ${guia.comprobante_url ? `
-                          <button 
-                            type="button" 
-                            onclick="window.openLightbox('${guia.comprobante_url}', 'Evidencia de Intento Fallido', '${guia.destinatario.replace(/'/g, "\\'")} - #${guia.id_guia}')"
-                            class="text-[11px] text-indigo-600 hover:text-indigo-800 font-bold underline mt-1.5 block cursor-pointer"
-                          >
-                            Ver foto de evidencia adjunta
-                          </button>
-                        ` : ''}
-                      </div>
-                    </div>
-                  </div>
-                ` : (isGpsConfirmed ? `
-                  <div class="bg-emerald-50/40 rounded-xl p-3 border border-emerald-200/70 space-y-1">
-                    <div class="flex items-start gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      <div>
-                        <p class="text-[10px] uppercase font-bold text-emerald-700 tracking-wider">Dirección confirmada por cliente</p>
-                        <p class="font-medium text-slate-800 text-xs leading-relaxed mt-0.5">
-                          ${guia.direccion_referencia || 'Ubicación satelital GPS registrada'}
-                        </p>
-                        <p class="text-[11px] text-slate-500 mt-1">
-                          <span class="font-semibold text-slate-700">${guia.ciudad_destino}</span> • Telf: ${guia.telefono_principal}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ` : `
-                  <div class="bg-amber-50/60 rounded-xl p-3 border border-amber-200/80 space-y-1">
-                    <div class="flex items-start gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div class="space-y-0.5">
-                        <p class="text-[10px] uppercase font-bold text-amber-800 tracking-wider">Ubicación pendiente</p>
-                        <p class="text-xs text-amber-900 font-medium leading-relaxed">
-                          El cliente aún no ha confirmado su ubicación exacta en el portal.
-                        </p>
-                        ${guia.direccion_referencia ? `
-                          <p class="text-[11px] text-slate-600 bg-white/70 px-2 py-0.5 rounded border border-amber-200/50 mt-1">
-                            <span class="font-bold text-slate-700">Nota almacén:</span> ${guia.direccion_referencia}
-                          </p>
-                        ` : ''}
-                      </div>
-                    </div>
-                  </div>
-                `)}
-              </div>
-
-              <!-- BOTONES DE ACCIÓN RÁPIDA -->
-              <div class="space-y-2 pt-1">
-                
-                ${isGpsConfirmed ? `
-                  <a 
-                    href="${navUrl}" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    class="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-black active:scale-[0.98] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer tap-active"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                    </svg>
-                    <span>${hasCoordinates ? 'Navegar con GPS Exacto' : 'Navegar a Dirección'}</span>
-                  </a>
-                ` : `
-                  <a 
-                    href="${waUrl}" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    class="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer tap-active"
-                  >
-                    <svg class="w-4 h-4 fill-current text-white shrink-0" viewBox="0 0 24 24">
-                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.275.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824z"/>
-                    </svg>
-                    <span>Pedir Ubicación al Cliente por WhatsApp</span>
-                  </a>
-                `}
-
-                <div class="grid grid-cols-2 gap-2">
-                  <a 
-                    href="tel:${guia.telefono_principal}"
-                    class="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-all tap-active"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                    <span>Llamar</span>
-                  </a>
-
-                  <a 
-                    href="${waUrl}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="py-2.5 px-3 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold flex items-center justify-center gap-1.5 transition-all tap-active"
-                  >
-                    <svg class="w-4 h-4 fill-current text-emerald-600" viewBox="0 0 24 24">
-                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.275.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824z"/>
-                    </svg>
-                    <span>WhatsApp</span>
-                  </a>
-                </div>
-
-                <!-- Botón de Marcar Entregado / Incidencia -->
-                ${!isEntregado ? `
-                  <button 
-                    onclick="window.openDeliveryModal('${guia.id_guia}', '${guia.destinatario.replace(/'/g, "\\'")}', '${(guia.direccion_referencia || '').replace(/'/g, "\\'")}', ${stopNumber})"
-                    class="w-full mt-1 py-3 px-4 rounded-xl ${isNoEntregado ? 'bg-amber-600 hover:bg-amber-700' : 'bg-emerald-600 hover:bg-emerald-700'} active:scale-[0.98] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer tap-active"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>${isNoEntregado ? 'Reintentar / Confirmar Entrega' : 'Confirmar Entrega o Reportar'}</span>
-                  </button>
-                ` : `
-                  <div class="space-y-2 mt-1">
-                    <div class="w-full py-2 px-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold flex items-center justify-between">
-                      <div class="flex items-center gap-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span>Entregado exitosamente</span>
-                      </div>
-                      ${guia.recibido_por ? `<span class="text-[10px] text-slate-500 font-normal truncate max-w-[120px]" title="${guia.recibido_por}">Recibió: ${guia.recibido_por}</span>` : ''}
-                    </div>
-
-                    ${guia.comprobante_url ? `
-                      <button
-                        type="button"
-                        onclick="window.openLightbox('${guia.comprobante_url}', 'Guía #${guia.id_guia} - ${guia.destinatario.replace(/'/g, "\\'")}', '${guia.recibido_por ? `Recibido por: ${guia.recibido_por.replace(/'/g, "\\'")}` : 'Comprobante verificado'}')"
-                        class="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer tap-active"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <span>Ver Foto Comprobante</span>
-                      </button>
-                    ` : ''}
-                  </div>
-                `}
-
-              </div>
-            `;
-
-            cardsContainer.appendChild(card);
-          });
-        }
-
-        updateStats();
-      }
-
-      // 5. Actualizar KPIs y Contadores
-      function updateStats() {
-        const total = guiasData.length;
-        const noEntregados = guiasData.filter(g => g.estado === 'No entregado').length;
-        const entregados = guiasData.filter(g => g.estado === 'Entregado').length;
-        const pendientes = guiasData.filter(g => g.estado !== 'Entregado' && g.estado !== 'No entregado').length;
-        const porcentaje = total > 0 ? Math.round((entregados / total) * 100) : 0;
-
-        if (statPendientes) statPendientes.textContent = pendientes;
-        if (statEntregados) statEntregados.textContent = entregados;
-        if (statNoEntregados) statNoEntregados.textContent = noEntregados;
-        if (statTotal) statTotal.textContent = total;
-        
-        if (badgeTabPendientes) badgeTabPendientes.textContent = pendientes;
-        if (badgeTabEntregados) badgeTabEntregados.textContent = entregados;
-        if (badgeTabNoEntregados) badgeTabNoEntregados.textContent = noEntregados;
-        if (badgeTabTodos) badgeTabTodos.textContent = total;
-        
-        if (progressText) progressText.textContent = `${entregados} de ${total} paradas (${porcentaje}%)`;
-        if (progressBarFill) progressBarFill.style.width = `${porcentaje}%`;
-
-        const activeWithRoute = guiasData.find(g => g.ruta_origen || g.ruta_destino);
-        const routeStartText = document.getElementById('route-start-text');
-        const routeEndText = document.getElementById('route-end-text');
-        const routeStopsCountText = document.getElementById('route-stops-count-text');
-        if (routeStartText && activeWithRoute?.ruta_origen) {
-          routeStartText.textContent = activeWithRoute.ruta_origen;
-        }
-        if (routeEndText && activeWithRoute?.ruta_destino) {
-          routeEndText.textContent = activeWithRoute.ruta_destino;
-        }
-        if (routeStopsCountText) {
-          routeStopsCountText.textContent = `${total} paradas programadas`;
-        }
-      }
-
-      // ==========================================
-      // OPTIMIZACIÓN Y COMPRESIÓN DE FOTO EN CANVAS (A PRUEBA DE FALLOS)
-      // ==========================================
-      function compressImage(file: File, maxWidth = 1200, maxHeight = 1600, quality = 0.75): Promise<{ blob: Blob, dataUrl: string, sizeKb: number }> {
+      // ====================================================
+      // MOTOR DE COMPRESIÓN CANVAS HTML5 (ZERO-FAIL)
+      // ====================================================
+      function compressImage(file, maxWidth = 1200, maxHeight = 1600, quality = 0.75) {
         return new Promise((resolve) => {
           const reader = new FileReader();
           reader.onload = (e) => {
-            const dataUrlFallback = (e.target?.result || '') as string;
+            const dataUrlFallback = (e.target?.result || '');
             const img = new Image();
             img.onload = () => {
               try {
@@ -1715,36 +860,68 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         });
       }
 
-      async function handleScanFiles(files: File[]) {
+      // ====================================================
+      // MÓDULO 1: ESCÁNER Y SUBIDA DE GUÍAS FÍSICAS
+      // ====================================================
+      const heroCameraInput = document.getElementById('hero-camera-input');
+      const heroGalleryInput = document.getElementById('hero-gallery-input');
+      const modalScanCameraInput = document.getElementById('modal-scan-camera-input');
+      const modalScanGalleryInput = document.getElementById('modal-scan-gallery-input');
+      const scanModal = document.getElementById('scan-modal');
+      const scanModalCloseBtn = document.getElementById('scan-modal-close-btn');
+      const btnHeaderScan = document.getElementById('btn-header-scan');
+
+      let currentScanTargetMode = 'hero';
+
+      function openScanModal() {
+        scanModal?.classList.remove('hidden');
+        scanModal?.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeScanModal() {
+        scanModal?.classList.add('hidden');
+        scanModal?.classList.remove('flex');
+        document.body.style.overflow = '';
+      }
+
+      scanModalCloseBtn?.addEventListener('click', closeScanModal);
+      btnHeaderScan?.addEventListener('click', openScanModal);
+      scanModal?.addEventListener('click', (e) => {
+        if (e.target === scanModal) closeScanModal();
+      });
+
+      // Manejador centralizado de archivos seleccionados
+      async function handleScanFiles(files) {
         if (!files || files.length === 0) return;
 
+        const total = files.length;
         const nowScan = new Date();
-        const pad2 = (n: number) => n.toString().padStart(2, '0');
+        const pad2 = (n) => n.toString().padStart(2, '0');
         const scanLoteId = `chofer_${nowScan.getFullYear()}${pad2(nowScan.getMonth()+1)}${pad2(nowScan.getDate())}_${pad2(nowScan.getHours())}${pad2(nowScan.getMinutes())}`;
 
-        const total = files.length;
-        let processed = 0;
-        let uploadedOk = 0;
-
-        const liveSection = currentScanTargetMode === 'modal' ? modalScanLiveSection : choferScanLiveSection;
-        const pBar = currentScanTargetMode === 'modal' ? modalProgressBar : choferProgressBar;
-        const pLabel = currentScanTargetMode === 'modal' ? modalProgressLabel : choferProgressLabel;
-        const pCount = currentScanTargetMode === 'modal' ? modalProgressCount : choferProgressCount;
-        const grid = currentScanTargetMode === 'modal' ? modalGalleryGrid : choferGalleryGrid;
-        const countLabel = currentScanTargetMode === 'modal' ? modalGalleryCount : choferGalleryCount;
+        const isModal = currentScanTargetMode === 'modal';
+        const liveSection = document.getElementById(isModal ? 'modal-scan-live-section' : 'hero-scan-live-section');
+        const progressBar = document.getElementById(isModal ? 'modal-progress-bar' : 'hero-progress-bar');
+        const progressLabel = document.getElementById(isModal ? 'modal-progress-label' : 'hero-progress-label');
+        const progressCount = document.getElementById(isModal ? 'modal-progress-count' : 'hero-progress-count');
+        const galleryGrid = document.getElementById(isModal ? 'modal-gallery-grid' : 'hero-gallery-grid');
+        const galleryCount = document.getElementById(isModal ? 'modal-gallery-count' : 'hero-gallery-count');
 
         liveSection?.classList.remove('hidden');
-        if (pBar) pBar.style.width = '0%';
-        if (pLabel) pLabel.textContent = `Procesando ${total} foto${total !== 1 ? 's' : ''}...`;
-        if (pCount) pCount.textContent = `0 / ${total}`;
+        if (progressBar) progressBar.style.width = '0%';
+        if (progressLabel) progressLabel.textContent = `Procesando ${total} foto${total !== 1 ? 's' : ''}...`;
+        if (progressCount) progressCount.textContent = `0 / ${total}`;
         showToast(`Procesando ${total} foto(s)...`, 'info');
+
+        let uploadedOk = 0;
+        let processed = 0;
 
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
           sessionScannedCount++;
           const itemIndex = sessionScannedCount;
 
-          // Miniatura temporal
+          // Crear miniatura temporal en el DOM
           const thumbDiv = document.createElement('div');
           thumbDiv.id = `scan-thumb-${itemIndex}`;
           thumbDiv.className = 'relative aspect-square rounded-xl overflow-hidden bg-slate-100 border-2 border-slate-200 transition-all';
@@ -1756,11 +933,12 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
               </svg>
             </div>
           `;
-          if (grid) grid.prepend(thumbDiv);
+          if (galleryGrid) galleryGrid.prepend(thumbDiv);
 
           try {
+            // Optimización con Canvas HTML5
             const comp = await compressImage(file, 1200, 1600, 0.75);
-            
+
             if (comp.dataUrl) {
               const imgEl = document.createElement('img');
               imgEl.src = comp.dataUrl;
@@ -1779,7 +957,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
               method: 'POST',
               body: formData
             });
-            const data = await res.json().catch(() => ({ success: false, message: 'Error de conexión con el servidor.' }));
+            const data = await res.json().catch(() => ({ success: false, message: 'Error de red con el servidor' }));
 
             const overlay = document.getElementById(`scan-thumb-overlay-${itemIndex}`);
             if (res.ok && data.success) {
@@ -1794,87 +972,94 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
               if (overlay) {
                 overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
               }
-              const errMsg = `HTTP ${res.status}: ${data.message || 'Error desconocido'}`;
-              console.error('[Escaneo API Error]:', errMsg, data);
-              showToast(errMsg, 'error');
+              showToast(`HTTP ${res.status}: ${data.message || 'Error al guardar foto'}`, 'error');
             }
-          } catch(err: any) {
-            console.error('Error subiendo foto de guía:', err);
+          } catch (err) {
+            console.error('Error procesando escaneo:', err);
             const overlay = document.getElementById(`scan-thumb-overlay-${itemIndex}`);
             thumbDiv.classList.replace('border-slate-200', 'border-rose-400');
             if (overlay) {
               overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
             }
-            showToast('Error al procesar la imagen: ' + (err.message || 'desconocido'), 'error');
+            showToast('Error al procesar la imagen', 'error');
           }
 
           processed++;
           const pct = Math.round((processed / total) * 100);
-          if (pBar) pBar.style.width = `${pct}%`;
-          if (pCount) pCount.textContent = `${processed} / ${total}`;
+          if (progressBar) progressBar.style.width = `${pct}%`;
+          if (progressCount) progressCount.textContent = `${processed} / ${total}`;
         }
 
-        if (scanCameraInput) scanCameraInput.value = '';
-        if (scanGalleryInput) scanGalleryInput.value = '';
-
-        if (pLabel) pLabel.textContent = `¡${uploadedOk} de ${total} guías cargadas con éxito!`;
-        if (countLabel) countLabel.textContent = `${grid?.children.length || 0} subidas`;
+        if (progressLabel) progressLabel.textContent = `&iexcl;${uploadedOk} de ${total} gu&iacute;as cargadas con &eacute;xito!`;
+        if (galleryCount) galleryCount.textContent = `${galleryGrid?.children.length || 0} subidas`;
         if (uploadedOk > 0) {
-          showToast(`¡${uploadedOk} foto(s) enviada(s) a Logística!`, 'success');
+          showToast(`&iexcl;${uploadedOk} foto(s) enviada(s) a Log&iacute;stica!`, 'success');
         }
       }
 
-      // Eventos de Dropzone de Foto
-      dropzonePhoto?.addEventListener('click', (e) => {
-        if (e.target !== btnRetakePhoto) {
-          modalPhotoInput.click();
+      // Event listeners para los inputs de escaneo
+      heroCameraInput?.addEventListener('change', (e) => {
+        const files = e.target.files ? Array.from(e.target.files) : [];
+        if (files.length > 0) {
+          currentScanTargetMode = 'hero';
+          handleScanFiles(files);
         }
+        e.target.value = '';
       });
 
-      btnRetakePhoto?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        modalPhotoInput.value = '';
-        modalPhotoInput.click();
-      });
-
-      modalPhotoInput?.addEventListener('change', async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        photoPlaceholder.classList.add('hidden');
-        photoPreviewContainer.classList.remove('hidden');
-        photoStatusText.textContent = 'Optimizando foto...';
-        modalConfirmBtn.disabled = true;
-
-        try {
-          const result = await compressImage(file);
-          currentCompressedFile = result.blob;
-          photoPreviewImg.src = result.dataUrl;
-          photoStatusText.textContent = `Foto lista (${result.sizeKb} KB optimizada)`;
-          
-          photoSizeBadge.textContent = `${result.sizeKb} KB`;
-          photoSizeBadge.classList.remove('hidden');
-
-          modalConfirmBtn.disabled = false;
-        } catch (err) {
-          console.error('Error al optimizar imagen:', err);
-          showToast('Error al procesar la imagen seleccionada', 'error');
-          resetPhotoState();
+      heroGalleryInput?.addEventListener('change', (e) => {
+        const files = e.target.files ? Array.from(e.target.files) : [];
+        if (files.length > 0) {
+          currentScanTargetMode = 'hero';
+          handleScanFiles(files);
         }
+        e.target.value = '';
       });
 
-      function resetPhotoState() {
-        currentCompressedFile = null;
-        if (modalPhotoInput) modalPhotoInput.value = '';
-        if (photoPreviewImg) photoPreviewImg.src = '';
-        photoPlaceholder?.classList.remove('hidden');
-        photoPreviewContainer?.classList.add('hidden');
-        photoSizeBadge?.classList.add('hidden');
-        if (modalConfirmBtn) modalConfirmBtn.disabled = true;
-      }
+      modalScanCameraInput?.addEventListener('change', (e) => {
+        const files = e.target.files ? Array.from(e.target.files) : [];
+        if (files.length > 0) {
+          currentScanTargetMode = 'modal';
+          handleScanFiles(files);
+        }
+        e.target.value = '';
+      });
 
-      // Modal Mode Management (Success vs Incident)
-      function setModalMode(mode) {
+      modalScanGalleryInput?.addEventListener('change', (e) => {
+        const files = e.target.files ? Array.from(e.target.files) : [];
+        if (files.length > 0) {
+          currentScanTargetMode = 'modal';
+          handleScanFiles(files);
+        }
+        e.target.value = '';
+      });
+
+      // ====================================================
+      // MÓDULO 2: CONFIRMACIÓN DE ENTREGA E INCIDENCIA
+      // ====================================================
+      const deliveryModal = document.getElementById('delivery-modal');
+      const modalCloseBtn = document.getElementById('modal-close-btn');
+      const modalCancelBtn = document.getElementById('modal-cancel-btn');
+      const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+      const modalIncidentSubmitBtn = document.getElementById('modal-incident-submit-btn');
+      const modalTabSuccessBtn = document.getElementById('modal-tab-success-btn');
+      const modalTabIncidentBtn = document.getElementById('modal-tab-incident-btn');
+      const modalPanelSuccess = document.getElementById('modal-panel-success');
+      const modalPanelIncident = document.getElementById('modal-panel-incident');
+      const modalTitleText = document.getElementById('modal-title-text');
+      const modalGuiaCode = document.getElementById('modal-guia-code');
+      const modalDestinatario = document.getElementById('modal-destinatario');
+      const modalDireccion = document.getElementById('modal-direccion');
+      const modalRecibidoPor = document.getElementById('modal-recibido-por');
+      const modalIncidentNote = document.getElementById('modal-incident-note');
+      const modalDeliveryPhotoInput = document.getElementById('modal-delivery-photo-input');
+      const photoPlaceholder = document.getElementById('photo-placeholder');
+      const photoPreviewContainer = document.getElementById('photo-preview-container');
+      const photoPreviewImg = document.getElementById('photo-preview-img');
+      const photoSizeBadge = document.getElementById('photo-size-badge');
+      const photoStatusText = document.getElementById('photo-status-text');
+
+      function setDeliveryModalMode(mode) {
         modalDeliveryMode = mode;
         if (mode === 'success') {
           if (modalTabSuccessBtn) modalTabSuccessBtn.className = 'py-2 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 shadow-xs cursor-pointer';
@@ -1884,9 +1069,6 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           modalConfirmBtn?.classList.remove('hidden');
           modalIncidentSubmitBtn?.classList.add('hidden');
           if (modalTitleText) modalTitleText.textContent = 'Confirmar Entrega Realizada';
-          modalHeaderIconSuccess?.classList.remove('hidden');
-          modalHeaderIconIncident?.classList.add('hidden');
-          if (modalHeaderIconContainer) modalHeaderIconContainer.className = 'w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 transition-colors';
         } else {
           if (modalTabIncidentBtn) modalTabIncidentBtn.className = 'py-2 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-rose-900 shadow-xs cursor-pointer';
           if (modalTabSuccessBtn) modalTabSuccessBtn.className = 'py-2 px-2 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 cursor-pointer';
@@ -1894,17 +1076,23 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           modalPanelIncident?.classList.remove('hidden');
           modalConfirmBtn?.classList.add('hidden');
           modalIncidentSubmitBtn?.classList.remove('hidden');
-          if (modalTitleText) modalTitleText.textContent = 'Reportar No Entregado';
-          modalHeaderIconSuccess?.classList.add('hidden');
-          modalHeaderIconIncident?.classList.remove('hidden');
-          if (modalHeaderIconContainer) modalHeaderIconContainer.className = 'w-9 h-9 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 transition-colors';
+          if (modalTitleText) modalTitleText.textContent = 'Reportar Incidencia de Entrega';
         }
       }
 
-      modalTabSuccessBtn?.addEventListener('click', () => setModalMode('success'));
-      modalTabIncidentBtn?.addEventListener('click', () => setModalMode('incident'));
+      modalTabSuccessBtn?.addEventListener('click', () => setDeliveryModalMode('success'));
+      modalTabIncidentBtn?.addEventListener('click', () => setDeliveryModalMode('incident'));
 
-      // 6. Modal de Entrega (Bottom Sheet)
+      function resetDeliveryPhotoState() {
+        currentCompressedBlob = null;
+        if (modalDeliveryPhotoInput) modalDeliveryPhotoInput.value = '';
+        if (photoPreviewImg) photoPreviewImg.src = '';
+        photoPlaceholder?.classList.remove('hidden');
+        photoPreviewContainer?.classList.add('hidden');
+        photoSizeBadge?.classList.add('hidden');
+        if (modalConfirmBtn) modalConfirmBtn.disabled = true;
+      }
+
       window.openDeliveryModal = function(idGuia, destinatario, direccion, stopNumber) {
         activeModalGuiaId = idGuia;
         if (modalGuiaCode) modalGuiaCode.textContent = `Parada #${stopNumber} • Guía #${idGuia}`;
@@ -1912,62 +1100,65 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         if (modalDireccion) modalDireccion.textContent = direccion || 'Ubicación confirmada';
         if (modalRecibidoPor) modalRecibidoPor.value = '';
         if (modalIncidentNote) modalIncidentNote.value = '';
-        setModalMode('success');
-        resetPhotoState();
-        deliveryModal.classList.remove('hidden');
-        deliveryModal.classList.add('flex');
+        setDeliveryModalMode('success');
+        resetDeliveryPhotoState();
+        deliveryModal?.classList.remove('hidden');
+        deliveryModal?.classList.add('flex');
       };
 
-      function closeModal() {
-        deliveryModal.classList.add('hidden');
-        deliveryModal.classList.remove('flex');
+      function closeDeliveryModal() {
+        deliveryModal?.classList.add('hidden');
+        deliveryModal?.classList.remove('flex');
         activeModalGuiaId = null;
-        resetPhotoState();
+        resetDeliveryPhotoState();
       }
 
-      modalCloseBtn?.addEventListener('click', closeModal);
-      modalCancelBtn?.addEventListener('click', closeModal);
+      modalCloseBtn?.addEventListener('click', closeDeliveryModal);
+      modalCancelBtn?.addEventListener('click', closeDeliveryModal);
 
-      // Lightbox para ver fotos
-      window.openLightbox = function(imgUrl, title, info) {
-        lightboxImg.src = imgUrl;
-        lightboxTitle.textContent = title || 'Comprobante de Entrega';
-        lightboxInfo.textContent = info || '';
-        lightboxModal.classList.remove('hidden');
-        lightboxModal.classList.add('flex');
-      };
+      // Manejo de la foto de entrega
+      modalDeliveryPhotoInput?.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
 
-      lightboxCloseBtn?.addEventListener('click', () => {
-        lightboxModal.classList.add('hidden');
-        lightboxModal.classList.remove('flex');
-        lightboxImg.src = '';
-      });
+        photoPlaceholder?.classList.add('hidden');
+        photoPreviewContainer?.classList.remove('hidden');
+        if (photoStatusText) photoStatusText.textContent = 'Optimizando foto...';
+        if (modalConfirmBtn) modalConfirmBtn.disabled = true;
 
-      lightboxModal?.addEventListener('click', (e) => {
-        if (e.target === lightboxModal) {
-          lightboxModal.classList.add('hidden');
-          lightboxModal.classList.remove('flex');
-          lightboxImg.src = '';
+        try {
+          const result = await compressImage(file, 1200, 1600, 0.75);
+          currentCompressedBlob = result.blob;
+          if (photoPreviewImg) photoPreviewImg.src = result.dataUrl;
+          if (photoStatusText) photoStatusText.textContent = `Foto lista (${result.sizeKb} KB optimizada)`;
+          if (photoSizeBadge) {
+            photoSizeBadge.textContent = `${result.sizeKb} KB`;
+            photoSizeBadge.classList.remove('hidden');
+          }
+          if (modalConfirmBtn) modalConfirmBtn.disabled = false;
+        } catch (err) {
+          console.error('Error optimizando foto de entrega:', err);
+          showToast('Error al procesar la foto', 'error');
+          resetDeliveryPhotoState();
         }
       });
 
-      // Confirmar Entrega Exitosa
+      // Submit Confirmar Entrega
       modalConfirmBtn?.addEventListener('click', async () => {
         if (!activeModalGuiaId) return;
-
-        if (!currentCompressedFile) {
+        if (!currentCompressedBlob) {
           showToast('Debes tomar o subir una foto del comprobante sin excepción', 'error');
           return;
         }
 
         modalConfirmBtn.disabled = true;
-        const originalBtnHtml = modalConfirmBtn.innerHTML;
+        const originalHtml = modalConfirmBtn.innerHTML;
         modalConfirmBtn.innerHTML = `
           <svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
           </svg>
-          <span>Guardando entrega y foto...</span>
+          <span>Guardando...</span>
         `;
 
         try {
@@ -1975,239 +1166,503 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           formData.append('id_guia', activeModalGuiaId);
           formData.append('tipo_resultado', 'entregado');
           formData.append('recibido_por', modalRecibidoPor?.value?.trim() || '');
-          formData.append('foto', currentCompressedFile);
+          formData.append('foto', currentCompressedBlob, 'comprobante.jpg');
 
           const res = await fetch('/api/chofer/entregar', {
             method: 'POST',
             body: formData
           });
-
           const data = await res.json();
 
           if (res.ok && data.success) {
-            const index = guiasData.findIndex(g => g.id_guia === activeModalGuiaId);
-            if (index !== -1) {
-              guiasData[index].estado = 'Entregado';
-              guiasData[index].comprobante_url = data.data.comprobante_url;
-              guiasData[index].recibido_por = data.data.recibido_por;
+            const idx = guiasData.findIndex(g => g.id_guia === activeModalGuiaId);
+            if (idx !== -1) {
+              guiasData[idx].estado = 'Entregado';
+              guiasData[idx].comprobante_url = data.data.comprobante_url;
+              guiasData[idx].recibido_por = data.data.recibido_por;
             }
-            closeModal();
+            closeDeliveryModal();
             renderCards();
             updateMapMarkers();
-            showToast('¡Entrega confirmada y comprobante guardado!', 'success');
+            showToast('&iexcl;Entrega confirmada y comprobante guardado!', 'success');
           } else {
             showToast(data.message || 'Error al registrar entrega', 'error');
             modalConfirmBtn.disabled = false;
-            modalConfirmBtn.innerHTML = originalBtnHtml;
+            modalConfirmBtn.innerHTML = originalHtml;
           }
         } catch (err) {
-          console.error('Error entregando:', err);
-          showToast('Error de conexión al registrar entrega', 'error');
+          console.error('Error confirmando entrega:', err);
+          showToast('Error de red al guardar entrega', 'error');
           modalConfirmBtn.disabled = false;
-          modalConfirmBtn.innerHTML = originalBtnHtml;
+          modalConfirmBtn.innerHTML = originalHtml;
         }
       });
 
-      // Confirmar Reporte de Incidencia / No Entregado
+      // Submit Incidencia
       modalIncidentSubmitBtn?.addEventListener('click', async () => {
         if (!activeModalGuiaId) return;
-
-        const selectedRadio = document.querySelector('input[name="incident-reason"]:checked');
-        const reason = selectedRadio ? selectedRadio.value : 'No contesta llamadas / Teléfono apagado';
-        const note = modalIncidentNote?.value?.trim() || '';
+        const note = modalIncidentNote?.value?.trim();
+        if (!note) {
+          showToast('Debes ingresar el motivo de la incidencia', 'error');
+          return;
+        }
 
         modalIncidentSubmitBtn.disabled = true;
-        const originalBtnHtml = modalIncidentSubmitBtn.innerHTML;
-        modalIncidentSubmitBtn.innerHTML = `
-          <svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span>Guardando reporte...</span>
-        `;
-
         try {
           const formData = new FormData();
           formData.append('id_guia', activeModalGuiaId);
           formData.append('tipo_resultado', 'no_entregado');
-          formData.append('motivo_no_entrega', reason);
-          formData.append('nota_adicional', note);
-          if (currentCompressedFile) {
-            formData.append('foto', currentCompressedFile);
-          }
+          formData.append('nota_incidencia', note);
 
           const res = await fetch('/api/chofer/entregar', {
             method: 'POST',
             body: formData
           });
-
           const data = await res.json();
 
           if (res.ok && data.success) {
-            const index = guiasData.findIndex(g => g.id_guia === activeModalGuiaId);
-            if (index !== -1) {
-              guiasData[index].estado = 'No entregado';
-              guiasData[index].recibido_por = data.data.recibido_por;
-              if (data.data.comprobante_url) {
-                guiasData[index].comprobante_url = data.data.comprobante_url;
-              }
+            const idx = guiasData.findIndex(g => g.id_guia === activeModalGuiaId);
+            if (idx !== -1) {
+              guiasData[idx].estado = 'No entregado';
+              guiasData[idx].recibido_por = note;
             }
-            closeModal();
+            closeDeliveryModal();
             renderCards();
             updateMapMarkers();
-            showToast('¡Incidencia registrada correctamente!', 'info');
+            showToast('Incidencia registrada correctamente', 'info');
           } else {
             showToast(data.message || 'Error al registrar incidencia', 'error');
-            modalIncidentSubmitBtn.disabled = false;
-            modalIncidentSubmitBtn.innerHTML = originalBtnHtml;
           }
         } catch (err) {
-          console.error('Error reportando no entrega:', err);
-          showToast('Error de conexión al reportar incidencia', 'error');
+          showToast('Error de red al guardar incidencia', 'error');
+        } finally {
           modalIncidentSubmitBtn.disabled = false;
-          modalIncidentSubmitBtn.innerHTML = originalBtnHtml;
         }
       });
 
-      // 7. Toast Notifications
-      function showToast(msg, type = 'info') {
-        toastMessage.textContent = msg;
-        if (type === 'success') {
-          toastIcon.innerHTML = `<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>`;
-        } else if (type === 'error') {
-          toastIcon.innerHTML = `<svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>`;
-        } else {
-          toastIcon.innerHTML = `<svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`;
+      // Selección rápida de motivo de incidencia
+      document.querySelectorAll('#incident-reasons-grid .incident-opt').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          const reason = (e.currentTarget).getAttribute('data-reason');
+          if (modalIncidentNote && reason) {
+            modalIncidentNote.value = reason;
+          }
+        });
+      });
+
+      // ====================================================
+      // MÓDULO 3: HOJA DE RUTA, PARADAS Y MAPA LEAFLET
+      // ====================================================
+      const cardsContainer = document.getElementById('cards-container');
+      const emptyState = document.getElementById('empty-state');
+      const searchInput = document.getElementById('search-input');
+      const cityFilter = document.getElementById('city-filter');
+      const tabPendientes = document.getElementById('tab-pendientes');
+      const tabEntregados = document.getElementById('tab-entregados');
+      const tabNoEntregados = document.getElementById('tab-no-entregados');
+      const tabTodos = document.getElementById('tab-todos');
+      const badgeTabPendientes = document.getElementById('badge-tab-pendientes');
+      const badgeTabEntregados = document.getElementById('badge-tab-entregados');
+      const badgeTabNoEntregados = document.getElementById('badge-tab-no-entregados');
+      const badgeTabTodos = document.getElementById('badge-tab-todos');
+      const statPendientes = document.getElementById('stat-pendientes');
+      const statEntregados = document.getElementById('stat-entregados');
+      const statNoEntregados = document.getElementById('stat-no-entregados');
+      const statTotal = document.getElementById('stat-total');
+      const progressText = document.getElementById('progress-text');
+      const progressBarFill = document.getElementById('progress-bar-fill');
+
+      let map = null;
+      let markersLayer = null;
+      let routePolyline = null;
+      let isMapVisible = true;
+
+      function updateStats() {
+        const total = guiasData.length;
+        const entregados = guiasData.filter(g => g.estado === 'Entregado').length;
+        const noEntregados = guiasData.filter(g => g.estado === 'No entregado').length;
+        const pendientes = guiasData.filter(g => g.estado !== 'Entregado' && g.estado !== 'No entregado').length;
+        const pct = total > 0 ? Math.round((entregados / total) * 100) : 0;
+
+        if (statPendientes) statPendientes.textContent = pendientes;
+        if (statEntregados) statEntregados.textContent = entregados;
+        if (statNoEntregados) statNoEntregados.textContent = noEntregados;
+        if (statTotal) statTotal.textContent = total;
+
+        if (badgeTabPendientes) badgeTabPendientes.textContent = pendientes;
+        if (badgeTabEntregados) badgeTabEntregados.textContent = entregados;
+        if (badgeTabNoEntregados) badgeTabNoEntregados.textContent = noEntregados;
+        if (badgeTabTodos) badgeTabTodos.textContent = total;
+
+        if (progressText) progressText.textContent = `${entregados} de ${total} paradas (${pct}%)`;
+        if (progressBarFill) progressBarFill.style.width = `${pct}%`;
+      }
+
+      function getFilteredGuias() {
+        const q = searchQuery.toLowerCase().trim();
+        return guiasData.filter(g => {
+          const matchTab = 
+            activeTab === 'todos' ? true :
+            activeTab === 'entregados' ? g.estado === 'Entregado' :
+            activeTab === 'no_entregados' ? g.estado === 'No entregado' :
+            (g.estado !== 'Entregado' && g.estado !== 'No entregado');
+
+          const matchCity = !selectedCity || g.ciudad_destino === selectedCity;
+          const matchQuery = !q || 
+            (g.id_guia && g.id_guia.toLowerCase().includes(q)) ||
+            (g.destinatario && g.destinatario.toLowerCase().includes(q)) ||
+            (g.direccion_referencia && g.direccion_referencia.toLowerCase().includes(q)) ||
+            (g.telefono_principal && g.telefono_principal.includes(q));
+
+          return matchTab && matchCity && matchQuery;
+        });
+      }
+
+      function renderCards() {
+        updateStats();
+        if (!cardsContainer) return;
+
+        const filtered = getFilteredGuias();
+        if (filtered.length === 0) {
+          cardsContainer.innerHTML = '';
+          emptyState?.classList.remove('hidden');
+          return;
         }
 
-        toast.classList.remove('hidden');
-        setTimeout(() => {
-          toast.classList.add('hidden');
-        }, 3500);
+        emptyState?.classList.add('hidden');
+
+        cardsContainer.innerHTML = filtered.map((guia, index) => {
+          const stopNum = guia.orden_ruta && guia.orden_ruta > 0 ? guia.orden_ruta : (index + 1);
+          const isDelivered = guia.estado === 'Entregado';
+          const isIncident = guia.estado === 'No entregado';
+          const isPending = !isDelivered && !isIncident;
+
+          const phoneClean = formatPhoneForWhatsApp(guia.telefono_principal);
+          const msgWhatsApp = encodeURIComponent(`Hola ${guia.destinatario}, soy tu chofer de Envías C.A. Voy en camino a entregarte tu paquete (Guía #${guia.id_guia}).`);
+          const linkWhatsApp = `https://wa.me/${phoneClean}?text=${msgWhatsApp}`;
+
+          let gmapsUrl = '';
+          let wazeUrl = '';
+          if (guia.gps_confirmado && guia.gps_latitud && guia.gps_longitud) {
+            gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${guia.gps_latitud},${guia.gps_longitud}`;
+            wazeUrl = `https://waze.com/ul?ll=${guia.gps_latitud},${guia.gps_longitud}&navigate=yes`;
+          } else {
+            const destQuery = encodeURIComponent(`${guia.direccion_referencia || ''} ${guia.ciudad_destino || ''} Venezuela`);
+            gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${destQuery}`;
+            wazeUrl = `https://waze.com/ul?q=${destQuery}&navigate=yes`;
+          }
+
+          let badgeStatusHtml = '';
+          if (isDelivered) {
+            badgeStatusHtml = `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200">Entregado</span>`;
+          } else if (isIncident) {
+            badgeStatusHtml = `<span class="px-2 py-0.5 rounded-md bg-rose-50 text-rose-800 text-[10px] font-bold border border-rose-200">No entregó</span>`;
+          } else {
+            badgeStatusHtml = `<span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200">Pendiente</span>`;
+          }
+
+          return `
+            <div class="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm space-y-3 transition-all ${isDelivered ? 'opacity-75 bg-slate-50/50' : ''}">
+              <!-- Fila Superior: Parada, Guía y Estado -->
+              <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-xl ${isDelivered ? 'bg-emerald-600' : isIncident ? 'bg-rose-600' : 'bg-slate-900'} text-white flex items-center justify-center font-extrabold text-xs shrink-0 shadow-xs">
+                    #${stopNum}
+                  </div>
+                  <div>
+                    <span class="font-mono font-bold text-xs text-slate-900">Guía #${guia.id_guia}</span>
+                    <span class="text-[10px] text-slate-400 font-medium ml-1">&bull; ${guia.piezas || 1} pza(s)</span>
+                  </div>
+                </div>
+                ${badgeStatusHtml}
+              </div>
+
+              <!-- Info Destinatario -->
+              <div class="space-y-1 text-xs">
+                <p class="font-bold text-slate-900 text-sm leading-snug">${guia.destinatario}</p>
+                <div class="flex items-center gap-1.5 text-slate-500 font-medium">
+                  <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  <span class="truncate">${guia.ciudad_destino}${guia.direccion_referencia ? ' &bull; ' + guia.direccion_referencia : ''}</span>
+                </div>
+                ${guia.hora_disponible ? `
+                  <p class="text-[10px] text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded-md inline-block">
+                    Horario: Hasta las ${guia.hora_disponible}
+                  </p>
+                ` : ''}
+              </div>
+
+              <!-- Botones de Acción (Navegación, WhatsApp y Confirmación) -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1 border-t border-slate-100">
+                <!-- WhatsApp -->
+                <a 
+                  href="${linkWhatsApp}" 
+                  target="_blank" 
+                  class="tap-active p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-center font-bold text-[11px] flex items-center justify-center gap-1 transition-colors"
+                >
+                  <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.961.947 3.224.947 3.182 0 5.768-2.586 5.768-5.766 0-3.18-2.586-5.766-5.766-5.766zm9.969 5.828c0 5.518-4.482 10-10 10-1.748 0-3.385-.45-4.818-1.237l-5.182 1.409 1.433-5.068c-.89-1.488-1.433-3.232-1.433-5.104 0-5.518 4.482-10 10-10s10 4.482 10 10z"/></svg>
+                  <span>WhatsApp</span>
+                </a>
+
+                <!-- Google Maps -->
+                <a 
+                  href="${gmapsUrl}" 
+                  target="_blank" 
+                  class="tap-active p-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-center font-bold text-[11px] flex items-center justify-center gap-1 transition-colors"
+                >
+                  <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+                  <span>Google Maps</span>
+                </a>
+
+                <!-- Waze -->
+                <a 
+                  href="${wazeUrl}" 
+                  target="_blank" 
+                  class="tap-active p-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-center font-bold text-[11px] flex items-center justify-center gap-1 transition-colors"
+                >
+                  <svg class="w-3.5 h-3.5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  <span>Waze</span>
+                </a>
+
+                <!-- Botón de Estado / Entrega -->
+                ${isPending ? `
+                  <button 
+                    type="button" 
+                    onclick="window.openDeliveryModal('${guia.id_guia}', '${guia.destinatario.replace(/'/g, "\\'")}', '${(guia.direccion_referencia || '').replace(/'/g, "\\'")}', ${stopNum})" 
+                    class="tap-active p-2 rounded-xl bg-slate-900 hover:bg-black text-white text-center font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-xs"
+                  >
+                    <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    <span>Entregar</span>
+                  </button>
+                ` : isDelivered && guia.comprobante_url ? `
+                  <button 
+                    type="button" 
+                    onclick="window.openLightbox('${guia.comprobante_url}', 'Guía #${guia.id_guia}', '${guia.destinatario.replace(/'/g, "\\'")}')" 
+                    class="tap-active p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-center font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <svg class="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    <span>Comprobante</span>
+                  </button>
+                ` : `
+                  <button 
+                    type="button" 
+                    onclick="window.openDeliveryModal('${guia.id_guia}', '${guia.destinatario.replace(/'/g, "\\'")}', '${(guia.direccion_referencia || '').replace(/'/g, "\\'")}', ${stopNum})" 
+                    class="tap-active p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-center font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <span>Actualizar</span>
+                  </button>
+                `}
+              </div>
+            </div>
+          `;
+        }).join('');
       }
 
-      // 8. Control de Pestañas
-      function resetTabStyles() {
-        const inactiveClass = 'py-2 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer';
-        if (tabPendientes) tabPendientes.className = inactiveClass;
-        if (tabEntregados) tabEntregados.className = inactiveClass;
-        if (tabNoEntregados) tabNoEntregados.className = inactiveClass;
-        if (tabTodos) tabTodos.className = inactiveClass;
+      function updateTabsUI() {
+        const tabs = [
+          { id: 'tab-pendientes', key: 'pendientes' },
+          { id: 'tab-entregados', key: 'entregados' },
+          { id: 'tab-no-entregados', key: 'no_entregados' },
+          { id: 'tab-todos', key: 'todos' }
+        ];
+
+        tabs.forEach(t => {
+          const btn = document.getElementById(t.id);
+          if (!btn) return;
+          if (activeTab === t.key) {
+            btn.className = 'py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs cursor-pointer';
+          } else {
+            btn.className = 'py-2 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer';
+          }
+        });
       }
 
-      tabPendientes?.addEventListener('click', () => {
-        activeTab = 'pendientes';
-        resetTabStyles();
-        tabPendientes.className = 'py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs cursor-pointer';
-        renderCards();
-      });
+      tabPendientes?.addEventListener('click', () => { activeTab = 'pendientes'; updateTabsUI(); renderCards(); });
+      tabEntregados?.addEventListener('click', () => { activeTab = 'entregados'; updateTabsUI(); renderCards(); });
+      tabNoEntregados?.addEventListener('click', () => { activeTab = 'no_entregados'; updateTabsUI(); renderCards(); });
+      tabTodos?.addEventListener('click', () => { activeTab = 'todos'; updateTabsUI(); renderCards(); });
 
-      tabEntregados?.addEventListener('click', () => {
-        activeTab = 'entregados';
-        resetTabStyles();
-        tabEntregados.className = 'py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs cursor-pointer';
-        renderCards();
-      });
-
-      tabNoEntregados?.addEventListener('click', () => {
-        activeTab = 'no_entregados';
-        resetTabStyles();
-        tabNoEntregados.className = 'py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-rose-900 shadow-xs cursor-pointer';
-        renderCards();
-      });
-
-      tabTodos?.addEventListener('click', () => {
-        activeTab = 'todos';
-        resetTabStyles();
-        tabTodos.className = 'py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs cursor-pointer';
-        renderCards();
-      });
-
-      // 9. Buscador y Filtro de Ciudad
       searchInput?.addEventListener('input', (e) => {
-        searchQuery = e.target.value;
+        searchQuery = (e.target).value;
         renderCards();
       });
 
       cityFilter?.addEventListener('change', (e) => {
-        selectedCity = e.target.value;
+        selectedCity = (e.target).value;
         renderCards();
       });
 
-      // 10. Toggle y Re-centrado del Mapa
+      // Inicialización segura del mapa Leaflet
+      function initMap() {
+        try {
+          if (typeof L === 'undefined') return;
+          const mapContainer = document.getElementById('route-map');
+          if (!mapContainer || map) return;
+
+          map = L.map('route-map', { zoomControl: true, attributionControl: false }).setView([10.0808, -69.3756], 12);
+          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19,
+            subdomains: 'abcd'
+          }).addTo(map);
+
+          markersLayer = L.layerGroup().addTo(map);
+          updateMapMarkers();
+        } catch (err) {
+          console.warn('[Map Init Warning]:', err);
+        }
+      }
+
+      function updateMapMarkers() {
+        if (!map || !markersLayer || typeof L === 'undefined') return;
+        markersLayer.clearLayers();
+
+        const latLngs = [];
+        guiasData.forEach((g, idx) => {
+          if (g.gps_confirmado && g.gps_latitud && g.gps_longitud) {
+            const lat = parseFloat(g.gps_latitud);
+            const lng = parseFloat(g.gps_longitud);
+            if (!isNaN(lat) && !isNaN(lng)) {
+              const stopNum = g.orden_ruta && g.orden_ruta > 0 ? g.orden_ruta : (idx + 1);
+              const isDelivered = g.estado === 'Entregado';
+              const isIncident = g.estado === 'No entregado';
+              const bgColor = isDelivered ? '#059669' : isIncident ? '#e11d48' : '#0f172a';
+
+              const iconHtml = `
+                <div style="background:${bgColor};width:28px;height:28px;border-radius:50%;border:2px solid white;color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;box-shadow:0 2px 6px rgba(0,0,0,0.3);">
+                  ${stopNum}
+                </div>
+              `;
+              const icon = L.divIcon({ html: iconHtml, className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+              const marker = L.marker([lat, lng], { icon }).addTo(markersLayer);
+              marker.bindPopup(`<b>Parada #${stopNum}</b><br/>Guía #${g.id_guia}<br/>${g.destinatario}`);
+              latLngs.push([lat, lng]);
+            }
+          }
+        });
+
+        if (routePolyline) {
+          map.removeLayer(routePolyline);
+          routePolyline = null;
+        }
+
+        if (latLngs.length > 1) {
+          routePolyline = L.polyline(latLngs, { color: '#4f46e5', weight: 3, opacity: 0.8, dashArray: '6, 6' }).addTo(map);
+        }
+
+        if (latLngs.length > 0) {
+          map.fitBounds(L.latLngBounds(latLngs), { padding: [30, 30] });
+        }
+      }
+
+      // Toggle Mapa
+      const toggleMapBtn = document.getElementById('toggle-map-btn');
+      const toggleMapText = document.getElementById('toggle-map-text');
+      const mapWrapper = document.getElementById('map-wrapper');
+      const recenterMapBtn = document.getElementById('recenter-map-btn');
+
       toggleMapBtn?.addEventListener('click', () => {
         isMapVisible = !isMapVisible;
         if (isMapVisible) {
-          mapWrapper.classList.remove('hidden');
-          toggleMapText.textContent = 'Ocultar Mapa';
-          toggleMapIcon.style.transform = 'rotate(0deg)';
-          setTimeout(() => {
-            if (map) map.invalidateSize();
-          }, 200);
+          mapWrapper?.classList.remove('hidden');
+          if (toggleMapText) toggleMapText.textContent = 'Ocultar Mapa';
+          setTimeout(() => { if (map) map.invalidateSize(); }, 150);
         } else {
-          mapWrapper.classList.add('hidden');
-          toggleMapText.textContent = 'Mostrar Mapa';
-          toggleMapIcon.style.transform = 'rotate(180deg)';
+          mapWrapper?.classList.add('hidden');
+          if (toggleMapText) toggleMapText.textContent = 'Ver Mapa';
         }
       });
 
       recenterMapBtn?.addEventListener('click', () => {
-        userHasInteractedWithMap = false;
-        updateMapMarkers(true);
-        showToast('Vista ajustada a toda la ruta', 'info');
+        updateMapMarkers();
       });
 
-      // 11. Live Sync en Segundo Plano (cada 4.5 segundos)
-      async function fetchLatestGuias(isManual = false) {
-        if (isManual && refreshIcon) {
-          refreshIcon.classList.add('animate-spin');
-        }
+      // ====================================================
+      // MÓDULO 4: LIGHTBOX
+      // ====================================================
+      const lightboxModal = document.getElementById('lightbox-modal');
+      const lightboxImg = document.getElementById('lightbox-img');
+      const lightboxTitle = document.getElementById('lightbox-title');
+      const lightboxInfo = document.getElementById('lightbox-info');
+      const lightboxCloseBtn = document.getElementById('lightbox-close-btn');
 
+      window.openLightbox = function(url, title, info) {
+        if (!lightboxModal || !lightboxImg) return;
+        lightboxImg.src = url;
+        if (lightboxTitle) lightboxTitle.textContent = title || 'Comprobante';
+        if (lightboxInfo) lightboxInfo.textContent = info || '';
+        lightboxModal.classList.remove('hidden');
+        lightboxModal.classList.add('flex');
+      };
+
+      function closeLightbox() {
+        lightboxModal?.classList.add('hidden');
+        lightboxModal?.classList.remove('flex');
+        if (lightboxImg) lightboxImg.src = '';
+      }
+
+      lightboxCloseBtn?.addEventListener('click', closeLightbox);
+      lightboxModal?.addEventListener('click', (e) => {
+        if (e.target === lightboxModal) closeLightbox();
+      });
+
+      // ====================================================
+      // MÓDULO 5: LIVE SYNC SILENCIOSO (4.5s)
+      // ====================================================
+      const refreshBtn = document.getElementById('refresh-btn');
+      const refreshIcon = document.getElementById('refresh-icon');
+
+      async function syncGuias(showToastNotification = false) {
+        if (refreshIcon) refreshIcon.classList.add('animate-spin');
         try {
           const res = await fetch('/api/chofer/guias');
-          if (res.status === 401 || res.status === 403) {
-            window.location.href = '/login';
-            return;
-          }
-          if (res.ok) {
-            const data = await res.json();
-            if (data.success && Array.isArray(data.data)) {
-              guiasData = data.data;
-              renderCards();
-              updateMapMarkers(isManual);
-              if (isManual) {
-                showToast('Hoja de ruta actualizada', 'info');
-              }
+          if (!res.ok) return;
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data)) {
+            guiasData = json.data;
+
+            const noRoutesContainer = document.getElementById('no-routes-container');
+            const activeRoutesContainer = document.getElementById('active-routes-container');
+
+            if (guiasData.length === 0) {
+              noRoutesContainer?.classList.remove('hidden');
+              activeRoutesContainer?.classList.add('hidden');
+            } else {
+              noRoutesContainer?.classList.add('hidden');
+              activeRoutesContainer?.classList.remove('hidden');
+            }
+
+            renderCards();
+            updateMapMarkers();
+            if (showToastNotification) {
+              showToast('Ruta actualizada', 'success');
             }
           }
         } catch (err) {
-          console.warn('[LiveSync Chofer Error]:', err);
-        } finally {
-          if (isManual && refreshIcon) {
-            setTimeout(() => {
-              refreshIcon.classList.remove('animate-spin');
-            }, 600);
+          if (showToastNotification) {
+            showToast('Error al sincronizar con el servidor', 'error');
           }
+        } finally {
+          if (refreshIcon) refreshIcon.classList.remove('animate-spin');
         }
       }
 
-      refreshBtn?.addEventListener('click', () => {
-        fetchLatestGuias(true);
-      });
+      refreshBtn?.addEventListener('click', () => syncGuias(true));
 
-      window.addEventListener('pageshow', (event) => {
-        if (event.persisted) {
-          window.location.reload();
-        }
-      });
-
-      // Inicialización
-      initMap();
-      renderCards();
-
+      // Polling de 4.5s
       setInterval(() => {
-        fetchLatestGuias(false);
+        syncGuias(false);
       }, 4500);
+
+      // Inicialización en arranque
+      document.addEventListener('DOMContentLoaded', () => {
+        renderCards();
+        initMap();
+      });
+
+      // Si DOMContentLoaded ya pasó (script diferido)
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        renderCards();
+        setTimeout(initMap, 200);
+      }
     </script>
   </body>
 </html>
