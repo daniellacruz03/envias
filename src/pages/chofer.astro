@@ -935,6 +935,20 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
       const photoStatusText = document.getElementById('photo-status-text');
       const btnRetakePhoto = document.getElementById('btn-retake-photo');
 
+      // Lightbox Elements
+      const lightboxModal = document.getElementById('lightbox-modal');
+      const lightboxCloseBtn = document.getElementById('lightbox-close-btn');
+      const lightboxImg = document.getElementById('lightbox-img');
+      const lightboxTitle = document.getElementById('lightbox-title');
+      const lightboxInfo = document.getElementById('lightbox-info');
+
+      let currentCompressedFile = null;
+
+      // Toast Elements
+      const toast = document.getElementById('toast');
+      const toastIcon = document.getElementById('toast-icon');
+      const toastMessage = document.getElementById('toast-message');
+
       // Listeners de inputs de escaneo (hero + modal)
       const scanCameraInput = document.getElementById('scan-camera-input') as HTMLInputElement;
       const scanGalleryInput = document.getElementById('scan-gallery-input') as HTMLInputElement;
