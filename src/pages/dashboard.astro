@@ -1867,6 +1867,154 @@ const userInitials = currentUser.nombre
       }
 
       // ==========================================
+      // PALETAS DE COLOR DISTINTIVAS POR CIUDAD / ZONA
+      // ==========================================
+      const CITY_COLOR_THEMES: Record<string, {
+        accentBorder: string;
+        cardBorder: string;
+        headerBg: string;
+        iconBg: string;
+        badgeBg: string;
+        iconColor: string;
+      }> = {
+        barquisimeto: {
+          accentBorder: 'border-l-indigo-600',
+          cardBorder: 'border-indigo-200/90',
+          headerBg: 'from-indigo-50/90 via-indigo-50/30 to-white',
+          iconBg: 'bg-indigo-600 text-white shadow-md shadow-indigo-200',
+          badgeBg: 'bg-indigo-100/90 text-indigo-900 border border-indigo-200',
+          iconColor: 'text-indigo-200'
+        },
+        caracas: {
+          accentBorder: 'border-l-sky-600',
+          cardBorder: 'border-sky-200/90',
+          headerBg: 'from-sky-50/90 via-sky-50/30 to-white',
+          iconBg: 'bg-sky-600 text-white shadow-md shadow-sky-200',
+          badgeBg: 'bg-sky-100/90 text-sky-900 border border-sky-200',
+          iconColor: 'text-sky-200'
+        },
+        maracaibo: {
+          accentBorder: 'border-l-amber-500',
+          cardBorder: 'border-amber-200/90',
+          headerBg: 'from-amber-50/90 via-amber-50/30 to-white',
+          iconBg: 'bg-amber-500 text-white shadow-md shadow-amber-200',
+          badgeBg: 'bg-amber-100/90 text-amber-900 border border-amber-200',
+          iconColor: 'text-amber-100'
+        },
+        valencia: {
+          accentBorder: 'border-l-emerald-600',
+          cardBorder: 'border-emerald-200/90',
+          headerBg: 'from-emerald-50/90 via-emerald-50/30 to-white',
+          iconBg: 'bg-emerald-600 text-white shadow-md shadow-emerald-200',
+          badgeBg: 'bg-emerald-100/90 text-emerald-900 border border-emerald-200',
+          iconColor: 'text-emerald-200'
+        },
+        merida: {
+          accentBorder: 'border-l-cyan-600',
+          cardBorder: 'border-cyan-200/90',
+          headerBg: 'from-cyan-50/90 via-cyan-50/30 to-white',
+          iconBg: 'bg-cyan-600 text-white shadow-md shadow-cyan-200',
+          badgeBg: 'bg-cyan-100/90 text-cyan-900 border border-cyan-200',
+          iconColor: 'text-cyan-200'
+        },
+        maracay: {
+          accentBorder: 'border-l-rose-500',
+          cardBorder: 'border-rose-200/90',
+          headerBg: 'from-rose-50/90 via-rose-50/30 to-white',
+          iconBg: 'bg-rose-500 text-white shadow-md shadow-rose-200',
+          badgeBg: 'bg-rose-100/90 text-rose-900 border border-rose-200',
+          iconColor: 'text-rose-200'
+        },
+        sancristobal: {
+          accentBorder: 'border-l-purple-600',
+          cardBorder: 'border-purple-200/90',
+          headerBg: 'from-purple-50/90 via-purple-50/30 to-white',
+          iconBg: 'bg-purple-600 text-white shadow-md shadow-purple-200',
+          badgeBg: 'bg-purple-100/90 text-purple-900 border border-purple-200',
+          iconColor: 'text-purple-200'
+        },
+        barcelona: {
+          accentBorder: 'border-l-teal-600',
+          cardBorder: 'border-teal-200/90',
+          headerBg: 'from-teal-50/90 via-teal-50/30 to-white',
+          iconBg: 'bg-teal-600 text-white shadow-md shadow-teal-200',
+          badgeBg: 'bg-teal-100/90 text-teal-900 border border-teal-200',
+          iconColor: 'text-teal-200'
+        },
+        puertolacruz: {
+          accentBorder: 'border-l-teal-600',
+          cardBorder: 'border-teal-200/90',
+          headerBg: 'from-teal-50/90 via-teal-50/30 to-white',
+          iconBg: 'bg-teal-600 text-white shadow-md shadow-teal-200',
+          badgeBg: 'bg-teal-100/90 text-teal-900 border border-teal-200',
+          iconColor: 'text-teal-200'
+        },
+        barinas: {
+          accentBorder: 'border-l-lime-600',
+          cardBorder: 'border-lime-200/90',
+          headerBg: 'from-lime-50/90 via-lime-50/30 to-white',
+          iconBg: 'bg-lime-600 text-white shadow-md shadow-lime-200',
+          badgeBg: 'bg-lime-100/90 text-lime-900 border border-lime-200',
+          iconColor: 'text-lime-200'
+        },
+        acarigua: {
+          accentBorder: 'border-l-orange-500',
+          cardBorder: 'border-orange-200/90',
+          headerBg: 'from-orange-50/90 via-orange-50/30 to-white',
+          iconBg: 'bg-orange-500 text-white shadow-md shadow-orange-200',
+          badgeBg: 'bg-orange-100/90 text-orange-900 border border-orange-200',
+          iconColor: 'text-orange-200'
+        },
+        cabudare: {
+          accentBorder: 'border-l-violet-600',
+          cardBorder: 'border-violet-200/90',
+          headerBg: 'from-violet-50/90 via-violet-50/30 to-white',
+          iconBg: 'bg-violet-600 text-white shadow-md shadow-violet-200',
+          badgeBg: 'bg-violet-100/90 text-violet-900 border border-violet-200',
+          iconColor: 'text-violet-200'
+        },
+        maturin: {
+          accentBorder: 'border-l-fuchsia-600',
+          cardBorder: 'border-fuchsia-200/90',
+          headerBg: 'from-fuchsia-50/90 via-fuchsia-50/30 to-white',
+          iconBg: 'bg-fuchsia-600 text-white shadow-md shadow-fuchsia-200',
+          badgeBg: 'bg-fuchsia-100/90 text-fuchsia-900 border border-fuchsia-200',
+          iconColor: 'text-fuchsia-200'
+        },
+        puertoordaz: {
+          accentBorder: 'border-l-blue-600',
+          cardBorder: 'border-blue-200/90',
+          headerBg: 'from-blue-50/90 via-blue-50/30 to-white',
+          iconBg: 'bg-blue-600 text-white shadow-md shadow-blue-200',
+          badgeBg: 'bg-blue-100/90 text-blue-900 border border-blue-200',
+          iconColor: 'text-blue-200'
+        }
+      };
+
+      const DEFAULT_CITY_PALETTES = [
+        { accentBorder: 'border-l-indigo-600', cardBorder: 'border-indigo-200/90', headerBg: 'from-indigo-50/80 via-white to-white', iconBg: 'bg-indigo-600 text-white shadow-md shadow-indigo-200', badgeBg: 'bg-indigo-100/90 text-indigo-900 border border-indigo-200', iconColor: 'text-indigo-200' },
+        { accentBorder: 'border-l-sky-600', cardBorder: 'border-sky-200/90', headerBg: 'from-sky-50/80 via-white to-white', iconBg: 'bg-sky-600 text-white shadow-md shadow-sky-200', badgeBg: 'bg-sky-100/90 text-sky-900 border border-sky-200', iconColor: 'text-sky-200' },
+        { accentBorder: 'border-l-emerald-600', cardBorder: 'border-emerald-200/90', headerBg: 'from-emerald-50/80 via-white to-white', iconBg: 'bg-emerald-600 text-white shadow-md shadow-emerald-200', badgeBg: 'bg-emerald-100/90 text-emerald-900 border border-emerald-200', iconColor: 'text-emerald-200' },
+        { accentBorder: 'border-l-amber-500', cardBorder: 'border-amber-200/90', headerBg: 'from-amber-50/80 via-white to-white', iconBg: 'bg-amber-500 text-white shadow-md shadow-amber-200', badgeBg: 'bg-amber-100/90 text-amber-900 border border-amber-200', iconColor: 'text-amber-200' },
+        { accentBorder: 'border-l-rose-500', cardBorder: 'border-rose-200/90', headerBg: 'from-rose-50/80 via-white to-white', iconBg: 'bg-rose-500 text-white shadow-md shadow-rose-200', badgeBg: 'bg-rose-100/90 text-rose-900 border border-rose-200', iconColor: 'text-rose-200' },
+        { accentBorder: 'border-l-purple-600', cardBorder: 'border-purple-200/90', headerBg: 'from-purple-50/80 via-white to-white', iconBg: 'bg-purple-600 text-white shadow-md shadow-purple-200', badgeBg: 'bg-purple-100/90 text-purple-900 border border-purple-200', iconColor: 'text-purple-200' },
+        { accentBorder: 'border-l-teal-600', cardBorder: 'border-teal-200/90', headerBg: 'from-teal-50/80 via-white to-white', iconBg: 'bg-teal-600 text-white shadow-md shadow-teal-200', badgeBg: 'bg-teal-100/90 text-teal-900 border border-teal-200', iconColor: 'text-teal-200' },
+        { accentBorder: 'border-l-cyan-600', cardBorder: 'border-cyan-200/90', headerBg: 'from-cyan-50/80 via-white to-white', iconBg: 'bg-cyan-600 text-white shadow-md shadow-cyan-200', badgeBg: 'bg-cyan-100/90 text-cyan-900 border border-cyan-200', iconColor: 'text-cyan-200' }
+      ];
+
+      function getCityColorTheme(name: string) {
+        const clean = normalizeText(name || '').replace(/[^a-z0-9]/g, '');
+        if (CITY_COLOR_THEMES[clean]) return CITY_COLOR_THEMES[clean];
+        for (const [k, v] of Object.entries(CITY_COLOR_THEMES)) {
+          if (clean.includes(k) || k.includes(clean)) return v;
+        }
+        let hash = 0;
+        for (let i = 0; i < clean.length; i++) hash = clean.charCodeAt(i) + ((hash << 5) - hash);
+        const index = Math.abs(hash) % DEFAULT_CITY_PALETTES.length;
+        return DEFAULT_CITY_PALETTES[index];
+      }
+
+      // ==========================================
       // RENDER VISTA 2: AGRUPADO POR CIUDAD
       // ==========================================
       function renderCitiesGrouped(filtered: GuiaRow[]) {
@@ -1882,6 +2030,7 @@ const userInitials = currentUser.nombre
 
         viewContainerCities.innerHTML = cityNames.map(cityName => {
           const cityGuias = cityMap[cityName];
+          const theme = getCityColorTheme(cityName);
           const totalPieces = cityGuias.reduce((acc, curr) => acc + (curr.piezas || 1), 0);
           const gpsCount = cityGuias.filter(g => g.gps_confirmado).length;
           
@@ -1917,15 +2066,15 @@ const userInitials = currentUser.nombre
           `;
 
           return `
-            <div class="bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden transition-all duration-200">
+            <div class="bg-white border-y border-r ${theme.cardBorder} ${theme.accentBorder} border-l-[5px] rounded-2xl shadow-xs hover:shadow-md overflow-hidden transition-all duration-200">
               
-              <!-- Cabecera de la Ciudad (Card Header) -->
-              <div class="p-4 sm:p-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <!-- Cabecera de la Ciudad (Card Header con Color Distintivo) -->
+              <div class="p-4 sm:p-5 border-b border-slate-100 bg-gradient-to-r ${theme.headerBg} flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 
                 <!-- Info de la Ciudad y Métricas -->
                 <div class="flex items-center gap-3.5">
-                  <div class="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-bold text-sm shadow-sm shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div class="w-10 h-10 rounded-2xl ${theme.iconBg} flex items-center justify-center font-bold text-sm shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 ${theme.iconColor}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
@@ -1933,7 +2082,7 @@ const userInitials = currentUser.nombre
                   <div>
                     <div class="flex items-center gap-2 flex-wrap">
                       <h4 class="text-base font-extrabold text-slate-900 tracking-tight">${cityName}</h4>
-                      <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-800">
+                      <span class="text-xs font-bold px-2.5 py-0.5 rounded-full ${theme.badgeBg}">
                         ${cityGuias.length} ${cityGuias.length === 1 ? 'guía' : 'guías'} • ${totalPieces} ${totalPieces === 1 ? 'pieza' : 'piezas'}
                       </span>
                       ${gpsCount > 0 ? `
