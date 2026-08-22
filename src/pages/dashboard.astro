@@ -335,8 +335,22 @@ const userInitials = currentUser.nombre
                 </svg>
                 <span>Estado de Choferes</span>
                 <span id="drivers-count-pill" class="text-[10px] bg-slate-300/80 px-1.5 py-0.2 rounded-full font-bold">0</span>
-              </button>
             </div>
+
+            <!-- 4ta Pestaña: Revisar Guías Escaneadas -->
+            <button
+              type="button"
+              id="btn-view-escaneos"
+              class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-slate-600 hover:text-slate-900"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>Revisar Guias</span>
+              <span id="escaneos-count-pill" class="text-[10px] bg-slate-300/80 px-1.5 py-0.2 rounded-full font-bold hidden">0</span>
+            </button>
+          </div>
 
             <!-- Botón Principal: Abrir Planificador de Rutas (Spoke Style) -->
             <button
@@ -438,9 +452,132 @@ const userInitials = currentUser.nombre
           <p class="text-sm font-semibold text-slate-800">No se encontraron envíos</p>
           <p class="text-xs text-slate-400 max-w-xs">No hay registros que coincidan con los filtros o aún no se han registrado guías.</p>
         </div>
+
+        <!-- ========================================== -->
+        <!-- MODO 4: REVISIÓN DE GUÍAS ESCANEADAS       -->
+        <!-- ========================================== -->
+        <div id="view-container-escaneos" class="hidden p-4 sm:p-6 bg-slate-50/50 space-y-5">
+          <!-- Cargando -->
+          <div id="escaneos-loading" class="flex items-center justify-center py-12 text-slate-400 text-sm gap-2">
+            <svg class="animate-spin w-5 h-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span>Cargando guías escaneadas...</span>
+          </div>
+          <!-- Lista de lotes - se rellena por JS -->
+          <div id="escaneos-list" class="hidden space-y-5"></div>
+          <!-- Estado vacío -->
+          <div id="escaneos-empty" class="hidden p-12 text-center">
+            <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-3">
+              <svg class="w-7 h-7 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+              </svg>
+            </div>
+            <p class="text-sm font-semibold text-slate-700">Sin guías pendientes</p>
+            <p class="text-xs text-slate-400 mt-1">Los choferes aún no han subido guías para revisar.</p>
+          </div>
+        </div>
+
       </section>
 
     </main>
+
+    <!-- ========================================================= -->
+    <!-- DRAWER LATERAL: APROBAR / RECHAZAR ESCANEO                -->
+    <!-- ========================================================= -->
+    <div id="escaneo-drawer" class="fixed inset-0 z-50 hidden">
+      <!-- Overlay -->
+      <div id="escaneo-drawer-overlay" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+      <!-- Panel -->
+      <div class="absolute right-0 top-0 h-full w-full max-w-lg bg-white shadow-2xl flex flex-col">
+        <!-- Header del Drawer -->
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 shrink-0">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900" id="drawer-title">Revisar Guía Escaneada</h3>
+            <p class="text-[11px] text-slate-500 mt-0.5" id="drawer-subtitle">Ingresa los datos de la guía física</p>
+          </div>
+          <button id="drawer-close-btn" type="button" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Foto de la guía -->
+        <div class="px-5 pt-4 shrink-0">
+          <div class="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 max-h-64">
+            <img id="drawer-foto" src="" alt="Guía escaneada" class="w-full h-full object-contain" />
+          </div>
+        </div>
+
+        <!-- Formulario de datos -->
+        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div class="col-span-1 space-y-1">
+              <label class="text-xs font-semibold text-slate-700">N° Guía <span class="text-rose-500">*</span></label>
+              <input type="text" id="drawer-id-guia" placeholder="Ej: 982001" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all font-mono" />
+            </div>
+            <div class="col-span-1 space-y-1">
+              <label class="text-xs font-semibold text-slate-700">Piezas</label>
+              <input type="number" id="drawer-piezas" value="1" min="1" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-slate-700">Destinatario <span class="text-rose-500">*</span></label>
+            <input type="text" id="drawer-destinatario" placeholder="Nombre completo del destinatario" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-slate-700">Teléfono <span class="text-rose-500">*</span></label>
+            <input type="tel" id="drawer-telefono" placeholder="Ej: 04141234567" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all font-mono" />
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-slate-700">Ciudad Destino <span class="text-rose-500">*</span></label>
+            <input type="text" id="drawer-ciudad" placeholder="Ej: Mérida" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-slate-700">Dirección / Referencias <span class="text-slate-400 font-normal">(Opcional)</span></label>
+            <input type="text" id="drawer-direccion" placeholder="Ej: Av. Las Américas, frente al C.C." class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
+          </div>
+
+          <!-- Mensaje de error -->
+          <div id="drawer-error" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 font-semibold"></div>
+        </div>
+
+        <!-- Acciones del Drawer -->
+        <div class="px-5 py-4 border-t border-slate-200 shrink-0 flex items-center gap-3">
+          <button id="drawer-reject-btn" type="button" class="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-700 hover:text-rose-700 font-semibold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            Rechazar
+          </button>
+          <button id="drawer-approve-btn" type="button" class="flex-2 flex-grow py-2.5 px-5 rounded-xl bg-slate-900 hover:bg-black active:scale-[0.98] text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+            Aprobar y Crear Guía
+          </button>
+        </div>
+
+        <!-- Navegación Anterior / Siguiente -->
+        <div class="px-5 pb-4 flex items-center justify-between shrink-0">
+          <button id="drawer-prev-btn" type="button" class="text-xs font-semibold text-slate-500 hover:text-slate-900 disabled:opacity-30 flex items-center gap-1 transition-colors cursor-pointer disabled:cursor-not-allowed">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            Anterior
+          </button>
+          <span id="drawer-nav-counter" class="text-[11px] text-slate-400 font-mono">1 / 1</span>
+          <button id="drawer-next-btn" type="button" class="text-xs font-semibold text-slate-500 hover:text-slate-900 disabled:opacity-30 flex items-center gap-1 transition-colors cursor-pointer disabled:cursor-not-allowed">
+            Siguiente
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- ========================================== -->
     <!-- MODAL PLANIFICADOR DE RUTA SECUENCIAL (SPOKE) -->
@@ -879,7 +1016,7 @@ const userInitials = currentUser.nombre
       let shipments: GuiaRow[] = [];
       let drivers: Driver[] = [];
       let isLoading = true;
-      let currentViewMode: 'table' | 'cities' | 'drivers' = 'table';
+      let currentViewMode: 'table' | 'cities' | 'drivers' | 'escaneos' = 'table';
       let expandedCities: Record<string, boolean> = {};
 
       // ==========================================
@@ -1133,11 +1270,14 @@ const userInitials = currentUser.nombre
       const viewContainerTable = document.getElementById('view-container-table') as HTMLElement;
       const viewContainerCities = document.getElementById('view-container-cities') as HTMLElement;
       const viewContainerDrivers = document.getElementById('view-container-drivers') as HTMLElement;
+      const viewContainerEscaneos = document.getElementById('view-container-escaneos') as HTMLElement;
       const btnViewTable = document.getElementById('btn-view-table') as HTMLButtonElement;
       const btnViewCities = document.getElementById('btn-view-cities') as HTMLButtonElement;
       const btnViewDrivers = document.getElementById('btn-view-drivers') as HTMLButtonElement;
+      const btnViewEscaneos = document.getElementById('btn-view-escaneos') as HTMLButtonElement;
       const citiesCountPill = document.getElementById('cities-count-pill') as HTMLElement;
       const driversCountPill = document.getElementById('drivers-count-pill') as HTMLElement;
+      const escaneosCountPill = document.getElementById('escaneos-count-pill') as HTMLElement;
 
       const searchInput = document.getElementById('search-input') as HTMLInputElement;
       const filterCiudad = document.getElementById('filter-ciudad') as HTMLSelectElement;
@@ -2157,26 +2297,37 @@ const userInitials = currentUser.nombre
           btnViewTable.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewCities.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewDrivers.classList.remove('tab-btn-active', 'text-slate-600');
+          btnViewEscaneos?.classList.remove('tab-btn-active', 'text-slate-600');
           
           viewContainerTable.classList.add('hidden');
           viewContainerCities.classList.add('hidden');
           viewContainerDrivers.classList.add('hidden');
+          viewContainerEscaneos?.classList.add('hidden');
 
           if (currentViewMode === 'table') {
             btnViewTable.classList.add('tab-btn-active');
             btnViewCities.classList.add('text-slate-600');
             btnViewDrivers.classList.add('text-slate-600');
+            btnViewEscaneos?.classList.add('text-slate-600');
             viewContainerTable.classList.remove('hidden');
           } else if (currentViewMode === 'cities') {
             btnViewCities.classList.add('tab-btn-active');
             btnViewTable.classList.add('text-slate-600');
             btnViewDrivers.classList.add('text-slate-600');
+            btnViewEscaneos?.classList.add('text-slate-600');
             viewContainerCities.classList.remove('hidden');
           } else if (currentViewMode === 'drivers') {
             btnViewDrivers.classList.add('tab-btn-active');
             btnViewTable.classList.add('text-slate-600');
             btnViewCities.classList.add('text-slate-600');
+            btnViewEscaneos?.classList.add('text-slate-600');
             viewContainerDrivers.classList.remove('hidden');
+          } else if (currentViewMode === 'escaneos') {
+            btnViewEscaneos?.classList.add('tab-btn-active');
+            btnViewTable.classList.add('text-slate-600');
+            btnViewCities.classList.add('text-slate-600');
+            btnViewDrivers.classList.add('text-slate-600');
+            viewContainerEscaneos?.classList.remove('hidden');
           }
         }
 
@@ -2196,6 +2347,275 @@ const userInitials = currentUser.nombre
           currentViewMode = 'drivers';
           updateTabStyles();
           renderViews();
+        });
+
+        btnViewEscaneos?.addEventListener('click', () => {
+          currentViewMode = 'escaneos';
+          updateTabStyles();
+          loadAndRenderEscaneos();
+        });
+
+        // ============================================
+        // MÓDULO DE REVISIÓN DE GUÍAS ESCANEADAS
+        // ============================================
+        let escaneosData: any[] = [];
+        let drawerFotosFlat: any[] = []; // lista plana de fotos para navegar
+        let drawerCurrentIndex = 0;
+        let activeEscaneoId: number | null = null;
+
+        async function loadAndRenderEscaneos() {
+          const loadingEl = document.getElementById('escaneos-loading') as HTMLElement;
+          const listEl = document.getElementById('escaneos-list') as HTMLElement;
+          const emptyEl = document.getElementById('escaneos-empty') as HTMLElement;
+
+          loadingEl?.classList.remove('hidden');
+          listEl?.classList.add('hidden');
+          emptyEl?.classList.add('hidden');
+
+          try {
+            const res = await fetch('/api/escaneos');
+            if (!res.ok) { loadingEl?.classList.add('hidden'); return; }
+            const data = await res.json();
+            escaneosData = data.data || [];
+
+            // Actualizar badge de la pestaña
+            const totalPend = data.totalPendientes || 0;
+            if (escaneosCountPill) {
+              if (totalPend > 0) {
+                escaneosCountPill.textContent = totalPend.toString();
+                escaneosCountPill.classList.remove('hidden');
+                escaneosCountPill.className = 'text-[10px] bg-amber-400 text-white px-1.5 py-0.2 rounded-full font-bold';
+              } else {
+                escaneosCountPill.classList.add('hidden');
+              }
+            }
+
+            loadingEl?.classList.add('hidden');
+
+            if (escaneosData.length === 0) {
+              emptyEl?.classList.remove('hidden');
+              return;
+            }
+
+            listEl!.innerHTML = escaneosData.map((lote: any) => renderEscaneoLote(lote)).join('');
+            listEl?.classList.remove('hidden');
+
+            // Construir lista plana de fotos pendientes para navegación del drawer
+            drawerFotosFlat = escaneosData.flatMap((lote: any) =>
+              (lote.fotos || []).filter((f: any) => f.estado === 'pendiente').map((f: any) => ({
+                ...f,
+                chofer_nombre: lote.chofer_nombre,
+                lote_id: lote.lote_id
+              }))
+            );
+
+          } catch (e) {
+            loadingEl?.classList.add('hidden');
+            emptyEl?.classList.remove('hidden');
+          }
+        }
+
+        function renderEscaneoLote(lote: any): string {
+          const fecha = new Date(lote.created_at).toLocaleDateString('es-VE', {
+            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+          });
+          const fotosPendientes = (lote.fotos || []).filter((f: any) => f.estado === 'pendiente');
+
+          return `
+            <div class="bg-white border border-slate-200/90 rounded-2xl shadow-sm overflow-hidden">
+              <!-- Cabecera del lote -->
+              <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-extrabold text-xs shrink-0">
+                    ${(lote.chofer_nombre || 'CH').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <p class="text-sm font-bold text-slate-900">${lote.chofer_nombre || 'Chofer'}</p>
+                    <p class="text-[11px] text-slate-500 mt-0.5">${fecha} &bull; ${lote.total} foto${lote.total !== 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  ${lote.pendientes > 0 ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">${lote.pendientes} pendientes</span>` : ''}
+                  ${lote.procesadas > 0 ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">${lote.procesadas} procesadas</span>` : ''}
+                </div>
+              </div>
+              <!-- Barra de progreso del lote -->
+              <div class="px-4 pt-3 pb-1">
+                <div class="flex items-center justify-between text-[10px] text-slate-500 font-semibold mb-1.5">
+                  <span>Progreso de revisión</span>
+                  <span>${lote.procesadas} / ${lote.total}</span>
+                </div>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full bg-emerald-500" style="width: ${lote.total > 0 ? Math.round(lote.procesadas/lote.total*100) : 0}%"></div>
+                </div>
+              </div>
+              <!-- Grid de miniaturas -->
+              <div class="p-3 grid grid-cols-4 sm:grid-cols-6 gap-2">
+                ${(lote.fotos || []).map((foto: any) => `
+                  <div
+                    class="relative aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-all hover:scale-105 ${foto.estado === 'pendiente' ? 'border-amber-300 hover:border-amber-500' : foto.estado === 'procesado' ? 'border-emerald-400' : 'border-rose-300 opacity-60'}"
+                    ${foto.estado === 'pendiente' ? `onclick="window.openEscaneoDrawer(${foto.id})"` : ''}
+                    title="${foto.estado === 'pendiente' ? 'Clic para revisar' : foto.estado === 'procesado' ? 'Ya procesada' : 'Rechazada'}"
+                  >
+                    <img src="${foto.foto_url}" class="w-full h-full object-cover" loading="lazy" />
+                    <div class="absolute bottom-0 inset-x-0 py-0.5 text-center text-[8px] font-bold ${foto.estado === 'pendiente' ? 'bg-amber-400/80 text-white' : foto.estado === 'procesado' ? 'bg-emerald-500/80 text-white' : 'bg-rose-400/80 text-white'}">
+                      ${foto.estado === 'pendiente' ? 'REV.' : foto.estado === 'procesado' ? 'OK' : 'NO'}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+              ${fotosPendientes.length > 0 ? `
+                <div class="px-4 pb-4">
+                  <button
+                    onclick="window.openEscaneoDrawer(${fotosPendientes[0].id})"
+                    class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                  >
+                    <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    Revisar ${fotosPendientes.length} guia${fotosPendientes.length !== 1 ? 's' : ''} pendiente${fotosPendientes.length !== 1 ? 's' : ''}
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }
+
+        // Drawer de revisión
+        const escaneoDrawer = document.getElementById('escaneo-drawer') as HTMLElement;
+        const drawerOverlay = document.getElementById('escaneo-drawer-overlay') as HTMLElement;
+        const drawerFoto = document.getElementById('drawer-foto') as HTMLImageElement;
+        const drawerIdGuia = document.getElementById('drawer-id-guia') as HTMLInputElement;
+        const drawerPiezas = document.getElementById('drawer-piezas') as HTMLInputElement;
+        const drawerDestinatario = document.getElementById('drawer-destinatario') as HTMLInputElement;
+        const drawerTelefono = document.getElementById('drawer-telefono') as HTMLInputElement;
+        const drawerCiudad = document.getElementById('drawer-ciudad') as HTMLInputElement;
+        const drawerDireccion = document.getElementById('drawer-direccion') as HTMLInputElement;
+        const drawerError = document.getElementById('drawer-error') as HTMLElement;
+        const drawerCloseBtn = document.getElementById('drawer-close-btn') as HTMLButtonElement;
+        const drawerApproveBtn = document.getElementById('drawer-approve-btn') as HTMLButtonElement;
+        const drawerRejectBtn = document.getElementById('drawer-reject-btn') as HTMLButtonElement;
+        const drawerPrevBtn = document.getElementById('drawer-prev-btn') as HTMLButtonElement;
+        const drawerNextBtn = document.getElementById('drawer-next-btn') as HTMLButtonElement;
+        const drawerNavCounter = document.getElementById('drawer-nav-counter') as HTMLElement;
+        const drawerSubtitle = document.getElementById('drawer-subtitle') as HTMLElement;
+
+        window.openEscaneoDrawer = function(escaneoId: number) {
+          const idx = drawerFotosFlat.findIndex((f: any) => f.id === escaneoId);
+          drawerCurrentIndex = idx >= 0 ? idx : 0;
+          loadDrawerByIndex(drawerCurrentIndex);
+          escaneoDrawer.classList.remove('hidden');
+          document.body.style.overflow = 'hidden';
+        };
+
+        function loadDrawerByIndex(idx: number) {
+          if (drawerFotosFlat.length === 0) return;
+          const foto = drawerFotosFlat[idx];
+          activeEscaneoId = foto.id;
+          drawerFoto.src = foto.foto_url;
+          drawerIdGuia.value = '';
+          drawerPiezas.value = '1';
+          drawerDestinatario.value = '';
+          drawerTelefono.value = '';
+          drawerCiudad.value = '';
+          drawerDireccion.value = '';
+          drawerError.classList.add('hidden');
+          drawerSubtitle.textContent = `${foto.chofer_nombre} — ${foto.lote_id}`;
+          drawerNavCounter.textContent = `${idx + 1} / ${drawerFotosFlat.length}`;
+          drawerPrevBtn.disabled = idx === 0;
+          drawerNextBtn.disabled = idx === drawerFotosFlat.length - 1;
+        }
+
+        function closeDrawer() {
+          escaneoDrawer.classList.add('hidden');
+          document.body.style.overflow = '';
+          activeEscaneoId = null;
+        }
+
+        drawerCloseBtn?.addEventListener('click', closeDrawer);
+        drawerOverlay?.addEventListener('click', closeDrawer);
+
+        drawerPrevBtn?.addEventListener('click', () => {
+          if (drawerCurrentIndex > 0) {
+            drawerCurrentIndex--;
+            loadDrawerByIndex(drawerCurrentIndex);
+          }
+        });
+        drawerNextBtn?.addEventListener('click', () => {
+          if (drawerCurrentIndex < drawerFotosFlat.length - 1) {
+            drawerCurrentIndex++;
+            loadDrawerByIndex(drawerCurrentIndex);
+          }
+        });
+
+        drawerRejectBtn?.addEventListener('click', async () => {
+          if (!activeEscaneoId) return;
+          drawerRejectBtn.disabled = true;
+          try {
+            await fetch(`/api/escaneos/${activeEscaneoId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ accion: 'rechazar' })
+            });
+            // Remover de la lista plana y avanzar
+            drawerFotosFlat.splice(drawerCurrentIndex, 1);
+            if (drawerFotosFlat.length === 0) { closeDrawer(); loadAndRenderEscaneos(); return; }
+            if (drawerCurrentIndex >= drawerFotosFlat.length) drawerCurrentIndex = drawerFotosFlat.length - 1;
+            loadDrawerByIndex(drawerCurrentIndex);
+            loadAndRenderEscaneos();
+          } catch(e) { drawerRejectBtn.disabled = false; }
+        });
+
+        drawerApproveBtn?.addEventListener('click', async () => {
+          if (!activeEscaneoId) return;
+
+          const id_guia = drawerIdGuia.value.trim();
+          const destinatario = drawerDestinatario.value.trim();
+          const telefono = drawerTelefono.value.trim();
+          const ciudad = drawerCiudad.value.trim();
+          const piezas = drawerPiezas.value;
+          const direccion = drawerDireccion.value.trim();
+
+          if (!id_guia || !destinatario || !telefono || !ciudad) {
+            drawerError.textContent = 'Completa los campos obligatorios: N° Guía, Destinatario, Teléfono y Ciudad.';
+            drawerError.classList.remove('hidden');
+            return;
+          }
+          drawerError.classList.add('hidden');
+
+          const originalHtml = drawerApproveBtn.innerHTML;
+          drawerApproveBtn.disabled = true;
+          drawerApproveBtn.innerHTML = `<svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg><span>Creando guía...</span>`;
+
+          try {
+            const res = await fetch(`/api/escaneos/${activeEscaneoId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                accion: 'procesar',
+                datos_guia: { id_guia, destinatario, telefono_principal: telefono, ciudad_destino: ciudad, piezas, direccion_referencia: direccion }
+              })
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+              // Remover foto procesada y avanzar
+              drawerFotosFlat.splice(drawerCurrentIndex, 1);
+              if (drawerFotosFlat.length === 0) { closeDrawer(); loadAndRenderEscaneos(); silentRefresh(); return; }
+              if (drawerCurrentIndex >= drawerFotosFlat.length) drawerCurrentIndex = drawerFotosFlat.length - 1;
+              loadDrawerByIndex(drawerCurrentIndex);
+              loadAndRenderEscaneos();
+              silentRefresh();
+            } else {
+              drawerError.textContent = data.message || 'Error al crear la guía.';
+              drawerError.classList.remove('hidden');
+              drawerApproveBtn.disabled = false;
+              drawerApproveBtn.innerHTML = originalHtml;
+            }
+          } catch(e) {
+            drawerError.textContent = 'Error de conexión. Intenta de nuevo.';
+            drawerError.classList.remove('hidden');
+            drawerApproveBtn.disabled = false;
+            drawerApproveBtn.innerHTML = originalHtml;
+          }
         });
 
         form.addEventListener('submit', async (e) => {

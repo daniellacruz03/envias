@@ -1,0 +1,424 @@
+﻿---
+import '../styles/global.css';
+import { getUserFromCookies } from '../lib/auth';
+import { query } from '../lib/db';
+
+const currentUser = getUserFromCookies(Astro.cookies);
+if (!currentUser) return Astro.redirect('/login');
+if (currentUser.rol !== 'Chofer') return Astro.redirect('/chofer');
+
+Astro.response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+Astro.response.headers.set('Pragma', 'no-cache');
+
+// Consultar lotes previos del chofer para mostrar resumen
+const escaneosResult = await query(`
+  SELECT lote_id, estado, COUNT(*) as cantidad, MIN(created_at) as fecha_lote
+  FROM guias_escaneos
+  WHERE chofer_id = $1
+  GROUP BY lote_id, estado
+  ORDER BY MIN(created_at) DESC
+`, [currentUser.id]);
+
+// Agrupar por lote
+const lotesMap: Record<string, any> = {};
+for (const row of escaneosResult.rows) {
+  if (!lotesMap[row.lote_id]) {
+    lotesMap[row.lote_id] = { lote_id: row.lote_id, fecha_lote: row.fecha_lote, total: 0, pendientes: 0, procesadas: 0, rechazadas: 0 };
+  }
+  const cnt = parseInt(row.cantidad, 10);
+  lotesMap[row.lote_id].total += cnt;
+  if (row.estado === 'pendiente') lotesMap[row.lote_id].pendientes += cnt;
+  else if (row.estado === 'procesado') lotesMap[row.lote_id].procesadas += cnt;
+  else if (row.estado === 'rechazado') lotesMap[row.lote_id].rechazadas += cnt;
+}
+const lotesHistorial = Object.values(lotesMap).slice(0, 5);
+
+const totalPendientes = lotesHistorial.reduce((acc: number, l: any) => acc + l.pendientes, 0);
+const title = `Cargar Guias | ${currentUser.nombre} - Envias C.A.`;
+---
+
+<!doctype html>
+<html lang="es" class="h-full bg-[#F8FAFC]">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>{title}</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      body { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; }
+      .upload-zone { transition: all 0.2s ease; }
+      .upload-zone:active { transform: scale(0.98); }
+      .thumb-item { animation: fadeIn 0.25s ease; }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+      .progress-bar { transition: width 0.4s ease; }
+    </style>
+  </head>
+  <body class="min-h-full flex flex-col text-slate-800 bg-[#F8FAFC] antialiased">
+
+    <!-- HEADER -->
+    <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3.5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="/chofer" class="p-2 -ml-1 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </a>
+        <div>
+          <h1 class="text-sm font-bold text-slate-900 leading-tight">Cargar Guias del Dia</h1>
+          <p class="text-[11px] text-slate-500 font-medium">{currentUser.nombre}</p>
+        </div>
+      </div>
+      {totalPendientes > 0 && (
+        <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+          {totalPendientes} en revision
+        </span>
+      )}
+    </header>
+
+    <main class="flex-1 px-4 py-5 space-y-5 max-w-lg mx-auto w-full">
+
+      <!-- ZONA DE CARGA -->
+      <section class="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-100">
+          <h2 class="text-sm font-bold text-slate-900">Nueva Carga de Guias</h2>
+          <p class="text-[11px] text-slate-500 mt-0.5">Fotografía las guías físicas una por una. Cada foto se comprime automáticamente.</p>
+        </div>
+
+        <!-- Botón Principal de Carga -->
+        <div class="p-4">
+          <button
+            id="btn-select-photo"
+            type="button"
+            class="upload-zone w-full border-2 border-dashed border-slate-200 hover:border-slate-400 bg-slate-50/60 hover:bg-slate-50 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 cursor-pointer transition-all"
+          >
+            <div class="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center shadow-md">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+            <div class="text-center">
+              <p class="text-sm font-bold text-slate-900">Tomar Foto / Elegir de Galeria</p>
+              <p class="text-xs text-slate-500 mt-0.5">Puedes seleccionar varias a la vez</p>
+            </div>
+          </button>
+          <input type="file" id="photo-input" accept="image/*" multiple class="hidden" />
+        </div>
+
+        <!-- Barra de Progreso (oculta hasta que hay carga activa) -->
+        <div id="progress-section" class="hidden px-4 pb-4 space-y-2">
+          <div class="flex items-center justify-between text-xs font-semibold text-slate-700">
+            <span id="progress-label">Preparando...</span>
+            <span id="progress-counter" class="font-mono text-slate-500">0 / 0</span>
+          </div>
+          <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+            <div id="progress-bar" class="progress-bar h-full rounded-full bg-slate-900" style="width: 0%"></div>
+          </div>
+          <p id="progress-detail" class="text-[11px] text-slate-400"></p>
+        </div>
+
+        <!-- Resumen del lote actual -->
+        <div id="lote-summary" class="hidden px-4 pb-4">
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center justify-between">
+            <div>
+              <p class="text-xs font-bold text-slate-900" id="summary-title">Lote cargado</p>
+              <p class="text-[11px] text-slate-500 mt-0.5" id="summary-detail"></p>
+            </div>
+            <div id="summary-icon" class="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- GALERIA DE FOTOS DEL LOTE ACTUAL -->
+      <section id="gallery-section" class="hidden bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h2 class="text-sm font-bold text-slate-900">Fotos de este Lote</h2>
+            <p id="gallery-count" class="text-[11px] text-slate-500 mt-0.5">0 fotos</p>
+          </div>
+          <button id="btn-add-more" type="button" class="text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-colors cursor-pointer">
+            + Agregar mas
+          </button>
+        </div>
+        <div id="gallery-grid" class="p-3 grid grid-cols-3 gap-2">
+          <!-- Miniaturas se insertan aqui por JS -->
+        </div>
+      </section>
+
+      <!-- HISTORIAL DE LOTES ANTERIORES -->
+      {lotesHistorial.length > 0 && (
+        <section class="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden">
+          <div class="p-4 border-b border-slate-100">
+            <h2 class="text-sm font-bold text-slate-900">Lotes Anteriores</h2>
+          </div>
+          <div class="divide-y divide-slate-100">
+            {lotesHistorial.map((lote: any) => (
+              <div class="p-4 flex items-center justify-between">
+                <div>
+                  <p class="text-xs font-bold text-slate-900">
+                    {new Date(lote.fecha_lote).toLocaleDateString('es-VE', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                  <div class="flex items-center gap-2 mt-1 flex-wrap">
+                    <span class="text-[11px] font-semibold text-slate-600">{lote.total} fotos</span>
+                    {lote.pendientes > 0 && (
+                      <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">{lote.pendientes} pendientes</span>
+                    )}
+                    {lote.procesadas > 0 && (
+                      <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">{lote.procesadas} procesadas</span>
+                    )}
+                    {lote.rechazadas > 0 && (
+                      <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">{lote.rechazadas} rechazadas</span>
+                    )}
+                  </div>
+                </div>
+                {lote.pendientes > 0 ? (
+                  <div class="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
+                ) : (
+                  <div class="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Info del proceso -->
+      <div class="px-1 pb-8 space-y-2 text-[11px] text-slate-400 text-center">
+        <p>Las fotos se comprimen automaticamente a ~80 KB antes de enviarse.</p>
+        <p>Logistica revisara tus guias y las agregara a tu hoja de ruta.</p>
+      </div>
+
+    </main>
+
+    <script>
+      // ============================================
+      // ESTADO GLOBAL
+      // ============================================
+      const MAX_WIDTH = 1200;
+      const MAX_HEIGHT = 1600;
+      const JPEG_QUALITY = 0.75;
+
+      // Generar lote_id unico para esta sesion del dia
+      const now = new Date();
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const loteId = `chofer_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}`;
+
+      let uploadQueue: File[] = [];
+      let uploadedCount = 0;
+      let failedCount = 0;
+      let isUploading = false;
+      const currentLoteFotos: { dataUrl: string; estado: 'ok' | 'error' | 'subiendo' }[] = [];
+
+      // ============================================
+      // ELEMENTOS DEL DOM
+      // ============================================
+      const btnSelect = document.getElementById('btn-select-photo') as HTMLButtonElement;
+      const btnAddMore = document.getElementById('btn-add-more') as HTMLButtonElement;
+      const photoInput = document.getElementById('photo-input') as HTMLInputElement;
+      const progressSection = document.getElementById('progress-section') as HTMLElement;
+      const progressLabel = document.getElementById('progress-label') as HTMLElement;
+      const progressCounter = document.getElementById('progress-counter') as HTMLElement;
+      const progressBar = document.getElementById('progress-bar') as HTMLElement;
+      const progressDetail = document.getElementById('progress-detail') as HTMLElement;
+      const loteSummary = document.getElementById('lote-summary') as HTMLElement;
+      const summaryTitle = document.getElementById('summary-title') as HTMLElement;
+      const summaryDetail = document.getElementById('summary-detail') as HTMLElement;
+      const gallerySection = document.getElementById('gallery-section') as HTMLElement;
+      const galleryGrid = document.getElementById('gallery-grid') as HTMLElement;
+      const galleryCount = document.getElementById('gallery-count') as HTMLElement;
+
+      // ============================================
+      // COMPRESION DE IMAGEN (CANVAS)
+      // ============================================
+      function compressImage(file: File): Promise<File> {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              let w = img.width;
+              let h = img.height;
+              if (w > MAX_WIDTH) { h = Math.round(h * MAX_WIDTH / w); w = MAX_WIDTH; }
+              if (h > MAX_HEIGHT) { w = Math.round(w * MAX_HEIGHT / h); h = MAX_HEIGHT; }
+
+              const canvas = document.createElement('canvas');
+              canvas.width = w; canvas.height = h;
+              const ctx = canvas.getContext('2d')!;
+              ctx.drawImage(img, 0, 0, w, h);
+
+              canvas.toBlob((blob) => {
+                if (!blob) { reject(new Error('Fallo al comprimir')); return; }
+                resolve(new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), { type: 'image/jpeg', lastModified: Date.now() }));
+              }, 'image/jpeg', JPEG_QUALITY);
+            };
+            img.onerror = reject;
+            img.src = e.target!.result as string;
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function getDataUrl(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target!.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      }
+
+      // ============================================
+      // AGREGAR MINIATURA A LA GALERIA
+      // ============================================
+      function addThumb(dataUrl: string, index: number) {
+        const div = document.createElement('div');
+        div.id = `thumb-${index}`;
+        div.className = 'thumb-item relative aspect-square rounded-xl overflow-hidden bg-slate-100 border-2 border-slate-200';
+        div.innerHTML = `
+          <img src="${dataUrl}" class="w-full h-full object-cover" />
+          <div id="thumb-overlay-${index}" class="absolute inset-0 bg-black/50 flex items-center justify-center">
+            <svg class="w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+          </div>
+        `;
+        galleryGrid.appendChild(div);
+        gallerySection.classList.remove('hidden');
+        galleryCount.textContent = `${galleryGrid.children.length} foto${galleryGrid.children.length !== 1 ? 's' : ''}`;
+      }
+
+      function markThumbOk(index: number) {
+        const overlay = document.getElementById(`thumb-overlay-${index}`);
+        const thumb = document.getElementById(`thumb-${index}`);
+        if (overlay) {
+          overlay.innerHTML = `<svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>`;
+          setTimeout(() => { overlay?.classList.add('opacity-0'); }, 800);
+        }
+        if (thumb) thumb.classList.replace('border-slate-200', 'border-emerald-400');
+      }
+
+      function markThumbError(index: number) {
+        const overlay = document.getElementById(`thumb-overlay-${index}`);
+        const thumb = document.getElementById(`thumb-${index}`);
+        if (overlay) {
+          overlay.innerHTML = `
+            <div class="flex flex-col items-center gap-1">
+              <svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              <span class="text-white text-[9px] font-bold">Error</span>
+            </div>
+          `;
+        }
+        if (thumb) thumb.classList.replace('border-slate-200', 'border-rose-400');
+      }
+
+      // ============================================
+      // COLA DE SUBIDA SECUENCIAL
+      // ============================================
+      async function processQueue() {
+        if (isUploading || uploadQueue.length === 0) return;
+        isUploading = true;
+
+        const totalInBatch = uploadQueue.length;
+        const startIndex = uploadedCount + failedCount;
+
+        progressSection.classList.remove('hidden');
+        loteSummary.classList.add('hidden');
+
+        for (let i = 0; i < totalInBatch; i++) {
+          const file = uploadQueue[i];
+          const globalIndex = startIndex + i;
+          const totalGlobal = startIndex + totalInBatch;
+
+          progressLabel.textContent = `Subiendo guia ${uploadedCount + failedCount + 1}...`;
+          progressCounter.textContent = `${uploadedCount + failedCount + 1} / ${totalGlobal}`;
+          progressDetail.textContent = `Comprimiendo ${file.name}...`;
+
+          let dataUrl = '';
+          try {
+            dataUrl = await getDataUrl(file);
+          } catch { dataUrl = ''; }
+
+          addThumb(dataUrl, globalIndex);
+
+          try {
+            progressDetail.textContent = `Enviando al servidor...`;
+            const compressed = await compressImage(file);
+            const formData = new FormData();
+            formData.append('foto', compressed);
+            formData.append('lote_id', loteId);
+
+            const res = await fetch('/api/escaneos', { method: 'POST', body: formData });
+            if (res.ok) {
+              uploadedCount++;
+              markThumbOk(globalIndex);
+            } else {
+              failedCount++;
+              markThumbError(globalIndex);
+            }
+          } catch {
+            failedCount++;
+            markThumbError(globalIndex);
+          }
+
+          const done = uploadedCount + failedCount;
+          const total = startIndex + totalInBatch;
+          const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+          progressBar.style.width = `${pct}%`;
+        }
+
+        uploadQueue = [];
+        isUploading = false;
+
+        // Mostrar resumen final
+        progressLabel.textContent = 'Carga completada';
+        progressCounter.textContent = `${uploadedCount + failedCount} / ${uploadedCount + failedCount}`;
+        progressBar.style.width = '100%';
+        progressBar.classList.add(failedCount > 0 ? 'bg-amber-500' : 'bg-emerald-500');
+        progressBar.classList.remove('bg-slate-900');
+
+        loteSummary.classList.remove('hidden');
+        summaryTitle.textContent = failedCount === 0
+          ? `${uploadedCount} guias subidas correctamente`
+          : `${uploadedCount} subidas, ${failedCount} con error`;
+        summaryDetail.textContent = 'Logistica las revisara y las agregara a tu hoja de ruta.';
+        if (failedCount > 0) {
+          const icon = document.getElementById('summary-icon')!;
+          icon.className = 'w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center';
+          icon.innerHTML = `<svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`;
+        }
+      }
+
+      // ============================================
+      // EVENTOS
+      // ============================================
+      btnSelect.addEventListener('click', () => photoInput.click());
+      btnAddMore.addEventListener('click', () => photoInput.click());
+
+      photoInput.addEventListener('change', async (e) => {
+        const files = Array.from((e.target as HTMLInputElement).files || []);
+        if (files.length === 0) return;
+        photoInput.value = '';
+
+        uploadQueue.push(...files);
+        processQueue();
+      });
+    </script>
+  </body>
+</html>

@@ -132,6 +132,10 @@ Las credenciales estan almacenadas en la tabla `usuarios` de PostgreSQL en Railw
 | POST | /api/auth/login | Autentica usuario contra PostgreSQL y emite cookie de sesion. |
 | GET | /api/auth/logout | Destruye la sesion y redirige a /login. |
 | GET | /api/auth/me | Retorna los datos del usuario autenticado en la sesion actual. |
+| `GET` | `/api/escaneos` | Lista escaneos de guías físicas agrupados por lote (solo Logistica). Incluye `totalPendientes` para badge. |
+| `POST` | `/api/escaneos` | Recibe foto individual del chofer (FormData: `foto`, `lote_id`). Guarda en `/uploads/escaneos/` y en BD. |
+| `PATCH` | `/api/escaneos/[id]` | Logística aprueba (`accion: 'procesar'`) creando guía en tabla `guias`, o rechaza (`accion: 'rechazar'`). |
+| `POST` | `/api/admin/migrate` | Ejecuta migraciones SQL: crea tabla `guias_escaneos` con índices (solo Logistica). |
 
 ---
 
