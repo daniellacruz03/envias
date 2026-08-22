@@ -122,7 +122,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
                 <span>En ruta</span>
               </span>
             </div>
-            <p class="text-[10px] text-slate-400 font-medium truncate">Hoja de Ruta Digital &bull; Env&iacute;as</p>
+            <p class="text-[10px] text-slate-400 font-medium truncate">Hoja de Ruta Digital • Envías</p>
           </div>
         </div>
 
@@ -185,10 +185,10 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         </div>
 
         <div>
-          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">&iexcl;Hola, {targetChoferNombre}!</h2>
-          <p class="text-sm font-bold text-slate-700 mt-1">A&uacute;n no tienes rutas asignadas</p>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">¡Hola, {targetChoferNombre}!</h2>
+          <p class="text-sm font-bold text-slate-700 mt-1">Aún no tienes rutas asignadas</p>
           <p class="text-xs text-slate-500 max-w-md mx-auto mt-1.5 leading-relaxed">
-            Mientras Log&iacute;stica organiza tu despacho, puedes escanear y cargar aqu&iacute; las gu&iacute;as f&iacute;sicas que recibiste en el almac&eacute;n.
+            Mientras Logística organiza tu despacho, puedes escanear y cargar aquí las guías físicas que recibiste en el almacén.
           </p>
         </div>
 
@@ -206,7 +206,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               </svg>
             </div>
             <div>
-              <p class="text-xs font-bold">Tomar Foto con C&aacute;mara</p>
+              <p class="text-xs font-bold">Tomar Foto con Cámara</p>
               <p class="text-[10px] text-slate-300">Disparo 1 a 1</p>
             </div>
           </label>
@@ -218,7 +218,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               </svg>
             </div>
             <div>
-              <p class="text-xs font-bold">Elegir de Galer&iacute;a</p>
+              <p class="text-xs font-bold">Elegir de Galería</p>
               <p class="text-[10px] text-slate-500">Seleccionar varias fotos</p>
             </div>
           </label>
@@ -238,7 +238,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
 
           <div class="space-y-1.5">
             <div class="flex items-center justify-between">
-              <p class="text-xs font-bold text-slate-700">Gu&iacute;as cargadas en esta sesi&oacute;n</p>
+              <p class="text-xs font-bold text-slate-700">Guías cargadas en esta sesión</p>
               <span id="hero-gallery-count" class="text-[11px] font-bold text-indigo-600"></span>
             </div>
             <div id="hero-gallery-grid" class="grid grid-cols-4 sm:grid-cols-6 gap-2"></div>
@@ -287,7 +287,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               <b class="text-emerald-900 text-xs" id="stat-entregados">{entregadosInitial}</b>
             </div>
             <div class="p-1 rounded-lg bg-rose-50/80 border border-rose-200/60">
-              <span class="block text-[10px] text-rose-700 font-bold uppercase">No entreg&oacute;</span>
+              <span class="block text-[10px] text-rose-700 font-bold uppercase">No entregó</span>
               <b class="text-rose-900 text-xs" id="stat-no-entregados">{noEntregadosInitial}</b>
             </div>
             <div class="p-1 rounded-lg bg-slate-100 border border-slate-200/60">
@@ -415,7 +415,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               id="tab-no-entregados"
               class="py-2 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer"
             >
-              <span>No entreg&oacute;</span>
+              <span>No entregó</span>
               <span class="px-1.5 py-0.2 rounded-full bg-rose-200 text-rose-800 text-[9px]" id="badge-tab-no-entregados">
                 {noEntregadosInitial}
               </span>
@@ -446,9 +446,9 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h3 class="text-sm font-bold text-slate-900 mb-1" id="empty-title">&iexcl;Sin paradas en este filtro!</h3>
+          <h3 class="text-sm font-bold text-slate-900 mb-1" id="empty-title">¡Sin paradas en este filtro!</h3>
           <p class="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed" id="empty-desc">
-            No hay entregas que coincidan con la b&uacute;squeda o el estado seleccionado.
+            No hay entregas que coincidan con la búsqueda o el estado seleccionado.
           </p>
         </div>
 
@@ -471,8 +471,8 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               </svg>
             </div>
             <div>
-              <h3 class="text-sm font-bold text-slate-900">Escanear Gu&iacute;as F&iacute;sicas</h3>
-              <p class="text-[11px] text-slate-500 font-medium">Carga fotos para enviar a Log&iacute;stica</p>
+              <h3 class="text-sm font-bold text-slate-900">Escanear Guías Físicas</h3>
+              <p class="text-[11px] text-slate-500 font-medium">Carga fotos para enviar a Logística</p>
             </div>
           </div>
           <button id="scan-modal-close-btn" type="button" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
@@ -493,7 +493,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               </svg>
             </div>
             <div>
-              <p class="text-xs font-bold">Usar C&aacute;mara</p>
+              <p class="text-xs font-bold">Usar Cámara</p>
               <p class="text-[9px] text-slate-300">Foto directa</p>
             </div>
           </label>
@@ -505,8 +505,8 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               </svg>
             </div>
             <div>
-              <p class="text-xs font-bold">Galer&iacute;a</p>
-              <p class="text-[9px] text-slate-500">M&uacute;ltiples fotos</p>
+              <p class="text-xs font-bold">Galería</p>
+              <p class="text-[9px] text-slate-500">Múltiples fotos</p>
             </div>
           </label>
         </div>
@@ -515,7 +515,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         <div id="modal-scan-live-section" class="hidden space-y-3 pt-1 text-left">
           <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2">
             <div class="flex items-center justify-between text-xs">
-              <span id="modal-progress-label" class="font-bold text-slate-800">Subiendo gu&iacute;as...</span>
+              <span id="modal-progress-label" class="font-bold text-slate-800">Subiendo guías...</span>
               <span id="modal-progress-count" class="font-mono font-bold text-indigo-600">0 / 0</span>
             </div>
             <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
@@ -554,7 +554,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             </div>
             <div>
               <h3 class="text-sm font-bold text-slate-900" id="modal-title-text">Confirmar Entrega Realizada</h3>
-              <p class="text-[11px] text-slate-500 font-medium" id="modal-guia-code">Parada #--- &bull; Gu&iacute;a #---</p>
+              <p class="text-[11px] text-slate-500 font-medium" id="modal-guia-code">Parada #--- • Guía #---</p>
             </div>
           </div>
           <button id="modal-close-btn" type="button" class="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer">
@@ -616,7 +616,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
                   </svg>
                 </div>
                 <p class="text-xs font-bold text-slate-800">Tomar foto o subir comprobante</p>
-                <p class="text-[10px] text-slate-400">Toca aqu&iacute; para abrir la c&aacute;mara</p>
+                <p class="text-[10px] text-slate-400">Toca aquí para abrir la cámara</p>
               </div>
 
               <div id="photo-preview-container" class="hidden space-y-2">
@@ -634,7 +634,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
 
           <div class="space-y-1.5">
             <label for="modal-recibido-por" class="block text-xs font-semibold text-slate-700">
-              &iquest;Qui&eacute;n recibi&oacute; el paquete? <span class="text-slate-400 font-normal">(Opcional)</span>
+              ¿Quién recibió el paquete? <span class="text-slate-400 font-normal">(Opcional)</span>
             </label>
             <input 
               type="text" 
@@ -655,7 +655,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5" id="incident-reasons-grid">
               <button type="button" data-reason="Dirección incorrecta / Incompleta" class="incident-opt p-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-left font-semibold text-[11px] hover:border-rose-300 hover:bg-rose-50/50 transition-all cursor-pointer">
-                Direcci&oacute;n incorrecta / Incompleta
+                Dirección incorrecta / Incompleta
               </button>
               <button type="button" data-reason="Cliente no atiende llamadas" class="incident-opt p-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-left font-semibold text-[11px] hover:border-rose-300 hover:bg-rose-50/50 transition-all cursor-pointer">
                 Cliente no atiende llamadas
@@ -671,7 +671,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
 
           <div class="space-y-1.5">
             <label for="modal-incident-note" class="block text-xs font-semibold text-slate-700">
-              Observaci&oacute;n detallada <span class="text-rose-500">*</span>
+              Observación detallada <span class="text-rose-500">*</span>
             </label>
             <textarea 
               id="modal-incident-note" 
@@ -990,10 +990,10 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           if (progressCount) progressCount.textContent = `${processed} / ${total}`;
         }
 
-        if (progressLabel) progressLabel.textContent = `&iexcl;${uploadedOk} de ${total} gu&iacute;as cargadas con &eacute;xito!`;
+        if (progressLabel) progressLabel.textContent = `¡${uploadedOk} de ${total} guías cargadas con éxito!`;
         if (galleryCount) galleryCount.textContent = `${galleryGrid?.children.length || 0} subidas`;
         if (uploadedOk > 0) {
-          showToast(`&iexcl;${uploadedOk} foto(s) enviada(s) a Log&iacute;stica!`, 'success');
+          showToast(`¡${uploadedOk} foto(s) enviada(s) a Logística!`, 'success');
         }
       }
 
