@@ -174,16 +174,17 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           )}
 
           <!-- Botón Cargar Guías del Día -->
-          <a
-            href="/escanear"
-            class="relative p-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 transition-colors tap-active"
+          <button
+            id="btn-header-scan"
+            type="button"
+            class="relative p-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 transition-colors tap-active cursor-pointer"
             title="Cargar guías físicas del día"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
-          </a>
+          </button>
 
           <button 
             id="refresh-btn"
@@ -214,227 +215,303 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
     <!-- ========================================== -->
     <main class="max-w-2xl mx-auto px-4 pt-3.5 space-y-3.5">
 
-      <!-- TARJETA COMPACTA DE PROGRESO DE RUTA -->
-      <section class="bg-white rounded-2xl border border-slate-200/80 p-3.5 shadow-sm">
-        <div class="flex items-center justify-between mb-2">
-          <div class="flex items-center gap-2">
-            <div class="w-6 h-6 rounded-lg bg-slate-900 text-white flex items-center justify-center text-[10px] font-bold">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-              </svg>
-            </div>
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-800">Progreso de la Ruta</span>
-          </div>
-          <span class="text-xs font-extrabold text-slate-900" id="progress-text">
-            {entregadosInitial} de {totalInitial} paradas ({porcentajeInitial}%)
-          </span>
-        </div>
-
-        <!-- Barra de Progreso -->
-        <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mb-2.5 border border-slate-200/60">
-          <div 
-            id="progress-bar-fill"
-            class="bg-gradient-to-r from-slate-900 to-emerald-600 h-full rounded-full transition-all duration-500 ease-out"
-            style={`width: ${porcentajeInitial}%`}
-          ></div>
-        </div>
-
-        <!-- Mini Badges de Conteo -->
-        <div class="grid grid-cols-4 gap-1 text-center text-[11px] pt-1.5 border-t border-slate-100 text-slate-600">
-          <div class="p-1 rounded-lg bg-amber-50/80 border border-amber-200/60">
-            <span class="block text-[10px] text-amber-700 font-bold uppercase">Pendientes</span>
-            <b class="text-amber-900 text-xs" id="stat-pendientes">{pendientesInitial}</b>
-          </div>
-          <div class="p-1 rounded-lg bg-emerald-50/80 border border-emerald-200/60">
-            <span class="block text-[10px] text-emerald-700 font-bold uppercase">Entregadas</span>
-            <b class="text-emerald-900 text-xs" id="stat-entregados">{entregadosInitial}</b>
-          </div>
-          <div class="p-1 rounded-lg bg-rose-50/80 border border-rose-200/60">
-            <span class="block text-[10px] text-rose-700 font-bold uppercase">No entregó</span>
-            <b class="text-rose-900 text-xs" id="stat-no-entregados">{noEntregadosInitial}</b>
-          </div>
-          <div class="p-1 rounded-lg bg-slate-100 border border-slate-200/60">
-            <span class="block text-[10px] text-slate-500 font-bold uppercase">Total</span>
-            <b class="text-slate-900 text-xs" id="stat-total">{totalInitial}</b>
-          </div>
-        </div>
-
-        <!-- Banner de Itinerario de Ruta Planificada (Spoke Style) -->
-        <div id="route-itinerary-banner" class="mt-2 bg-slate-900 text-white rounded-xl p-3 shadow-sm space-y-1.5 border border-slate-800">
-          <div class="flex items-center justify-between text-xs">
-            <span class="text-[10px] uppercase tracking-wider font-extrabold text-indigo-400 flex items-center gap-1">
-              <svg class="w-3 h-3 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-              <span>Itinerario Despachado</span>
-            </span>
-            <span class="text-[10px] font-mono font-bold text-slate-300" id="route-stops-count-text">{totalInitial} paradas</span>
-          </div>
-          <div class="flex items-center gap-2 text-xs font-semibold">
-            <div class="flex items-center gap-1 text-slate-200 truncate flex-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0"></span>
-              <span id="route-start-text" class="truncate font-bold">Sede Principal Barquisimeto</span>
-            </div>
-            <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-            <div class="flex items-center gap-1 text-slate-200 truncate flex-1 justify-end">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
-              <span id="route-end-text" class="truncate font-bold">Retorno a Sede Principal Barquisimeto</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <!-- ========================================== -->
-      <!-- 3. MAPA INTERACTIVO DE HOJA DE RUTA        -->
+      <!-- VISTA A: SIN RUTAS ASIGNADAS (BIENVENIDA + ESCANER DIRECTO) -->
       <!-- ========================================== -->
-      <section class="space-y-2">
-        <div class="flex items-center justify-between px-1">
-          <div class="flex items-center gap-1.5">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">Mapa de Paradas GPS</h2>
-          </div>
-          
-          <!-- Botón de Colapsar/Expandir Mapa -->
-          <button 
-            id="toggle-map-btn" 
-            class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
-          >
-            <span id="toggle-map-text">Ocultar Mapa</span>
-            <svg id="toggle-map-icon" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-            </svg>
-          </button>
-        </div>
-
-        <!-- Contenedor del Mapa Leaflet -->
-        <div id="map-wrapper" class="relative rounded-2xl overflow-hidden border border-slate-200/90 shadow-sm bg-slate-100 transition-all duration-300">
-          <div id="route-map" class="h-64 sm:h-80 w-full z-10"></div>
-          
-          <!-- Badge Flotante con Distancia y Tiempo Real en Carretera -->
-          <div 
-            id="route-info-pill" 
-            class="hidden absolute top-3 left-3 z-20 bg-white/95 backdrop-blur-xs border border-slate-200/90 px-3 py-1.5 rounded-xl shadow-md text-[11px] font-bold text-slate-800 flex items-center gap-1.5 animate-fadeIn"
-          >
-            <span class="flex h-2 w-2 relative">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-600"></span>
-            </span>
-            <span id="route-distance-text">Calculando ruta por carretera...</span>
-          </div>
-
-          <!-- Botón Flotante para Re-centrar Paradas -->
-          <button 
-            id="recenter-map-btn"
-            class="absolute bottom-3 right-3 z-20 p-2.5 rounded-xl bg-white/95 text-slate-800 border border-slate-200 shadow-md hover:bg-white transition-all tap-active cursor-pointer"
-            title="Ajustar vista a todas las paradas"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-            </svg>
-          </button>
-        </div>
-      </section>
-
-      <!-- ========================================== -->
-      <!-- 4. BARRA DE FILTROS & BÚSQUEDA             -->
-      <!-- ========================================== -->
-      <section class="space-y-2 pt-1">
-        
-        <div class="flex items-center gap-2">
-          <!-- Buscador en tiempo real -->
-          <div class="relative flex-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input 
-              type="text" 
-              id="search-input"
-              placeholder="Buscar por guía, cliente o dirección..."
-              class="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 shadow-2xs transition-all"
-            />
-          </div>
-
-          <!-- Filtro por Ciudad (si aplica) -->
-          {uniqueCiudades.length > 1 && (
-            <select 
-              id="city-filter"
-              class="bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-xs text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 cursor-pointer shadow-2xs shrink-0"
-            >
-              <option value="">Todas las ciudades</option>
-              {uniqueCiudades.map(city => (
-                <option value={city}>{city}</option>
-              ))}
-            </select>
-          )}
-        </div>
-
-        <!-- Segmented Control de Pestañas (Pendientes / Entregados / No Entregados / Todos) -->
-        <div class="grid grid-cols-4 p-1 bg-slate-200/70 rounded-xl border border-slate-200/80 text-xs gap-0.5">
-          <button 
-            id="tab-pendientes"
-            class="py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs cursor-pointer"
-          >
-            <span>Pendientes</span>
-            <span class="px-1.5 py-0.2 rounded-full bg-slate-900 text-white text-[9px]" id="badge-tab-pendientes">
-              {pendientesInitial}
-            </span>
-          </button>
-
-          <button 
-            id="tab-entregados"
-            class="py-2 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer"
-          >
-            <span>Entregados</span>
-            <span class="px-1.5 py-0.2 rounded-full bg-slate-300 text-slate-700 text-[9px]" id="badge-tab-entregados">
-              {entregadosInitial}
-            </span>
-          </button>
-
-          <button 
-            id="tab-no-entregados"
-            class="py-2 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer"
-          >
-            <span>No entregó</span>
-            <span class="px-1.5 py-0.2 rounded-full bg-rose-200 text-rose-800 text-[9px]" id="badge-tab-no-entregados">
-              {noEntregadosInitial}
-            </span>
-          </button>
-
-          <button 
-            id="tab-todos"
-            class="py-2 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer"
-          >
-            <span>Todos</span>
-            <span class="px-1.5 py-0.2 rounded-full bg-slate-300 text-slate-700 text-[9px]" id="badge-tab-todos">
-              {totalInitial}
-            </span>
-          </button>
-        </div>
-
-      </section>
-
-      <!-- ========================================== -->
-      <!-- 5. LISTA DE PARADAS SECUENCIALES (CARDS)   -->
-      <!-- ========================================== -->
-      <section id="cards-container" class="space-y-3">
-        <!-- Generado dinámicamente con JavaScript -->
-      </section>
-
-      <!-- ESTADO VACÍO (EMPTY STATE) -->
-      <div id="empty-state" class="hidden bg-white rounded-2xl border border-slate-200/80 p-8 text-center my-6 shadow-sm animate-fadeIn">
-        <div class="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center mx-auto mb-2.5">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      <div id="no-routes-container" class={`bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-7 shadow-sm text-center space-y-5 animate-fadeIn ${totalInitial === 0 ? '' : 'hidden'}`}>
+        <!-- Icono de bienvenida -->
+        <div class="w-16 h-16 rounded-3xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center mx-auto shadow-xs">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
         </div>
-        <h3 class="text-sm font-bold text-slate-900 mb-1" id="empty-title">¡Sin paradas en este filtro!</h3>
-        <p class="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed" id="empty-desc">
-          No hay entregas que coincidan con la búsqueda o el estado seleccionado.
-        </p>
+
+        <div>
+          <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">¡Hola, {targetChoferNombre}!</h2>
+          <p class="text-sm font-bold text-slate-700 mt-1">Aún no tienes rutas asignadas</p>
+          <p class="text-xs text-slate-500 max-w-md mx-auto mt-1.5 leading-relaxed">
+            Mientras el equipo de Logística organiza tu despacho, puedes escanear y cargar aquí las guías físicas que recibiste en el almacén.
+          </p>
+        </div>
+
+        <!-- Opciones de Captura Directa -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <!-- Botón 1: Cámara Directa -->
+          <button
+            type="button"
+            id="btn-no-routes-camera"
+            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 shadow-sm transition-all cursor-pointer text-center"
+          >
+            <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-bold">Tomar Foto con Cámara</p>
+              <p class="text-[10px] text-slate-300">Disparo 1 a 1</p>
+            </div>
+          </button>
+
+          <!-- Botón 2: Galería Múltiple -->
+          <button
+            type="button"
+            id="btn-no-routes-gallery"
+            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer text-center"
+          >
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-bold">Elegir de Galería</p>
+              <p class="text-[10px] text-slate-500">Seleccionar varias fotos</p>
+            </div>
+          </button>
+        </div>
+
+        <!-- Contenedor de Progreso y Miniaturas de Subida en Vivo -->
+        <div id="chofer-scan-live-section" class="hidden space-y-3 pt-2 text-left">
+          <!-- Barra de Progreso -->
+          <div id="chofer-progress-box" class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span id="chofer-progress-label" class="font-bold text-slate-800">Comprimiendo y subiendo...</span>
+              <span id="chofer-progress-count" class="font-mono font-bold text-indigo-600">0 / 0</span>
+            </div>
+            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+              <div id="chofer-progress-bar" class="bg-indigo-600 h-full rounded-full transition-all duration-200" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Miniaturas subidas -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <p class="text-xs font-bold text-slate-700">Guías cargadas en esta sesión</p>
+              <span id="chofer-gallery-count" class="text-[11px] font-bold text-indigo-600"></span>
+            </div>
+            <div id="chofer-gallery-grid" class="grid grid-cols-4 sm:grid-cols-6 gap-2"></div>
+          </div>
+        </div>
       </div>
 
-    </main>
+      <!-- ========================================== -->
+      <!-- VISTA B: CON RUTAS ASIGNADAS (MAPA, STATS, PARADAS) -->
+      <!-- ========================================== -->
+      <div id="active-routes-container" class={`space-y-3.5 ${totalInitial > 0 ? '' : 'hidden'}`}>
+
+        <!-- TARJETA COMPACTA DE PROGRESO DE RUTA -->
+        <section class="bg-white rounded-2xl border border-slate-200/80 p-3.5 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-lg bg-slate-900 text-white flex items-center justify-center text-[10px] font-bold">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+              </div>
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-800">Progreso de la Ruta</span>
+            </div>
+            <span class="text-xs font-extrabold text-slate-900" id="progress-text">
+              {entregadosInitial} de {totalInitial} paradas ({porcentajeInitial}%)
+            </span>
+          </div>
+
+          <!-- Barra de Progreso -->
+          <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden mb-2.5 border border-slate-200/60">
+            <div 
+              id="progress-bar-fill"
+              class="bg-gradient-to-r from-slate-900 to-emerald-600 h-full rounded-full transition-all duration-500 ease-out"
+              style={`width: ${porcentajeInitial}%`}
+            ></div>
+          </div>
+
+          <!-- Mini Badges de Conteo -->
+          <div class="grid grid-cols-4 gap-1 text-center text-[11px] pt-1.5 border-t border-slate-100 text-slate-600">
+            <div class="p-1 rounded-lg bg-amber-50/80 border border-amber-200/60">
+              <span class="block text-[10px] text-amber-700 font-bold uppercase">Pendientes</span>
+              <b class="text-amber-900 text-xs" id="stat-pendientes">{pendientesInitial}</b>
+            </div>
+            <div class="p-1 rounded-lg bg-emerald-50/80 border border-emerald-200/60">
+              <span class="block text-[10px] text-emerald-700 font-bold uppercase">Entregadas</span>
+              <b class="text-emerald-900 text-xs" id="stat-entregados">{entregadosInitial}</b>
+            </div>
+            <div class="p-1 rounded-lg bg-rose-50/80 border border-rose-200/60">
+              <span class="block text-[10px] text-rose-700 font-bold uppercase">No entregó</span>
+              <b class="text-rose-900 text-xs" id="stat-no-entregados">{noEntregadosInitial}</b>
+            </div>
+            <div class="p-1 rounded-lg bg-slate-100 border border-slate-200/60">
+              <span class="block text-[10px] text-slate-500 font-bold uppercase">Total</span>
+              <b class="text-slate-900 text-xs" id="stat-total">{totalInitial}</b>
+            </div>
+          </div>
+
+          <!-- Banner de Itinerario de Ruta Planificada (Spoke Style) -->
+          <div id="route-itinerary-banner" class="mt-2 bg-slate-900 text-white rounded-xl p-3 shadow-sm space-y-1.5 border border-slate-800">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-[10px] uppercase tracking-wider font-extrabold text-indigo-400 flex items-center gap-1">
+                <svg class="w-3 h-3 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                <span>Itinerario Despachado</span>
+              </span>
+              <span class="text-[10px] font-mono font-bold text-slate-300" id="route-stops-count-text">{totalInitial} paradas</span>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-semibold">
+              <div class="flex items-center gap-1 text-slate-200 truncate flex-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0"></span>
+                <span id="route-start-text" class="truncate font-bold">Sede Principal Barquisimeto</span>
+              </div>
+              <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+              <div class="flex items-center gap-1 text-slate-200 truncate flex-1 justify-end">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+                <span id="route-end-text" class="truncate font-bold">Retorno a Sede Principal Barquisimeto</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- MAPA INTERACTIVO DE HOJA DE RUTA -->
+        <section class="space-y-2">
+          <div class="flex items-center justify-between px-1">
+            <div class="flex items-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">Mapa de Paradas GPS</h2>
+            </div>
+            
+            <button 
+              id="toggle-map-btn" 
+              class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer"
+            >
+              <span id="toggle-map-text">Ocultar Mapa</span>
+              <svg id="toggle-map-icon" xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+              </svg>
+            </button>
+          </div>
+
+          <div id="map-wrapper" class="relative rounded-2xl overflow-hidden border border-slate-200/90 shadow-sm bg-slate-100 transition-all duration-300">
+            <div id="route-map" class="h-64 sm:h-80 w-full z-10"></div>
+            
+            <div 
+              id="route-info-pill" 
+              class="hidden absolute top-3 left-3 z-20 bg-white/95 backdrop-blur-xs border border-slate-200/90 px-3 py-1.5 rounded-xl shadow-md text-[11px] font-bold text-slate-800 flex items-center gap-1.5 animate-fadeIn"
+            >
+              <span class="flex h-2 w-2 relative">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-600"></span>
+              </span>
+              <span id="route-distance-text">Calculando ruta por carretera...</span>
+            </div>
+
+            <button 
+              id="recenter-map-btn"
+              class="absolute bottom-3 right-3 z-20 p-2.5 rounded-xl bg-white/95 text-slate-800 border border-slate-200 shadow-md hover:bg-white transition-all tap-active cursor-pointer"
+              title="Ajustar vista a todas las paradas"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+            </button>
+          </div>
+        </section>
+
+        <!-- BARRA DE FILTROS & BÚSQUEDA -->
+        <section class="space-y-2 pt-1">
+          <div class="flex items-center gap-2">
+            <div class="relative flex-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input 
+                type="text" 
+                id="search-input"
+                placeholder="Buscar por guía, cliente o dirección..."
+                class="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 shadow-2xs transition-all"
+              />
+            </div>
+
+            {uniqueCiudades.length > 1 && (
+              <select 
+                id="city-filter"
+                class="bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-xs text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-slate-900/10 cursor-pointer shadow-2xs shrink-0"
+              >
+                <option value="">Todas las ciudades</option>
+                {uniqueCiudades.map(city => (
+                  <option value={city}>{city}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <!-- Segmented Control de Pestañas -->
+          <div class="grid grid-cols-4 p-1 bg-slate-200/70 rounded-xl border border-slate-200/80 text-xs gap-0.5">
+            <button 
+              id="tab-pendientes"
+              class="py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs cursor-pointer"
+            >
+              <span>Pendientes</span>
+              <span class="px-1.5 py-0.2 rounded-full bg-slate-900 text-white text-[9px]" id="badge-tab-pendientes">
+                {pendientesInitial}
+              </span>
+            </button>
+
+            <button 
+              id="tab-entregados"
+              class="py-2 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer"
+            >
+              <span>Entregados</span>
+              <span class="px-1.5 py-0.2 rounded-full bg-slate-300 text-slate-700 text-[9px]" id="badge-tab-entregados">
+                {entregadosInitial}
+              </span>
+            </button>
+
+            <button 
+              id="tab-no-entregados"
+              class="py-2 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer"
+            >
+              <span>No entregó</span>
+              <span class="px-1.5 py-0.2 rounded-full bg-rose-200 text-rose-800 text-[9px]" id="badge-tab-no-entregados">
+                {noEntregadosInitial}
+              </span>
+            </button>
+
+            <button 
+              id="tab-todos"
+              class="py-2 text-[11px] font-semibold rounded-lg transition-all flex items-center justify-center gap-1 text-slate-600 hover:text-slate-900 cursor-pointer"
+            >
+              <span>Todos</span>
+              <span class="px-1.5 py-0.2 rounded-full bg-slate-300 text-slate-700 text-[9px]" id="badge-tab-todos">
+                {totalInitial}
+              </span>
+            </button>
+          </div>
+        </section>
+
+        <!-- LISTA DE PARADAS SECUENCIALES (CARDS) -->
+        <section id="cards-container" class="space-y-3">
+          <!-- Generado dinámicamente con JavaScript -->
+        </section>
+
+        <!-- ESTADO VACÍO EN FILTRO -->
+        <div id="empty-state" class="hidden bg-white rounded-2xl border border-slate-200/80 p-8 text-center my-6 shadow-sm animate-fadeIn">
+          <div class="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center mx-auto mb-2.5">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h3 class="text-sm font-bold text-slate-900 mb-1" id="empty-title">¡Sin paradas en este filtro!</h3>
+          <p class="text-xs text-slate-500 max-w-xs mx-auto leading-relaxed" id="empty-desc">
+            No hay entregas que coincidan con la búsqueda o el estado seleccionado.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Inputs ocultos para carga de fotos de escaneo -->
+      <input type="file" id="scan-camera-input" accept="image/*" capture="environment" class="hidden" />
+      <input type="file" id="scan-gallery-input" accept="image/*" multiple class="hidden" />
 
     <!-- ========================================== -->
     <!-- 6. MODAL / BOTTOM SHEET DE ENTREGA         -->
@@ -654,6 +731,91 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           <img id="lightbox-img" class="w-full h-auto max-h-[60vh] object-contain" alt="Comprobante de Entrega" />
         </div>
         <p class="text-[11px] text-slate-500 text-center" id="lightbox-info"></p>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL DE ESCANEO / CARGA DE GUÍAS FÍSICAS  -->
+    <!-- ========================================== -->
+    <div id="scan-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-end sm:items-center justify-center p-0 sm:p-4 transition-all">
+      <div class="w-full sm:max-w-md bg-white border border-slate-200 rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 animate-fadeIn max-h-[92vh] overflow-y-auto">
+        
+        <!-- Cabecera modal escaneo -->
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900">Cargar Guías Físicas</h3>
+              <p class="text-[11px] text-slate-500">Toma fotos o sube desde la galería</p>
+            </div>
+          </div>
+          <button id="scan-modal-close-btn" type="button" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <!-- Opciones de Captura -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <button
+            type="button"
+            id="modal-btn-camera"
+            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 shadow-sm transition-all cursor-pointer text-center"
+          >
+            <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-bold">Usar Cámara</p>
+              <p class="text-[9px] text-slate-300">Foto directa</p>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            id="modal-btn-gallery"
+            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer text-center"
+          >
+            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-bold">Galería</p>
+              <p class="text-[9px] text-slate-500">Múltiples fotos</p>
+            </div>
+          </button>
+        </div>
+
+        <!-- Progreso y Galería de este modal -->
+        <div id="modal-scan-live-section" class="hidden space-y-3 pt-1 text-left">
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2">
+            <div class="flex items-center justify-between text-xs">
+              <span id="modal-progress-label" class="font-bold text-slate-800">Subiendo guías...</span>
+              <span id="modal-progress-count" class="font-mono font-bold text-indigo-600">0 / 0</span>
+            </div>
+            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+              <div id="modal-progress-bar" class="bg-indigo-600 h-full rounded-full transition-all duration-200" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <p class="text-xs font-bold text-slate-700">Fotos cargadas</p>
+              <span id="modal-gallery-count" class="text-[11px] font-bold text-indigo-600"></span>
+            </div>
+            <div id="modal-gallery-grid" class="grid grid-cols-4 gap-2"></div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1020,6 +1182,19 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
 
       // 4. Renderizar Tarjetas de Entrega Secuenciales
       function renderCards() {
+        const noRoutesContainer = document.getElementById('no-routes-container');
+        const activeRoutesContainer = document.getElementById('active-routes-container');
+
+        if (guiasData.length === 0) {
+          noRoutesContainer?.classList.remove('hidden');
+          activeRoutesContainer?.classList.add('hidden');
+          updateStats();
+          return;
+        } else {
+          noRoutesContainer?.classList.add('hidden');
+          activeRoutesContainer?.classList.remove('hidden');
+        }
+
         const query = searchQuery.trim().toLowerCase();
         
         let filtered = guiasData.filter((guia) => {
@@ -1783,6 +1958,193 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           window.location.reload();
         }
       });
+
+      // ============================================
+      // SISTEMA DE ESCANEO DIRECTO DE GUÍAS FÍSICAS
+      // ============================================
+      const scanCameraInput = document.getElementById('scan-camera-input') as HTMLInputElement;
+      const scanGalleryInput = document.getElementById('scan-gallery-input') as HTMLInputElement;
+
+      const btnNoRoutesCamera = document.getElementById('btn-no-routes-camera');
+      const btnNoRoutesGallery = document.getElementById('btn-no-routes-gallery');
+      const btnHeaderScan = document.getElementById('btn-header-scan');
+
+      const scanModal = document.getElementById('scan-modal');
+      const scanModalCloseBtn = document.getElementById('scan-modal-close-btn');
+      const modalBtnCamera = document.getElementById('modal-btn-camera');
+      const modalBtnGallery = document.getElementById('modal-btn-gallery');
+
+      const choferScanLiveSection = document.getElementById('chofer-scan-live-section');
+      const choferProgressBar = document.getElementById('chofer-progress-bar');
+      const choferProgressLabel = document.getElementById('chofer-progress-label');
+      const choferProgressCount = document.getElementById('chofer-progress-count');
+      const choferGalleryGrid = document.getElementById('chofer-gallery-grid');
+      const choferGalleryCount = document.getElementById('chofer-gallery-count');
+
+      const modalScanLiveSection = document.getElementById('modal-scan-live-section');
+      const modalProgressBar = document.getElementById('modal-progress-bar');
+      const modalProgressLabel = document.getElementById('modal-progress-label');
+      const modalProgressCount = document.getElementById('modal-progress-count');
+      const modalGalleryGrid = document.getElementById('modal-gallery-grid');
+      const modalGalleryCount = document.getElementById('modal-gallery-count');
+
+      let currentScanTargetMode = 'hero'; // 'hero' | 'modal'
+      let sessionScannedCount = 0;
+
+      // Generar lote_id único para la sesión
+      const nowScan = new Date();
+      const pad2 = (n: number) => n.toString().padStart(2, '0');
+      const scanLoteId = `chofer_${nowScan.getFullYear()}${pad2(nowScan.getMonth()+1)}${pad2(nowScan.getDate())}_${pad2(nowScan.getHours())}${pad2(nowScan.getMinutes())}`;
+
+      function openScanModal() {
+        scanModal?.classList.remove('hidden');
+        scanModal?.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeScanModal() {
+        scanModal?.classList.add('hidden');
+        scanModal?.classList.remove('flex');
+        document.body.style.overflow = '';
+      }
+
+      btnHeaderScan?.addEventListener('click', () => {
+        currentScanTargetMode = 'modal';
+        openScanModal();
+      });
+
+      scanModalCloseBtn?.addEventListener('click', closeScanModal);
+      scanModal?.addEventListener('click', (e) => {
+        if (e.target === scanModal) closeScanModal();
+      });
+
+      btnNoRoutesCamera?.addEventListener('click', () => {
+        currentScanTargetMode = 'hero';
+        scanCameraInput.click();
+      });
+
+      btnNoRoutesGallery?.addEventListener('click', () => {
+        currentScanTargetMode = 'hero';
+        scanGalleryInput.click();
+      });
+
+      modalBtnCamera?.addEventListener('click', () => {
+        currentScanTargetMode = 'modal';
+        scanCameraInput.click();
+      });
+
+      modalBtnGallery?.addEventListener('click', () => {
+        currentScanTargetMode = 'modal';
+        scanGalleryInput.click();
+      });
+
+      scanCameraInput?.addEventListener('change', (e) => {
+        const files = (e.target as HTMLInputElement).files;
+        if (files && files.length > 0) {
+          handleScanFiles(Array.from(files));
+        }
+        scanCameraInput.value = '';
+      });
+
+      scanGalleryInput?.addEventListener('change', (e) => {
+        const files = (e.target as HTMLInputElement).files;
+        if (files && files.length > 0) {
+          handleScanFiles(Array.from(files));
+        }
+        scanGalleryInput.value = '';
+      });
+
+      async function handleScanFiles(files: File[]) {
+        if (files.length === 0) return;
+
+        const total = files.length;
+        let processed = 0;
+        let uploadedOk = 0;
+
+        const liveSection = currentScanTargetMode === 'modal' ? modalScanLiveSection : choferScanLiveSection;
+        const pBar = currentScanTargetMode === 'modal' ? modalProgressBar : choferProgressBar;
+        const pLabel = currentScanTargetMode === 'modal' ? modalProgressLabel : choferProgressLabel;
+        const pCount = currentScanTargetMode === 'modal' ? modalProgressCount : choferProgressCount;
+        const grid = currentScanTargetMode === 'modal' ? modalGalleryGrid : choferGalleryGrid;
+        const countLabel = currentScanTargetMode === 'modal' ? modalGalleryCount : choferGalleryCount;
+
+        liveSection?.classList.remove('hidden');
+        if (pBar) pBar.style.width = '0%';
+        if (pLabel) pLabel.textContent = `Procesando y subiendo ${total} foto${total !== 1 ? 's' : ''}...`;
+        if (pCount) pCount.textContent = `0 / ${total}`;
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          sessionScannedCount++;
+          const itemIndex = sessionScannedCount;
+
+          // Miniatura temporal
+          const thumbDiv = document.createElement('div');
+          thumbDiv.id = `scan-thumb-${itemIndex}`;
+          thumbDiv.className = 'relative aspect-square rounded-xl overflow-hidden bg-slate-100 border-2 border-slate-200 transition-all';
+          thumbDiv.innerHTML = `
+            <div id="scan-thumb-overlay-${itemIndex}" class="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <svg class="w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+            </div>
+          `;
+          if (grid) grid.prepend(thumbDiv);
+
+          try {
+            const comp = await compressImage(file, 1200, 1600, 0.75);
+            
+            // Colocar imagen en miniatura
+            const imgEl = document.createElement('img');
+            imgEl.src = comp.dataUrl;
+            imgEl.className = 'w-full h-full object-cover';
+            thumbDiv.prepend(imgEl);
+
+            const formData = new FormData();
+            formData.append('foto', comp.file);
+            formData.append('foto_base64', comp.dataUrl);
+            formData.append('lote_id', scanLoteId);
+
+            const res = await fetch('/api/escaneos', {
+              method: 'POST',
+              body: formData
+            });
+            const data = await res.json();
+
+            const overlay = document.getElementById(`scan-thumb-overlay-${itemIndex}`);
+            if (res.ok && data.success) {
+              uploadedOk++;
+              thumbDiv.classList.replace('border-slate-200', 'border-emerald-400');
+              if (overlay) {
+                overlay.innerHTML = `<svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>`;
+                setTimeout(() => overlay.classList.add('opacity-0'), 700);
+              }
+            } else {
+              thumbDiv.classList.replace('border-slate-200', 'border-rose-400');
+              if (overlay) {
+                overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
+              }
+            }
+          } catch(err) {
+            console.error('Error subiendo foto de guía:', err);
+            const overlay = document.getElementById(`scan-thumb-overlay-${itemIndex}`);
+            thumbDiv.classList.replace('border-slate-200', 'border-rose-400');
+            if (overlay) {
+              overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
+            }
+          }
+
+          processed++;
+          const pct = Math.round((processed / total) * 100);
+          if (pBar) pBar.style.width = `${pct}%`;
+          if (pCount) pCount.textContent = `${processed} / ${total}`;
+        }
+
+        if (pLabel) pLabel.textContent = `¡${uploadedOk} de ${total} guías cargadas con éxito!`;
+        if (countLabel) countLabel.textContent = `${grid?.children.length || 0} subidas`;
+        showToast(`¡${uploadedOk} fotos de guías enviadas a Logística Central!`, 'success');
+      }
 
       // Inicialización
       initMap();
