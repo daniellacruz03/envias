@@ -237,37 +237,39 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         <!-- Opciones de Captura Directa -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
           <!-- Botón 1: Cámara Directa -->
-          <label
-            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 shadow-sm transition-all cursor-pointer text-center select-none active:scale-[0.98] relative overflow-hidden"
+          <button
+            type="button"
+            id="btn-hero-camera"
+            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 shadow-sm transition-all cursor-pointer text-center select-none active:scale-[0.98]"
           >
-            <input type="file" accept="image/*" capture="environment" class="scan-camera-trigger sr-only opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10" />
-            <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400 pointer-events-none">
+            <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
             </div>
-            <div class="pointer-events-none">
+            <div>
               <p class="text-xs font-bold">Tomar Foto con Cámara</p>
               <p class="text-[10px] text-slate-300">Disparo 1 a 1</p>
             </div>
-          </label>
+          </button>
 
           <!-- Botón 2: Galería Múltiple -->
-          <label
-            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer text-center select-none active:scale-[0.98] relative overflow-hidden"
+          <button
+            type="button"
+            id="btn-hero-gallery"
+            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer text-center select-none active:scale-[0.98]"
           >
-            <input type="file" accept="image/*" multiple class="scan-gallery-trigger sr-only opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10" />
-            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center pointer-events-none">
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
             </div>
-            <div class="pointer-events-none">
+            <div>
               <p class="text-xs font-bold">Elegir de Galería</p>
               <p class="text-[10px] text-slate-500">Seleccionar varias fotos</p>
             </div>
-          </label>
+          </button>
         </div>
 
         <!-- Contenedor de Progreso y Miniaturas de Subida en Vivo -->
@@ -506,6 +508,10 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         </div>
 
       </div>
+
+      <!-- Inputs ocultos para carga de fotos de escaneo -->
+      <input type="file" id="scan-camera-input" accept="image/*" capture="environment" class="hidden" />
+      <input type="file" id="scan-gallery-input" accept="image/*" multiple class="hidden" />
 
     </main>
 
@@ -757,36 +763,38 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
 
         <!-- Opciones de Captura -->
         <div class="grid grid-cols-2 gap-2.5">
-          <label
-            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 shadow-sm transition-all cursor-pointer text-center select-none active:scale-[0.98] relative overflow-hidden"
+          <button
+            type="button"
+            id="modal-btn-camera"
+            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 shadow-sm transition-all cursor-pointer text-center select-none active:scale-[0.98]"
           >
-            <input type="file" accept="image/*" capture="environment" class="scan-camera-trigger sr-only opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10" />
-            <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400 pointer-events-none">
+            <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
             </div>
-            <div class="pointer-events-none">
+            <div>
               <p class="text-xs font-bold">Usar Cámara</p>
               <p class="text-[9px] text-slate-300">Foto directa</p>
             </div>
-          </label>
+          </button>
 
-          <label
-            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer text-center select-none active:scale-[0.98] relative overflow-hidden"
+          <button
+            type="button"
+            id="modal-btn-gallery"
+            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer text-center select-none active:scale-[0.98]"
           >
-            <input type="file" accept="image/*" multiple class="scan-gallery-trigger sr-only opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10" />
-            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center pointer-events-none">
+            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
             </div>
-            <div class="pointer-events-none">
+            <div>
               <p class="text-xs font-bold">Galería</p>
               <p class="text-[9px] text-slate-500">Múltiples fotos</p>
             </div>
-          </label>
+          </button>
         </div>
 
         <!-- Progreso y Galería de este modal -->
@@ -1974,9 +1982,17 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
       // ============================================
       // SISTEMA DE ESCANEO DIRECTO DE GUÍAS FÍSICAS
       // ============================================
+      const scanCameraInput = document.getElementById('scan-camera-input') as HTMLInputElement;
+      const scanGalleryInput = document.getElementById('scan-gallery-input') as HTMLInputElement;
+
+      const btnHeroCamera = document.getElementById('btn-hero-camera');
+      const btnHeroGallery = document.getElementById('btn-hero-gallery');
       const btnHeaderScan = document.getElementById('btn-header-scan');
+
       const scanModal = document.getElementById('scan-modal');
       const scanModalCloseBtn = document.getElementById('scan-modal-close-btn');
+      const modalBtnCamera = document.getElementById('modal-btn-camera');
+      const modalBtnGallery = document.getElementById('modal-btn-gallery');
 
       const choferScanLiveSection = document.getElementById('chofer-scan-live-section');
       const choferProgressBar = document.getElementById('chofer-progress-bar');
@@ -2016,17 +2032,39 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         if (e.target === scanModal) closeScanModal();
       });
 
-      // Vincular eventos change en todos los inputs de cámara y galería
-      document.querySelectorAll('.scan-camera-trigger, .scan-gallery-trigger').forEach((inputEl) => {
-        inputEl.addEventListener('change', (e) => {
-          const target = e.target as HTMLInputElement;
-          const files = target.files;
-          if (files && files.length > 0) {
-            currentScanTargetMode = (scanModal && !scanModal.classList.contains('hidden')) ? 'modal' : 'hero';
-            handleScanFiles(Array.from(files));
-          }
-          target.value = '';
-        });
+      // Disparadores de botones
+      btnHeroCamera?.addEventListener('click', () => {
+        currentScanTargetMode = 'hero';
+        if (scanCameraInput) scanCameraInput.click();
+      });
+
+      btnHeroGallery?.addEventListener('click', () => {
+        currentScanTargetMode = 'hero';
+        if (scanGalleryInput) scanGalleryInput.click();
+      });
+
+      modalBtnCamera?.addEventListener('click', () => {
+        currentScanTargetMode = 'modal';
+        if (scanCameraInput) scanCameraInput.click();
+      });
+
+      modalBtnGallery?.addEventListener('click', () => {
+        currentScanTargetMode = 'modal';
+        if (scanGalleryInput) scanGalleryInput.click();
+      });
+
+      scanCameraInput?.addEventListener('change', (e) => {
+        const files = (e.target as HTMLInputElement).files;
+        if (files && files.length > 0) {
+          handleScanFiles(Array.from(files));
+        }
+      });
+
+      scanGalleryInput?.addEventListener('change', (e) => {
+        const files = (e.target as HTMLInputElement).files;
+        if (files && files.length > 0) {
+          handleScanFiles(Array.from(files));
+        }
       });
 
       async function handleScanFiles(files: File[]) {
@@ -2049,8 +2087,9 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
 
         liveSection?.classList.remove('hidden');
         if (pBar) pBar.style.width = '0%';
-        if (pLabel) pLabel.textContent = `Procesando y subiendo ${total} foto${total !== 1 ? 's' : ''}...`;
+        if (pLabel) pLabel.textContent = `Procesando ${total} foto${total !== 1 ? 's' : ''}...`;
         if (pCount) pCount.textContent = `0 / ${total}`;
+        showToast(`Procesando ${total} foto(s)...`, 'info');
 
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
@@ -2107,7 +2146,7 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
               if (overlay) {
                 overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
               }
-              showToast(data.message || 'No se pudo guardar la guía', 'error');
+              showToast(data.message || 'No se pudo guardar la guía en el servidor', 'error');
             }
           } catch(err: any) {
             console.error('Error subiendo foto de guía:', err);
@@ -2125,10 +2164,13 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           if (pCount) pCount.textContent = `${processed} / ${total}`;
         }
 
+        if (scanCameraInput) scanCameraInput.value = '';
+        if (scanGalleryInput) scanGalleryInput.value = '';
+
         if (pLabel) pLabel.textContent = `¡${uploadedOk} de ${total} guías cargadas con éxito!`;
         if (countLabel) countLabel.textContent = `${grid?.children.length || 0} subidas`;
         if (uploadedOk > 0) {
-          showToast(`¡${uploadedOk} fotos de guías enviadas a Logística Central!`, 'success');
+          showToast(`¡${uploadedOk} foto(s) enviada(s) a Logística!`, 'success');
         }
       }
 
