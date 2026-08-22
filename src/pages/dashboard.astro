@@ -542,146 +542,194 @@ const userInitials = currentUser.nombre
     </main>
 
     <!-- ========================================================= -->
-    <!-- DRAWER LATERAL: APROBAR / RECHAZAR ESCANEO                -->
     <!-- ========================================================= -->
-    <div id="escaneo-drawer" class="fixed inset-0 z-50 hidden">
+    <!-- MODAL COMPLETO: APROBAR / RECHAZAR ESCANEO CON ZOOM DIRECTO -->
+    <!-- ========================================================= -->
+    <div id="escaneo-drawer" class="fixed inset-0 z-50 hidden items-center justify-center p-2 sm:p-4 md:p-6">
       <!-- Overlay -->
-      <div id="escaneo-drawer-overlay" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-      <!-- Panel -->
-      <div class="absolute right-0 top-0 h-full w-full max-w-lg bg-white shadow-2xl flex flex-col">
-        <!-- Header del Drawer -->
-        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 shrink-0">
-          <div>
-            <h3 class="text-sm font-bold text-slate-900" id="drawer-title">Revisar Guía Escaneada</h3>
-            <p class="text-[11px] text-slate-500 mt-0.5" id="drawer-subtitle">Ingresa los datos de la guía física</p>
-          </div>
-          <button id="drawer-close-btn" type="button" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-
-        <!-- Foto de la guía con botón de pantalla completa -->
-        <div class="px-5 pt-4 shrink-0">
-          <div
-            id="drawer-foto-container"
-            class="relative group rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 max-h-64 flex items-center justify-center cursor-zoom-in"
-            title="Clic para ver en pantalla completa y hacer zoom"
-          >
-            <img id="drawer-foto" src="" alt="Guía escaneada" class="w-full h-full max-h-64 object-contain transition-transform duration-200 group-hover:scale-102" />
-            <!-- Overlay y Botón flotante pantalla completa -->
-            <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-              <span class="bg-black/70 text-white text-xs font-bold px-3 py-1.5 rounded-xl backdrop-blur-xs flex items-center gap-1.5 shadow-lg">
-                <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                </svg>
-                <span>Pantalla Completa</span>
-              </span>
-            </div>
-            <button
-              type="button"
-              id="btn-drawer-fullscreen"
-              class="absolute bottom-2.5 right-2.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-black text-white text-[11px] font-bold flex items-center gap-1.5 shadow-lg backdrop-blur-xs transition-all cursor-pointer z-10"
-            >
-              <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+      <div id="escaneo-drawer-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity"></div>
+      
+      <!-- Contenedor Modal de 2 Columnas -->
+      <div class="relative z-10 w-full max-w-6xl h-[94vh] sm:h-[90vh] bg-white rounded-3xl shadow-2xl border border-slate-200/80 flex flex-col overflow-hidden animate-fadeIn">
+        
+        <!-- Header del Modal -->
+        <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-white shrink-0">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
               </svg>
-              <span>Ampliar</span>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-extrabold text-slate-900" id="drawer-title">Revisar Guía Escaneada</h3>
+                <span id="drawer-lote-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-mono"></span>
+              </div>
+              <p class="text-[11px] text-slate-500 font-medium" id="drawer-subtitle">Ingresa los datos de la guía física</p>
+            </div>
+          </div>
+
+          <!-- Controles de navegación y cierre -->
+          <div class="flex items-center gap-2">
+            <div class="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200/80 gap-1">
+              <button id="drawer-prev-btn" type="button" class="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-white rounded-lg transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed" title="Guía anterior">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+              <span id="drawer-nav-counter" class="text-xs font-mono font-bold px-2 text-slate-700">1 / 1</span>
+              <button id="drawer-next-btn" type="button" class="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-white rounded-lg transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed" title="Guía siguiente">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+
+            <button id="drawer-close-btn" type="button" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer" title="Cerrar modal (Esc)">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
             </button>
           </div>
         </div>
 
-        <!-- Formulario de datos -->
-        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-          <div class="grid grid-cols-2 gap-3">
-            <div class="col-span-1 space-y-1">
-              <label class="text-xs font-semibold text-slate-700">N° Guía <span class="text-rose-500">*</span></label>
-              <input type="text" id="drawer-id-guia" placeholder="Ej: 982001" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all font-mono" />
+        <!-- Cuerpo del Modal: 2 Columnas -->
+        <div class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
+          
+          <!-- COLUMNA IZQUIERDA: VISOR CON ZOOM INTERACTIVO INTEGRADO -->
+          <div class="flex-1 md:w-3/5 bg-slate-950 flex flex-col relative overflow-hidden select-none border-b md:border-b-0 md:border-r border-slate-800">
+            
+            <!-- Barra de herramientas flotante de Zoom -->
+            <div class="absolute top-3 inset-x-3 z-20 flex items-center justify-between pointer-events-none">
+              <span class="bg-slate-900/90 text-slate-300 text-[10px] font-medium px-2.5 py-1 rounded-xl backdrop-blur-md border border-slate-700 shadow-md">
+                Rueda del ratón para zoom • Arrastra para mover
+              </span>
+              <div class="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl backdrop-blur-md border border-slate-700 shadow-md pointer-events-auto">
+                <button type="button" id="btn-zoom-out" class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer" title="Alejar (-)">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+                </button>
+                <span id="zoom-level-text" class="text-[10px] font-mono font-bold text-slate-200 px-1.5 min-w-[40px] text-center">100%</span>
+                <button type="button" id="btn-zoom-in" class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer" title="Acercar (+)">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                </button>
+                <div class="w-px h-3.5 bg-slate-700 mx-0.5"></div>
+                <button type="button" id="btn-zoom-rotate" class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer" title="Rotar 90°">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                </button>
+                <button type="button" id="btn-zoom-reset" class="px-2 py-0.5 text-[10px] font-bold text-indigo-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors cursor-pointer" title="Restablecer vista">
+                  Ajustar
+                </button>
+              </div>
             </div>
-            <div class="col-span-1 space-y-1">
-              <label class="text-xs font-semibold text-slate-700">Piezas</label>
-              <input type="number" id="drawer-piezas" value="1" min="1" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
+
+            <!-- Canvas de visualización de imagen interactiva -->
+            <div id="drawer-zoom-viewport" class="flex-1 w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing overflow-hidden relative touch-none">
+              <img
+                id="drawer-foto"
+                src=""
+                alt="Guía escaneada"
+                class="max-w-none transition-transform duration-75 origin-center will-change-transform"
+                style="transform: translate(0px, 0px) scale(1) rotate(0deg); max-height: 80%; max-width: 80%; object-contain: contain;"
+                draggable="false"
+              />
             </div>
           </div>
 
-          <div class="space-y-1">
-            <label class="text-xs font-semibold text-slate-700">Destinatario <span class="text-rose-500">*</span></label>
-            <input type="text" id="drawer-destinatario" placeholder="Nombre completo del destinatario" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
+          <!-- COLUMNA DERECHA: FORMULARIO DE REVISIÓN Y ACCIONES -->
+          <div class="w-full md:w-2/5 flex flex-col bg-white overflow-hidden">
+            <!-- Formulario Scrollable -->
+            <div class="flex-1 overflow-y-auto px-5 py-4 space-y-3.5 custom-scrollbar">
+              
+              <div class="grid grid-cols-2 gap-3">
+                <div class="col-span-1 space-y-1">
+                  <label class="text-xs font-bold text-slate-700 flex items-center gap-1">
+                    <span>N° Guía</span>
+                    <span class="text-rose-500">*</span>
+                  </label>
+                  <input type="text" id="drawer-id-guia" placeholder="Ej: 982001" class="w-full text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
+                </div>
+                <div class="col-span-1 space-y-1">
+                  <label class="text-xs font-bold text-slate-700">Piezas</label>
+                  <input type="number" id="drawer-piezas" value="1" min="1" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
+                </div>
+              </div>
+
+              <div class="space-y-1">
+                <label class="text-xs font-bold text-slate-700 flex items-center gap-1">
+                  <span>Destinatario</span>
+                  <span class="text-rose-500">*</span>
+                </label>
+                <input type="text" id="drawer-destinatario" placeholder="Nombre completo del destinatario" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div class="col-span-1 space-y-1">
+                  <label class="text-xs font-bold text-slate-700 flex items-center gap-1">
+                    <span>Teléfono</span>
+                    <span class="text-rose-500">*</span>
+                  </label>
+                  <input type="tel" id="drawer-telefono" placeholder="Ej: 04141234567" class="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
+                </div>
+
+                <div class="col-span-1 space-y-1">
+                  <label class="text-xs font-bold text-slate-700 flex items-center gap-1">
+                    <span>Ciudad Destino</span>
+                    <span class="text-rose-500">*</span>
+                  </label>
+                  <input type="text" id="drawer-ciudad" placeholder="Ej: Mérida" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
+                </div>
+              </div>
+
+              <div class="space-y-1">
+                <label class="text-xs font-bold text-slate-700">Empresa / Courier</label>
+                <select id="drawer-empresa" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer">
+                  <option value="">Seleccionar Empresa...</option>
+                  <option value="Troop">Troop</option>
+                  <option value="Crazy cargo">Crazy cargo</option>
+                  <option value="Cargo King">Cargo King</option>
+                  <option value="JJ">JJ</option>
+                  <option value="Greymar">Greymar</option>
+                  <option value="Ajbp">Ajbp</option>
+                  <option value="Global jats">Global jats</option>
+                  <option value="Su descarga">Su descarga</option>
+                  <option value="Rima cargo">Rima cargo</option>
+                  <option value="Dina cargo">Dina cargo</option>
+                  <option value="Send logístics">Send logístics</option>
+                  <option value="Alas cargo">Alas cargo</option>
+                  <option value="Aexpress">Aexpress</option>
+                  <option value="Priority">Priority</option>
+                  <option value="Alpi">Alpi</option>
+                  <option value="Venexcargo">Venexcargo</option>
+                  <option value="DBL">DBL</option>
+                  <option value="2BC">2BC</option>
+                </select>
+              </div>
+
+              <div class="space-y-1">
+                <label class="text-xs font-bold text-slate-700">Dirección / Referencias <span class="text-slate-400 font-normal">(Opcional)</span></label>
+                <input type="text" id="drawer-direccion" placeholder="Ej: Av. Las Américas, frente al C.C." class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
+              </div>
+
+              <!-- Mensaje de error -->
+              <div id="drawer-error" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 font-semibold"></div>
+            </div>
+
+            <!-- Botones de Acción Fijos al Pie -->
+            <div class="px-5 py-4 border-t border-slate-200 bg-slate-50/80 shrink-0 flex items-center gap-3">
+              <button id="drawer-reject-btn" type="button" class="py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-700 hover:text-rose-700 font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+                Rechazar
+              </button>
+              <button id="drawer-approve-btn" type="button" class="flex-1 py-2.5 px-5 rounded-xl bg-slate-900 hover:bg-black active:scale-[0.98] text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 shadow-sm">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                </svg>
+                Aprobar y Crear Guía
+              </button>
+            </div>
+
           </div>
 
-          <div class="space-y-1">
-            <label class="text-xs font-semibold text-slate-700">Teléfono <span class="text-rose-500">*</span></label>
-            <input type="tel" id="drawer-telefono" placeholder="Ej: 04141234567" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all font-mono" />
-          </div>
-
-          <div class="space-y-1">
-            <label class="text-xs font-semibold text-slate-700">Ciudad Destino <span class="text-rose-500">*</span></label>
-            <input type="text" id="drawer-ciudad" placeholder="Ej: Mérida" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
-          </div>
-
-          <div class="space-y-1">
-            <label class="text-xs font-semibold text-slate-700">Empresa / Courier</label>
-            <select id="drawer-empresa" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer">
-              <option value="">Seleccionar Empresa...</option>
-              <option value="Troop">Troop</option>
-              <option value="Crazy cargo">Crazy cargo</option>
-              <option value="Cargo King">Cargo King</option>
-              <option value="JJ">JJ</option>
-              <option value="Greymar">Greymar</option>
-              <option value="Ajbp">Ajbp</option>
-              <option value="Global jats">Global jats</option>
-              <option value="Su descarga">Su descarga</option>
-              <option value="Rima cargo">Rima cargo</option>
-              <option value="Dina cargo">Dina cargo</option>
-              <option value="Send logístics">Send logístics</option>
-              <option value="Alas cargo">Alas cargo</option>
-              <option value="Aexpress">Aexpress</option>
-              <option value="Priority">Priority</option>
-              <option value="Alpi">Alpi</option>
-              <option value="Venexcargo">Venexcargo</option>
-              <option value="DBL">DBL</option>
-              <option value="2BC">2BC</option>
-            </select>
-          </div>
-
-          <div class="space-y-1">
-            <label class="text-xs font-semibold text-slate-700">Dirección / Referencias <span class="text-slate-400 font-normal">(Opcional)</span></label>
-            <input type="text" id="drawer-direccion" placeholder="Ej: Av. Las Américas, frente al C.C." class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
-          </div>
-
-          <!-- Mensaje de error -->
-          <div id="drawer-error" class="hidden text-xs text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2 font-semibold"></div>
         </div>
 
-        <!-- Acciones del Drawer -->
-        <div class="px-5 py-4 border-t border-slate-200 shrink-0 flex items-center gap-3">
-          <button id="drawer-reject-btn" type="button" class="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-700 hover:text-rose-700 font-semibold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-            Rechazar
-          </button>
-          <button id="drawer-approve-btn" type="button" class="flex-2 flex-grow py-2.5 px-5 rounded-xl bg-slate-900 hover:bg-black active:scale-[0.98] text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5">
-            <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
-            </svg>
-            Aprobar y Crear Guía
-          </button>
-        </div>
-
-        <!-- Navegación Anterior / Siguiente -->
-        <div class="px-5 pb-4 flex items-center justify-between shrink-0">
-          <button id="drawer-prev-btn" type="button" class="text-xs font-semibold text-slate-500 hover:text-slate-900 disabled:opacity-30 flex items-center gap-1 transition-colors cursor-pointer disabled:cursor-not-allowed">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-            Anterior
-          </button>
-          <span id="drawer-nav-counter" class="text-[11px] text-slate-400 font-mono">1 / 1</span>
-          <button id="drawer-next-btn" type="button" class="text-xs font-semibold text-slate-500 hover:text-slate-900 disabled:opacity-30 flex items-center gap-1 transition-colors cursor-pointer disabled:cursor-not-allowed">
-            Siguiente
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-          </button>
-        </div>
       </div>
     </div>
 
@@ -2957,10 +3005,18 @@ const userInitials = currentUser.nombre
           `;
         }
 
-        // Drawer de revisión
+        // Modal de revisión de escaneos
         const escaneoDrawer = document.getElementById('escaneo-drawer') as HTMLElement;
         const drawerOverlay = document.getElementById('escaneo-drawer-overlay') as HTMLElement;
         const drawerFoto = document.getElementById('drawer-foto') as HTMLImageElement;
+        const drawerZoomViewport = document.getElementById('drawer-zoom-viewport') as HTMLElement;
+        const btnZoomIn = document.getElementById('btn-zoom-in') as HTMLButtonElement;
+        const btnZoomOut = document.getElementById('btn-zoom-out') as HTMLButtonElement;
+        const btnZoomRotate = document.getElementById('btn-zoom-rotate') as HTMLButtonElement;
+        const btnZoomReset = document.getElementById('btn-zoom-reset') as HTMLButtonElement;
+        const zoomLevelText = document.getElementById('zoom-level-text') as HTMLElement;
+        const drawerLoteBadge = document.getElementById('drawer-lote-badge') as HTMLElement;
+
         const drawerIdGuia = document.getElementById('drawer-id-guia') as HTMLInputElement;
         const drawerPiezas = document.getElementById('drawer-piezas') as HTMLInputElement;
         const drawerDestinatario = document.getElementById('drawer-destinatario') as HTMLInputElement;
@@ -2977,11 +3033,88 @@ const userInitials = currentUser.nombre
         const drawerNavCounter = document.getElementById('drawer-nav-counter') as HTMLElement;
         const drawerSubtitle = document.getElementById('drawer-subtitle') as HTMLElement;
 
+        // Estado del visor de zoom interactivo
+        let modalZoom = 1;
+        let modalPanX = 0;
+        let modalPanY = 0;
+        let modalRotate = 0;
+        let isPanning = false;
+        let startPanX = 0;
+        let startPanY = 0;
+
+        function applyModalZoomTransform() {
+          if (!drawerFoto) return;
+          drawerFoto.style.transform = `translate(${modalPanX}px, ${modalPanY}px) scale(${modalZoom}) rotate(${modalRotate}deg)`;
+          if (zoomLevelText) {
+            zoomLevelText.textContent = `${Math.round(modalZoom * 100)}%`;
+          }
+        }
+
+        function resetModalZoom() {
+          modalZoom = 1;
+          modalPanX = 0;
+          modalPanY = 0;
+          modalRotate = 0;
+          applyModalZoomTransform();
+        }
+
+        // Eventos de Zoom con Rueda del Ratón
+        drawerZoomViewport?.addEventListener('wheel', (e: WheelEvent) => {
+          e.preventDefault();
+          const delta = e.deltaY < 0 ? 1.15 : 0.87;
+          modalZoom = Math.min(Math.max(modalZoom * delta, 0.4), 6.0);
+          applyModalZoomTransform();
+        }, { passive: false });
+
+        // Eventos de Arrastre (Pan) con Mouse
+        drawerZoomViewport?.addEventListener('mousedown', (e: MouseEvent) => {
+          if (e.button !== 0) return;
+          isPanning = true;
+          startPanX = e.clientX - modalPanX;
+          startPanY = e.clientY - modalPanY;
+          if (drawerZoomViewport) drawerZoomViewport.style.cursor = 'grabbing';
+        });
+
+        window.addEventListener('mousemove', (e: MouseEvent) => {
+          if (!isPanning) return;
+          modalPanX = e.clientX - startPanX;
+          modalPanY = e.clientY - startPanY;
+          applyModalZoomTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+          if (isPanning) {
+            isPanning = false;
+            if (drawerZoomViewport) drawerZoomViewport.style.cursor = 'grab';
+          }
+        });
+
+        // Botones de control de zoom
+        btnZoomIn?.addEventListener('click', () => {
+          modalZoom = Math.min(modalZoom * 1.25, 6.0);
+          applyModalZoomTransform();
+        });
+
+        btnZoomOut?.addEventListener('click', () => {
+          modalZoom = Math.max(modalZoom * 0.8, 0.4);
+          applyModalZoomTransform();
+        });
+
+        btnZoomRotate?.addEventListener('click', () => {
+          modalRotate = (modalRotate + 90) % 360;
+          applyModalZoomTransform();
+        });
+
+        btnZoomReset?.addEventListener('click', () => {
+          resetModalZoom();
+        });
+
         window.openEscaneoDrawer = function(escaneoId: number) {
           const idx = drawerFotosFlat.findIndex((f: any) => f.id === escaneoId);
           drawerCurrentIndex = idx >= 0 ? idx : 0;
           loadDrawerByIndex(drawerCurrentIndex);
           escaneoDrawer.classList.remove('hidden');
+          escaneoDrawer.classList.add('flex');
           document.body.style.overflow = 'hidden';
         };
 
@@ -2990,6 +3123,7 @@ const userInitials = currentUser.nombre
           const foto = drawerFotosFlat[idx];
           activeEscaneoId = foto.id;
           drawerFoto.src = foto.foto_url;
+          resetModalZoom();
           drawerIdGuia.value = '';
           drawerPiezas.value = '1';
           drawerDestinatario.value = '';
@@ -2998,35 +3132,23 @@ const userInitials = currentUser.nombre
           if (drawerEmpresa) drawerEmpresa.value = foto.empresa || '';
           drawerDireccion.value = '';
           drawerError.classList.add('hidden');
-          drawerSubtitle.textContent = `${foto.chofer_nombre} — ${foto.lote_id}`;
+          drawerSubtitle.textContent = `Chofer: ${foto.chofer_nombre}`;
+          if (drawerLoteBadge) drawerLoteBadge.textContent = foto.lote_id || 'Lote';
           drawerNavCounter.textContent = `${idx + 1} / ${drawerFotosFlat.length}`;
           drawerPrevBtn.disabled = idx === 0;
           drawerNextBtn.disabled = idx === drawerFotosFlat.length - 1;
+          setTimeout(() => {
+            drawerIdGuia?.focus();
+          }, 120);
         }
 
         function closeDrawer() {
           escaneoDrawer.classList.add('hidden');
+          escaneoDrawer.classList.remove('flex');
           document.body.style.overflow = '';
           activeEscaneoId = null;
+          resetModalZoom();
         }
-
-        const drawerFotoContainer = document.getElementById('drawer-foto-container') as HTMLElement;
-        const btnDrawerFullscreen = document.getElementById('btn-drawer-fullscreen') as HTMLButtonElement;
-
-        function openCurrentDrawerFotoFullscreen() {
-          if (drawerFoto && drawerFoto.src) {
-            const title = drawerSubtitle ? drawerSubtitle.textContent || 'Guía Escaneada' : 'Guía Escaneada';
-            (window as any).openLightbox(drawerFoto.src, title, 'Visualización en pantalla completa para inspección de texto');
-          }
-        }
-
-        drawerFotoContainer?.addEventListener('click', () => {
-          openCurrentDrawerFotoFullscreen();
-        });
-        btnDrawerFullscreen?.addEventListener('click', (e) => {
-          e.stopPropagation();
-          openCurrentDrawerFotoFullscreen();
-        });
 
         drawerCloseBtn?.addEventListener('click', closeDrawer);
         drawerOverlay?.addEventListener('click', closeDrawer);
@@ -3041,6 +3163,17 @@ const userInitials = currentUser.nombre
           if (drawerCurrentIndex < drawerFotosFlat.length - 1) {
             drawerCurrentIndex++;
             loadDrawerByIndex(drawerCurrentIndex);
+          }
+        });
+
+        // Atajos de teclado cuando el modal está abierto
+        window.addEventListener('keydown', (e: KeyboardEvent) => {
+          if (escaneoDrawer && !escaneoDrawer.classList.contains('hidden')) {
+            if (e.key === 'Escape') {
+              closeDrawer();
+            } else if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              drawerApproveBtn?.click();
+            }
           }
         });
 
