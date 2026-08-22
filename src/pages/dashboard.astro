@@ -996,34 +996,89 @@ const userInitials = currentUser.nombre
     </div>
 
     <!-- ========================================== -->
-    <!-- LIGHTBOX / VISOR DE FOTOS PANTALLA COMPLETA-->
+    <!-- LIGHTBOX / VISOR DE FOTOS PANTALLA COMPLETA CON ZOOM -->
     <!-- ========================================== -->
-    <div id="lightbox-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 sm:p-6 bg-slate-950/90 backdrop-blur-md">
-      <div class="relative max-w-5xl w-full max-h-[95vh] flex flex-col bg-slate-900 border border-slate-700/60 rounded-3xl overflow-hidden shadow-2xl">
+    <div id="lightbox-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-2 sm:p-4 bg-slate-950/90 backdrop-blur-md select-none">
+      <div class="relative max-w-6xl w-full h-[92vh] flex flex-col bg-slate-900 border border-slate-700/60 rounded-3xl overflow-hidden shadow-2xl">
         <!-- Header del visor -->
-        <div class="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between shrink-0 bg-slate-900/90">
-          <div class="min-w-0 pr-3">
+        <div class="px-4 sm:px-5 py-3 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0 bg-slate-900/90">
+          <div class="min-w-0 pr-2">
             <h4 id="lightbox-title" class="text-sm font-bold text-white truncate">Visualizador de Guía / Comprobante</h4>
             <p id="lightbox-info" class="text-[11px] text-slate-400 truncate"></p>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
+
+          <!-- Barra de Herramientas de Zoom e Inspección -->
+          <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div class="flex items-center bg-slate-800 rounded-xl p-1 border border-slate-700">
+              <!-- Zoom Out -->
+              <button
+                id="lightbox-zoom-out"
+                type="button"
+                class="p-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                title="Alejar (Zoom -)"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                </svg>
+              </button>
+
+              <!-- Indicador de Zoom / Reset a 100% -->
+              <button
+                id="lightbox-zoom-reset"
+                type="button"
+                class="px-2 py-0.5 text-xs font-mono font-bold text-indigo-300 hover:text-white transition-colors cursor-pointer"
+                title="Restablecer al 100%"
+              >
+                <span id="lightbox-zoom-level">100%</span>
+              </button>
+
+              <!-- Zoom In -->
+              <button
+                id="lightbox-zoom-in"
+                type="button"
+                class="p-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                title="Acercar (Zoom +)"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+
+              <div class="h-4 w-px bg-slate-700 mx-1"></div>
+
+              <!-- Rotar 90° -->
+              <button
+                id="lightbox-rotate"
+                type="button"
+                class="p-1.5 rounded-lg hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                title="Rotar imagen 90°"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Abrir Original -->
             <a
               id="lightbox-external-link"
               href="#"
               target="_blank"
-              class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
               title="Abrir imagen original en pestaña nueva"
             >
               <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
-              <span class="hidden sm:inline">Pestaña nueva</span>
+              <span class="hidden md:inline">Original</span>
             </a>
+
+            <!-- Cerrar -->
             <button
               id="lightbox-close-btn"
               type="button"
               class="p-2 rounded-xl bg-slate-800 hover:bg-rose-500/20 hover:text-rose-400 text-slate-400 transition-colors cursor-pointer"
-              title="Cerrar visor"
+              title="Cerrar visor (Esc)"
             >
               <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -1032,9 +1087,25 @@ const userInitials = currentUser.nombre
           </div>
         </div>
 
-        <!-- Imagen a tamaño completo -->
-        <div class="flex-1 overflow-auto p-4 flex items-center justify-center bg-black/50 min-h-[50vh] max-h-[82vh]">
-          <img id="lightbox-img" src="" alt="Comprobante / Guía" class="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl transition-all select-none" />
+        <!-- Área de Inspección / Imagen con Zoom y Arrastre Pan -->
+        <div
+          id="lightbox-viewport"
+          class="flex-1 overflow-hidden relative flex items-center justify-center bg-black/70 cursor-grab active:cursor-grabbing"
+          title="Usa la rueda del ratón para hacer zoom o arrastra para mover"
+        >
+          <img
+            id="lightbox-img"
+            src=""
+            alt="Comprobante / Guía"
+            class="max-w-full max-h-[82vh] object-contain rounded-xl shadow-2xl pointer-events-none select-none transition-transform duration-75"
+            style="transform-origin: center center;"
+          />
+
+          <!-- Guía flotante en esquina -->
+          <div class="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-xs text-[10px] text-slate-400 font-medium px-2.5 py-1 rounded-lg border border-slate-800 pointer-events-none flex items-center gap-1.5">
+            <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+            <span>Rueda del ratón para zoom &bull; Arrastra para mover</span>
+          </div>
         </div>
       </div>
     </div>
@@ -1483,12 +1554,15 @@ const userInitials = currentUser.nombre
             }
           }
 
-          // 2. Sincronizar badge de escaneos y lista si está activa la vista
+          // 2. Sincronizar badge de escaneos y lista en tiempo real si está activa la vista
           try {
             const escRes = await fetch('/api/escaneos');
             if (escRes.ok) {
               const escData = await escRes.json();
               const totalPend = escData.totalPendientes || 0;
+              const newLotes = escData.data || [];
+
+              // Actualizar badge numérico en la pestaña
               if (escaneosCountPill) {
                 if (totalPend > 0) {
                   escaneosCountPill.textContent = totalPend.toString();
@@ -1496,6 +1570,41 @@ const userInitials = currentUser.nombre
                   escaneosCountPill.className = 'text-[10px] bg-amber-400 text-white px-1.5 py-0.2 rounded-full font-bold';
                 } else {
                   escaneosCountPill.classList.add('hidden');
+                }
+              }
+
+              // Si el usuario está viendo la pestaña de escaneos y el drawer NO está abierto
+              const escaneoDrawerEl = document.getElementById('escaneo-drawer');
+              const isDrawerClosed = !escaneoDrawerEl || escaneoDrawerEl.classList.contains('hidden');
+
+              if (currentViewMode === 'escaneos' && isDrawerClosed) {
+                const prevSummary = JSON.stringify(escaneosData.map((l: any) => ({ id: l.lote_id, total: l.total, pend: l.pendientes, proc: l.procesadas })));
+                const newSummary = JSON.stringify(newLotes.map((l: any) => ({ id: l.lote_id, total: l.total, pend: l.pendientes, proc: l.procesadas })));
+
+                if (prevSummary !== newSummary || escaneosData.length === 0) {
+                  escaneosData = newLotes;
+                  const listEl = document.getElementById('escaneos-list');
+                  const emptyEl = document.getElementById('escaneos-empty');
+                  const loadingEl = document.getElementById('escaneos-loading');
+                  loadingEl?.classList.add('hidden');
+
+                  if (escaneosData.length === 0) {
+                    listEl?.classList.add('hidden');
+                    emptyEl?.classList.remove('hidden');
+                  } else {
+                    emptyEl?.classList.add('hidden');
+                    if (listEl) {
+                      listEl.innerHTML = escaneosData.map((lote: any) => renderEscaneoLote(lote)).join('');
+                      listEl.classList.remove('hidden');
+                    }
+                    drawerFotosFlat = escaneosData.flatMap((lote: any) =>
+                      (lote.fotos || []).filter((f: any) => f.estado === 'pendiente').map((f: any) => ({
+                        ...f,
+                        chofer_nombre: lote.chofer_nombre,
+                        lote_id: lote.lote_id
+                      }))
+                    );
+                  }
                 }
               }
             }
@@ -2993,16 +3102,56 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }, 3500);
       }
 
-      // Lightbox para ver fotos de comprobantes
+      // Lightbox para ver fotos de comprobantes y guías con ZOOM y PAN
       const lightboxModal = document.getElementById('lightbox-modal') as HTMLElement;
       const lightboxCloseBtn = document.getElementById('lightbox-close-btn') as HTMLElement;
       const lightboxImg = document.getElementById('lightbox-img') as HTMLImageElement;
       const lightboxTitle = document.getElementById('lightbox-title') as HTMLElement;
       const lightboxInfo = document.getElementById('lightbox-info') as HTMLElement;
       const lightboxExternalLink = document.getElementById('lightbox-external-link') as HTMLAnchorElement;
+      const lightboxViewport = document.getElementById('lightbox-viewport') as HTMLElement;
+      const lightboxZoomIn = document.getElementById('lightbox-zoom-in') as HTMLButtonElement;
+      const lightboxZoomOut = document.getElementById('lightbox-zoom-out') as HTMLButtonElement;
+      const lightboxZoomReset = document.getElementById('lightbox-zoom-reset') as HTMLButtonElement;
+      const lightboxZoomLevel = document.getElementById('lightbox-zoom-level') as HTMLElement;
+      const lightboxRotate = document.getElementById('lightbox-rotate') as HTMLButtonElement;
+
+      let zoomScale = 1;
+      let panX = 0;
+      let panY = 0;
+      let rotation = 0;
+      let isPanning = false;
+      let startX = 0;
+      let startY = 0;
+
+      function applyTransform() {
+        if (!lightboxImg) return;
+        lightboxImg.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomScale}) rotate(${rotation}deg)`;
+        if (lightboxZoomLevel) {
+          lightboxZoomLevel.textContent = `${Math.round(zoomScale * 100)}%`;
+        }
+      }
+
+      function resetZoom() {
+        zoomScale = 1;
+        panX = 0;
+        panY = 0;
+        rotation = 0;
+        applyTransform();
+      }
+
+      function setZoom(newScale: number) {
+        zoomScale = Math.min(Math.max(0.5, newScale), 5.0);
+        if (zoomScale === 1) {
+          panX = 0;
+          panY = 0;
+        }
+        applyTransform();
+      }
 
       (window as any).openLightbox = (imgUrl: string, title?: string, info?: string) => {
         if (!lightboxModal || !lightboxImg) return;
+        resetZoom();
         lightboxImg.src = imgUrl;
         if (lightboxTitle) lightboxTitle.textContent = title || 'Visualizador de Imagen';
         if (lightboxInfo) lightboxInfo.textContent = info || '';
@@ -3016,11 +3165,92 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         lightboxModal?.classList.add('hidden');
         lightboxModal?.classList.remove('flex');
         if (lightboxImg) lightboxImg.src = '';
+        resetZoom();
         const escaneoDrawerEl = document.getElementById('escaneo-drawer');
         if (!escaneoDrawerEl || escaneoDrawerEl.classList.contains('hidden')) {
           document.body.style.overflow = '';
         }
       }
+
+      // Eventos de Zoom
+      lightboxZoomIn?.addEventListener('click', () => setZoom(zoomScale + 0.3));
+      lightboxZoomOut?.addEventListener('click', () => setZoom(zoomScale - 0.3));
+      lightboxZoomReset?.addEventListener('click', () => resetZoom());
+      lightboxRotate?.addEventListener('click', () => {
+        rotation = (rotation + 90) % 360;
+        applyTransform();
+      });
+
+      // Zoom con rueda del ratón
+      lightboxViewport?.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.2 : 0.2;
+        setZoom(zoomScale + delta);
+      }, { passive: false });
+
+      // Arrastre (Pan) con ratón
+      lightboxViewport?.addEventListener('mousedown', (e) => {
+        if (e.target === lightboxCloseBtn || (e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('a')) return;
+        isPanning = true;
+        startX = e.clientX - panX;
+        startY = e.clientY - panY;
+        lightboxViewport.classList.add('cursor-grabbing');
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isPanning) return;
+        panX = e.clientX - startX;
+        panY = e.clientY - startY;
+        applyTransform();
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isPanning) {
+          isPanning = false;
+          lightboxViewport?.classList.remove('cursor-grabbing');
+        }
+      });
+
+      // Soporte para gestos táctiles (Touch)
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let initialPinchDistance = 0;
+      let initialPinchScale = 1;
+
+      lightboxViewport?.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          isPanning = true;
+          touchStartX = e.touches[0].clientX - panX;
+          touchStartY = e.touches[0].clientY - panY;
+        } else if (e.touches.length === 2) {
+          isPanning = false;
+          initialPinchDistance = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          initialPinchScale = zoomScale;
+        }
+      }, { passive: true });
+
+      lightboxViewport?.addEventListener('touchmove', (e) => {
+        if (isPanning && e.touches.length === 1) {
+          panX = e.touches[0].clientX - touchStartX;
+          panY = e.touches[0].clientY - touchStartY;
+          applyTransform();
+        } else if (e.touches.length === 2 && initialPinchDistance > 0) {
+          const currentDistance = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          const factor = currentDistance / initialPinchDistance;
+          setZoom(initialPinchScale * factor);
+        }
+      }, { passive: true });
+
+      lightboxViewport?.addEventListener('touchend', () => {
+        isPanning = false;
+        initialPinchDistance = 0;
+      });
 
       lightboxCloseBtn?.addEventListener('click', closeLightboxModal);
       lightboxModal?.addEventListener('click', (e) => {
