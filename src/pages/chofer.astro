@@ -240,15 +240,16 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           <button
             type="button"
             id="btn-hero-camera"
+            onclick="window.triggerScanCamera && window.triggerScanCamera('hero')"
             class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 shadow-sm transition-all cursor-pointer text-center select-none active:scale-[0.98]"
           >
-            <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
+            <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400 pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
             </div>
-            <div>
+            <div class="pointer-events-none">
               <p class="text-xs font-bold">Tomar Foto con Cámara</p>
               <p class="text-[10px] text-slate-300">Disparo 1 a 1</p>
             </div>
@@ -258,14 +259,15 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           <button
             type="button"
             id="btn-hero-gallery"
+            onclick="window.triggerScanGallery && window.triggerScanGallery('hero')"
             class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer text-center select-none active:scale-[0.98]"
           >
-            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
             </div>
-            <div>
+            <div class="pointer-events-none">
               <p class="text-xs font-bold">Elegir de Galería</p>
               <p class="text-[10px] text-slate-500">Seleccionar varias fotos</p>
             </div>
@@ -766,15 +768,16 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           <button
             type="button"
             id="modal-btn-camera"
+            onclick="window.triggerScanCamera && window.triggerScanCamera('modal')"
             class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 shadow-sm transition-all cursor-pointer text-center select-none active:scale-[0.98]"
           >
-            <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
+            <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400 pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
             </div>
-            <div>
+            <div class="pointer-events-none">
               <p class="text-xs font-bold">Usar Cámara</p>
               <p class="text-[9px] text-slate-300">Foto directa</p>
             </div>
@@ -783,14 +786,15 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           <button
             type="button"
             id="modal-btn-gallery"
+            onclick="window.triggerScanGallery && window.triggerScanGallery('modal')"
             class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer text-center select-none active:scale-[0.98]"
           >
-            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
             </div>
-            <div>
+            <div class="pointer-events-none">
               <p class="text-xs font-bold">Galería</p>
               <p class="text-[9px] text-slate-500">Múltiples fotos</p>
             </div>
@@ -913,19 +917,74 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
       const photoStatusText = document.getElementById('photo-status-text');
       const btnRetakePhoto = document.getElementById('btn-retake-photo');
 
-      // Lightbox Elements
-      const lightboxModal = document.getElementById('lightbox-modal');
-      const lightboxCloseBtn = document.getElementById('lightbox-close-btn');
-      const lightboxImg = document.getElementById('lightbox-img');
-      const lightboxTitle = document.getElementById('lightbox-title');
-      const lightboxInfo = document.getElementById('lightbox-info');
+      // Scanner Elements & Global Triggers (HOISTED)
+      const scanCameraInput = document.getElementById('scan-camera-input') as HTMLInputElement;
+      const scanGalleryInput = document.getElementById('scan-gallery-input') as HTMLInputElement;
+      const scanModal = document.getElementById('scan-modal');
+      const scanModalCloseBtn = document.getElementById('scan-modal-close-btn');
 
-      let currentCompressedFile = null;
+      const choferScanLiveSection = document.getElementById('chofer-scan-live-section');
+      const choferProgressBar = document.getElementById('chofer-progress-bar');
+      const choferProgressLabel = document.getElementById('chofer-progress-label');
+      const choferProgressCount = document.getElementById('chofer-progress-count');
+      const choferGalleryGrid = document.getElementById('chofer-gallery-grid');
+      const choferGalleryCount = document.getElementById('chofer-gallery-count');
 
-      // Toast Element
-      const toast = document.getElementById('toast');
-      const toastIcon = document.getElementById('toast-icon');
-      const toastMessage = document.getElementById('toast-message');
+      const modalScanLiveSection = document.getElementById('modal-scan-live-section');
+      const modalProgressBar = document.getElementById('modal-progress-bar');
+      const modalProgressLabel = document.getElementById('modal-progress-label');
+      const modalProgressCount = document.getElementById('modal-progress-count');
+      const modalGalleryGrid = document.getElementById('modal-gallery-grid');
+      const modalGalleryCount = document.getElementById('modal-gallery-count');
+
+      let currentScanTargetMode = 'hero'; // 'hero' | 'modal'
+      let sessionScannedCount = 0;
+
+      (window as any).triggerScanCamera = (mode = 'hero') => {
+        currentScanTargetMode = mode;
+        const inp = document.getElementById('scan-camera-input') as HTMLInputElement;
+        if (inp) inp.click();
+      };
+
+      (window as any).triggerScanGallery = (mode = 'hero') => {
+        currentScanTargetMode = mode;
+        const inp = document.getElementById('scan-gallery-input') as HTMLInputElement;
+        if (inp) inp.click();
+      };
+
+      (window as any).openScanModal = () => {
+        const modal = document.getElementById('scan-modal');
+        modal?.classList.remove('hidden');
+        modal?.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+      };
+
+      (window as any).closeScanModal = () => {
+        const modal = document.getElementById('scan-modal');
+        modal?.classList.add('hidden');
+        modal?.classList.remove('flex');
+        document.body.style.overflow = '';
+      };
+
+      // Listeners de cambio de archivos
+      scanCameraInput?.addEventListener('change', (e) => {
+        const files = (e.target as HTMLInputElement).files;
+        if (files && files.length > 0) {
+          handleScanFiles(Array.from(files));
+        }
+      });
+
+      scanGalleryInput?.addEventListener('change', (e) => {
+        const files = (e.target as HTMLInputElement).files;
+        if (files && files.length > 0) {
+          handleScanFiles(Array.from(files));
+        }
+      });
+
+      scanModalCloseBtn?.addEventListener('click', () => (window as any).closeScanModal());
+      scanModal?.addEventListener('click', (e) => {
+        if (e.target === scanModal) (window as any).closeScanModal();
+      });
 
       // 1. Normalización de teléfono para WhatsApp
       function formatPhoneForWhatsApp(phone) {
@@ -1602,6 +1661,113 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         });
       }
 
+      async function handleScanFiles(files: File[]) {
+        if (!files || files.length === 0) return;
+
+        const nowScan = new Date();
+        const pad2 = (n: number) => n.toString().padStart(2, '0');
+        const scanLoteId = `chofer_${nowScan.getFullYear()}${pad2(nowScan.getMonth()+1)}${pad2(nowScan.getDate())}_${pad2(nowScan.getHours())}${pad2(nowScan.getMinutes())}`;
+
+        const total = files.length;
+        let processed = 0;
+        let uploadedOk = 0;
+
+        const liveSection = currentScanTargetMode === 'modal' ? modalScanLiveSection : choferScanLiveSection;
+        const pBar = currentScanTargetMode === 'modal' ? modalProgressBar : choferProgressBar;
+        const pLabel = currentScanTargetMode === 'modal' ? modalProgressLabel : choferProgressLabel;
+        const pCount = currentScanTargetMode === 'modal' ? modalProgressCount : choferProgressCount;
+        const grid = currentScanTargetMode === 'modal' ? modalGalleryGrid : choferGalleryGrid;
+        const countLabel = currentScanTargetMode === 'modal' ? modalGalleryCount : choferGalleryCount;
+
+        liveSection?.classList.remove('hidden');
+        if (pBar) pBar.style.width = '0%';
+        if (pLabel) pLabel.textContent = `Procesando ${total} foto${total !== 1 ? 's' : ''}...`;
+        if (pCount) pCount.textContent = `0 / ${total}`;
+        showToast(`Procesando ${total} foto(s)...`, 'info');
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          sessionScannedCount++;
+          const itemIndex = sessionScannedCount;
+
+          // Miniatura temporal
+          const thumbDiv = document.createElement('div');
+          thumbDiv.id = `scan-thumb-${itemIndex}`;
+          thumbDiv.className = 'relative aspect-square rounded-xl overflow-hidden bg-slate-100 border-2 border-slate-200 transition-all';
+          thumbDiv.innerHTML = `
+            <div id="scan-thumb-overlay-${itemIndex}" class="absolute inset-0 bg-black/50 flex items-center justify-center">
+              <svg class="w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+            </div>
+          `;
+          if (grid) grid.prepend(thumbDiv);
+
+          try {
+            const comp = await compressImage(file, 1200, 1600, 0.75);
+            
+            if (comp.dataUrl) {
+              const imgEl = document.createElement('img');
+              imgEl.src = comp.dataUrl;
+              imgEl.className = 'w-full h-full object-cover';
+              thumbDiv.prepend(imgEl);
+            }
+
+            const formData = new FormData();
+            if (comp.blob) {
+              formData.append('foto', comp.blob, 'escaneo.jpg');
+            }
+            formData.append('foto_base64', comp.dataUrl);
+            formData.append('lote_id', scanLoteId);
+
+            const res = await fetch('/api/escaneos', {
+              method: 'POST',
+              body: formData
+            });
+            const data = await res.json().catch(() => ({ success: false, message: 'Error de conexión con el servidor.' }));
+
+            const overlay = document.getElementById(`scan-thumb-overlay-${itemIndex}`);
+            if (res.ok && data.success) {
+              uploadedOk++;
+              thumbDiv.classList.replace('border-slate-200', 'border-emerald-400');
+              if (overlay) {
+                overlay.innerHTML = `<svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>`;
+                setTimeout(() => overlay.classList.add('opacity-0'), 700);
+              }
+            } else {
+              thumbDiv.classList.replace('border-slate-200', 'border-rose-400');
+              if (overlay) {
+                overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
+              }
+              showToast(data.message || 'No se pudo guardar la guía en el servidor', 'error');
+            }
+          } catch(err: any) {
+            console.error('Error subiendo foto de guía:', err);
+            const overlay = document.getElementById(`scan-thumb-overlay-${itemIndex}`);
+            thumbDiv.classList.replace('border-slate-200', 'border-rose-400');
+            if (overlay) {
+              overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
+            }
+            showToast('Error al procesar la imagen: ' + (err.message || 'desconocido'), 'error');
+          }
+
+          processed++;
+          const pct = Math.round((processed / total) * 100);
+          if (pBar) pBar.style.width = `${pct}%`;
+          if (pCount) pCount.textContent = `${processed} / ${total}`;
+        }
+
+        if (scanCameraInput) scanCameraInput.value = '';
+        if (scanGalleryInput) scanGalleryInput.value = '';
+
+        if (pLabel) pLabel.textContent = `¡${uploadedOk} de ${total} guías cargadas con éxito!`;
+        if (countLabel) countLabel.textContent = `${grid?.children.length || 0} subidas`;
+        if (uploadedOk > 0) {
+          showToast(`¡${uploadedOk} foto(s) enviada(s) a Logística!`, 'success');
+        }
+      }
+
       // Eventos de Dropzone de Foto
       dropzonePhoto?.addEventListener('click', (e) => {
         if (e.target !== btnRetakePhoto) {
@@ -1978,201 +2144,6 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
           window.location.reload();
         }
       });
-
-      // ============================================
-      // SISTEMA DE ESCANEO DIRECTO DE GUÍAS FÍSICAS
-      // ============================================
-      const scanCameraInput = document.getElementById('scan-camera-input') as HTMLInputElement;
-      const scanGalleryInput = document.getElementById('scan-gallery-input') as HTMLInputElement;
-
-      const btnHeroCamera = document.getElementById('btn-hero-camera');
-      const btnHeroGallery = document.getElementById('btn-hero-gallery');
-      const btnHeaderScan = document.getElementById('btn-header-scan');
-
-      const scanModal = document.getElementById('scan-modal');
-      const scanModalCloseBtn = document.getElementById('scan-modal-close-btn');
-      const modalBtnCamera = document.getElementById('modal-btn-camera');
-      const modalBtnGallery = document.getElementById('modal-btn-gallery');
-
-      const choferScanLiveSection = document.getElementById('chofer-scan-live-section');
-      const choferProgressBar = document.getElementById('chofer-progress-bar');
-      const choferProgressLabel = document.getElementById('chofer-progress-label');
-      const choferProgressCount = document.getElementById('chofer-progress-count');
-      const choferGalleryGrid = document.getElementById('chofer-gallery-grid');
-      const choferGalleryCount = document.getElementById('chofer-gallery-count');
-
-      const modalScanLiveSection = document.getElementById('modal-scan-live-section');
-      const modalProgressBar = document.getElementById('modal-progress-bar');
-      const modalProgressLabel = document.getElementById('modal-progress-label');
-      const modalProgressCount = document.getElementById('modal-progress-count');
-      const modalGalleryGrid = document.getElementById('modal-gallery-grid');
-      const modalGalleryCount = document.getElementById('modal-gallery-count');
-
-      let currentScanTargetMode = 'hero'; // 'hero' | 'modal'
-      let sessionScannedCount = 0;
-
-      function openScanModal() {
-        scanModal?.classList.remove('hidden');
-        scanModal?.classList.add('flex');
-        document.body.style.overflow = 'hidden';
-      }
-
-      function closeScanModal() {
-        scanModal?.classList.add('hidden');
-        scanModal?.classList.remove('flex');
-        document.body.style.overflow = '';
-      }
-
-      btnHeaderScan?.addEventListener('click', () => {
-        openScanModal();
-      });
-
-      scanModalCloseBtn?.addEventListener('click', closeScanModal);
-      scanModal?.addEventListener('click', (e) => {
-        if (e.target === scanModal) closeScanModal();
-      });
-
-      // Disparadores de botones
-      btnHeroCamera?.addEventListener('click', () => {
-        currentScanTargetMode = 'hero';
-        if (scanCameraInput) scanCameraInput.click();
-      });
-
-      btnHeroGallery?.addEventListener('click', () => {
-        currentScanTargetMode = 'hero';
-        if (scanGalleryInput) scanGalleryInput.click();
-      });
-
-      modalBtnCamera?.addEventListener('click', () => {
-        currentScanTargetMode = 'modal';
-        if (scanCameraInput) scanCameraInput.click();
-      });
-
-      modalBtnGallery?.addEventListener('click', () => {
-        currentScanTargetMode = 'modal';
-        if (scanGalleryInput) scanGalleryInput.click();
-      });
-
-      scanCameraInput?.addEventListener('change', (e) => {
-        const files = (e.target as HTMLInputElement).files;
-        if (files && files.length > 0) {
-          handleScanFiles(Array.from(files));
-        }
-      });
-
-      scanGalleryInput?.addEventListener('change', (e) => {
-        const files = (e.target as HTMLInputElement).files;
-        if (files && files.length > 0) {
-          handleScanFiles(Array.from(files));
-        }
-      });
-
-      async function handleScanFiles(files: File[]) {
-        if (!files || files.length === 0) return;
-
-        const nowScan = new Date();
-        const pad2 = (n: number) => n.toString().padStart(2, '0');
-        const scanLoteId = `chofer_${nowScan.getFullYear()}${pad2(nowScan.getMonth()+1)}${pad2(nowScan.getDate())}_${pad2(nowScan.getHours())}${pad2(nowScan.getMinutes())}`;
-
-        const total = files.length;
-        let processed = 0;
-        let uploadedOk = 0;
-
-        const liveSection = currentScanTargetMode === 'modal' ? modalScanLiveSection : choferScanLiveSection;
-        const pBar = currentScanTargetMode === 'modal' ? modalProgressBar : choferProgressBar;
-        const pLabel = currentScanTargetMode === 'modal' ? modalProgressLabel : choferProgressLabel;
-        const pCount = currentScanTargetMode === 'modal' ? modalProgressCount : choferProgressCount;
-        const grid = currentScanTargetMode === 'modal' ? modalGalleryGrid : choferGalleryGrid;
-        const countLabel = currentScanTargetMode === 'modal' ? modalGalleryCount : choferGalleryCount;
-
-        liveSection?.classList.remove('hidden');
-        if (pBar) pBar.style.width = '0%';
-        if (pLabel) pLabel.textContent = `Procesando ${total} foto${total !== 1 ? 's' : ''}...`;
-        if (pCount) pCount.textContent = `0 / ${total}`;
-        showToast(`Procesando ${total} foto(s)...`, 'info');
-
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          sessionScannedCount++;
-          const itemIndex = sessionScannedCount;
-
-          // Miniatura temporal
-          const thumbDiv = document.createElement('div');
-          thumbDiv.id = `scan-thumb-${itemIndex}`;
-          thumbDiv.className = 'relative aspect-square rounded-xl overflow-hidden bg-slate-100 border-2 border-slate-200 transition-all';
-          thumbDiv.innerHTML = `
-            <div id="scan-thumb-overlay-${itemIndex}" class="absolute inset-0 bg-black/50 flex items-center justify-center">
-              <svg class="w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-              </svg>
-            </div>
-          `;
-          if (grid) grid.prepend(thumbDiv);
-
-          try {
-            const comp = await compressImage(file, 1200, 1600, 0.75);
-            
-            if (comp.dataUrl) {
-              const imgEl = document.createElement('img');
-              imgEl.src = comp.dataUrl;
-              imgEl.className = 'w-full h-full object-cover';
-              thumbDiv.prepend(imgEl);
-            }
-
-            const formData = new FormData();
-            if (comp.blob) {
-              formData.append('foto', comp.blob, 'escaneo.jpg');
-            }
-            formData.append('foto_base64', comp.dataUrl);
-            formData.append('lote_id', scanLoteId);
-
-            const res = await fetch('/api/escaneos', {
-              method: 'POST',
-              body: formData
-            });
-            const data = await res.json().catch(() => ({ success: false, message: 'Error de conexión con el servidor.' }));
-
-            const overlay = document.getElementById(`scan-thumb-overlay-${itemIndex}`);
-            if (res.ok && data.success) {
-              uploadedOk++;
-              thumbDiv.classList.replace('border-slate-200', 'border-emerald-400');
-              if (overlay) {
-                overlay.innerHTML = `<svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>`;
-                setTimeout(() => overlay.classList.add('opacity-0'), 700);
-              }
-            } else {
-              thumbDiv.classList.replace('border-slate-200', 'border-rose-400');
-              if (overlay) {
-                overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
-              }
-              showToast(data.message || 'No se pudo guardar la guía en el servidor', 'error');
-            }
-          } catch(err: any) {
-            console.error('Error subiendo foto de guía:', err);
-            const overlay = document.getElementById(`scan-thumb-overlay-${itemIndex}`);
-            thumbDiv.classList.replace('border-slate-200', 'border-rose-400');
-            if (overlay) {
-              overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
-            }
-            showToast('Error al procesar la imagen: ' + (err.message || 'desconocido'), 'error');
-          }
-
-          processed++;
-          const pct = Math.round((processed / total) * 100);
-          if (pBar) pBar.style.width = `${pct}%`;
-          if (pCount) pCount.textContent = `${processed} / ${total}`;
-        }
-
-        if (scanCameraInput) scanCameraInput.value = '';
-        if (scanGalleryInput) scanGalleryInput.value = '';
-
-        if (pLabel) pLabel.textContent = `¡${uploadedOk} de ${total} guías cargadas con éxito!`;
-        if (countLabel) countLabel.textContent = `${grid?.children.length || 0} subidas`;
-        if (uploadedOk > 0) {
-          showToast(`¡${uploadedOk} foto(s) enviada(s) a Logística!`, 'success');
-        }
-      }
 
       // Inicialización
       initMap();
