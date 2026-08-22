@@ -23,6 +23,7 @@ export const GET: APIRoute = async () => {
         g.gps_latitud,
         g.gps_longitud,
         g.gps_confirmado,
+        g.empresa,
         g.chofer_asignado_id,
         g.created_at,
         u.nombre AS chofer_nombre,
@@ -63,7 +64,8 @@ export const POST: APIRoute = async ({ request }) => {
       telefono_secundario,
       ciudad_destino,
       piezas,
-      direccion_referencia
+      direccion_referencia,
+      empresa
     } = body;
 
     if (!id_guia || !destinatario || !telefono_principal || !ciudad_destino) {
@@ -99,11 +101,12 @@ export const POST: APIRoute = async ({ request }) => {
         ciudad_destino,
         piezas,
         direccion_referencia,
+        empresa,
         estado,
         gps_confirmado,
         created_at
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, 'Por contactar', false, NOW()
+        $1, $2, $3, $4, $5, $6, $7, $8, 'Por contactar', false, NOW()
       )
       RETURNING *
     `, [
@@ -113,7 +116,8 @@ export const POST: APIRoute = async ({ request }) => {
       telefono_secundario ? telefono_secundario.trim() : null,
       ciudad_destino.trim(),
       parseInt(piezas, 10) || 1,
-      direccion_referencia ? direccion_referencia.trim() : null
+      direccion_referencia ? direccion_referencia.trim() : null,
+      empresa ? empresa.trim() : null
     ]);
 
     const newGuia = insertResult.rows[0];

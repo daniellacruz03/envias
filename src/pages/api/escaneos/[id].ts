@@ -65,9 +65,9 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
       const insertResult = await query(`
         INSERT INTO guias (
           id_guia, destinatario, telefono_principal, telefono_secundario,
-          ciudad_destino, piezas, direccion_referencia,
+          ciudad_destino, piezas, direccion_referencia, empresa,
           estado, gps_confirmado, chofer_asignado_id, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'Por contactar', false, $8, NOW())
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Por contactar', false, $9, NOW())
         RETURNING *
       `, [
         cleanGuia,
@@ -77,6 +77,7 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
         datos_guia.ciudad_destino.trim(),
         parseInt(datos_guia.piezas, 10) || 1,
         datos_guia.direccion_referencia ? datos_guia.direccion_referencia.trim() : null,
+        datos_guia.empresa ? datos_guia.empresa.trim() : null,
         escaneo.chofer_id
       ]);
 

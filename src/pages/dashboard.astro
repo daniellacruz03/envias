@@ -254,8 +254,39 @@ const userInitials = currentUser.nombre
             />
           </div>
 
+          <!-- Empresa / Courier Aliado -->
+          <div class="lg:col-span-1 space-y-1">
+            <label for="input-empresa" class="block text-xs font-semibold text-slate-700">
+              Empresa / Courier
+            </label>
+            <select
+              id="input-empresa"
+              class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer"
+            >
+              <option value="">Seleccionar Empresa...</option>
+              <option value="Troop">Troop</option>
+              <option value="Crazy cargo">Crazy cargo</option>
+              <option value="Cargo King">Cargo King</option>
+              <option value="JJ">JJ</option>
+              <option value="Greymar">Greymar</option>
+              <option value="Ajbp">Ajbp</option>
+              <option value="Global jats">Global jats</option>
+              <option value="Su descarga">Su descarga</option>
+              <option value="Rima cargo">Rima cargo</option>
+              <option value="Dina cargo">Dina cargo</option>
+              <option value="Send logístics">Send logístics</option>
+              <option value="Alas cargo">Alas cargo</option>
+              <option value="Aexpress">Aexpress</option>
+              <option value="Priority">Priority</option>
+              <option value="Alpi">Alpi</option>
+              <option value="Venexcargo">Venexcargo</option>
+              <option value="DBL">DBL</option>
+              <option value="2BC">2BC</option>
+            </select>
+          </div>
+
           <!-- Dirección / Referencias -->
-          <div class="sm:col-span-2 lg:col-span-3 space-y-1">
+          <div class="sm:col-span-2 lg:col-span-2 space-y-1">
             <label for="input-direccion" class="block text-xs font-semibold text-slate-700">
               Dirección Inicial / Referencias <span class="text-slate-400 font-normal">(Opcional)</span>
             </label>
@@ -388,6 +419,33 @@ const userInitials = currentUser.nombre
               class="text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer"
             >
               <option value="ALL">Todas las Ciudades</option>
+            </select>
+
+            <!-- Filtro por Empresa -->
+            <select
+              id="filter-empresa"
+              aria-label="Filtrar por empresa"
+              class="text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer font-medium"
+            >
+              <option value="ALL">Todas las Empresas</option>
+              <option value="Troop">Troop</option>
+              <option value="Crazy cargo">Crazy cargo</option>
+              <option value="Cargo King">Cargo King</option>
+              <option value="JJ">JJ</option>
+              <option value="Greymar">Greymar</option>
+              <option value="Ajbp">Ajbp</option>
+              <option value="Global jats">Global jats</option>
+              <option value="Su descarga">Su descarga</option>
+              <option value="Rima cargo">Rima cargo</option>
+              <option value="Dina cargo">Dina cargo</option>
+              <option value="Send logístics">Send logístics</option>
+              <option value="Alas cargo">Alas cargo</option>
+              <option value="Aexpress">Aexpress</option>
+              <option value="Priority">Priority</option>
+              <option value="Alpi">Alpi</option>
+              <option value="Venexcargo">Venexcargo</option>
+              <option value="DBL">DBL</option>
+              <option value="2BC">2BC</option>
             </select>
 
             <!-- Filtro por Estado -->
@@ -560,6 +618,31 @@ const userInitials = currentUser.nombre
           <div class="space-y-1">
             <label class="text-xs font-semibold text-slate-700">Ciudad Destino <span class="text-rose-500">*</span></label>
             <input type="text" id="drawer-ciudad" placeholder="Ej: Mérida" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-xs font-semibold text-slate-700">Empresa / Courier</label>
+            <select id="drawer-empresa" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer">
+              <option value="">Seleccionar Empresa...</option>
+              <option value="Troop">Troop</option>
+              <option value="Crazy cargo">Crazy cargo</option>
+              <option value="Cargo King">Cargo King</option>
+              <option value="JJ">JJ</option>
+              <option value="Greymar">Greymar</option>
+              <option value="Ajbp">Ajbp</option>
+              <option value="Global jats">Global jats</option>
+              <option value="Su descarga">Su descarga</option>
+              <option value="Rima cargo">Rima cargo</option>
+              <option value="Dina cargo">Dina cargo</option>
+              <option value="Send logístics">Send logístics</option>
+              <option value="Alas cargo">Alas cargo</option>
+              <option value="Aexpress">Aexpress</option>
+              <option value="Priority">Priority</option>
+              <option value="Alpi">Alpi</option>
+              <option value="Venexcargo">Venexcargo</option>
+              <option value="DBL">DBL</option>
+              <option value="2BC">2BC</option>
+            </select>
           </div>
 
           <div class="space-y-1">
@@ -1135,12 +1218,13 @@ const userInitials = currentUser.nombre
         piezas: number;
         direccion_referencia?: string | null;
         hora_disponible?: string | null;
+        empresa?: string | null;
         comprobante_url?: string | null;
         recibido_por?: string | null;
         orden_ruta?: number | null;
         ruta_origen?: string | null;
         ruta_destino?: string | null;
-        estado: 'Por contactar' | 'Contactado' | 'En ruta' | 'Entregado';
+        estado: 'Por contactar' | 'Contactado' | 'En ruta' | 'Entregado' | 'No entregado';
         gps_latitud?: number | null;
         gps_longitud?: number | null;
         gps_confirmado: boolean;
@@ -1419,6 +1503,7 @@ const userInitials = currentUser.nombre
 
       const searchInput = document.getElementById('search-input') as HTMLInputElement;
       const filterCiudad = document.getElementById('filter-ciudad') as HTMLSelectElement;
+      const filterEmpresa = document.getElementById('filter-empresa') as HTMLSelectElement;
       const filterEstado = document.getElementById('filter-estado') as HTMLSelectElement;
       const filteredCountBadge = document.getElementById('filtered-count-badge') as HTMLElement;
       const emptyState = document.getElementById('empty-state') as HTMLElement;
@@ -1539,7 +1624,8 @@ const userInitials = currentUser.nombre
                   current.estado !== newShipments[i].estado ||
                   current.chofer_asignado_id !== newShipments[i].chofer_asignado_id ||
                   current.direccion_referencia !== newShipments[i].direccion_referencia ||
-                  current.hora_disponible !== newShipments[i].hora_disponible
+                  current.hora_disponible !== newShipments[i].hora_disponible ||
+                  current.empresa !== newShipments[i].empresa
                 ) {
                   hasChanges = true;
                   break;
@@ -1651,17 +1737,20 @@ const userInitials = currentUser.nombre
         const query = searchInput.value.toLowerCase().trim();
         const cityFilter = filterCiudad.value;
         const statusFilter = filterEstado.value;
+        const empresaFilter = filterEmpresa ? filterEmpresa.value : 'ALL';
 
         return shipments.filter(item => {
           const matchQuery = (item.id_guia && item.id_guia.toLowerCase().includes(query)) || 
                              (item.destinatario && item.destinatario.toLowerCase().includes(query)) ||
                              (item.telefono_principal && item.telefono_principal.includes(query)) ||
                              (item.telefono_secundario && item.telefono_secundario.includes(query)) ||
-                             (item.ciudad_destino && item.ciudad_destino.toLowerCase().includes(query));
+                             (item.ciudad_destino && item.ciudad_destino.toLowerCase().includes(query)) ||
+                             (item.empresa && item.empresa.toLowerCase().includes(query));
           const matchCity = cityFilter === 'ALL' || item.ciudad_destino === cityFilter;
           const matchStatus = statusFilter === 'ALL' || item.estado === statusFilter;
+          const matchEmpresa = empresaFilter === 'ALL' || (item.empresa && item.empresa.trim().toLowerCase() === empresaFilter.trim().toLowerCase());
 
-          return matchQuery && matchCity && matchStatus;
+          return matchQuery && matchCity && matchStatus && matchEmpresa;
         });
       }
 
@@ -1751,15 +1840,20 @@ const userInitials = currentUser.nombre
 
         return `
           <tr class="hover:bg-slate-50/70 transition-colors group">
-            <!-- Guía & Piezas -->
+            <!-- Guía & Piezas & Empresa -->
             <td class="py-3.5 px-4">
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
                 <a href="/confirmar?guia=${encodeURIComponent(item.id_guia)}" target="_blank" title="Abrir portal del cliente" class="font-mono font-bold text-slate-900 hover:text-indigo-600 underline-offset-2 hover:underline">
                   #${item.id_guia}
                 </a>
                 ${item.orden_ruta && item.orden_ruta > 0 ? `
                   <span class="text-[10px] font-mono font-bold bg-indigo-100 text-indigo-800 px-1.5 py-0.2 rounded border border-indigo-200" title="Parada #${item.orden_ruta} en la ruta">
                     #${item.orden_ruta}
+                  </span>
+                ` : ''}
+                ${item.empresa ? `
+                  <span class="text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-purple-50 text-purple-700 border border-purple-200" title="Empresa / Courier">
+                    ${item.empresa}
                   </span>
                 ` : ''}
               </div>
@@ -2172,9 +2266,16 @@ const userInitials = currentUser.nombre
                     ${cityGuias.map(item => `
                       <tr class="hover:bg-slate-50/70 transition-colors">
                         <td class="py-2.5 px-4">
-                          <a href="/confirmar?guia=${encodeURIComponent(item.id_guia)}" target="_blank" class="font-mono font-bold text-slate-900 hover:text-indigo-600 underline-offset-2 hover:underline">
-                            #${item.id_guia}
-                          </a>
+                          <div class="flex items-center gap-1.5 flex-wrap">
+                            <a href="/confirmar?guia=${encodeURIComponent(item.id_guia)}" target="_blank" class="font-mono font-bold text-slate-900 hover:text-indigo-600 underline-offset-2 hover:underline">
+                              #${item.id_guia}
+                            </a>
+                            ${item.empresa ? `
+                              <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                                ${item.empresa}
+                              </span>
+                            ` : ''}
+                          </div>
                           <span class="text-[10px] text-slate-400 block">${item.piezas || 1} ${item.piezas === 1 ? 'pieza' : 'piezas'}</span>
                         </td>
                         <td class="py-2.5 px-4">
@@ -2436,9 +2537,16 @@ const userInitials = currentUser.nombre
                       ` : faseAlmacen.map(g => `
                         <div class="p-3 bg-slate-50/70 hover:bg-slate-50 border border-slate-200/80 rounded-xl space-y-1.5 transition-all">
                           <div class="flex items-center justify-between gap-1">
-                            <a href="/confirmar?guia=${encodeURIComponent(g.id_guia)}" target="_blank" class="font-mono font-bold text-xs text-slate-900 hover:text-indigo-600">
-                              #${g.id_guia}
-                            </a>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                              <a href="/confirmar?guia=${encodeURIComponent(g.id_guia)}" target="_blank" class="font-mono font-bold text-xs text-slate-900 hover:text-indigo-600">
+                                #${g.id_guia}
+                              </a>
+                              ${g.empresa ? `
+                                <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                                  ${g.empresa}
+                                </span>
+                              ` : ''}
+                            </div>
                             <span class="text-[10px] font-bold px-2 py-0.2 rounded-md ${g.estado === 'Contactado' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
                               ${g.estado}
                             </span>
@@ -2475,13 +2583,18 @@ const userInitials = currentUser.nombre
                       ` : faseEnRuta.map((g, idx) => `
                         <div class="p-3 bg-sky-50/40 hover:bg-sky-50/70 border border-sky-100 rounded-xl space-y-1.5 transition-all">
                           <div class="flex items-center justify-between gap-1">
-                            <div class="flex items-center gap-1.5">
+                            <div class="flex items-center gap-1.5 flex-wrap">
                               <span class="w-5 h-5 rounded-md bg-slate-900 text-white font-mono font-bold text-[10px] flex items-center justify-center">
                                 ${g.orden_ruta || idx + 1}
                               </span>
                               <a href="/confirmar?guia=${encodeURIComponent(g.id_guia)}" target="_blank" class="font-mono font-bold text-xs text-slate-900 hover:text-indigo-600">
                                 #${g.id_guia}
                               </a>
+                              ${g.empresa ? `
+                                <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                                  ${g.empresa}
+                                </span>
+                              ` : ''}
                             </div>
                             ${g.gps_confirmado && g.gps_latitud && g.gps_longitud ? `
                               <a
@@ -2538,9 +2651,16 @@ const userInitials = currentUser.nombre
                         return `
                         <div class="p-3 ${isNoEntregado ? 'bg-rose-50/30 hover:bg-rose-50/60 border-rose-100' : 'bg-emerald-50/30 hover:bg-emerald-50/60 border-emerald-100'} border rounded-xl space-y-2 transition-all">
                           <div class="flex items-center justify-between gap-1">
-                            <a href="/confirmar?guia=${encodeURIComponent(g.id_guia)}" target="_blank" class="font-mono font-bold text-xs ${isNoEntregado ? 'text-rose-900 hover:text-rose-700' : 'text-slate-900 hover:text-emerald-700'}">
-                              #${g.id_guia}
-                            </a>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                              <a href="/confirmar?guia=${encodeURIComponent(g.id_guia)}" target="_blank" class="font-mono font-bold text-xs ${isNoEntregado ? 'text-rose-900 hover:text-rose-700' : 'text-slate-900 hover:text-emerald-700'}">
+                                #${g.id_guia}
+                              </a>
+                              ${g.empresa ? `
+                                <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                                  ${g.empresa}
+                                </span>
+                              ` : ''}
+                            </div>
                             <span class="text-[10px] font-bold px-2 py-0.2 rounded-md ${isNoEntregado ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'} flex items-center gap-1">
                               ${isNoEntregado ? `
                                 <svg class="w-3 h-3 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -2847,6 +2967,7 @@ const userInitials = currentUser.nombre
         const drawerDestinatario = document.getElementById('drawer-destinatario') as HTMLInputElement;
         const drawerTelefono = document.getElementById('drawer-telefono') as HTMLInputElement;
         const drawerCiudad = document.getElementById('drawer-ciudad') as HTMLInputElement;
+        const drawerEmpresa = document.getElementById('drawer-empresa') as HTMLSelectElement;
         const drawerDireccion = document.getElementById('drawer-direccion') as HTMLInputElement;
         const drawerError = document.getElementById('drawer-error') as HTMLElement;
         const drawerCloseBtn = document.getElementById('drawer-close-btn') as HTMLButtonElement;
@@ -2875,6 +2996,7 @@ const userInitials = currentUser.nombre
           drawerDestinatario.value = '';
           drawerTelefono.value = '';
           drawerCiudad.value = '';
+          if (drawerEmpresa) drawerEmpresa.value = foto.empresa || '';
           drawerDireccion.value = '';
           drawerError.classList.add('hidden');
           drawerSubtitle.textContent = `${foto.chofer_nombre} — ${foto.lote_id}`;
@@ -2949,6 +3071,7 @@ const userInitials = currentUser.nombre
           const telefono = drawerTelefono.value.trim();
           const ciudad = drawerCiudad.value.trim();
           const piezas = drawerPiezas.value;
+          const empresa = drawerEmpresa ? drawerEmpresa.value.trim() : '';
           const direccion = drawerDireccion.value.trim();
 
           if (!id_guia || !destinatario || !telefono || !ciudad) {
@@ -2968,7 +3091,15 @@ const userInitials = currentUser.nombre
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 accion: 'procesar',
-                datos_guia: { id_guia, destinatario, telefono_principal: telefono, ciudad_destino: ciudad, piezas, direccion_referencia: direccion }
+                datos_guia: {
+                  id_guia,
+                  destinatario,
+                  telefono_principal: telefono,
+                  ciudad_destino: ciudad,
+                  piezas,
+                  direccion_referencia: direccion,
+                  empresa: empresa || undefined
+                }
               })
             });
             const data = await res.json();
@@ -3005,6 +3136,7 @@ const userInitials = currentUser.nombre
           const tel2Input = document.getElementById('input-telefono-2') as HTMLInputElement;
           const ciudadInput = document.getElementById('input-ciudad') as HTMLInputElement;
           const piezasInput = document.getElementById('input-piezas') as HTMLInputElement;
+          const empresaInput = document.getElementById('input-empresa') as HTMLSelectElement;
           const dirInput = document.getElementById('input-direccion') as HTMLInputElement;
           const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
 
@@ -3030,6 +3162,7 @@ const userInitials = currentUser.nombre
             telefono_secundario: tel2Input.value.trim() || undefined,
             ciudad_destino: ciudadInput.value.trim(),
             piezas: parseInt(piezasInput.value, 10) || 1,
+            empresa: empresaInput ? empresaInput.value.trim() || undefined : undefined,
             direccion_referencia: dirInput.value.trim() || undefined
           };
 
@@ -3048,6 +3181,7 @@ const userInitials = currentUser.nombre
 
               form.reset();
               piezasInput.value = '1';
+              if (empresaInput) empresaInput.value = '';
               guiaInput.focus();
 
               populateCityFilter();
@@ -3068,6 +3202,7 @@ const userInitials = currentUser.nombre
 
         searchInput.addEventListener('input', renderViews);
         filterCiudad.addEventListener('change', renderViews);
+        filterEmpresa?.addEventListener('change', renderViews);
         filterEstado.addEventListener('change', renderViews);
       }
 
