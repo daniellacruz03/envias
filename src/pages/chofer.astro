@@ -236,13 +236,19 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
 
         <!-- Opciones de Captura Directa -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+
           <!-- Botón 1: Cámara Directa -->
-          <button
-            type="button"
+          <label
             id="btn-hero-camera"
-            onclick="window.triggerScanCamera && window.triggerScanCamera('hero')"
-            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 shadow-sm transition-all cursor-pointer text-center select-none active:scale-[0.98]"
+            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 shadow-sm transition-all cursor-pointer text-center select-none active:scale-[0.98] relative overflow-hidden block"
           >
+            <input
+              type="file"
+              id="scan-camera-input"
+              accept="image/*"
+              capture="environment"
+              style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;"
+            />
             <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400 pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
@@ -253,15 +259,20 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
               <p class="text-xs font-bold">Tomar Foto con Cámara</p>
               <p class="text-[10px] text-slate-300">Disparo 1 a 1</p>
             </div>
-          </button>
+          </label>
 
           <!-- Botón 2: Galería Múltiple -->
-          <button
-            type="button"
+          <label
             id="btn-hero-gallery"
-            onclick="window.triggerScanGallery && window.triggerScanGallery('hero')"
-            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer text-center select-none active:scale-[0.98]"
+            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer text-center select-none active:scale-[0.98] relative overflow-hidden block"
           >
+            <input
+              type="file"
+              id="scan-gallery-input"
+              accept="image/*"
+              multiple
+              style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;"
+            />
             <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -271,7 +282,8 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
               <p class="text-xs font-bold">Elegir de Galería</p>
               <p class="text-[10px] text-slate-500">Seleccionar varias fotos</p>
             </div>
-          </button>
+          </label>
+
         </div>
 
         <!-- Contenedor de Progreso y Miniaturas de Subida en Vivo -->
@@ -510,10 +522,6 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
         </div>
 
       </div>
-
-      <!-- Inputs ocultos para carga de fotos de escaneo -->
-      <input type="file" id="scan-camera-input" accept="image/*" capture="environment" class="hidden" />
-      <input type="file" id="scan-gallery-input" accept="image/*" multiple class="hidden" />
 
     </main>
 
@@ -765,12 +773,17 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
 
         <!-- Opciones de Captura -->
         <div class="grid grid-cols-2 gap-2.5">
-          <button
-            type="button"
-            id="modal-btn-camera"
-            onclick="window.triggerScanCamera && window.triggerScanCamera('modal')"
-            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 shadow-sm transition-all cursor-pointer text-center select-none active:scale-[0.98]"
+
+          <label
+            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 shadow-sm transition-all cursor-pointer text-center select-none active:scale-[0.98] relative overflow-hidden block"
           >
+            <input
+              type="file"
+              id="scan-modal-camera-input"
+              accept="image/*"
+              capture="environment"
+              style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;"
+            />
             <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400 pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
@@ -781,14 +794,18 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
               <p class="text-xs font-bold">Usar Cámara</p>
               <p class="text-[9px] text-slate-300">Foto directa</p>
             </div>
-          </button>
+          </label>
 
-          <button
-            type="button"
-            id="modal-btn-gallery"
-            onclick="window.triggerScanGallery && window.triggerScanGallery('modal')"
-            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer text-center select-none active:scale-[0.98]"
+          <label
+            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer text-center select-none active:scale-[0.98] relative overflow-hidden block"
           >
+            <input
+              type="file"
+              id="scan-modal-gallery-input"
+              accept="image/*"
+              multiple
+              style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:10;"
+            />
             <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -798,7 +815,8 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
               <p class="text-xs font-bold">Galería</p>
               <p class="text-[9px] text-slate-500">Múltiples fotos</p>
             </div>
-          </button>
+          </label>
+
         </div>
 
         <!-- Progreso y Galería de este modal -->
@@ -917,9 +935,11 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
       const photoStatusText = document.getElementById('photo-status-text');
       const btnRetakePhoto = document.getElementById('btn-retake-photo');
 
-      // Scanner Elements & Global Triggers (HOISTED)
+      // Listeners de inputs de escaneo (hero + modal)
       const scanCameraInput = document.getElementById('scan-camera-input') as HTMLInputElement;
       const scanGalleryInput = document.getElementById('scan-gallery-input') as HTMLInputElement;
+      const scanModalCameraInput = document.getElementById('scan-modal-camera-input') as HTMLInputElement;
+      const scanModalGalleryInput = document.getElementById('scan-modal-gallery-input') as HTMLInputElement;
       const scanModal = document.getElementById('scan-modal');
       const scanModalCloseBtn = document.getElementById('scan-modal-close-btn');
 
@@ -937,54 +957,64 @@ const title = `Hoja de Ruta | ${targetChoferNombre} - Envías C.A.`;
       const modalGalleryGrid = document.getElementById('modal-gallery-grid');
       const modalGalleryCount = document.getElementById('modal-gallery-count');
 
-      let currentScanTargetMode = 'hero'; // 'hero' | 'modal'
+      let currentScanTargetMode = 'hero';
       let sessionScannedCount = 0;
 
-      (window as any).triggerScanCamera = (mode = 'hero') => {
-        currentScanTargetMode = mode;
-        const inp = document.getElementById('scan-camera-input') as HTMLInputElement;
-        if (inp) inp.click();
-      };
-
-      (window as any).triggerScanGallery = (mode = 'hero') => {
-        currentScanTargetMode = mode;
-        const inp = document.getElementById('scan-gallery-input') as HTMLInputElement;
-        if (inp) inp.click();
-      };
-
-      (window as any).openScanModal = () => {
-        const modal = document.getElementById('scan-modal');
-        modal?.classList.remove('hidden');
-        modal?.classList.add('flex');
+      function openScanModal() {
+        scanModal?.classList.remove('hidden');
+        scanModal?.classList.add('flex');
         document.body.style.overflow = 'hidden';
-      };
-
-      (window as any).closeScanModal = () => {
-        const modal = document.getElementById('scan-modal');
-        modal?.classList.add('hidden');
-        modal?.classList.remove('flex');
+      }
+      function closeScanModal() {
+        scanModal?.classList.add('hidden');
+        scanModal?.classList.remove('flex');
         document.body.style.overflow = '';
-      };
+      }
 
-      // Listeners de cambio de archivos
+      scanModalCloseBtn?.addEventListener('click', closeScanModal);
+      scanModal?.addEventListener('click', (e) => {
+        if (e.target === scanModal) closeScanModal();
+      });
+
+      // Hero inputs (pantalla de bienvenida)
       scanCameraInput?.addEventListener('change', (e) => {
         const files = (e.target as HTMLInputElement).files;
         if (files && files.length > 0) {
+          currentScanTargetMode = 'hero';
           handleScanFiles(Array.from(files));
+          (e.target as HTMLInputElement).value = '';
         }
       });
-
       scanGalleryInput?.addEventListener('change', (e) => {
         const files = (e.target as HTMLInputElement).files;
         if (files && files.length > 0) {
+          currentScanTargetMode = 'hero';
           handleScanFiles(Array.from(files));
+          (e.target as HTMLInputElement).value = '';
         }
       });
 
-      scanModalCloseBtn?.addEventListener('click', () => (window as any).closeScanModal());
-      scanModal?.addEventListener('click', (e) => {
-        if (e.target === scanModal) (window as any).closeScanModal();
+      // Modal inputs (modal #scan-modal)
+      scanModalCameraInput?.addEventListener('change', (e) => {
+        const files = (e.target as HTMLInputElement).files;
+        if (files && files.length > 0) {
+          currentScanTargetMode = 'modal';
+          handleScanFiles(Array.from(files));
+          (e.target as HTMLInputElement).value = '';
+        }
       });
+      scanModalGalleryInput?.addEventListener('change', (e) => {
+        const files = (e.target as HTMLInputElement).files;
+        if (files && files.length > 0) {
+          currentScanTargetMode = 'modal';
+          handleScanFiles(Array.from(files));
+          (e.target as HTMLInputElement).value = '';
+        }
+      });
+
+      // Botón de cámara del encabezado -> abre scan-modal
+      const btnHeaderScan = document.getElementById('btn-header-scan');
+      btnHeaderScan?.addEventListener('click', openScanModal);
 
       // 1. Normalización de teléfono para WhatsApp
       function formatPhoneForWhatsApp(phone) {
