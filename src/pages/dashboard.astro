@@ -621,23 +621,9 @@ const userInitials = currentUser.nombre
                   class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer"
                 />
               </div>
-
-              <!-- Filtro de Estado -->
-              <div class="space-y-1 min-w-[140px]">
-                <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Estado de Guías</label>
-                <select
-                  id="listin-status-filter"
-                  class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer"
-                >
-                  <option value="ALL">Todas las Guías</option>
-                  <option value="En ruta">Solo En Ruta</option>
-                  <option value="Por contactar">Solo Almacén (Por contactar)</option>
-                  <option value="Contactado">Solo Contactadas</option>
-                </select>
-              </div>
             </div>
 
-            <!-- Botones de Acción: Optimizar, Descargar PDF e Imprimir -->
+            <!-- Botones de Acción: Optimizar, Descargar PDF y Enviar Listín al Chofer -->
             <div class="flex flex-wrap items-center gap-2">
               <button
                 type="button"
@@ -665,14 +651,14 @@ const userInitials = currentUser.nombre
 
               <button
                 type="button"
-                id="btn-listin-print"
+                id="btn-listin-send"
                 class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black active:scale-95 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer"
-                title="Imprimir Listín de Despacho físico"
+                title="Enviar listín oficial al chofer para que lo imprima y revise"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
-                <span>Imprimir Listín</span>
+                <span>Enviar Listín</span>
               </button>
             </div>
           </div>
@@ -1866,10 +1852,9 @@ const userInitials = currentUser.nombre
       const listinDriverSelect = document.getElementById('listin-driver-select') as HTMLSelectElement;
       const listinPlacaInput = document.getElementById('listin-placa-input') as HTMLInputElement;
       const listinFechaInput = document.getElementById('listin-fecha-input') as HTMLInputElement;
-      const listinStatusFilter = document.getElementById('listin-status-filter') as HTMLSelectElement;
       const btnListinAutoTsp = document.getElementById('btn-listin-auto-tsp') as HTMLButtonElement;
       const btnListinDownloadPdf = document.getElementById('btn-listin-download-pdf') as HTMLButtonElement;
-      const btnListinPrint = document.getElementById('btn-listin-print') as HTMLButtonElement;
+      const btnListinSend = document.getElementById('btn-listin-send') as HTMLButtonElement;
       const listinHierarchyList = document.getElementById('listin-hierarchy-list') as HTMLElement;
       const listinCitiesCount = document.getElementById('listin-cities-count') as HTMLElement;
 
@@ -5353,14 +5338,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
       function getListinSourceShipments(): GuiaRow[] {
         const driverFilter = listinDriverSelect ? listinDriverSelect.value : 'ALL';
-        const statusFilter = listinStatusFilter ? listinStatusFilter.value : 'ALL';
-
         return shipments.filter(g => {
           if (driverFilter !== 'ALL') {
             if (String(g.chofer_asignado_id) !== driverFilter) return false;
-          }
-          if (statusFilter !== 'ALL') {
-            if (g.estado !== statusFilter) return false;
           }
           return true;
         });
@@ -5609,9 +5589,6 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       listinDriverSelect?.addEventListener('change', () => {
         renderListinView();
       });
-      listinStatusFilter?.addEventListener('change', () => {
-        renderListinView();
-      });
       listinPlacaInput?.addEventListener('input', () => {
         if (previewListinPlaca) {
           previewListinPlaca.textContent = listinPlacaInput.value.trim().toUpperCase() || 'NO ASIGNADA';
@@ -5630,9 +5607,81 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         renderListinView();
       });
 
-      // Impresión Nativa Fisiológica
-      btnListinPrint?.addEventListener('click', () => {
-        window.print();
+      // Enviar Listín Oficial al Chofer (Guarda orden en DB y abre WhatsApp con el enlace de impresión)
+      btnListinSend?.addEventListener('click', async () => {
+        const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
+        const driverId = listinDriverSelect?.value;
+
+        if (!driverId || driverId === 'ALL') {
+          showToast('Por favor selecciona un Chofer específico para enviarle su listín', 'info');
+          listinDriverSelect?.focus();
+          return;
+        }
+
+        const driverObj = drivers.find(d => String(d.id) === String(driverId));
+        const driverName = driverObj ? driverObj.nombre : (selectedDriverOption?.text || 'Chofer');
+        const driverPhone = driverObj ? driverObj.telefono : '';
+        const fecha = listinFechaInput?.value || new Date().toISOString().split('T')[0];
+        const placa = listinPlacaInput?.value?.trim()?.toUpperCase() || 'NO ASIGNADA';
+
+        const srcShipments = getListinSourceShipments();
+        const orderedActiveGuias: GuiaRow[] = [];
+        const citiesList: string[] = [];
+
+        listinCitiesOrder.forEach(cityName => {
+          if (listinExcludedCities.has(cityName)) return;
+          const cityGuias = srcShipments.filter(g => 
+            (g.ciudad_destino || 'Sin Ciudad').trim() === cityName &&
+            !listinExcludedGuiaIds.has(g.id_guia)
+          );
+          if (cityGuias.length > 0) {
+            citiesList.push(cityName);
+            orderedActiveGuias.push(...cityGuias);
+          }
+        });
+
+        const totalGuias = orderedActiveGuias.length;
+        const totalPiezas = orderedActiveGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+
+        if (totalGuias === 0) {
+          showToast('No hay guías activas incluidas para este chofer', 'error');
+          return;
+        }
+
+        // 1. Guardar orden de ruta en base de datos para este chofer
+        try {
+          for (let i = 0; i < orderedActiveGuias.length; i++) {
+            const g = orderedActiveGuias[i];
+            fetch(`/api/guias/${g.id_guia}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ orden_ruta: i + 1, chofer_asignado_id: Number(driverId) })
+            }).catch(() => {});
+          }
+        } catch (e) {}
+
+        // 2. Formatear mensaje oficial para WhatsApp
+        const ciudadesTexto = citiesList.join(', ');
+        const portalUrl = `https://envias-production.up.railway.app/chofer`;
+        const rawMsg = `🚚 *LISTÍN DE CARGA Y DESPACHO — ENVÍAS C.A.*\n\n` +
+          `📅 *Fecha:* ${fecha}\n` +
+          `🚛 *Placa:* ${placa}\n` +
+          `👤 *Chofer:* ${driverName}\n` +
+          `📦 *Total Guías:* ${totalGuias} (${totalPiezas} piezas/bultos)\n` +
+          `📍 *Zonas en ruta:* ${ciudadesTexto}\n\n` +
+          `🖨️ *Tu Listín oficial ya está listo en tu portal de chofer para imprimir y revisar:* \n${portalUrl}`;
+
+        showToast(`Listín generado y enviado al Chofer ${driverName}`, 'success');
+
+        let cleanPhone = (driverPhone || '').replace(/\D/g, '');
+        if (cleanPhone.startsWith('04')) cleanPhone = '58' + cleanPhone.slice(1);
+        else if (cleanPhone.startsWith('4') && cleanPhone.length === 10) cleanPhone = '58' + cleanPhone;
+
+        const waUrl = cleanPhone 
+          ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(rawMsg)}`
+          : `https://api.whatsapp.com/send?text=${encodeURIComponent(rawMsg)}`;
+
+        window.open(waUrl, '_blank');
       });
 
       // Generar y Descargar PDF con html2pdf

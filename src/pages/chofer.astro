@@ -82,6 +82,9 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 
+    <!-- html2pdf.js para Exportación Directa de Listines PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+
     <style>
       body {
         font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
@@ -96,6 +99,37 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       }
       .animate-fadeIn {
         animation: fadeIn 0.2s ease-out forwards;
+      }
+
+      /* Estilos de Impresión (@media print) para el Listín del Chofer */
+      @media print {
+        body {
+          background: white !important;
+          color: black !important;
+        }
+        body * {
+          visibility: hidden !important;
+        }
+        #chofer-listin-print-wrapper, #chofer-listin-print-wrapper * {
+          visibility: visible !important;
+        }
+        #chofer-listin-print-wrapper {
+          position: absolute !important;
+          left: 0 !important;
+          top: 0 !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 4mm 6mm !important;
+          background: white !important;
+          box-shadow: none !important;
+          border: none !important;
+          color: black !important;
+          z-index: 9999999 !important;
+        }
+        @page {
+          size: letter portrait;
+          margin: 6mm 6mm 6mm 6mm;
+        }
       }
     </style>
   </head>
@@ -128,6 +162,21 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
 
         <!-- Acciones rápidas -->
         <div class="flex items-center gap-1.5 shrink-0">
+          <!-- Botón Imprimir Listín Oficial de Carga -->
+          <button
+            type="button"
+            id="btn-chofer-print-listin"
+            onclick="window.openChoferListinModal()"
+            class="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all tap-active flex items-center gap-1.5 shadow-sm cursor-pointer"
+            title="Ver e imprimir listín de despacho de hoy"
+          >
+            <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            <span class="hidden sm:inline">Imprimir Listín</span>
+            <span class="sm:hidden">Listín</span>
+          </button>
+
           <!-- Botón Escanear Guías (Abre Modal de Escaneo) -->
           <button
             type="button"
@@ -738,6 +787,156 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         <div class="flex items-center justify-center max-h-[70vh] overflow-hidden rounded-2xl bg-black">
           <img id="lightbox-img" src="" alt="Comprobante" class="max-h-[68vh] w-auto object-contain rounded-xl" />
         </div>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL CHOFER: VISOR E IMPRESIÓN OFICIAL DEL LISTÍN DE CARGA -->
+    <!-- ========================================================= -->
+    <div id="chofer-listin-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-2 sm:p-4 md:p-6">
+      <!-- Overlay -->
+      <div id="chofer-listin-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity" onclick="window.closeChoferListinModal()"></div>
+
+      <!-- Modal Content Container -->
+      <div class="relative z-10 w-full max-w-4xl bg-slate-100 rounded-3xl shadow-2xl border border-slate-300 flex flex-col max-h-[95vh] overflow-hidden">
+        
+        <!-- Header con Botones de Acción -->
+        <div class="px-4 sm:px-6 py-3.5 bg-white border-b border-slate-200 flex items-center justify-between gap-3 shrink-0">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <div class="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0">
+              <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div class="min-w-0">
+              <h3 class="text-xs font-black text-slate-900 uppercase tracking-wider truncate">Listín Oficial de Despacho</h3>
+              <p class="text-[10px] text-slate-500 font-medium truncate">Formato oficial Envías C.A. para control de carga</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 shrink-0">
+            <!-- Botón Imprimir Físico -->
+            <button
+              type="button"
+              onclick="window.print()"
+              class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer tap-active"
+            >
+              <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              <span>Imprimir</span>
+            </button>
+
+            <!-- Botón Cerrar -->
+            <button
+              type="button"
+              onclick="window.closeChoferListinModal()"
+              class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
+            >
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Cuerpo del Modal: Hoja Imprimible Oficial en Formato Dual -->
+        <div class="p-3 sm:p-6 overflow-y-auto flex justify-center bg-slate-200/80">
+          <div id="chofer-listin-print-wrapper" class="w-full max-w-[760px] min-h-[960px] bg-white p-6 sm:p-7 rounded-xl shadow-xl text-black select-none font-sans text-xs border border-slate-300">
+            <!-- Header del Listín -->
+            <div class="flex items-start justify-between border-b-2 border-black pb-3 mb-2.5">
+              <div class="flex items-center gap-2.5">
+                <svg class="w-11 h-11 text-black shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="1" y="3" width="15" height="13" rx="2" fill="#000" stroke="#000" />
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 8" fill="#000" stroke="#000" />
+                  <circle cx="5.5" cy="18.5" r="2.5" fill="#fff" stroke="#000" stroke-width="2" />
+                  <circle cx="18.5" cy="18.5" r="2.5" fill="#fff" stroke="#000" stroke-width="2" />
+                  <text x="3.5" y="10.5" fill="#fff" font-size="4.5" font-weight="900" font-family="sans-serif">EN</text>
+                  <text x="3" y="14" fill="#fff" font-size="3.2" font-weight="900" font-family="sans-serif">VIAS</text>
+                </svg>
+                <div>
+                  <h1 class="text-xl font-black tracking-tighter leading-none">ENVÍAS C.A.</h1>
+                  <p class="text-[9px] font-black uppercase tracking-widest text-slate-800">Transporte y Encomiendas</p>
+                  <p class="text-[8px] font-bold text-slate-600">Hub Central Barquisimeto &bull; Entregas Nacionales</p>
+                </div>
+              </div>
+
+              <!-- Metadatos -->
+              <div class="border border-black rounded-lg p-2.5 w-60 space-y-1 text-[11px] bg-slate-50/50">
+                <div class="flex items-center justify-between border-b border-slate-300 pb-0.5">
+                  <span class="font-bold">FECHA:</span>
+                  <span id="chofer-modal-fecha" class="font-mono font-bold">{new Date().toLocaleDateString('es-VE')}</span>
+                </div>
+                <div class="flex items-center justify-between border-b border-slate-300 pb-0.5">
+                  <span class="font-bold">PLACA:</span>
+                  <span id="chofer-modal-placa" class="font-mono font-bold">ASIGNADA</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="font-bold">CHOFER:</span>
+                  <span id="chofer-modal-chofer" class="font-bold truncate max-w-[130px]">{targetChoferNombre}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Título -->
+            <div class="text-center mb-2">
+              <h2 class="text-xs font-black uppercase tracking-widest border-y border-black py-0.5 bg-slate-100">
+                LISTÍN DE CARGA Y DESPACHO DE GUÍAS
+              </h2>
+            </div>
+
+            <!-- Tabla Dual -->
+            <div class="w-full mb-3">
+              <table class="w-full border-collapse text-[10px] border-2 border-black" id="chofer-listin-dual-table">
+                <thead>
+                  <tr class="bg-slate-200 text-black uppercase font-black text-center border-b-2 border-black">
+                    <th class="py-1 px-1.5 border-r border-black w-[17%]">NRO DE GUIA</th>
+                    <th class="py-1 px-1 border-r border-black w-[8%]">PIEZAS</th>
+                    <th class="py-1 px-2 border-r-2 border-black w-[25%]">DESTINO</th>
+                    <th class="py-1 px-1.5 border-r border-black w-[17%]">NRO DE GUIA</th>
+                    <th class="py-1 px-1 border-r border-black w-[8%]">PIEZAS</th>
+                    <th class="py-1 px-2 w-[25%]">DESTINO</th>
+                  </tr>
+                </thead>
+                <tbody id="chofer-listin-tbody" class="font-mono font-semibold divide-y divide-black/40">
+                  <!-- Generado dinámicamente con las guías del chofer -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Totales y Firmas -->
+            <div class="mt-3 pt-2 border-t-2 border-black space-y-2.5">
+              <div class="flex items-center justify-between bg-slate-100 px-3 py-1.5 rounded border border-black font-bold text-[11px]">
+                <div>TOTAL GUÍAS: <span id="chofer-listin-total-guias" class="font-black text-black">0</span></div>
+                <div>TOTAL PIEZAS: <span id="chofer-listin-total-piezas" class="font-black text-black">0</span></div>
+                <div>TOTAL ZONAS: <span id="chofer-listin-total-destinos" class="font-black text-black">0</span></div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-8 pt-5 pb-1 text-center text-[10px] font-bold">
+                <div>
+                  <div class="border-t border-black w-44 mx-auto mb-1"></div>
+                  <p>Firma Despacho / Almacén</p>
+                  <p class="text-[8px] text-slate-500 font-normal">Envías C.A. - Logística Central</p>
+                </div>
+                <div>
+                  <div class="border-t border-black w-44 mx-auto mb-1"></div>
+                  <p>Firma Chofer Receptor</p>
+                  <p class="text-[8px] text-slate-500 font-normal">Conforme con bultos y guías físicas</p>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-[8px] text-slate-500 pt-1.5 border-t border-slate-300">
+                <span>Envías C.A. &bull; Sistema Oficial de Despacho y Logística</span>
+                <div class="flex items-center gap-1 font-mono font-bold text-black text-[9px]">
+                  <span>||| | | |||| | ||||| || |</span>
+                  <span>7 599187 000185</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -1703,6 +1902,75 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           if (refreshIcon) refreshIcon.classList.remove('animate-spin');
         }
       }
+
+      // ----------------------------------------------------
+      // LISTÍN DE DESPACHO OFICIAL PARA IMPRESIÓN DEL CHOFER
+      // ----------------------------------------------------
+      function renderChoferListinTable() {
+        const tbody = document.getElementById('chofer-listin-tbody');
+        const totalGuiasEl = document.getElementById('chofer-listin-total-guias');
+        const totalPiezasEl = document.getElementById('chofer-listin-total-piezas');
+        const totalDestinosEl = document.getElementById('chofer-listin-total-destinos');
+
+        const activeGuias = (guiasData || []).slice().sort((a, b) => {
+          if (a.orden_ruta && b.orden_ruta) return a.orden_ruta - b.orden_ruta;
+          if (a.orden_ruta) return -1;
+          if (b.orden_ruta) return 1;
+          return (a.ciudad_destino || '').localeCompare(b.ciudad_destino || '');
+        });
+
+        const uniqueCities = Array.from(new Set(activeGuias.map(g => (g.ciudad_destino || '').trim()).filter(Boolean)));
+        const totalGuias = activeGuias.length;
+        const totalPiezas = activeGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+
+        if (totalGuiasEl) totalGuiasEl.textContent = totalGuias.toString();
+        if (totalPiezasEl) totalPiezasEl.textContent = totalPiezas.toString();
+        if (totalDestinosEl) totalDestinosEl.textContent = uniqueCities.length.toString();
+
+        const rowCount = Math.max(Math.ceil(activeGuias.length / 2), 20);
+        const leftGuias = activeGuias.slice(0, rowCount);
+        const rightGuias = activeGuias.slice(rowCount, rowCount * 2);
+
+        let html = '';
+        for (let i = 0; i < rowCount; i++) {
+          const left = leftGuias[i];
+          const right = rightGuias[i];
+
+          html += `
+            <tr class="h-6 border-b border-black/30 text-black">
+              <!-- Bloque Izquierdo -->
+              <td class="py-1 px-1.5 border-r border-black font-mono font-bold text-center">${left ? left.id_guia : ''}</td>
+              <td class="py-1 px-1 border-r border-black text-center font-bold">${left ? (left.piezas || 1) : ''}</td>
+              <td class="py-1 px-2 border-r-2 border-black font-bold uppercase truncate max-w-[140px]">${left ? left.ciudad_destino : ''}</td>
+              <!-- Bloque Derecho -->
+              <td class="py-1 px-1.5 border-r border-black font-mono font-bold text-center">${right ? right.id_guia : ''}</td>
+              <td class="py-1 px-1 border-r border-black text-center font-bold">${right ? (right.piezas || 1) : ''}</td>
+              <td class="py-1 px-2 font-bold uppercase truncate max-w-[140px]">${right ? right.ciudad_destino : ''}</td>
+            </tr>
+          `;
+        }
+
+        if (tbody) {
+          tbody.innerHTML = html;
+        }
+      }
+
+      window.openChoferListinModal = () => {
+        renderChoferListinTable();
+        const modal = document.getElementById('chofer-listin-modal');
+        if (modal) {
+          modal.classList.remove('hidden');
+          modal.classList.add('flex');
+        }
+      };
+
+      window.closeChoferListinModal = () => {
+        const modal = document.getElementById('chofer-listin-modal');
+        if (modal) {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+        }
+      };
 
       refreshBtn?.addEventListener('click', () => syncGuias(true));
 
