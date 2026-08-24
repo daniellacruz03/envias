@@ -973,23 +973,25 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       // ----------------------------------------------------
       // ESTADO GLOBAL
       // ----------------------------------------------------
-      let currentChoferId = targetChoferId;
-      let guiasData = initialGuias || [];
-      let activeTab = 'pendientes';
-      let searchQuery = '';
-      let selectedCity = '';
-      let activeModalGuiaId = null;
-      let modalDeliveryMode = 'success';
-      let currentCompressedBlob = null;
-      let sessionScannedCount = 0;
+      var currentChoferId = targetChoferId;
+      var guiasData = initialGuias || [];
+      var activeTab = 'pendientes';
+      var searchQuery = '';
+      var selectedCity = '';
+      var activeModalGuiaId = null;
+      var modalDeliveryMode = 'success';
+      var currentCompressedBlob = null;
+      var sessionScannedCount = 0;
+      var isUploadingScans = false;
 
       // Elementos Toast
-      const toastEl = document.getElementById('toast');
-      const toastIconEl = document.getElementById('toast-icon');
-      const toastMsgEl = document.getElementById('toast-message');
-      let toastTimeout = null;
+      var toastEl = document.getElementById('toast');
+      var toastIconEl = document.getElementById('toast-icon');
+      var toastMsgEl = document.getElementById('toast-message');
+      var toastTimeout = null;
 
-      function showToast(message, type = 'info') {
+      function showToast(message, type) {
+        if (!type) type = 'info';
         if (!toastEl || !toastMsgEl) return;
         if (toastTimeout) clearTimeout(toastTimeout);
 
@@ -1006,14 +1008,14 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         }
 
         toastEl.classList.remove('hidden');
-        toastTimeout = setTimeout(() => {
-          toastEl?.classList.add('hidden');
+        toastTimeout = setTimeout(function() {
+          if (toastEl) toastEl.classList.add('hidden');
         }, 4000);
       }
 
       function formatPhoneForWhatsApp(phone) {
         if (!phone) return '';
-        let cleaned = phone.replace(/[^0-9]/g, '');
+        var cleaned = phone.replace(/[^0-9]/g, '');
         if (cleaned.startsWith('0')) {
           cleaned = '58' + cleaned.substring(1);
         } else if (cleaned.length === 10 && !cleaned.startsWith('58')) {
@@ -1025,20 +1027,24 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       // ====================================================
       // MOTOR DE COMPRESIÓN CANVAS HTML5 (ZERO MEMORY LEAK)
       // ====================================================
-      function compressImage(file: File, maxWidth = 1280, maxHeight = 1600, quality = 0.8): Promise<{ blob: Blob | File | null, dataUrl: string, sizeKb: number }> {
-        return new Promise((resolve) => {
+      function compressImage(file, maxWidth, maxHeight, quality) {
+        if (!maxWidth) maxWidth = 1280;
+        if (!maxHeight) maxHeight = 1600;
+        if (!quality) quality = 0.8;
+
+        return new Promise(function(resolve) {
           if (!file) {
             resolve({ blob: null, dataUrl: '', sizeKb: 0 });
             return;
           }
 
           // Safety timeout: 3 segundos máximo para nunca bloquear el proceso
-          const timer = setTimeout(() => {
+          var timer = setTimeout(function() {
             console.warn('[Compress Timeout]: Subiendo archivo directo');
             resolve({ blob: file, dataUrl: '', sizeKb: Math.round(file.size / 1024) });
           }, 3000);
 
-          let objectUrl = '';
+          var objectUrl = '';
           try {
             objectUrl = URL.createObjectURL(file);
           } catch(e) {
@@ -1047,12 +1053,12 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             return;
           }
 
-          const img = new Image();
-          img.onload = () => {
+          var img = new Image();
+          img.onload = function() {
             clearTimeout(timer);
             try {
-              let width = img.naturalWidth || img.width;
-              let height = img.naturalHeight || img.height;
+              var width = img.naturalWidth || img.width;
+              var height = img.naturalHeight || img.height;
 
               if (width > maxWidth || height > maxHeight) {
                 if (width > height) {
@@ -1064,10 +1070,10 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
                 }
               }
 
-              const canvas = document.createElement('canvas');
+              var canvas = document.createElement('canvas');
               canvas.width = width;
               canvas.height = height;
-              const ctx = canvas.getContext('2d');
+              var ctx = canvas.getContext('2d');
               if (!ctx) {
                 URL.revokeObjectURL(objectUrl);
                 resolve({ blob: file, dataUrl: '', sizeKb: Math.round(file.size / 1024) });
@@ -1076,7 +1082,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               ctx.drawImage(img, 0, 0, width, height);
               URL.revokeObjectURL(objectUrl);
 
-              canvas.toBlob((blob) => {
+              canvas.toBlob(function(blob) {
                 if (blob) {
                   resolve({ blob: blob, dataUrl: '', sizeKb: Math.round(blob.size / 1024) });
                 } else {
@@ -1089,7 +1095,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               resolve({ blob: file, dataUrl: '', sizeKb: Math.round(file.size / 1024) });
             }
           };
-          img.onerror = () => {
+          img.onerror = function() {
             clearTimeout(timer);
             URL.revokeObjectURL(objectUrl);
             resolve({ blob: file, dataUrl: '', sizeKb: Math.round(file.size / 1024) });
@@ -1101,147 +1107,151 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       // ====================================================
       // MÓDULO 1: ESCÁNER Y SUBIDA DE GUÍAS FÍSICAS
       // ====================================================
-      const heroCameraInput = document.getElementById('hero-camera-input') as HTMLInputElement;
-      const heroGalleryInput = document.getElementById('hero-gallery-input') as HTMLInputElement;
-      const modalScanCameraInput = document.getElementById('modal-scan-camera-input') as HTMLInputElement;
-      const modalScanGalleryInput = document.getElementById('modal-scan-gallery-input') as HTMLInputElement;
-      const scanModal = document.getElementById('scan-modal');
-      const scanModalCloseBtn = document.getElementById('scan-modal-close-btn');
-      const btnHeaderScan = document.getElementById('btn-header-scan');
+      var heroCameraInput = document.getElementById('hero-camera-input');
+      var heroGalleryInput = document.getElementById('hero-gallery-input');
+      var modalScanCameraInput = document.getElementById('modal-scan-camera-input');
+      var modalScanGalleryInput = document.getElementById('modal-scan-gallery-input');
+      var scanModal = document.getElementById('scan-modal');
+      var scanModalCloseBtn = document.getElementById('scan-modal-close-btn');
+      var btnHeaderScan = document.getElementById('btn-header-scan');
 
-      let currentScanTargetMode = 'hero';
-      let isUploadingScans = false;
+      var currentScanTargetMode = 'hero';
 
       function openScanModal() {
-        scanModal?.classList.remove('hidden');
-        scanModal?.classList.add('flex');
+        if (scanModal) {
+          scanModal.classList.remove('hidden');
+          scanModal.classList.add('flex');
+        }
         document.body.style.overflow = 'hidden';
       }
       function closeScanModal() {
-        scanModal?.classList.add('hidden');
-        scanModal?.classList.remove('flex');
+        if (scanModal) {
+          scanModal.classList.add('hidden');
+          scanModal.classList.remove('flex');
+        }
         document.body.style.overflow = '';
       }
 
-      scanModalCloseBtn?.addEventListener('click', closeScanModal);
-      btnHeaderScan?.addEventListener('click', openScanModal);
-      scanModal?.addEventListener('click', (e) => {
-        if (e.target === scanModal) closeScanModal();
-      });
+      if (scanModalCloseBtn) scanModalCloseBtn.addEventListener('click', closeScanModal);
+      if (btnHeaderScan) btnHeaderScan.addEventListener('click', openScanModal);
+      if (scanModal) {
+        scanModal.addEventListener('click', function(e) {
+          if (e.target === scanModal) closeScanModal();
+        });
+      }
 
       // Manejador centralizado de archivos seleccionados
-      async function handleScanFiles(files: File[]) {
+      async function handleScanFiles(files) {
         if (!files || files.length === 0) return;
         isUploadingScans = true;
 
-        const total = files.length;
-        const nowScan = new Date();
-        const pad2 = (n: number) => n.toString().padStart(2, '0');
-        const scanLoteId = `chofer_${nowScan.getFullYear()}${pad2(nowScan.getMonth()+1)}${pad2(nowScan.getDate())}_${pad2(nowScan.getHours())}${pad2(nowScan.getMinutes())}`;
+        var total = files.length;
+        var nowScan = new Date();
+        var pad2 = function(n) { return n.toString().padStart(2, '0'); };
+        var scanLoteId = 'chofer_' + nowScan.getFullYear() + pad2(nowScan.getMonth()+1) + pad2(nowScan.getDate()) + '_' + pad2(nowScan.getHours()) + pad2(nowScan.getMinutes());
 
-        const isModal = currentScanTargetMode === 'modal';
-        const liveSection = document.getElementById(isModal ? 'modal-scan-live-section' : 'hero-scan-live-section');
-        const progressBar = document.getElementById(isModal ? 'modal-progress-bar' : 'hero-progress-bar');
-        const progressLabel = document.getElementById(isModal ? 'modal-progress-label' : 'hero-progress-label');
-        const progressCount = document.getElementById(isModal ? 'modal-progress-count' : 'hero-progress-count');
-        const galleryGrid = document.getElementById(isModal ? 'modal-gallery-grid' : 'hero-gallery-grid');
-        const galleryCount = document.getElementById(isModal ? 'modal-gallery-count' : 'hero-gallery-count');
+        var isModal = currentScanTargetMode === 'modal';
+        var liveSection = document.getElementById(isModal ? 'modal-scan-live-section' : 'hero-scan-live-section');
+        var progressBar = document.getElementById(isModal ? 'modal-progress-bar' : 'hero-progress-bar');
+        var progressLabel = document.getElementById(isModal ? 'modal-progress-label' : 'hero-progress-label');
+        var progressCount = document.getElementById(isModal ? 'modal-progress-count' : 'hero-progress-count');
+        var galleryGrid = document.getElementById(isModal ? 'modal-gallery-grid' : 'hero-gallery-grid');
+        var galleryCount = document.getElementById(isModal ? 'modal-gallery-count' : 'hero-gallery-count');
 
-        liveSection?.classList.remove('hidden');
+        if (liveSection) liveSection.classList.remove('hidden');
         if (progressBar) progressBar.style.width = '0%';
-        if (progressLabel) progressLabel.textContent = `Procesando ${total} foto${total !== 1 ? 's' : ''}...`;
-        if (progressCount) progressCount.textContent = `0 / ${total}`;
-        showToast(`Procesando ${total} foto(s)...`, 'info');
+        if (progressLabel) progressLabel.textContent = 'Procesando ' + total + ' foto' + (total !== 1 ? 's' : '') + '...';
+        if (progressCount) progressCount.textContent = '0 / ' + total;
+        showToast('Procesando ' + total + ' foto(s)...', 'info');
 
-        let uploadedOk = 0;
-        let processed = 0;
+        var uploadedOk = 0;
+        var processed = 0;
 
         try {
-          for (let i = 0; i < files.length; i++) {
-            const file = files[i];
+          for (var i = 0; i < files.length; i++) {
+            var file = files[i];
             sessionScannedCount++;
-            const itemIndex = sessionScannedCount;
+            var itemIndex = sessionScannedCount;
 
             // Miniatura instantánea en el DOM con URL.createObjectURL
-            let previewUrl = '';
+            var previewUrl = '';
             try {
               previewUrl = URL.createObjectURL(file);
             } catch(e) {}
 
-            const thumbDiv = document.createElement('div');
-            thumbDiv.id = `scan-thumb-${itemIndex}`;
+            var thumbDiv = document.createElement('div');
+            thumbDiv.id = 'scan-thumb-' + itemIndex;
             thumbDiv.className = 'relative aspect-square rounded-xl overflow-hidden bg-slate-100 border-2 border-slate-200 transition-all';
-            thumbDiv.innerHTML = `
-              ${previewUrl ? `<img src="${previewUrl}" class="w-full h-full object-cover" />` : ''}
-              <div id="scan-thumb-overlay-${itemIndex}" class="absolute inset-0 bg-black/50 flex items-center justify-center transition-opacity">
-                <svg class="w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                </svg>
-              </div>
-            `;
+            thumbDiv.innerHTML = (previewUrl ? '<img src="' + previewUrl + '" class="w-full h-full object-cover" />' : '') +
+              '<div id="scan-thumb-overlay-' + itemIndex + '" class="absolute inset-0 bg-black/50 flex items-center justify-center transition-opacity">' +
+                '<svg class="w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">' +
+                  '<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>' +
+                  '<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>' +
+                '</svg>' +
+              '</div>';
+
             if (galleryGrid) galleryGrid.prepend(thumbDiv);
 
             try {
               // Optimización con Canvas HTML5 (rápida y a prueba de fallos)
-              const comp = await compressImage(file, 1280, 1600, 0.8);
+              var comp = await compressImage(file, 1280, 1600, 0.8);
 
-              const formData = new FormData();
+              var formData = new FormData();
               formData.append('foto', comp.blob || file, file.name || 'escaneo.jpg');
               formData.append('lote_id', scanLoteId);
 
-              const res = await fetch('/api/escaneos', {
+              var res = await fetch('/api/escaneos', {
                 method: 'POST',
                 body: formData,
                 credentials: 'include'
               });
-              const data = await res.json().catch(() => ({ success: false, message: 'Error de respuesta del servidor' }));
+              var data = await res.json().catch(function() { return { success: false, message: 'Error de respuesta del servidor' }; });
 
-              const overlay = document.getElementById(`scan-thumb-overlay-${itemIndex}`);
+              var overlay = document.getElementById('scan-thumb-overlay-' + itemIndex);
               if (res.ok && data.success) {
                 uploadedOk++;
                 thumbDiv.classList.replace('border-slate-200', 'border-emerald-400');
                 if (overlay) {
-                  overlay.innerHTML = `<svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>`;
-                  setTimeout(() => overlay.classList.add('opacity-0'), 700);
+                  overlay.innerHTML = '<svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>';
+                  setTimeout(function(ov) { if (ov) ov.classList.add('opacity-0'); }, 700, overlay);
                 }
               } else {
                 thumbDiv.classList.replace('border-slate-200', 'border-rose-400');
                 if (overlay) {
-                  overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
+                  overlay.innerHTML = '<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>';
                 }
-                showToast(`Error: ${data.message || 'Error al guardar foto'}`, 'error');
+                showToast('Error: ' + (data.message || 'Error al guardar foto'), 'error');
               }
             } catch (err) {
               console.error('Error procesando escaneo:', err);
-              const overlay = document.getElementById(`scan-thumb-overlay-${itemIndex}`);
+              var overlayErr = document.getElementById('scan-thumb-overlay-' + itemIndex);
               thumbDiv.classList.replace('border-slate-200', 'border-rose-400');
-              if (overlay) {
-                overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
+              if (overlayErr) {
+                overlayErr.innerHTML = '<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>';
               }
               showToast('Error de red al subir la foto', 'error');
             }
 
             processed++;
-            const pct = Math.round((processed / total) * 100);
-            if (progressBar) progressBar.style.width = `${pct}%`;
-            if (progressCount) progressCount.textContent = `${processed} / ${total}`;
+            var pct = Math.round((processed / total) * 100);
+            if (progressBar) progressBar.style.width = pct + '%';
+            if (progressCount) progressCount.textContent = processed + ' / ' + total;
           }
         } finally {
           isUploadingScans = false;
         }
 
-        if (progressLabel) progressLabel.textContent = `¡${uploadedOk} de ${total} guías cargadas con éxito!`;
-        if (galleryCount) galleryCount.textContent = `${galleryGrid?.children.length || 0} subidas`;
+        if (progressLabel) progressLabel.textContent = '¡' + uploadedOk + ' de ' + total + ' guías cargadas con éxito!';
+        if (galleryCount && galleryGrid) galleryCount.textContent = galleryGrid.children.length + ' subidas';
         if (uploadedOk > 0) {
-          showToast(`¡${uploadedOk} foto(s) enviada(s) a Logística!`, 'success');
+          showToast('¡' + uploadedOk + ' foto(s) enviada(s) a Logística!', 'success');
         }
       }
 
       // Event listeners seguros y asíncronos para los inputs de escaneo
-      async function onFileInputChange(e: Event, mode: string) {
-        const input = e.target as HTMLInputElement;
-        const files = input.files ? Array.from(input.files) : [];
+      async function onFileInputChange(e, mode) {
+        var input = e.target;
+        var files = input.files ? Array.from(input.files) : [];
         if (files.length === 0) return;
         currentScanTargetMode = mode;
         try {
@@ -1253,221 +1263,225 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         }
       }
 
-      heroCameraInput?.addEventListener('change', (e) => onFileInputChange(e, 'hero'));
-      heroGalleryInput?.addEventListener('change', (e) => onFileInputChange(e, 'hero'));
-      modalScanCameraInput?.addEventListener('change', (e) => onFileInputChange(e, 'modal'));
-      modalScanGalleryInput?.addEventListener('change', (e) => onFileInputChange(e, 'modal'));
+      if (heroCameraInput) heroCameraInput.addEventListener('change', function(e) { onFileInputChange(e, 'hero'); });
+      if (heroGalleryInput) heroGalleryInput.addEventListener('change', function(e) { onFileInputChange(e, 'hero'); });
+      if (modalScanCameraInput) modalScanCameraInput.addEventListener('change', function(e) { onFileInputChange(e, 'modal'); });
+      if (modalScanGalleryInput) modalScanGalleryInput.addEventListener('change', function(e) { onFileInputChange(e, 'modal'); });
 
       // ====================================================
       // MÓDULO 2: CONFIRMACIÓN DE ENTREGA E INCIDENCIA
       // ====================================================
-      const deliveryModal = document.getElementById('delivery-modal');
-      const modalCloseBtn = document.getElementById('modal-close-btn');
-      const modalCancelBtn = document.getElementById('modal-cancel-btn');
-      const modalConfirmBtn = document.getElementById('modal-confirm-btn');
-      const modalIncidentSubmitBtn = document.getElementById('modal-incident-submit-btn');
-      const modalTabSuccessBtn = document.getElementById('modal-tab-success-btn');
-      const modalTabIncidentBtn = document.getElementById('modal-tab-incident-btn');
-      const modalPanelSuccess = document.getElementById('modal-panel-success');
-      const modalPanelIncident = document.getElementById('modal-panel-incident');
-      const modalTitleText = document.getElementById('modal-title-text');
-      const modalGuiaCode = document.getElementById('modal-guia-code');
-      const modalDestinatario = document.getElementById('modal-destinatario');
-      const modalDireccion = document.getElementById('modal-direccion');
-      const modalRecibidoPor = document.getElementById('modal-recibido-por');
-      const modalIncidentNote = document.getElementById('modal-incident-note');
-      const modalDeliveryPhotoInput = document.getElementById('modal-delivery-photo-input');
-      const photoPlaceholder = document.getElementById('photo-placeholder');
-      const photoPreviewContainer = document.getElementById('photo-preview-container');
-      const photoPreviewImg = document.getElementById('photo-preview-img');
-      const photoSizeBadge = document.getElementById('photo-size-badge');
-      const photoStatusText = document.getElementById('photo-status-text');
+      var deliveryModal = document.getElementById('delivery-modal');
+      var modalCloseBtn = document.getElementById('modal-close-btn');
+      var modalCancelBtn = document.getElementById('modal-cancel-btn');
+      var modalConfirmBtn = document.getElementById('modal-confirm-btn');
+      var modalIncidentSubmitBtn = document.getElementById('modal-incident-submit-btn');
+      var modalTabSuccessBtn = document.getElementById('modal-tab-success-btn');
+      var modalTabIncidentBtn = document.getElementById('modal-tab-incident-btn');
+      var modalPanelSuccess = document.getElementById('modal-panel-success');
+      var modalPanelIncident = document.getElementById('modal-panel-incident');
+      var modalTitleText = document.getElementById('modal-title-text');
+      var modalGuiaCode = document.getElementById('modal-guia-code');
+      var modalDestinatario = document.getElementById('modal-destinatario');
+      var modalDireccion = document.getElementById('modal-direccion');
+      var modalRecibidoPor = document.getElementById('modal-recibido-por');
+      var modalIncidentNote = document.getElementById('modal-incident-note');
+      var modalDeliveryPhotoInput = document.getElementById('modal-delivery-photo-input');
+      var photoPlaceholder = document.getElementById('photo-placeholder');
+      var photoPreviewContainer = document.getElementById('photo-preview-container');
+      var photoPreviewImg = document.getElementById('photo-preview-img');
+      var photoSizeBadge = document.getElementById('photo-size-badge');
+      var photoStatusText = document.getElementById('photo-status-text');
 
       function setDeliveryModalMode(mode) {
         modalDeliveryMode = mode;
         if (mode === 'success') {
           if (modalTabSuccessBtn) modalTabSuccessBtn.className = 'py-2 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-slate-900 shadow-xs cursor-pointer';
           if (modalTabIncidentBtn) modalTabIncidentBtn.className = 'py-2 px-2 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 cursor-pointer';
-          modalPanelSuccess?.classList.remove('hidden');
-          modalPanelIncident?.classList.add('hidden');
-          modalConfirmBtn?.classList.remove('hidden');
-          modalIncidentSubmitBtn?.classList.add('hidden');
+          if (modalPanelSuccess) modalPanelSuccess.classList.remove('hidden');
+          if (modalPanelIncident) modalPanelIncident.classList.add('hidden');
+          if (modalConfirmBtn) modalConfirmBtn.classList.remove('hidden');
+          if (modalIncidentSubmitBtn) modalIncidentSubmitBtn.classList.add('hidden');
           if (modalTitleText) modalTitleText.textContent = 'Confirmar Entrega Realizada';
         } else {
           if (modalTabIncidentBtn) modalTabIncidentBtn.className = 'py-2 px-2 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 bg-white text-rose-900 shadow-xs cursor-pointer';
           if (modalTabSuccessBtn) modalTabSuccessBtn.className = 'py-2 px-2 text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 text-slate-600 hover:text-slate-900 cursor-pointer';
-          modalPanelSuccess?.classList.add('hidden');
-          modalPanelIncident?.classList.remove('hidden');
-          modalConfirmBtn?.classList.add('hidden');
-          modalIncidentSubmitBtn?.classList.remove('hidden');
+          if (modalPanelSuccess) modalPanelSuccess.classList.add('hidden');
+          if (modalPanelIncident) modalPanelIncident.classList.remove('hidden');
+          if (modalConfirmBtn) modalConfirmBtn.classList.add('hidden');
+          if (modalIncidentSubmitBtn) modalIncidentSubmitBtn.classList.remove('hidden');
           if (modalTitleText) modalTitleText.textContent = 'Reportar Incidencia de Entrega';
         }
       }
 
-      modalTabSuccessBtn?.addEventListener('click', () => setDeliveryModalMode('success'));
-      modalTabIncidentBtn?.addEventListener('click', () => setDeliveryModalMode('incident'));
+      if (modalTabSuccessBtn) modalTabSuccessBtn.addEventListener('click', function() { setDeliveryModalMode('success'); });
+      if (modalTabIncidentBtn) modalTabIncidentBtn.addEventListener('click', function() { setDeliveryModalMode('incident'); });
 
       function resetDeliveryPhotoState() {
         currentCompressedBlob = null;
         if (modalDeliveryPhotoInput) modalDeliveryPhotoInput.value = '';
         if (photoPreviewImg) photoPreviewImg.src = '';
-        photoPlaceholder?.classList.remove('hidden');
-        photoPreviewContainer?.classList.add('hidden');
-        photoSizeBadge?.classList.add('hidden');
+        if (photoPlaceholder) photoPlaceholder.classList.remove('hidden');
+        if (photoPreviewContainer) photoPreviewContainer.classList.add('hidden');
+        if (photoSizeBadge) photoSizeBadge.classList.add('hidden');
         if (modalConfirmBtn) modalConfirmBtn.disabled = true;
       }
 
       window.openDeliveryModal = function(idGuia, destinatario, direccion, stopNumber) {
         activeModalGuiaId = idGuia;
-        if (modalGuiaCode) modalGuiaCode.textContent = `Parada #${stopNumber} • Guía #${idGuia}`;
+        if (modalGuiaCode) modalGuiaCode.textContent = 'Parada #' + stopNumber + ' • Guía #' + idGuia;
         if (modalDestinatario) modalDestinatario.textContent = destinatario;
         if (modalDireccion) modalDireccion.textContent = direccion || 'Ubicación confirmada';
         if (modalRecibidoPor) modalRecibidoPor.value = '';
         if (modalIncidentNote) modalIncidentNote.value = '';
         setDeliveryModalMode('success');
         resetDeliveryPhotoState();
-        deliveryModal?.classList.remove('hidden');
-        deliveryModal?.classList.add('flex');
+        if (deliveryModal) {
+          deliveryModal.classList.remove('hidden');
+          deliveryModal.classList.add('flex');
+        }
       };
 
       function closeDeliveryModal() {
-        deliveryModal?.classList.add('hidden');
-        deliveryModal?.classList.remove('flex');
+        if (deliveryModal) {
+          deliveryModal.classList.add('hidden');
+          deliveryModal.classList.remove('flex');
+        }
         activeModalGuiaId = null;
         resetDeliveryPhotoState();
       }
 
-      modalCloseBtn?.addEventListener('click', closeDeliveryModal);
-      modalCancelBtn?.addEventListener('click', closeDeliveryModal);
+      if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeDeliveryModal);
+      if (modalCancelBtn) modalCancelBtn.addEventListener('click', closeDeliveryModal);
 
       // Manejo de la foto de entrega
-      modalDeliveryPhotoInput?.addEventListener('change', async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+      if (modalDeliveryPhotoInput) {
+        modalDeliveryPhotoInput.addEventListener('change', async function(e) {
+          var file = e.target.files ? e.target.files[0] : null;
+          if (!file) return;
 
-        photoPlaceholder?.classList.add('hidden');
-        photoPreviewContainer?.classList.remove('hidden');
-        if (photoStatusText) photoStatusText.textContent = 'Optimizando foto...';
-        if (modalConfirmBtn) modalConfirmBtn.disabled = true;
+          if (photoPlaceholder) photoPlaceholder.classList.add('hidden');
+          if (photoPreviewContainer) photoPreviewContainer.classList.remove('hidden');
+          if (photoStatusText) photoStatusText.textContent = 'Optimizando foto...';
+          if (modalConfirmBtn) modalConfirmBtn.disabled = true;
 
-        try {
-          const result = await compressImage(file, 1200, 1600, 0.75);
-          currentCompressedBlob = result.blob;
-          if (photoPreviewImg) photoPreviewImg.src = result.dataUrl;
-          if (photoStatusText) photoStatusText.textContent = `Foto lista (${result.sizeKb} KB optimizada)`;
-          if (photoSizeBadge) {
-            photoSizeBadge.textContent = `${result.sizeKb} KB`;
-            photoSizeBadge.classList.remove('hidden');
+          try {
+            var result = await compressImage(file, 1200, 1600, 0.75);
+            currentCompressedBlob = result.blob || file;
+            if (photoPreviewImg) photoPreviewImg.src = URL.createObjectURL(file);
+            if (photoStatusText) photoStatusText.textContent = 'Foto lista (' + result.sizeKb + ' KB optimizada)';
+            if (photoSizeBadge) {
+              photoSizeBadge.textContent = result.sizeKb + ' KB';
+              photoSizeBadge.classList.remove('hidden');
+            }
+            if (modalConfirmBtn) modalConfirmBtn.disabled = false;
+          } catch (err) {
+            console.error('Error optimizando foto de entrega:', err);
+            showToast('Error al procesar la foto', 'error');
+            resetDeliveryPhotoState();
           }
-          if (modalConfirmBtn) modalConfirmBtn.disabled = false;
-        } catch (err) {
-          console.error('Error optimizando foto de entrega:', err);
-          showToast('Error al procesar la foto', 'error');
-          resetDeliveryPhotoState();
-        }
-      });
+        });
+      }
 
       // Submit Confirmar Entrega
-      modalConfirmBtn?.addEventListener('click', async () => {
-        if (!activeModalGuiaId) return;
-        if (!currentCompressedBlob) {
-          showToast('Debes tomar o subir una foto del comprobante sin excepción', 'error');
-          return;
-        }
+      if (modalConfirmBtn) {
+        modalConfirmBtn.addEventListener('click', async function() {
+          if (!activeModalGuiaId) return;
+          if (!currentCompressedBlob) {
+            showToast('Debes tomar o subir una foto del comprobante sin excepción', 'error');
+            return;
+          }
 
-        modalConfirmBtn.disabled = true;
-        const originalHtml = modalConfirmBtn.innerHTML;
-        modalConfirmBtn.innerHTML = `
-          <svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-          </svg>
-          <span>Guardando...</span>
-        `;
+          modalConfirmBtn.disabled = true;
+          var originalHtml = modalConfirmBtn.innerHTML;
+          modalConfirmBtn.innerHTML = '<svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg><span>Guardando...</span>';
 
-        try {
-          const formData = new FormData();
-          formData.append('id_guia', activeModalGuiaId);
-          formData.append('tipo_resultado', 'entregado');
-          formData.append('recibido_por', modalRecibidoPor?.value?.trim() || '');
-          formData.append('foto', currentCompressedBlob, 'comprobante.jpg');
+          try {
+            var formData = new FormData();
+            formData.append('id_guia', activeModalGuiaId);
+            formData.append('tipo_resultado', 'entregado');
+            formData.append('recibido_por', modalRecibidoPor ? modalRecibidoPor.value.trim() : '');
+            formData.append('foto', currentCompressedBlob, 'comprobante.jpg');
 
-          const res = await fetch('/api/chofer/entregar', {
-            method: 'POST',
-            body: formData
-          });
-          const data = await res.json();
+            var res = await fetch('/api/chofer/entregar', {
+              method: 'POST',
+              body: formData
+            });
+            var data = await res.json().catch(function() { return { success: false, message: 'Error de respuesta del servidor' }; });
 
-          if (res.ok && data.success) {
-            const idx = guiasData.findIndex(g => g.id_guia === activeModalGuiaId);
-            if (idx !== -1) {
-              guiasData[idx].estado = 'Entregado';
-              guiasData[idx].comprobante_url = data.data.comprobante_url;
-              guiasData[idx].recibido_por = data.data.recibido_por;
+            if (res.ok && data.success) {
+              var idx = guiasData.findIndex(function(g) { return g.id_guia === activeModalGuiaId; });
+              if (idx !== -1) {
+                guiasData[idx].estado = 'Entregado';
+                guiasData[idx].comprobante_url = data.data ? data.data.comprobante_url : null;
+                guiasData[idx].recibido_por = data.data ? data.data.recibido_por : null;
+              }
+              closeDeliveryModal();
+              renderCards();
+              updateMapMarkers();
+              showToast('¡Entrega confirmada y comprobante guardado!', 'success');
+            } else {
+              showToast(data.message || 'Error al registrar entrega', 'error');
+              modalConfirmBtn.disabled = false;
+              modalConfirmBtn.innerHTML = originalHtml;
             }
-            closeDeliveryModal();
-            renderCards();
-            updateMapMarkers();
-            showToast('&iexcl;Entrega confirmada y comprobante guardado!', 'success');
-          } else {
-            showToast(data.message || 'Error al registrar entrega', 'error');
+          } catch (err) {
+            console.error('Error confirmando entrega:', err);
+            showToast('Error de red al guardar entrega', 'error');
             modalConfirmBtn.disabled = false;
             modalConfirmBtn.innerHTML = originalHtml;
           }
-        } catch (err) {
-          console.error('Error confirmando entrega:', err);
-          showToast('Error de red al guardar entrega', 'error');
-          modalConfirmBtn.disabled = false;
-          modalConfirmBtn.innerHTML = originalHtml;
-        }
-      });
+        });
+      }
 
       // Submit Incidencia
-      modalIncidentSubmitBtn?.addEventListener('click', async () => {
-        if (!activeModalGuiaId) return;
-        const note = modalIncidentNote?.value?.trim();
-        if (!note) {
-          showToast('Debes ingresar el motivo de la incidencia', 'error');
-          return;
-        }
-
-        modalIncidentSubmitBtn.disabled = true;
-        try {
-          const formData = new FormData();
-          formData.append('id_guia', activeModalGuiaId);
-          formData.append('tipo_resultado', 'no_entregado');
-          formData.append('nota_incidencia', note);
-
-          const res = await fetch('/api/chofer/entregar', {
-            method: 'POST',
-            body: formData
-          });
-          const data = await res.json();
-
-          if (res.ok && data.success) {
-            const idx = guiasData.findIndex(g => g.id_guia === activeModalGuiaId);
-            if (idx !== -1) {
-              guiasData[idx].estado = 'No entregado';
-              guiasData[idx].recibido_por = note;
-            }
-            closeDeliveryModal();
-            renderCards();
-            updateMapMarkers();
-            showToast('Incidencia registrada correctamente', 'info');
-          } else {
-            showToast(data.message || 'Error al registrar incidencia', 'error');
+      if (modalIncidentSubmitBtn) {
+        modalIncidentSubmitBtn.addEventListener('click', async function() {
+          if (!activeModalGuiaId) return;
+          var note = modalIncidentNote ? modalIncidentNote.value.trim() : '';
+          if (!note) {
+            showToast('Debes ingresar el motivo de la incidencia', 'error');
+            return;
           }
-        } catch (err) {
-          showToast('Error de red al guardar incidencia', 'error');
-        } finally {
-          modalIncidentSubmitBtn.disabled = false;
-        }
-      });
+
+          modalIncidentSubmitBtn.disabled = true;
+          try {
+            var formData = new FormData();
+            formData.append('id_guia', activeModalGuiaId);
+            formData.append('tipo_resultado', 'no_entregado');
+            formData.append('nota_incidencia', note);
+
+            var res = await fetch('/api/chofer/entregar', {
+              method: 'POST',
+              body: formData
+            });
+            var data = await res.json().catch(function() { return { success: false, message: 'Error de respuesta' }; });
+
+            if (res.ok && data.success) {
+              var idx = guiasData.findIndex(function(g) { return g.id_guia === activeModalGuiaId; });
+              if (idx !== -1) {
+                guiasData[idx].estado = 'No entregado';
+                guiasData[idx].recibido_por = note;
+              }
+              closeDeliveryModal();
+              renderCards();
+              updateMapMarkers();
+              showToast('Incidencia registrada correctamente', 'info');
+            } else {
+              showToast(data.message || 'Error al registrar incidencia', 'error');
+            }
+          } catch (err) {
+            showToast('Error de red al guardar incidencia', 'error');
+          } finally {
+            modalIncidentSubmitBtn.disabled = false;
+          }
+        });
+      }
 
       // Selección rápida de motivo de incidencia
-      document.querySelectorAll('#incident-reasons-grid .incident-opt').forEach((btn) => {
-        btn.addEventListener('click', (e) => {
-          const reason = (e.currentTarget).getAttribute('data-reason');
+      document.querySelectorAll('#incident-reasons-grid .incident-opt').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          var reason = e.currentTarget.getAttribute('data-reason');
           if (modalIncidentNote && reason) {
             modalIncidentNote.value = reason;
           }
@@ -1477,36 +1491,36 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       // ====================================================
       // MÓDULO 3: HOJA DE RUTA, PARADAS Y MAPA LEAFLET
       // ====================================================
-      const cardsContainer = document.getElementById('cards-container');
-      const emptyState = document.getElementById('empty-state');
-      const searchInput = document.getElementById('search-input');
-      const cityFilter = document.getElementById('city-filter');
-      const tabPendientes = document.getElementById('tab-pendientes');
-      const tabEntregados = document.getElementById('tab-entregados');
-      const tabNoEntregados = document.getElementById('tab-no-entregados');
-      const tabTodos = document.getElementById('tab-todos');
-      const badgeTabPendientes = document.getElementById('badge-tab-pendientes');
-      const badgeTabEntregados = document.getElementById('badge-tab-entregados');
-      const badgeTabNoEntregados = document.getElementById('badge-tab-no-entregados');
-      const badgeTabTodos = document.getElementById('badge-tab-todos');
-      const statPendientes = document.getElementById('stat-pendientes');
-      const statEntregados = document.getElementById('stat-entregados');
-      const statNoEntregados = document.getElementById('stat-no-entregados');
-      const statTotal = document.getElementById('stat-total');
-      const progressText = document.getElementById('progress-text');
-      const progressBarFill = document.getElementById('progress-bar-fill');
+      var cardsContainer = document.getElementById('cards-container');
+      var emptyState = document.getElementById('empty-state');
+      var searchInput = document.getElementById('search-input');
+      var cityFilter = document.getElementById('city-filter');
+      var tabPendientes = document.getElementById('tab-pendientes');
+      var tabEntregados = document.getElementById('tab-entregados');
+      var tabNoEntregados = document.getElementById('tab-no-entregados');
+      var tabTodos = document.getElementById('tab-todos');
+      var badgeTabPendientes = document.getElementById('badge-tab-pendientes');
+      var badgeTabEntregados = document.getElementById('badge-tab-entregados');
+      var badgeTabNoEntregados = document.getElementById('badge-tab-no-entregados');
+      var badgeTabTodos = document.getElementById('badge-tab-todos');
+      var statPendientes = document.getElementById('stat-pendientes');
+      var statEntregados = document.getElementById('stat-entregados');
+      var statNoEntregados = document.getElementById('stat-no-entregados');
+      var statTotal = document.getElementById('stat-total');
+      var progressText = document.getElementById('progress-text');
+      var progressBarFill = document.getElementById('progress-bar-fill');
 
-      let map = null;
-      let markersLayer = null;
-      let routePolyline = null;
-      let isMapVisible = true;
+      var map = null;
+      var markersLayer = null;
+      var routePolyline = null;
+      var isMapVisible = true;
 
       function updateStats() {
-        const total = guiasData.length;
-        const entregados = guiasData.filter(g => g.estado === 'Entregado').length;
-        const noEntregados = guiasData.filter(g => g.estado === 'No entregado').length;
-        const pendientes = guiasData.filter(g => g.estado !== 'Entregado' && g.estado !== 'No entregado').length;
-        const pct = total > 0 ? Math.round((entregados / total) * 100) : 0;
+        var total = guiasData.length;
+        var entregados = guiasData.filter(function(g) { return g.estado === 'Entregado'; }).length;
+        var noEntregados = guiasData.filter(function(g) { return g.estado === 'No entregado'; }).length;
+        var pendientes = guiasData.filter(function(g) { return g.estado !== 'Entregado' && g.estado !== 'No entregado'; }).length;
+        var pct = total > 0 ? Math.round((entregados / total) * 100) : 0;
 
         if (statPendientes) statPendientes.textContent = pendientes;
         if (statEntregados) statEntregados.textContent = entregados;
@@ -1518,21 +1532,21 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         if (badgeTabNoEntregados) badgeTabNoEntregados.textContent = noEntregados;
         if (badgeTabTodos) badgeTabTodos.textContent = total;
 
-        if (progressText) progressText.textContent = `${entregados} de ${total} paradas (${pct}%)`;
-        if (progressBarFill) progressBarFill.style.width = `${pct}%`;
+        if (progressText) progressText.textContent = entregados + ' de ' + total + ' paradas (' + pct + '%)';
+        if (progressBarFill) progressBarFill.style.width = pct + '%';
       }
 
       function getFilteredGuias() {
-        const q = searchQuery.toLowerCase().trim();
-        return guiasData.filter(g => {
-          const matchTab = 
+        var q = (searchQuery || '').toLowerCase().trim();
+        return guiasData.filter(function(g) {
+          var matchTab = 
             activeTab === 'todos' ? true :
             activeTab === 'entregados' ? g.estado === 'Entregado' :
             activeTab === 'no_entregados' ? g.estado === 'No entregado' :
             (g.estado !== 'Entregado' && g.estado !== 'No entregado');
 
-          const matchCity = !selectedCity || g.ciudad_destino === selectedCity;
-          const matchQuery = !q || 
+          var matchCity = !selectedCity || g.ciudad_destino === selectedCity;
+          var matchQuery = !q || 
             (g.id_guia && g.id_guia.toLowerCase().includes(q)) ||
             (g.destinatario && g.destinatario.toLowerCase().includes(q)) ||
             (g.direccion_referencia && g.direccion_referencia.toLowerCase().includes(q)) ||
@@ -1546,151 +1560,110 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         updateStats();
         if (!cardsContainer) return;
 
-        const filtered = getFilteredGuias();
+        var filtered = getFilteredGuias();
         if (filtered.length === 0) {
           cardsContainer.innerHTML = '';
-          emptyState?.classList.remove('hidden');
+          if (emptyState) emptyState.classList.remove('hidden');
           return;
         }
 
-        emptyState?.classList.add('hidden');
+        if (emptyState) emptyState.classList.add('hidden');
 
-        cardsContainer.innerHTML = filtered.map((guia, index) => {
-          const stopNum = guia.orden_ruta && guia.orden_ruta > 0 ? guia.orden_ruta : (index + 1);
-          const isDelivered = guia.estado === 'Entregado';
-          const isIncident = guia.estado === 'No entregado';
-          const isPending = !isDelivered && !isIncident;
+        cardsContainer.innerHTML = filtered.map(function(guia, index) {
+          var stopNum = guia.orden_ruta && guia.orden_ruta > 0 ? guia.orden_ruta : (index + 1);
+          var isDelivered = guia.estado === 'Entregado';
+          var isIncident = guia.estado === 'No entregado';
+          var isPending = !isDelivered && !isIncident;
 
-          const phoneClean = formatPhoneForWhatsApp(guia.telefono_principal);
-          const msgWhatsApp = encodeURIComponent(`Hola ${guia.destinatario}, soy tu chofer de Envías C.A. Voy en camino a entregarte tu paquete (Guía #${guia.id_guia}).`);
-          const linkWhatsApp = `https://wa.me/${phoneClean}?text=${msgWhatsApp}`;
+          var phoneClean = formatPhoneForWhatsApp(guia.telefono_principal);
+          var msgWhatsApp = encodeURIComponent('Hola ' + guia.destinatario + ', soy tu chofer de Envías C.A. Voy en camino a entregarte tu paquete (Guía #' + guia.id_guia + ').');
+          var linkWhatsApp = 'https://wa.me/' + phoneClean + '?text=' + msgWhatsApp;
 
-          let gmapsUrl = '';
-          let wazeUrl = '';
+          var gmapsUrl = '';
+          var wazeUrl = '';
           if (guia.gps_confirmado && guia.gps_latitud && guia.gps_longitud) {
-            gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${guia.gps_latitud},${guia.gps_longitud}`;
-            wazeUrl = `https://waze.com/ul?ll=${guia.gps_latitud},${guia.gps_longitud}&navigate=yes`;
+            gmapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + guia.gps_latitud + ',' + guia.gps_longitud;
+            wazeUrl = 'https://waze.com/ul?ll=' + guia.gps_latitud + ',' + guia.gps_longitud + '&navigate=yes';
           } else {
-            const destQuery = encodeURIComponent(`${guia.direccion_referencia || ''} ${guia.ciudad_destino || ''} Venezuela`);
-            gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${destQuery}`;
-            wazeUrl = `https://waze.com/ul?q=${destQuery}&navigate=yes`;
+            var destQuery = encodeURIComponent((guia.direccion_referencia || '') + ' ' + (guia.ciudad_destino || '') + ' Venezuela');
+            gmapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + destQuery;
+            wazeUrl = 'https://waze.com/ul?q=' + destQuery + '&navigate=yes';
           }
 
-          let badgeStatusHtml = '';
+          var badgeStatusHtml = '';
           if (isDelivered) {
-            badgeStatusHtml = `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200">Entregado</span>`;
+            badgeStatusHtml = '<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200">Entregado</span>';
           } else if (isIncident) {
-            badgeStatusHtml = `<span class="px-2 py-0.5 rounded-md bg-rose-50 text-rose-800 text-[10px] font-bold border border-rose-200">No entregó</span>`;
+            badgeStatusHtml = '<span class="px-2 py-0.5 rounded-md bg-rose-50 text-rose-800 text-[10px] font-bold border border-rose-200">No entregó</span>';
           } else {
-            badgeStatusHtml = `<span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200">Pendiente</span>`;
+            badgeStatusHtml = '<span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200">Pendiente</span>';
           }
 
-          return `
-            <div class="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm space-y-3 transition-all ${isDelivered ? 'opacity-75 bg-slate-50/50' : ''}">
-              <!-- Fila Superior: Parada, Guía y Estado -->
-              <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                <div class="flex items-center gap-2">
-                  <div class="w-7 h-7 rounded-xl ${isDelivered ? 'bg-emerald-600' : isIncident ? 'bg-rose-600' : 'bg-slate-900'} text-white flex items-center justify-center font-extrabold text-xs shrink-0 shadow-xs">
-                    #${stopNum}
-                  </div>
-                  <div>
-                    <span class="font-mono font-bold text-xs text-slate-900">Guía #${guia.id_guia}</span>
-                    <span class="text-[10px] text-slate-400 font-medium ml-1">&bull; ${guia.piezas || 1} pza(s)</span>
-                  </div>
-                </div>
-                ${badgeStatusHtml}
-              </div>
+          var destEscaped = (guia.destinatario || '').replace(/'/g, "\\'");
+          var dirEscaped = (guia.direccion_referencia || '').replace(/'/g, "\\'");
 
-              <!-- Info Destinatario -->
-              <div class="space-y-1 text-xs">
-                <p class="font-bold text-slate-900 text-sm leading-snug">${guia.destinatario}</p>
-                <div class="flex items-center gap-1.5 text-slate-500 font-medium">
-                  <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                  <span class="truncate">${guia.ciudad_destino}${guia.direccion_referencia ? ' &bull; ' + guia.direccion_referencia : ''}</span>
-                </div>
-                ${guia.hora_disponible ? `
-                  <p class="text-[10px] text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded-md inline-block">
-                    Horario: Hasta las ${guia.hora_disponible}
-                  </p>
-                ` : ''}
-              </div>
-
-              <!-- Botones de Acción (Navegación, WhatsApp y Confirmación) -->
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1 border-t border-slate-100">
-                <!-- WhatsApp -->
-                <a 
-                  href="${linkWhatsApp}" 
-                  target="_blank" 
-                  class="tap-active p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-center font-bold text-[11px] flex items-center justify-center gap-1 transition-colors"
-                >
-                  <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.961.947 3.224.947 3.182 0 5.768-2.586 5.768-5.766 0-3.18-2.586-5.766-5.766-5.766zm9.969 5.828c0 5.518-4.482 10-10 10-1.748 0-3.385-.45-4.818-1.237l-5.182 1.409 1.433-5.068c-.89-1.488-1.433-3.232-1.433-5.104 0-5.518 4.482-10 10-10s10 4.482 10 10z"/></svg>
-                  <span>WhatsApp</span>
-                </a>
-
-                <!-- Google Maps -->
-                <a 
-                  href="${gmapsUrl}" 
-                  target="_blank" 
-                  class="tap-active p-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-center font-bold text-[11px] flex items-center justify-center gap-1 transition-colors"
-                >
-                  <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
-                  <span>Google Maps</span>
-                </a>
-
-                <!-- Waze -->
-                <a 
-                  href="${wazeUrl}" 
-                  target="_blank" 
-                  class="tap-active p-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-center font-bold text-[11px] flex items-center justify-center gap-1 transition-colors"
-                >
-                  <svg class="w-3.5 h-3.5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                  <span>Waze</span>
-                </a>
-
-                <!-- Botón de Estado / Entrega -->
-                ${isPending ? `
-                  <button 
-                    type="button" 
-                    onclick="window.openDeliveryModal('${guia.id_guia}', '${guia.destinatario.replace(/'/g, "\\'")}', '${(guia.direccion_referencia || '').replace(/'/g, "\\'")}', ${stopNum})" 
-                    class="tap-active p-2 rounded-xl bg-slate-900 hover:bg-black text-white text-center font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-xs"
-                  >
-                    <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                    <span>Entregar</span>
-                  </button>
-                ` : isDelivered && guia.comprobante_url ? `
-                  <button 
-                    type="button" 
-                    onclick="window.openLightbox('${guia.comprobante_url}', 'Guía #${guia.id_guia}', '${guia.destinatario.replace(/'/g, "\\'")}', '${guia.id_guia}')" 
-                    class="tap-active p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-center font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer"
-                  >
-                    <svg class="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                    <span>Comprobante</span>
-                  </button>
-                ` : `
-                  <button 
-                    type="button" 
-                    onclick="window.openDeliveryModal('${guia.id_guia}', '${guia.destinatario.replace(/'/g, "\\'")}', '${(guia.direccion_referencia || '').replace(/'/g, "\\'")}', ${stopNum})" 
-                    class="tap-active p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-center font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer"
-                  >
-                    <span>Actualizar</span>
-                  </button>
-                `}
-              </div>
-            </div>
-          `;
+          return '<div class="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm space-y-3 transition-all ' + (isDelivered ? 'opacity-75 bg-slate-50/50' : '') + '">' +
+            '<div class="flex items-center justify-between border-b border-slate-100 pb-2.5">' +
+              '<div class="flex items-center gap-2">' +
+                '<div class="w-7 h-7 rounded-xl ' + (isDelivered ? 'bg-emerald-600' : isIncident ? 'bg-rose-600' : 'bg-slate-900') + ' text-white flex items-center justify-center font-extrabold text-xs shrink-0 shadow-xs">' +
+                  '#' + stopNum +
+                '</div>' +
+                '<div>' +
+                  '<span class="font-mono font-bold text-xs text-slate-900">Guía #' + guia.id_guia + '</span>' +
+                  '<span class="text-[10px] text-slate-400 font-medium ml-1">&bull; ' + (guia.piezas || 1) + ' pza(s)</span>' +
+                '</div>' +
+              '</div>' +
+              badgeStatusHtml +
+            '</div>' +
+            '<div class="space-y-1 text-xs">' +
+              '<p class="font-bold text-slate-900 text-sm leading-snug">' + guia.destinatario + '</p>' +
+              '<div class="flex items-center gap-1.5 text-slate-500 font-medium">' +
+                '<svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
+                '<span class="truncate">' + guia.ciudad_destino + (guia.direccion_referencia ? ' &bull; ' + guia.direccion_referencia : '') + '</span>' +
+              '</div>' +
+              (guia.hora_disponible ? '<p class="text-[10px] text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded-md inline-block">Horario: Hasta las ' + guia.hora_disponible + '</p>' : '') +
+            '</div>' +
+            '<div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1 border-t border-slate-100">' +
+              '<a href="' + linkWhatsApp + '" target="_blank" class="tap-active p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-center font-bold text-[11px] flex items-center justify-center gap-1 transition-colors">' +
+                '<svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.961.947 3.224.947 3.182 0 5.768-2.586 5.768-5.766 0-3.18-2.586-5.766-5.766-5.766zm9.969 5.828c0 5.518-4.482 10-10 10-1.748 0-3.385-.45-4.818-1.237l-5.182 1.409 1.433-5.068c-.89-1.488-1.433-3.232-1.433-5.104 0-5.518 4.482-10 10-10s10 4.482 10 10z"/></svg>' +
+                '<span>WhatsApp</span>' +
+              '</a>' +
+              '<a href="' + gmapsUrl + '" target="_blank" class="tap-active p-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-center font-bold text-[11px] flex items-center justify-center gap-1 transition-colors">' +
+                '<svg class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>' +
+                '<span>Google Maps</span>' +
+              '</a>' +
+              '<a href="' + wazeUrl + '" target="_blank" class="tap-active p-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-center font-bold text-[11px] flex items-center justify-center gap-1 transition-colors">' +
+                '<svg class="w-3.5 h-3.5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>' +
+                '<span>Waze</span>' +
+              '</a>' +
+              (isPending ?
+                '<button type="button" onclick="window.openDeliveryModal(\'' + guia.id_guia + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ')" class="tap-active p-2 rounded-xl bg-slate-900 hover:bg-black text-white text-center font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-xs">' +
+                  '<svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>' +
+                  '<span>Entregar</span>' +
+                '</button>' : (isDelivered && guia.comprobante_url ?
+                '<button type="button" onclick="window.openLightbox(\'' + guia.comprobante_url + '\', \'Guía #' + guia.id_guia + '\', \'' + destEscaped + '\', \'' + guia.id_guia + '\')" class="tap-active p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-center font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer">' +
+                  '<svg class="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>' +
+                  '<span>Comprobante</span>' +
+                '</button>' :
+                '<button type="button" onclick="window.openDeliveryModal(\'' + guia.id_guia + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ')" class="tap-active p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-center font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer">' +
+                  '<span>Actualizar</span>' +
+                '</button>'
+              )) +
+            '</div>' +
+          '</div>';
         }).join('');
       }
 
       function updateTabsUI() {
-        const tabs = [
+        var tabs = [
           { id: 'tab-pendientes', key: 'pendientes' },
           { id: 'tab-entregados', key: 'entregados' },
           { id: 'tab-no-entregados', key: 'no_entregados' },
           { id: 'tab-todos', key: 'todos' }
         ];
 
-        tabs.forEach(t => {
-          const btn = document.getElementById(t.id);
+        tabs.forEach(function(t) {
+          var btn = document.getElementById(t.id);
           if (!btn) return;
           if (activeTab === t.key) {
             btn.className = 'py-2 text-[11px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 bg-white text-slate-900 shadow-xs cursor-pointer';
@@ -1700,18 +1673,18 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         });
       }
 
-      tabPendientes?.addEventListener('click', () => { activeTab = 'pendientes'; updateTabsUI(); renderCards(); });
-      tabEntregados?.addEventListener('click', () => { activeTab = 'entregados'; updateTabsUI(); renderCards(); });
-      tabNoEntregados?.addEventListener('click', () => { activeTab = 'no_entregados'; updateTabsUI(); renderCards(); });
-      tabTodos?.addEventListener('click', () => { activeTab = 'todos'; updateTabsUI(); renderCards(); });
+      if (tabPendientes) tabPendientes.addEventListener('click', function() { activeTab = 'pendientes'; updateTabsUI(); renderCards(); });
+      if (tabEntregados) tabEntregados.addEventListener('click', function() { activeTab = 'entregados'; updateTabsUI(); renderCards(); });
+      if (tabNoEntregados) tabNoEntregados.addEventListener('click', function() { activeTab = 'no_entregados'; updateTabsUI(); renderCards(); });
+      if (tabTodos) tabTodos.addEventListener('click', function() { activeTab = 'todos'; updateTabsUI(); renderCards(); });
 
-      searchInput?.addEventListener('input', (e) => {
-        searchQuery = (e.target).value;
+      if (searchInput) searchInput.addEventListener('input', function(e) {
+        searchQuery = e.target.value;
         renderCards();
       });
 
-      cityFilter?.addEventListener('change', (e) => {
-        selectedCity = (e.target).value;
+      if (cityFilter) cityFilter.addEventListener('change', function(e) {
+        selectedCity = e.target.value;
         renderCards();
       });
 
@@ -1719,7 +1692,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       function initMap() {
         try {
           if (typeof L === 'undefined') return;
-          const mapContainer = document.getElementById('route-map');
+          var mapContainer = document.getElementById('route-map');
           if (!mapContainer || map) return;
 
           map = L.map('route-map', { zoomControl: true, attributionControl: false }).setView([10.0808, -69.3756], 12);
@@ -1739,25 +1712,23 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         if (!map || !markersLayer || typeof L === 'undefined') return;
         markersLayer.clearLayers();
 
-        const latLngs = [];
-        guiasData.forEach((g, idx) => {
+        var latLngs = [];
+        guiasData.forEach(function(g, idx) {
           if (g.gps_confirmado && g.gps_latitud && g.gps_longitud) {
-            const lat = parseFloat(g.gps_latitud);
-            const lng = parseFloat(g.gps_longitud);
+            var lat = parseFloat(g.gps_latitud);
+            var lng = parseFloat(g.gps_longitud);
             if (!isNaN(lat) && !isNaN(lng)) {
-              const stopNum = g.orden_ruta && g.orden_ruta > 0 ? g.orden_ruta : (idx + 1);
-              const isDelivered = g.estado === 'Entregado';
-              const isIncident = g.estado === 'No entregado';
-              const bgColor = isDelivered ? '#059669' : isIncident ? '#e11d48' : '#0f172a';
+              var stopNum = g.orden_ruta && g.orden_ruta > 0 ? g.orden_ruta : (idx + 1);
+              var isDelivered = g.estado === 'Entregado';
+              var isIncident = g.estado === 'No entregado';
+              var bgColor = isDelivered ? '#059669' : isIncident ? '#e11d48' : '#0f172a';
 
-              const iconHtml = `
-                <div style="background:${bgColor};width:28px;height:28px;border-radius:50%;border:2px solid white;color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;box-shadow:0 2px 6px rgba(0,0,0,0.3);">
-                  ${stopNum}
-                </div>
-              `;
-              const icon = L.divIcon({ html: iconHtml, className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
-              const marker = L.marker([lat, lng], { icon }).addTo(markersLayer);
-              marker.bindPopup(`<b>Parada #${stopNum}</b><br/>Guía #${g.id_guia}<br/>${g.destinatario}`);
+              var iconHtml = '<div style="background:' + bgColor + ';width:28px;height:28px;border-radius:50%;border:2px solid white;color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;box-shadow:0 2px 6px rgba(0,0,0,0.3);">' +
+                  stopNum +
+                '</div>';
+              var icon = L.divIcon({ html: iconHtml, className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+              var marker = L.marker([lat, lng], { icon: icon }).addTo(markersLayer);
+              marker.bindPopup('<b>Parada #' + stopNum + '</b><br/>Guía #' + g.id_guia + '<br/>' + g.destinatario);
               latLngs.push([lat, lng]);
             }
           }
@@ -1778,38 +1749,42 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       }
 
       // Toggle Mapa
-      const toggleMapBtn = document.getElementById('toggle-map-btn');
-      const toggleMapText = document.getElementById('toggle-map-text');
-      const mapWrapper = document.getElementById('map-wrapper');
-      const recenterMapBtn = document.getElementById('recenter-map-btn');
+      var toggleMapBtn = document.getElementById('toggle-map-btn');
+      var toggleMapText = document.getElementById('toggle-map-text');
+      var mapWrapper = document.getElementById('map-wrapper');
+      var recenterMapBtn = document.getElementById('recenter-map-btn');
 
-      toggleMapBtn?.addEventListener('click', () => {
-        isMapVisible = !isMapVisible;
-        if (isMapVisible) {
-          mapWrapper?.classList.remove('hidden');
-          if (toggleMapText) toggleMapText.textContent = 'Ocultar Mapa';
-          setTimeout(() => { if (map) map.invalidateSize(); }, 150);
-        } else {
-          mapWrapper?.classList.add('hidden');
-          if (toggleMapText) toggleMapText.textContent = 'Ver Mapa';
-        }
-      });
+      if (toggleMapBtn) {
+        toggleMapBtn.addEventListener('click', function() {
+          isMapVisible = !isMapVisible;
+          if (isMapVisible) {
+            if (mapWrapper) mapWrapper.classList.remove('hidden');
+            if (toggleMapText) toggleMapText.textContent = 'Ocultar Mapa';
+            setTimeout(function() { if (map) map.invalidateSize(); }, 150);
+          } else {
+            if (mapWrapper) mapWrapper.classList.add('hidden');
+            if (toggleMapText) toggleMapText.textContent = 'Ver Mapa';
+          }
+        });
+      }
 
-      recenterMapBtn?.addEventListener('click', () => {
-        updateMapMarkers();
-      });
+      if (recenterMapBtn) {
+        recenterMapBtn.addEventListener('click', function() {
+          updateMapMarkers();
+        });
+      }
 
       // ====================================================
       // MÓDULO 4: LIGHTBOX
       // ====================================================
-      const lightboxModal = document.getElementById('lightbox-modal');
-      const lightboxImg = document.getElementById('lightbox-img') as HTMLImageElement;
-      const lightboxTitle = document.getElementById('lightbox-title');
-      const lightboxInfo = document.getElementById('lightbox-info');
-      const lightboxCloseBtn = document.getElementById('lightbox-close-btn');
-      const lightboxDeleteBtn = document.getElementById('lightbox-delete-btn') as HTMLButtonElement;
+      var lightboxModal = document.getElementById('lightbox-modal');
+      var lightboxImg = document.getElementById('lightbox-img');
+      var lightboxTitle = document.getElementById('lightbox-title');
+      var lightboxInfo = document.getElementById('lightbox-info');
+      var lightboxCloseBtn = document.getElementById('lightbox-close-btn');
+      var lightboxDeleteBtn = document.getElementById('lightbox-delete-btn');
 
-      let currentChoferLightboxGuiaId: string | null = null;
+      var currentChoferLightboxGuiaId = null;
 
       window.openLightbox = function(url, title, info, guiaId) {
         if (!lightboxModal || !lightboxImg) return;
@@ -1832,80 +1807,86 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         lightboxModal.classList.add('flex');
       };
 
-      lightboxDeleteBtn?.addEventListener('click', async () => {
-        if (!currentChoferLightboxGuiaId) return;
+      if (lightboxDeleteBtn) {
+        lightboxDeleteBtn.addEventListener('click', async function() {
+          if (!currentChoferLightboxGuiaId) return;
 
-        if (!confirm(`¿Estás seguro de eliminar la foto de comprobante de la guía #${currentChoferLightboxGuiaId}?`)) {
-          return;
-        }
-
-        const origText = lightboxDeleteBtn.innerHTML;
-        lightboxDeleteBtn.disabled = true;
-        lightboxDeleteBtn.innerHTML = `<span>Borrando...</span>`;
-
-        try {
-          const res = await fetch(`/api/guias/${currentChoferLightboxGuiaId}/foto`, { method: 'DELETE' });
-          const data = await res.json();
-
-          if (res.ok && data.success) {
-            showToast('Foto eliminada correctamente', 'success');
-            const targetId = currentChoferLightboxGuiaId;
-            const item = guiasData.find((g: any) => g.id_guia === targetId);
-            if (item) {
-              item.comprobante_url = null;
-              item.comprobante_base64 = null;
-              item.recibido_por = null;
-            }
-            renderGuias();
-            closeLightbox();
-          } else {
-            showToast(data.message || 'Error al eliminar foto', 'error');
+          if (!confirm('¿Estás seguro de eliminar la foto de comprobante de la guía #' + currentChoferLightboxGuiaId + '?')) {
+            return;
           }
-        } catch(e) {
-          showToast('Error de conexión', 'error');
-        } finally {
-          lightboxDeleteBtn.disabled = false;
-          lightboxDeleteBtn.innerHTML = origText;
-        }
-      });
+
+          var origText = lightboxDeleteBtn.innerHTML;
+          lightboxDeleteBtn.disabled = true;
+          lightboxDeleteBtn.innerHTML = '<span>Borrando...</span>';
+
+          try {
+            var res = await fetch('/api/guias/' + currentChoferLightboxGuiaId + '/foto', { method: 'DELETE' });
+            var data = await res.json().catch(function() { return { success: false, message: 'Error de respuesta' }; });
+
+            if (res.ok && data.success) {
+              showToast('Foto eliminada correctamente', 'success');
+              var targetId = currentChoferLightboxGuiaId;
+              var item = guiasData.find(function(g) { return g.id_guia === targetId; });
+              if (item) {
+                item.comprobante_url = null;
+                item.comprobante_base64 = null;
+                item.recibido_por = null;
+              }
+              renderCards();
+              closeLightbox();
+            } else {
+              showToast(data.message || 'Error al eliminar foto', 'error');
+            }
+          } catch(e) {
+            showToast('Error de conexión', 'error');
+          } finally {
+            lightboxDeleteBtn.disabled = false;
+            lightboxDeleteBtn.innerHTML = origText;
+          }
+        });
+      }
 
       function closeLightbox() {
-        lightboxModal?.classList.add('hidden');
-        lightboxModal?.classList.remove('flex');
+        if (lightboxModal) {
+          lightboxModal.classList.add('hidden');
+          lightboxModal.classList.remove('flex');
+        }
         if (lightboxImg) lightboxImg.src = '';
         currentChoferLightboxGuiaId = null;
       }
 
-      lightboxCloseBtn?.addEventListener('click', closeLightbox);
-      lightboxModal?.addEventListener('click', (e) => {
-        if (e.target === lightboxModal) closeLightbox();
-      });
+      if (lightboxCloseBtn) lightboxCloseBtn.addEventListener('click', closeLightbox);
+      if (lightboxModal) {
+        lightboxModal.addEventListener('click', function(e) {
+          if (e.target === lightboxModal) closeLightbox();
+        });
+      }
 
       // ====================================================
       // MÓDULO 5: LIVE SYNC SILENCIOSO (4.5s)
       // ====================================================
-      const refreshBtn = document.getElementById('refresh-btn');
-      const refreshIcon = document.getElementById('refresh-icon');
+      var refreshBtn = document.getElementById('refresh-btn');
+      var refreshIcon = document.getElementById('refresh-icon');
 
-      async function syncGuias(showToastNotification = false) {
+      async function syncGuias(showToastNotification) {
         if (isUploadingScans) return;
         if (refreshIcon) refreshIcon.classList.add('animate-spin');
         try {
-          const res = await fetch('/api/chofer/guias');
+          var res = await fetch('/api/chofer/guias');
           if (!res.ok) return;
-          const json = await res.json();
+          var json = await res.json();
           if (json.success && Array.isArray(json.data)) {
             guiasData = json.data;
 
-            const noRoutesContainer = document.getElementById('no-routes-container');
-            const activeRoutesContainer = document.getElementById('active-routes-container');
+            var noRoutesContainer = document.getElementById('no-routes-container');
+            var activeRoutesContainer = document.getElementById('active-routes-container');
 
             if (guiasData.length === 0) {
-              noRoutesContainer?.classList.remove('hidden');
-              activeRoutesContainer?.classList.add('hidden');
+              if (noRoutesContainer) noRoutesContainer.classList.remove('hidden');
+              if (activeRoutesContainer) activeRoutesContainer.classList.add('hidden');
             } else {
-              noRoutesContainer?.classList.add('hidden');
-              activeRoutesContainer?.classList.remove('hidden');
+              if (noRoutesContainer) noRoutesContainer.classList.add('hidden');
+              if (activeRoutesContainer) activeRoutesContainer.classList.remove('hidden');
             }
 
             renderCards();
@@ -1927,47 +1908,45 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       // LISTÍN DE DESPACHO OFICIAL PARA IMPRESIÓN DEL CHOFER
       // ----------------------------------------------------
       function renderChoferListinTable() {
-        const tbody = document.getElementById('chofer-listin-tbody');
-        const totalGuiasEl = document.getElementById('chofer-listin-total-guias');
-        const totalPiezasEl = document.getElementById('chofer-listin-total-piezas');
-        const totalDestinosEl = document.getElementById('chofer-listin-total-destinos');
+        var tbody = document.getElementById('chofer-listin-tbody');
+        var totalGuiasEl = document.getElementById('chofer-listin-total-guias');
+        var totalPiezasEl = document.getElementById('chofer-listin-total-piezas');
+        var totalDestinosEl = document.getElementById('chofer-listin-total-destinos');
 
-        const activeGuias = (guiasData || []).slice().sort((a, b) => {
+        var activeGuias = (guiasData || []).slice().sort(function(a, b) {
           if (a.orden_ruta && b.orden_ruta) return a.orden_ruta - b.orden_ruta;
           if (a.orden_ruta) return -1;
           if (b.orden_ruta) return 1;
           return (a.ciudad_destino || '').localeCompare(b.ciudad_destino || '');
         });
 
-        const uniqueCities = Array.from(new Set(activeGuias.map(g => (g.ciudad_destino || '').trim()).filter(Boolean)));
-        const totalGuias = activeGuias.length;
-        const totalPiezas = activeGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+        var uniqueCities = Array.from(new Set(activeGuias.map(function(g) { return (g.ciudad_destino || '').trim(); }).filter(Boolean)));
+        var totalGuias = activeGuias.length;
+        var totalPiezas = activeGuias.reduce(function(acc, g) { return acc + (g.piezas || 1); }, 0);
 
         if (totalGuiasEl) totalGuiasEl.textContent = totalGuias.toString();
         if (totalPiezasEl) totalPiezasEl.textContent = totalPiezas.toString();
         if (totalDestinosEl) totalDestinosEl.textContent = uniqueCities.length.toString();
 
-        const rowCount = Math.max(Math.ceil(activeGuias.length / 2), 20);
-        const leftGuias = activeGuias.slice(0, rowCount);
-        const rightGuias = activeGuias.slice(rowCount, rowCount * 2);
+        var rowCount = Math.max(Math.ceil(activeGuias.length / 2), 20);
+        var leftGuias = activeGuias.slice(0, rowCount);
+        var rightGuias = activeGuias.slice(rowCount, rowCount * 2);
 
-        let html = '';
-        for (let i = 0; i < rowCount; i++) {
-          const left = leftGuias[i];
-          const right = rightGuias[i];
+        var html = '';
+        for (var i = 0; i < rowCount; i++) {
+          var left = leftGuias[i];
+          var right = rightGuias[i];
 
-          html += `
-            <tr class="h-6 border-b border-black/30 text-black">
-              <!-- Bloque Izquierdo -->
-              <td class="py-1 px-1.5 border-r border-black font-mono font-bold text-center">${left ? left.id_guia : ''}</td>
-              <td class="py-1 px-1 border-r border-black text-center font-bold">${left ? (left.piezas || 1) : ''}</td>
-              <td class="py-1 px-2 border-r-2 border-black font-bold uppercase truncate max-w-[140px]">${left ? left.ciudad_destino : ''}</td>
-              <!-- Bloque Derecho -->
-              <td class="py-1 px-1.5 border-r border-black font-mono font-bold text-center">${right ? right.id_guia : ''}</td>
-              <td class="py-1 px-1 border-r border-black text-center font-bold">${right ? (right.piezas || 1) : ''}</td>
-              <td class="py-1 px-2 font-bold uppercase truncate max-w-[140px]">${right ? right.ciudad_destino : ''}</td>
-            </tr>
-          `;
+          html += '<tr class="h-6 border-b border-black/30 text-black">' +
+              '<!-- Bloque Izquierdo -->' +
+              '<td class="py-1 px-1.5 border-r border-black font-mono font-bold text-center">' + (left ? left.id_guia : '') + '</td>' +
+              '<td class="py-1 px-1 border-r border-black text-center font-bold">' + (left ? (left.piezas || 1) : '') + '</td>' +
+              '<td class="py-1 px-2 border-r-2 border-black font-bold uppercase truncate max-w-[140px]">' + (left ? left.ciudad_destino : '') + '</td>' +
+              '<!-- Bloque Derecho -->' +
+              '<td class="py-1 px-1.5 border-r border-black font-mono font-bold text-center">' + (right ? right.id_guia : '') + '</td>' +
+              '<td class="py-1 px-1 border-r border-black text-center font-bold">' + (right ? (right.piezas || 1) : '') + '</td>' +
+              '<td class="py-1 px-2 font-bold uppercase truncate max-w-[140px]">' + (right ? right.ciudad_destino : '') + '</td>' +
+            '</tr>';
         }
 
         if (tbody) {
@@ -1975,32 +1954,32 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         }
       }
 
-      window.openChoferListinModal = () => {
+      window.openChoferListinModal = function() {
         renderChoferListinTable();
-        const modal = document.getElementById('chofer-listin-modal');
+        var modal = document.getElementById('chofer-listin-modal');
         if (modal) {
           modal.classList.remove('hidden');
           modal.classList.add('flex');
         }
       };
 
-      window.closeChoferListinModal = () => {
-        const modal = document.getElementById('chofer-listin-modal');
+      window.closeChoferListinModal = function() {
+        var modal = document.getElementById('chofer-listin-modal');
         if (modal) {
           modal.classList.add('hidden');
           modal.classList.remove('flex');
         }
       };
 
-      refreshBtn?.addEventListener('click', () => syncGuias(true));
+      if (refreshBtn) refreshBtn.addEventListener('click', function() { syncGuias(true); });
 
       // Polling de 4.5s
-      setInterval(() => {
+      setInterval(function() {
         syncGuias(false);
       }, 4500);
 
       // Inicialización en arranque
-      document.addEventListener('DOMContentLoaded', () => {
+      document.addEventListener('DOMContentLoaded', function() {
         renderCards();
         initMap();
       });

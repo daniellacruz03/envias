@@ -52,26 +52,28 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // Procesar foto si fue adjuntada
     if (foto && foto instanceof File && foto.size > 0) {
-      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'comprobantes');
-      await fs.mkdir(uploadDir, { recursive: true });
-
-      const distUploadDir = path.join(process.cwd(), 'dist', 'client', 'uploads', 'comprobantes');
-      try { await fs.mkdir(distUploadDir, { recursive: true }); } catch {}
-
       const extension = foto.type.includes('png') ? 'png' : (foto.type.includes('webp') ? 'webp' : 'jpg');
       const cleanId = id_guia.replace(/[^A-Z0-9_-]/gi, '');
       const fileName = `comprobante_${cleanId}_${Date.now()}.${extension}`;
-      const filePath = path.join(uploadDir, fileName);
+      publicUrl = `/uploads/comprobantes/${fileName}`;
 
       const arrayBuffer = await foto.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
-
-      await fs.writeFile(filePath, buffer);
-      try { await fs.writeFile(path.join(distUploadDir, fileName), buffer); } catch {}
-
-      publicUrl = `/uploads/comprobantes/${fileName}`;
       const mimeType = extension === 'png' ? 'image/png' : (extension === 'webp' ? 'image/webp' : 'image/jpeg');
       comprobanteBase64 = `data:${mimeType};base64,${buffer.toString('base64')}`;
+
+      try {
+        const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'comprobantes');
+        await fs.mkdir(uploadDir, { recursive: true });
+        const filePath = path.join(uploadDir, fileName);
+        await fs.writeFile(filePath, buffer);
+
+        const distUploadDir = path.join(process.cwd(), 'dist', 'client', 'uploads', 'comprobantes');
+        await fs.mkdir(distUploadDir, { recursive: true });
+        await fs.writeFile(path.join(distUploadDir, fileName), buffer);
+      } catch (fsErr) {
+        console.warn('[FS Warning]: Usando base64 en PostgreSQL para comprobante.', fsErr);
+      }
     }
 
     let nuevoEstado = 'Entregado';
