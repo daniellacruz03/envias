@@ -5607,26 +5607,22 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         renderListinView();
       });
 
-      // Enviar Listín Oficial al Chofer (Guarda orden en DB y abre WhatsApp con el enlace de impresión)
+      // Enviar Listín Oficial al Chofer (Guarda la asignación y orden jerárquico directamente en su portal)
       btnListinSend?.addEventListener('click', async () => {
         const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
         const driverId = listinDriverSelect?.value;
 
         if (!driverId || driverId === 'ALL') {
-          showToast('Por favor selecciona un Chofer específico para enviarle su listín', 'info');
+          showToast('Por favor selecciona un Chofer específico para despachar y enviarle su listín', 'info');
           listinDriverSelect?.focus();
           return;
         }
 
         const driverObj = drivers.find(d => String(d.id) === String(driverId));
         const driverName = driverObj ? driverObj.nombre : (selectedDriverOption?.text || 'Chofer');
-        const driverPhone = driverObj ? driverObj.telefono : '';
-        const fecha = listinFechaInput?.value || new Date().toISOString().split('T')[0];
-        const placa = listinPlacaInput?.value?.trim()?.toUpperCase() || 'NO ASIGNADA';
 
         const srcShipments = getListinSourceShipments();
         const orderedActiveGuias: GuiaRow[] = [];
-        const citiesList: string[] = [];
 
         listinCitiesOrder.forEach(cityName => {
           if (listinExcludedCities.has(cityName)) return;
@@ -5635,7 +5631,6 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             !listinExcludedGuiaIds.has(g.id_guia)
           );
           if (cityGuias.length > 0) {
-            citiesList.push(cityName);
             orderedActiveGuias.push(...cityGuias);
           }
         });
@@ -5648,40 +5643,37 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           return;
         }
 
-        // 1. Guardar orden de ruta en base de datos para este chofer
+        const origHtml = btnListinSend.innerHTML;
+        btnListinSend.disabled = true;
+        btnListinSend.innerHTML = `
+          <svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span>Despachando al portal...</span>
+        `;
+
         try {
-          for (let i = 0; i < orderedActiveGuias.length; i++) {
-            const g = orderedActiveGuias[i];
+          // Guardar asignación y orden de ruta en base de datos para este chofer
+          const updatePromises = orderedActiveGuias.map((g, idx) => 
             fetch(`/api/guias/${g.id_guia}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ orden_ruta: i + 1, chofer_asignado_id: Number(driverId) })
-            }).catch(() => {});
-          }
-        } catch (e) {}
+              body: JSON.stringify({ orden_ruta: idx + 1, chofer_asignado_id: Number(driverId) })
+            })
+          );
 
-        // 2. Formatear mensaje oficial para WhatsApp
-        const ciudadesTexto = citiesList.join(', ');
-        const portalUrl = `https://envias-production.up.railway.app/chofer`;
-        const rawMsg = `🚚 *LISTÍN DE CARGA Y DESPACHO — ENVÍAS C.A.*\n\n` +
-          `📅 *Fecha:* ${fecha}\n` +
-          `🚛 *Placa:* ${placa}\n` +
-          `👤 *Chofer:* ${driverName}\n` +
-          `📦 *Total Guías:* ${totalGuias} (${totalPiezas} piezas/bultos)\n` +
-          `📍 *Zonas en ruta:* ${ciudadesTexto}\n\n` +
-          `🖨️ *Tu Listín oficial ya está listo en tu portal de chofer para imprimir y revisar:* \n${portalUrl}`;
+          await Promise.all(updatePromises);
 
-        showToast(`Listín generado y enviado al Chofer ${driverName}`, 'success');
-
-        let cleanPhone = (driverPhone || '').replace(/\D/g, '');
-        if (cleanPhone.startsWith('04')) cleanPhone = '58' + cleanPhone.slice(1);
-        else if (cleanPhone.startsWith('4') && cleanPhone.length === 10) cleanPhone = '58' + cleanPhone;
-
-        const waUrl = cleanPhone 
-          ? `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(rawMsg)}`
-          : `https://api.whatsapp.com/send?text=${encodeURIComponent(rawMsg)}`;
-
-        window.open(waUrl, '_blank');
+          showToast(`¡Listín enviado al portal de ${driverName}! Ya puede imprimir su hoja de carga.`, 'success');
+          silentRefresh();
+        } catch (e) {
+          console.error('Error al despachar listín:', e);
+          showToast('Error al enviar el listín al chofer. Intenta nuevamente.', 'error');
+        } finally {
+          btnListinSend.disabled = false;
+          btnListinSend.innerHTML = origHtml;
+        }
       });
 
       // Generar y Descargar PDF con html2pdf
