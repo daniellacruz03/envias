@@ -2961,6 +2961,38 @@ const userInitials = currentUser.nombre
           }
         }
 
+        (window as any).deleteEscaneoLote = async (loteId: string) => {
+          if (!confirm(`¿Estás seguro de eliminar este lote y todas sus fotos asociadas?`)) return;
+          try {
+            const res = await fetch(`/api/escaneos?lote_id=${encodeURIComponent(loteId)}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (res.ok && data.success) {
+              showToast('Lote de escaneos eliminado correctamente', 'success');
+              loadAndRenderEscaneos();
+            } else {
+              showToast(data.message || 'Error al eliminar lote', 'error');
+            }
+          } catch (e) {
+            showToast('Error de conexión al eliminar lote', 'error');
+          }
+        };
+
+        (window as any).deleteIndividualEscaneo = async (fotoId: number) => {
+          if (!confirm('¿Estás seguro de eliminar esta foto de escaneo?')) return;
+          try {
+            const res = await fetch(`/api/escaneos/${fotoId}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (res.ok && data.success) {
+              showToast('Foto eliminada correctamente', 'success');
+              loadAndRenderEscaneos();
+            } else {
+              showToast(data.message || 'Error al eliminar foto', 'error');
+            }
+          } catch (e) {
+            showToast('Error de conexión al eliminar foto', 'error');
+          }
+        };
+
         function renderEscaneoLote(lote: any): string {
           const fecha = new Date(lote.created_at).toLocaleDateString('es-VE', {
             day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
@@ -2983,6 +3015,17 @@ const userInitials = currentUser.nombre
                 <div class="flex items-center gap-2">
                   ${lote.pendientes > 0 ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">${lote.pendientes} pendientes</span>` : ''}
                   ${lote.procesadas > 0 ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">${lote.procesadas} procesadas</span>` : ''}
+                  ${lote.rechazadas > 0 ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-800 border border-rose-200">${lote.rechazadas} rechazadas</span>` : ''}
+                  <button
+                    type="button"
+                    onclick="window.deleteEscaneoLote('${lote.lote_id}')"
+                    class="p-1.5 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                    title="Eliminar este lote y todas sus fotos"
+                  >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
                 </div>
               </div>
               <!-- Barra de progreso del lote -->
@@ -2999,14 +3042,24 @@ const userInitials = currentUser.nombre
               <div class="p-3 grid grid-cols-4 sm:grid-cols-6 gap-2">
                 ${(lote.fotos || []).map((foto: any) => `
                   <div
-                    class="relative aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-all hover:scale-105 ${foto.estado === 'pendiente' ? 'border-amber-300 hover:border-amber-500' : foto.estado === 'procesado' ? 'border-emerald-400' : 'border-rose-300 opacity-60'}"
-                    ${foto.estado === 'pendiente' ? `onclick="window.openEscaneoDrawer(${foto.id})"` : ''}
-                    title="${foto.estado === 'pendiente' ? 'Clic para revisar' : foto.estado === 'procesado' ? 'Ya procesada' : 'Rechazada'}"
+                    class="group relative aspect-square rounded-xl overflow-hidden border-2 cursor-pointer transition-all hover:scale-105 ${foto.estado === 'pendiente' ? 'border-amber-300 hover:border-amber-500 shadow-sm' : foto.estado === 'procesado' ? 'border-emerald-400' : 'border-rose-300 opacity-75 hover:opacity-100'}"
+                    onclick="${foto.estado === 'pendiente' ? `window.openEscaneoDrawer(${foto.id})` : `window.openLightbox('${foto.foto_url}', 'Escaneo #${foto.id}', 'Estado: ${foto.estado} • Chofer: ${(lote.chofer_nombre || 'Chofer').replace(/'/g, "\\'")}', '${foto.id}', 'escaneo')`}"
+                    title="${foto.estado === 'pendiente' ? 'Clic para revisar' : 'Clic para ampliar o eliminar'}"
                   >
                     <img src="${foto.foto_url}" class="w-full h-full object-cover" loading="lazy" />
                     <div class="absolute bottom-0 inset-x-0 py-0.5 text-center text-[8px] font-bold ${foto.estado === 'pendiente' ? 'bg-amber-400/80 text-white' : foto.estado === 'procesado' ? 'bg-emerald-500/80 text-white' : 'bg-rose-400/80 text-white'}">
                       ${foto.estado === 'pendiente' ? 'REV.' : foto.estado === 'procesado' ? 'OK' : 'NO'}
                     </div>
+                    <button
+                      type="button"
+                      onclick="event.stopPropagation(); window.deleteIndividualEscaneo(${foto.id});"
+                      class="absolute top-1 right-1 z-10 w-5 h-5 rounded-md bg-slate-900/80 hover:bg-rose-600 text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 shadow-sm cursor-pointer"
+                      title="Eliminar esta foto"
+                    >
+                      <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   </div>
                 `).join('')}
               </div>

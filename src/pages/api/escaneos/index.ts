@@ -144,3 +144,49 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     });
   }
 };
+
+// DELETE /api/escaneos — Elimina escaneos por lote_id
+export const DELETE: APIRoute = async ({ request, cookies }) => {
+  try {
+    const user = getUserFromCookies(cookies);
+    if (!user) {
+      return new Response(JSON.stringify({ success: false, message: 'No autenticado.' }), {
+        status: 401, headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    if (user.rol !== 'Logistica' && user.rol !== 'Admin') {
+      return new Response(JSON.stringify({ success: false, message: 'Acceso denegado.' }), {
+        status: 403, headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const url = new URL(request.url);
+    const loteId = url.searchParams.get('lote_id');
+
+    if (!loteId) {
+      return new Response(JSON.stringify({ success: false, message: 'Parámetro lote_id requerido.' }), {
+        status: 400, headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const escaneos = await query(`SELECT foto_url FROM guias_escaneos WHERE lote_id = $1`, [loteId]);
+    for (const row of escaneos.rows) {
+      if (row.foto_url && row.foto_url.startsWith('/uploads/')) {
+        const relPath = row.foto_url.replace(/^\/uploads\//, '');
+        const p = path.join(process.cwd(), 'public', 'uploads', relPath);
+        try { await fs.unlink(p); } catch(e) {}
+      }
+    }
+
+    await query(`DELETE FROM guias_escaneos WHERE lote_id = $1`, [loteId]);
+
+    return new Response(JSON.stringify({ success: true, message: `Lote ${loteId} eliminado correctamente.` }), {
+      status: 200, headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error: any) {
+    console.error('[API DELETE /api/escaneos Error]:', error);
+    return new Response(JSON.stringify({ success: false, message: 'Error al eliminar lote.', error: error.message }), {
+      status: 500, headers: { 'Content-Type': 'application/json' }
+    });
+  }
+};
