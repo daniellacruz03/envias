@@ -241,13 +241,17 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           </p>
         </div>
 
-        <!-- Inputs de archivo off-screen nativos -->
-        <input type="file" id="hero-camera-input" accept="image/*" capture="environment" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;" />
-        <input type="file" id="hero-gallery-input" accept="image/*" multiple style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;" />
+        <!-- Inputs de archivo ocultos nativos -->
+        <input type="file" id="hero-camera-input" accept="image/*" capture="environment" class="hidden" />
+        <input type="file" id="hero-gallery-input" accept="image/*" multiple class="hidden" />
 
         <!-- Botones de Captura Directa -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-          <label for="hero-camera-input" class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 shadow-sm transition-all cursor-pointer text-center select-none block">
+          <button
+            type="button"
+            onclick="document.getElementById('hero-camera-input').click()"
+            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 shadow-sm transition-all cursor-pointer text-center select-none"
+          >
             <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
@@ -258,9 +262,13 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               <p class="text-xs font-bold">Tomar Foto con Cámara</p>
               <p class="text-[10px] text-slate-300">Disparo 1 a 1</p>
             </div>
-          </label>
+          </button>
 
-          <label for="hero-gallery-input" class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer text-center select-none block">
+          <button
+            type="button"
+            onclick="document.getElementById('hero-gallery-input').click()"
+            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer text-center select-none"
+          >
             <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -270,7 +278,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               <p class="text-xs font-bold">Elegir de Galería</p>
               <p class="text-[10px] text-slate-500">Seleccionar varias fotos</p>
             </div>
-          </label>
+          </button>
         </div>
 
         <!-- Barra de Progreso y Miniaturas de Subida en Vivo (Hero) -->
@@ -529,12 +537,16 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           </button>
         </div>
 
-        <!-- Inputs off-screen para el modal -->
-        <input type="file" id="modal-scan-camera-input" accept="image/*" capture="environment" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;" />
-        <input type="file" id="modal-scan-gallery-input" accept="image/*" multiple style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;" />
+        <!-- Inputs ocultos para el modal -->
+        <input type="file" id="modal-scan-camera-input" accept="image/*" capture="environment" class="hidden" />
+        <input type="file" id="modal-scan-gallery-input" accept="image/*" multiple class="hidden" />
 
         <div class="grid grid-cols-2 gap-2.5">
-          <label for="modal-scan-camera-input" class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 shadow-sm transition-all cursor-pointer text-center select-none block">
+          <button
+            type="button"
+            onclick="document.getElementById('modal-scan-camera-input').click()"
+            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 shadow-sm transition-all cursor-pointer text-center select-none"
+          >
             <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
@@ -545,9 +557,13 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               <p class="text-xs font-bold">Usar Cámara</p>
               <p class="text-[9px] text-slate-300">Foto directa</p>
             </div>
-          </label>
+          </button>
 
-          <label for="modal-scan-gallery-input" class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer text-center select-none block">
+          <button
+            type="button"
+            onclick="document.getElementById('modal-scan-gallery-input').click()"
+            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer text-center select-none"
+          >
             <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -557,7 +573,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               <p class="text-xs font-bold">Galería</p>
               <p class="text-[9px] text-slate-500">Múltiples fotos</p>
             </div>
-          </label>
+          </button>
         </div>
 
         <!-- Progreso y Galería del Modal -->
@@ -1000,24 +1016,26 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       // ====================================================
       // MOTOR DE COMPRESIÓN CANVAS HTML5 (ZERO-FAIL)
       // ====================================================
-      function compressImage(file, maxWidth = 1200, maxHeight = 1600, quality = 0.75) {
+      function compressImage(file, maxWidth = 1280, maxHeight = 1600, quality = 0.8) {
         return new Promise((resolve) => {
+          if (!file) {
+            resolve({ blob: null, dataUrl: '', sizeKb: 0 });
+            return;
+          }
           const reader = new FileReader();
           reader.onload = (e) => {
-            const dataUrlFallback = (e.target?.result || '');
+            const rawDataUrl = (e.target?.result || '');
             const img = new Image();
             img.onload = () => {
               try {
-                let width = img.width;
-                let height = img.height;
+                let width = img.naturalWidth || img.width;
+                let height = img.naturalHeight || img.height;
 
-                if (width > height) {
-                  if (width > maxWidth) {
+                if (width > maxWidth || height > maxHeight) {
+                  if (width > height) {
                     height = Math.round((height * maxWidth) / width);
                     width = maxWidth;
-                  }
-                } else {
-                  if (height > maxHeight) {
+                  } else {
                     width = Math.round((width * maxHeight) / height);
                     height = maxHeight;
                   }
@@ -1028,7 +1046,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 if (!ctx) {
-                  resolve({ blob: file, dataUrl: dataUrlFallback, sizeKb: Math.round(file.size / 1024) });
+                  resolve({ blob: file, dataUrl: rawDataUrl, sizeKb: Math.round(file.size / 1024) });
                   return;
                 }
                 ctx.drawImage(img, 0, 0, width, height);
@@ -1038,18 +1056,18 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
                   if (blob) {
                     resolve({ blob: blob, dataUrl: finalDataUrl, sizeKb: Math.round(blob.size / 1024) });
                   } else {
-                    resolve({ blob: file, dataUrl: finalDataUrl || dataUrlFallback, sizeKb: Math.round(file.size / 1024) });
+                    resolve({ blob: file, dataUrl: finalDataUrl || rawDataUrl, sizeKb: Math.round(file.size / 1024) });
                   }
                 }, 'image/jpeg', quality);
               } catch (canvasErr) {
                 console.warn('[Canvas Compress Warning]:', canvasErr);
-                resolve({ blob: file, dataUrl: dataUrlFallback, sizeKb: Math.round(file.size / 1024) });
+                resolve({ blob: file, dataUrl: rawDataUrl, sizeKb: Math.round(file.size / 1024) });
               }
             };
             img.onerror = () => {
-              resolve({ blob: file, dataUrl: dataUrlFallback, sizeKb: Math.round(file.size / 1024) });
+              resolve({ blob: file, dataUrl: rawDataUrl, sizeKb: Math.round(file.size / 1024) });
             };
-            img.src = dataUrlFallback;
+            img.src = rawDataUrl;
           };
           reader.onerror = () => {
             resolve({ blob: file, dataUrl: '', sizeKb: Math.round(file.size / 1024) });
@@ -1061,10 +1079,10 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       // ====================================================
       // MÓDULO 1: ESCÁNER Y SUBIDA DE GUÍAS FÍSICAS
       // ====================================================
-      const heroCameraInput = document.getElementById('hero-camera-input');
-      const heroGalleryInput = document.getElementById('hero-gallery-input');
-      const modalScanCameraInput = document.getElementById('modal-scan-camera-input');
-      const modalScanGalleryInput = document.getElementById('modal-scan-gallery-input');
+      const heroCameraInput = document.getElementById('hero-camera-input') as HTMLInputElement;
+      const heroGalleryInput = document.getElementById('hero-gallery-input') as HTMLInputElement;
+      const modalScanCameraInput = document.getElementById('modal-scan-camera-input') as HTMLInputElement;
+      const modalScanGalleryInput = document.getElementById('modal-scan-gallery-input') as HTMLInputElement;
       const scanModal = document.getElementById('scan-modal');
       const scanModalCloseBtn = document.getElementById('scan-modal-close-btn');
       const btnHeaderScan = document.getElementById('btn-header-scan');
@@ -1089,12 +1107,12 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       });
 
       // Manejador centralizado de archivos seleccionados
-      async function handleScanFiles(files) {
+      async function handleScanFiles(files: File[]) {
         if (!files || files.length === 0) return;
 
         const total = files.length;
         const nowScan = new Date();
-        const pad2 = (n) => n.toString().padStart(2, '0');
+        const pad2 = (n: number) => n.toString().padStart(2, '0');
         const scanLoteId = `chofer_${nowScan.getFullYear()}${pad2(nowScan.getMonth()+1)}${pad2(nowScan.getDate())}_${pad2(nowScan.getHours())}${pad2(nowScan.getMinutes())}`;
 
         const isModal = currentScanTargetMode === 'modal';
@@ -1135,7 +1153,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
 
           try {
             // Optimización con Canvas HTML5
-            const comp = await compressImage(file, 1200, 1600, 0.75);
+            const comp = await compressImage(file, 1280, 1600, 0.8);
 
             if (comp.dataUrl) {
               const imgEl = document.createElement('img');
@@ -1146,16 +1164,21 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
 
             const formData = new FormData();
             if (comp.blob) {
-              formData.append('foto', comp.blob, 'escaneo.jpg');
+              formData.append('foto', comp.blob, file.name || 'escaneo.jpg');
+            } else {
+              formData.append('foto', file, file.name || 'escaneo.jpg');
             }
-            formData.append('foto_base64', comp.dataUrl);
+            if (comp.dataUrl) {
+              formData.append('foto_base64', comp.dataUrl);
+            }
             formData.append('lote_id', scanLoteId);
 
             const res = await fetch('/api/escaneos', {
               method: 'POST',
-              body: formData
+              body: formData,
+              credentials: 'include'
             });
-            const data = await res.json().catch(() => ({ success: false, message: 'Error de red con el servidor' }));
+            const data = await res.json().catch(() => ({ success: false, message: 'Error de respuesta del servidor' }));
 
             const overlay = document.getElementById(`scan-thumb-overlay-${itemIndex}`);
             if (res.ok && data.success) {
@@ -1170,7 +1193,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               if (overlay) {
                 overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
               }
-              showToast(`HTTP ${res.status}: ${data.message || 'Error al guardar foto'}`, 'error');
+              showToast(`Error: ${data.message || 'Error al guardar foto'}`, 'error');
             }
           } catch (err) {
             console.error('Error procesando escaneo:', err);
@@ -1179,7 +1202,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             if (overlay) {
               overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
             }
-            showToast('Error al procesar la imagen', 'error');
+            showToast('Error de red al subir la foto', 'error');
           }
 
           processed++;
@@ -1195,42 +1218,25 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         }
       }
 
-      // Event listeners para los inputs de escaneo
-      heroCameraInput?.addEventListener('change', (e) => {
-        const files = e.target.files ? Array.from(e.target.files) : [];
-        if (files.length > 0) {
-          currentScanTargetMode = 'hero';
-          handleScanFiles(files);
+      // Event listeners seguros y asíncronos para los inputs de escaneo
+      async function onFileInputChange(e: Event, mode: string) {
+        const input = e.target as HTMLInputElement;
+        const files = input.files ? Array.from(input.files) : [];
+        if (files.length === 0) return;
+        currentScanTargetMode = mode;
+        try {
+          await handleScanFiles(files);
+        } catch (err) {
+          console.error('Error en onFileInputChange:', err);
+        } finally {
+          input.value = '';
         }
-        e.target.value = '';
-      });
+      }
 
-      heroGalleryInput?.addEventListener('change', (e) => {
-        const files = e.target.files ? Array.from(e.target.files) : [];
-        if (files.length > 0) {
-          currentScanTargetMode = 'hero';
-          handleScanFiles(files);
-        }
-        e.target.value = '';
-      });
-
-      modalScanCameraInput?.addEventListener('change', (e) => {
-        const files = e.target.files ? Array.from(e.target.files) : [];
-        if (files.length > 0) {
-          currentScanTargetMode = 'modal';
-          handleScanFiles(files);
-        }
-        e.target.value = '';
-      });
-
-      modalScanGalleryInput?.addEventListener('change', (e) => {
-        const files = e.target.files ? Array.from(e.target.files) : [];
-        if (files.length > 0) {
-          currentScanTargetMode = 'modal';
-          handleScanFiles(files);
-        }
-        e.target.value = '';
-      });
+      heroCameraInput?.addEventListener('change', (e) => onFileInputChange(e, 'hero'));
+      heroGalleryInput?.addEventListener('change', (e) => onFileInputChange(e, 'hero'));
+      modalScanCameraInput?.addEventListener('change', (e) => onFileInputChange(e, 'modal'));
+      modalScanGalleryInput?.addEventListener('change', (e) => onFileInputChange(e, 'modal'));
 
       // ====================================================
       // MÓDULO 2: CONFIRMACIÓN DE ENTREGA E INCIDENCIA

@@ -75,43 +75,54 @@ export const GET: APIRoute = async ({ cookies }) => {
 };
 
 // POST /api/escaneos — Recibe foto del chofer o logística
-// FormData: { foto?: File, foto_base64?: string, lote_id: string }
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     const user = getUserFromCookies(cookies);
     if (!user) {
-      return new Response(JSON.stringify({ success: false, message: 'No autenticado.' }), {
+      return new Response(JSON.stringify({ success: false, message: 'No autenticado. Por favor inicia sesión.' }), {
         status: 401, headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    const formData = await request.formData();
-    const foto = formData.get('foto') as File | null;
-    let foto_base64 = (formData.get('foto_base64') || '').toString().trim();
-    const lote_id = (formData.get('lote_id') || '').toString().trim() || `lote_${Date.now()}`;
-
+    let foto_base64 = '';
+    let lote_id = `lote_${Date.now()}`;
     let publicUrl = '';
 
-    if (foto && foto instanceof File && foto.size > 0) {
-      const extension = foto.type.includes('png') ? 'png' : (foto.type.includes('webp') ? 'webp' : 'jpg');
-      const fileName = `escaneo_${user.id}_${Date.now()}.${extension}`;
-      publicUrl = `/uploads/escaneos/${fileName}`;
+    const contentType = request.headers.get('content-type') || '';
 
-      const arrayBuffer = await foto.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-
-      if (!foto_base64) {
-        const mimeType = extension === 'png' ? 'image/png' : (extension === 'webp' ? 'image/webp' : 'image/jpeg');
-        foto_base64 = `data:${mimeType};base64,${buffer.toString('base64')}`;
+    if (contentType.includes('application/json')) {
+      const body = await request.json().catch(() => ({}));
+      foto_base64 = (body.foto_base64 || '').toString().trim();
+      if (body.lote_id) lote_id = body.lote_id.toString().trim();
+    } else {
+      const formData = await request.formData().catch(() => new FormData());
+      const foto = formData.get('foto') as File | null;
+      foto_base64 = (formData.get('foto_base64') || '').toString().trim();
+      if (formData.get('lote_id')) {
+        lote_id = (formData.get('lote_id') || '').toString().trim();
       }
 
-      // Guardado local opcional a prueba de fallos
-      try {
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'escaneos');
-        await fs.mkdir(uploadDir, { recursive: true });
-        await fs.writeFile(path.join(uploadDir, fileName), buffer);
-      } catch (fsErr) {
-        console.warn('[FS Warning]: No se pudo escribir a disco local, usando base64 en BD.', fsErr);
+      if (foto && foto instanceof File && foto.size > 0) {
+        const extension = foto.type.includes('png') ? 'png' : (foto.type.includes('webp') ? 'webp' : 'jpg');
+        const fileName = `escaneo_${user.id}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${extension}`;
+        publicUrl = `/uploads/escaneos/${fileName}`;
+
+        const arrayBuffer = await foto.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        if (!foto_base64) {
+          const mimeType = extension === 'png' ? 'image/png' : (extension === 'webp' ? 'image/webp' : 'image/jpeg');
+          foto_base64 = `data:${mimeType};base64,${buffer.toString('base64')}`;
+        }
+
+        // Guardado local opcional
+        try {
+          const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'escaneos');
+          await fs.mkdir(uploadDir, { recursive: true });
+          await fs.writeFile(path.join(uploadDir, fileName), buffer);
+        } catch (fsErr) {
+          console.warn('[FS Warning]: Usando base64 en PostgreSQL.', fsErr);
+        }
       }
     }
 
@@ -132,7 +143,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     `, [lote_id, user.id, publicUrl, foto_base64]);
 
     const escaneo = insertResult.rows[0];
-    console.log('[ESCANEO SUBIDO OK]:', { id: escaneo.id, usuario: user.nombre, lote_id });
+    console.log('[ESCANEO GUARDADO OK]:', { id: escaneo.id, chofer: user.nombre, lote_id });
 
     return new Response(JSON.stringify({ success: true, message: 'Foto de guía guardada correctamente.', data: escaneo }), {
       status: 201, headers: { 'Content-Type': 'application/json' }
