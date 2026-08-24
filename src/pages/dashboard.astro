@@ -1528,6 +1528,273 @@ const userInitials = currentUser.nombre
     </div>
 
     <!-- ========================================== -->
+    <!-- MODAL PARA EDITAR GUÍA COMPLETA           -->
+    <!-- ========================================== -->
+    <div
+      id="edit-guia-modal"
+      class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 hidden"
+    >
+      <div class="bg-white rounded-3xl shadow-2xl border border-slate-200/90 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-fadeIn">
+        
+        <!-- Header del Modal -->
+        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-bold text-slate-900">Editar Guía</h3>
+                <span id="edit-guia-badge" class="font-mono text-xs font-extrabold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">#---</span>
+              </div>
+              <p class="text-[11px] text-slate-400 font-medium">Modifica los datos del destinatario, destino, courier o estado</p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            id="edit-guia-close-btn"
+            class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer"
+            title="Cerrar ventana"
+          >
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Formulario del Modal -->
+        <form id="edit-guia-form" class="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 custom-scrollbar">
+          <input type="hidden" id="edit-id-guia" />
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            
+            <!-- Destinatario -->
+            <div class="sm:col-span-2 space-y-1">
+              <label for="edit-destinatario" class="block text-xs font-bold text-slate-700">
+                Destinatario <span class="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="edit-destinatario"
+                required
+                placeholder="Nombre y Apellido completo"
+                class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all font-medium"
+              />
+            </div>
+
+            <!-- Teléfono Principal -->
+            <div class="space-y-1">
+              <label for="edit-telefono-principal" class="block text-xs font-bold text-slate-700">
+                Teléfono Principal (WhatsApp) <span class="text-rose-500">*</span>
+              </label>
+              <input
+                type="tel"
+                id="edit-telefono-principal"
+                required
+                placeholder="Ej: 04141234567"
+                class="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+              />
+            </div>
+
+            <!-- Teléfono Secundario -->
+            <div class="space-y-1">
+              <label for="edit-telefono-secundario" class="block text-xs font-bold text-slate-700">
+                Teléfono Alternativo <span class="text-slate-400 font-normal">(Opcional)</span>
+              </label>
+              <input
+                type="tel"
+                id="edit-telefono-secundario"
+                placeholder="Ej: 04129876543"
+                class="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+              />
+            </div>
+
+            <!-- Ciudad Destino -->
+            <div class="space-y-1">
+              <label for="edit-ciudad" class="block text-xs font-bold text-slate-700">
+                Ciudad Destino <span class="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="edit-ciudad"
+                required
+                placeholder="Ej: Mérida, Barquisimeto..."
+                class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all font-medium"
+              />
+            </div>
+
+            <!-- Piezas -->
+            <div class="space-y-1">
+              <label for="edit-piezas" class="block text-xs font-bold text-slate-700">
+                Cantidad de Piezas <span class="text-rose-500">*</span>
+              </label>
+              <input
+                type="number"
+                id="edit-piezas"
+                required
+                min="1"
+                class="w-full text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+              />
+            </div>
+
+            <!-- Empresa / Courier Aliado -->
+            <div class="space-y-1">
+              <label for="edit-empresa" class="block text-xs font-bold text-slate-700">
+                Empresa / Courier Aliado
+              </label>
+              <select
+                id="edit-empresa"
+                class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer font-medium"
+              >
+                <option value="">Sin Empresa / Directo</option>
+                <option value="Troop">Troop</option>
+                <option value="Crazy cargo">Crazy cargo</option>
+                <option value="Cargo King">Cargo King</option>
+                <option value="JJ">JJ</option>
+                <option value="Greymar">Greymar</option>
+                <option value="Ajbp">Ajbp</option>
+                <option value="Global jats">Global jats</option>
+                <option value="Su descarga">Su descarga</option>
+                <option value="Rima cargo">Rima cargo</option>
+                <option value="Dina cargo">Dina cargo</option>
+                <option value="Send logístics">Send logístics</option>
+                <option value="Alas cargo">Alas cargo</option>
+                <option value="Aexpress">Aexpress</option>
+                <option value="Priority">Priority</option>
+                <option value="Alpi">Alpi</option>
+                <option value="Venexcargo">Venexcargo</option>
+                <option value="DBL">DBL</option>
+                <option value="2BC">2BC</option>
+              </select>
+            </div>
+
+            <!-- Estado del Envío -->
+            <div class="space-y-1">
+              <label for="edit-estado" class="block text-xs font-bold text-slate-700">
+                Estado del Envío <span class="text-rose-500">*</span>
+              </label>
+              <select
+                id="edit-estado"
+                required
+                class="w-full text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer"
+              >
+                <option value="Por contactar">Por contactar</option>
+                <option value="Contactado">Contactado</option>
+                <option value="En ruta">En ruta</option>
+                <option value="Entregado">Entregado</option>
+                <option value="No entregado">No entregado / Incidencia</option>
+              </select>
+            </div>
+
+            <!-- Chofer Asignado -->
+            <div class="space-y-1">
+              <label for="edit-chofer" class="block text-xs font-bold text-slate-700">
+                Chofer Asignado
+              </label>
+              <select
+                id="edit-chofer"
+                class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer font-medium"
+              >
+                <option value="">Sin Asignar</option>
+              </select>
+            </div>
+
+            <!-- Horario Disponible -->
+            <div class="space-y-1">
+              <label for="edit-hora" class="block text-xs font-bold text-slate-700">
+                Horario Disponible <span class="text-slate-400 font-normal">(Ej: 04:00 PM)</span>
+              </label>
+              <input
+                type="text"
+                id="edit-hora"
+                placeholder="Ej: Hasta las 4:00 PM"
+                class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+              />
+            </div>
+
+            <!-- Dirección / Referencias -->
+            <div class="sm:col-span-2 space-y-1">
+              <label for="edit-direccion" class="block text-xs font-bold text-slate-700">
+                Dirección / Puntos de Referencia
+              </label>
+              <textarea
+                id="edit-direccion"
+                rows="2"
+                placeholder="Ej: Av. Las Américas, Edif. Los Andes, frente a la panadería"
+                class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all resize-none"
+              ></textarea>
+            </div>
+
+            <!-- Coordenadas GPS -->
+            <div class="space-y-1">
+              <label for="edit-gps-lat" class="block text-xs font-bold text-slate-700">
+                Latitud GPS <span class="text-slate-400 font-normal">(Opcional)</span>
+              </label>
+              <input
+                type="number"
+                step="any"
+                id="edit-gps-lat"
+                placeholder="Ej: 10.0808"
+                class="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+              />
+            </div>
+
+            <div class="space-y-1">
+              <label for="edit-gps-lon" class="block text-xs font-bold text-slate-700">
+                Longitud GPS <span class="text-slate-400 font-normal">(Opcional)</span>
+              </label>
+              <input
+                type="number"
+                step="any"
+                id="edit-gps-lon"
+                placeholder="Ej: -69.3756"
+                class="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+              />
+            </div>
+
+            <!-- Switch GPS Confirmado & Recibido por -->
+            <div class="sm:col-span-2 flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200/80">
+              <label class="flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  id="edit-gps-confirmado"
+                  class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-slate-300"
+                />
+                <span class="text-xs font-bold text-slate-800">Ubicación GPS Confirmada por Cliente</span>
+              </label>
+            </div>
+
+          </div>
+
+          <!-- Footer del Modal -->
+          <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <button
+              type="button"
+              id="edit-guia-cancel-btn"
+              class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              id="edit-guia-save-btn"
+              class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer active:scale-95"
+            >
+              <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Guardar Cambios</span>
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
     <!-- NOTIFICACIONES TOAST FLOTANTES             -->
     <!-- ========================================== -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
@@ -2290,6 +2557,18 @@ const userInitials = currentUser.nombre
                   </button>
                 ` : ''}
 
+                <!-- Botón Editar Guía -->
+                <button
+                  type="button"
+                  onclick="window.openEditGuiaModal('${item.id_guia}')"
+                  title="Editar datos de la guía #${item.id_guia}"
+                  class="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors cursor-pointer border border-transparent hover:border-indigo-100"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+
                 <!-- Botón WhatsApp -->
                 <button
                   type="button"
@@ -2702,6 +2981,16 @@ const userInitials = currentUser.nombre
                             ` : ''}
                             <button
                               type="button"
+                              onclick="window.openEditGuiaModal('${item.id_guia}')"
+                              title="Editar datos de la guía #${item.id_guia}"
+                              class="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
                               onclick="window.sendWhatsApp('${item.id_guia}')"
                               title="Enviar WhatsApp"
                               class="inline-flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[10px] px-2 py-1 rounded-lg transition-all shadow-xs cursor-pointer"
@@ -2907,9 +3196,21 @@ const userInitials = currentUser.nombre
                                 </span>
                               ` : ''}
                             </div>
-                            <span class="text-[10px] font-bold px-2 py-0.2 rounded-md ${g.estado === 'Contactado' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
-                              ${g.estado}
-                            </span>
+                            <div class="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onclick="window.openEditGuiaModal('${g.id_guia}')"
+                                title="Editar datos de la guía #${g.id_guia}"
+                                class="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              </button>
+                              <span class="text-[10px] font-bold px-2 py-0.2 rounded-md ${g.estado === 'Contactado' ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
+                                ${g.estado}
+                              </span>
+                            </div>
                           </div>
                           <p class="text-xs font-bold text-slate-800 truncate">${g.destinatario}</p>
                           <div class="flex items-center justify-between text-[11px] text-slate-500">
@@ -2956,19 +3257,31 @@ const userInitials = currentUser.nombre
                                 </span>
                               ` : ''}
                             </div>
-                            ${g.gps_confirmado && g.gps_latitud && g.gps_longitud ? `
-                              <a
-                                href="https://www.google.com/maps/search/?api=1&query=${g.gps_latitud},${g.gps_longitud}"
-                                target="_blank"
-                                class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded flex items-center gap-0.5"
-                                title="Ver punto satelital en Maps"
+                            <div class="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onclick="window.openEditGuiaModal('${g.id_guia}')"
+                                title="Editar datos de la guía #${g.id_guia}"
+                                class="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
                               >
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                <span>GPS</span>
-                              </a>
-                            ` : `
-                              <span class="text-[10px] text-slate-400 font-semibold">Ref. Escrita</span>
-                            `}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              </button>
+                              ${g.gps_confirmado && g.gps_latitud && g.gps_longitud ? `
+                                <a
+                                  href="https://www.google.com/maps/search/?api=1&query=${g.gps_latitud},${g.gps_longitud}"
+                                  target="_blank"
+                                  class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded flex items-center gap-0.5"
+                                  title="Ver punto satelital en Maps"
+                                >
+                                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                  <span>GPS</span>
+                                </a>
+                              ` : `
+                                <span class="text-[10px] text-slate-400 font-semibold">Ref. Escrita</span>
+                              `}
+                            </div>
                           </div>
 
                           <p class="text-xs font-bold text-slate-800 truncate">${g.destinatario}</p>
@@ -3021,15 +3334,27 @@ const userInitials = currentUser.nombre
                                 </span>
                               ` : ''}
                             </div>
-                            <span class="text-[10px] font-bold px-2 py-0.2 rounded-md ${isNoEntregado ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'} flex items-center gap-1">
-                              ${isNoEntregado ? `
-                                <svg class="w-3 h-3 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                                <span>No entregado</span>
-                              ` : `
-                                <svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                                <span>Entregado</span>
-                              `}
-                            </span>
+                            <div class="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onclick="window.openEditGuiaModal('${g.id_guia}')"
+                                title="Editar datos de la guía #${g.id_guia}"
+                                class="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              </button>
+                              <span class="text-[10px] font-bold px-2 py-0.2 rounded-md ${isNoEntregado ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'} flex items-center gap-1">
+                                ${isNoEntregado ? `
+                                  <svg class="w-3 h-3 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                  <span>No entregado</span>
+                                ` : `
+                                  <svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                  <span>Entregado</span>
+                                `}
+                              </span>
+                            </div>
                           </div>
 
                           <div>
@@ -3943,6 +4268,149 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           setTimeout(() => toast.remove(), 300);
         }, 3500);
       }
+
+      // ==========================================
+      // MODAL EDITAR GUÍA
+      // ==========================================
+      const editGuiaModal = document.getElementById('edit-guia-modal');
+      const editGuiaCloseBtn = document.getElementById('edit-guia-close-btn');
+      const editGuiaCancelBtn = document.getElementById('edit-guia-cancel-btn');
+      const editGuiaForm = document.getElementById('edit-guia-form') as HTMLFormElement;
+      const editGuiaBadge = document.getElementById('edit-guia-badge');
+      const editIdGuiaInput = document.getElementById('edit-id-guia') as HTMLInputElement;
+      const editDestinatario = document.getElementById('edit-destinatario') as HTMLInputElement;
+      const editTelPrincipal = document.getElementById('edit-telefono-principal') as HTMLInputElement;
+      const editTelSecundario = document.getElementById('edit-telefono-secundario') as HTMLInputElement;
+      const editCiudad = document.getElementById('edit-ciudad') as HTMLInputElement;
+      const editPiezas = document.getElementById('edit-piezas') as HTMLInputElement;
+      const editEmpresa = document.getElementById('edit-empresa') as HTMLSelectElement;
+      const editEstado = document.getElementById('edit-estado') as HTMLSelectElement;
+      const editChofer = document.getElementById('edit-chofer') as HTMLSelectElement;
+      const editHora = document.getElementById('edit-hora') as HTMLInputElement;
+      const editDireccion = document.getElementById('edit-direccion') as HTMLTextAreaElement;
+      const editGpsLat = document.getElementById('edit-gps-lat') as HTMLInputElement;
+      const editGpsLon = document.getElementById('edit-gps-lon') as HTMLInputElement;
+      const editGpsConfirmado = document.getElementById('edit-gps-confirmado') as HTMLInputElement;
+      const editGuiaSaveBtn = document.getElementById('edit-guia-save-btn') as HTMLButtonElement;
+
+      function closeEditGuiaModal() {
+        if (editGuiaModal) {
+          editGuiaModal.classList.add('hidden');
+        }
+        document.body.style.overflow = '';
+      }
+
+      editGuiaCloseBtn?.addEventListener('click', closeEditGuiaModal);
+      editGuiaCancelBtn?.addEventListener('click', closeEditGuiaModal);
+      editGuiaModal?.addEventListener('click', (e) => {
+        if (e.target === editGuiaModal) closeEditGuiaModal();
+      });
+
+      (window as any).openEditGuiaModal = (id_guia: string) => {
+        const item = shipments.find(s => s.id_guia === id_guia);
+        if (!item || !editGuiaModal) return;
+
+        // Cargar choferes en el select de edición
+        if (editChofer) {
+          editChofer.innerHTML = `
+            <option value="">Sin Asignar</option>
+            ${drivers.map(d => `
+              <option value="${d.id}" ${item.chofer_asignado_id === d.id ? 'selected' : ''}>
+                ${d.nombre}
+              </option>
+            `).join('')}
+          `;
+        }
+
+        if (editGuiaBadge) editGuiaBadge.textContent = `#${item.id_guia}`;
+        if (editIdGuiaInput) editIdGuiaInput.value = item.id_guia;
+        if (editDestinatario) editDestinatario.value = item.destinatario || '';
+        if (editTelPrincipal) editTelPrincipal.value = item.telefono_principal || '';
+        if (editTelSecundario) editTelSecundario.value = item.telefono_secundario || '';
+        if (editCiudad) editCiudad.value = item.ciudad_destino || '';
+        if (editPiezas) editPiezas.value = (item.piezas || 1).toString();
+        if (editEmpresa) editEmpresa.value = item.empresa || '';
+        if (editEstado) editEstado.value = item.estado || 'Por contactar';
+        if (editHora) editHora.value = item.hora_disponible || '';
+        if (editDireccion) editDireccion.value = item.direccion_referencia || '';
+        if (editGpsLat) editGpsLat.value = item.gps_latitud ? item.gps_latitud.toString() : '';
+        if (editGpsLon) editGpsLon.value = item.gps_longitud ? item.gps_longitud.toString() : '';
+        if (editGpsConfirmado) editGpsConfirmado.checked = item.gps_confirmado === true;
+
+        editGuiaModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      };
+
+      editGuiaForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id_guia = editIdGuiaInput.value.trim().toUpperCase();
+        if (!id_guia) return;
+
+        const origHtml = editGuiaSaveBtn.innerHTML;
+        editGuiaSaveBtn.disabled = true;
+        editGuiaSaveBtn.innerHTML = `
+          <svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span>Guardando...</span>
+        `;
+
+        const choferVal = editChofer.value ? parseInt(editChofer.value, 10) : null;
+        const latVal = editGpsLat.value ? parseFloat(editGpsLat.value) : null;
+        const lonVal = editGpsLon.value ? parseFloat(editGpsLon.value) : null;
+
+        const payload: Record<string, any> = {
+          destinatario: editDestinatario.value.trim(),
+          telefono_principal: editTelPrincipal.value.trim(),
+          telefono_secundario: editTelSecundario.value.trim() || null,
+          ciudad_destino: editCiudad.value.trim(),
+          piezas: parseInt(editPiezas.value, 10) || 1,
+          empresa: editEmpresa.value.trim() || null,
+          estado: editEstado.value,
+          chofer_asignado_id: choferVal,
+          hora_disponible: editHora.value.trim() || null,
+          direccion_referencia: editDireccion.value.trim() || null,
+          gps_latitud: latVal,
+          gps_longitud: lonVal,
+          gps_confirmado: editGpsConfirmado.checked
+        };
+
+        try {
+          const res = await fetch(`/api/guias/${encodeURIComponent(id_guia)}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          const json = await res.json();
+          if (res.ok && json.success) {
+            const idx = shipments.findIndex(s => s.id_guia === id_guia);
+            if (idx !== -1) {
+              const choferObj = drivers.find(d => d.id === choferVal);
+              shipments[idx] = {
+                ...shipments[idx],
+                ...payload,
+                chofer_nombre: choferObj ? choferObj.nombre : null,
+                chofer_telefono: choferObj ? choferObj.telefono : null
+              };
+            }
+
+            populateCityFilter();
+            renderViews();
+            closeEditGuiaModal();
+            showToast(`Guía #${id_guia} actualizada correctamente`, 'success');
+          } else {
+            showToast(json.message || 'Error al actualizar la guía', 'error');
+          }
+        } catch (err) {
+          console.error('Error al actualizar guía:', err);
+          showToast('Error de conexión al actualizar la guía', 'error');
+        } finally {
+          editGuiaSaveBtn.disabled = false;
+          editGuiaSaveBtn.innerHTML = origHtml;
+        }
+      });
 
       // Lightbox para ver fotos de comprobantes y guías con ZOOM y PAN
       const lightboxModal = document.getElementById('lightbox-modal') as HTMLElement;

@@ -87,6 +87,8 @@ export const PATCH: APIRoute = async ({ params, request }) => {
       'ciudad_destino',
       'piezas',
       'direccion_referencia',
+      'hora_disponible',
+      'orden_ruta',
       'telefono_principal',
       'telefono_secundario',
       'comprobante_url',
