@@ -43,6 +43,9 @@ const userInitials = currentUser.nombre
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
     
+    <!-- html2pdf.js para Exportación Directa de Listines PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+    
     <style>
       body {
         font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
@@ -62,6 +65,37 @@ const userInitials = currentUser.nombre
         background-color: #0f172a !important;
         color: #ffffff !important;
         box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
+      }
+
+      /* Estilos de Impresión Oficial (@media print) */
+      @media print {
+        body {
+          background: white !important;
+          color: black !important;
+        }
+        body * {
+          visibility: hidden !important;
+        }
+        #listin-print-wrapper, #listin-print-wrapper * {
+          visibility: visible !important;
+        }
+        #listin-print-wrapper {
+          position: absolute !important;
+          left: 0 !important;
+          top: 0 !important;
+          width: 100% !important;
+          margin: 0 !important;
+          padding: 4mm 6mm !important;
+          background: white !important;
+          box-shadow: none !important;
+          border: none !important;
+          color: black !important;
+          z-index: 9999999 !important;
+        }
+        @page {
+          size: letter portrait;
+          margin: 6mm 6mm 6mm 6mm;
+        }
       }
     </style>
   </head>
@@ -331,12 +365,12 @@ const userInitials = currentUser.nombre
 
             <div class="h-4 w-px bg-slate-200 hidden sm:block"></div>
 
-            <!-- Selector de Modo de Vista (Tabs) -->
-            <div class="flex items-center p-1 bg-slate-200/70 rounded-xl text-xs font-semibold gap-1">
+            <!-- Selector de Modo de Vista (5 Tabs Unificadas) -->
+            <div class="flex items-center p-1 bg-slate-200/70 rounded-xl text-xs font-semibold gap-1 overflow-x-auto max-w-full">
               <button
                 type="button"
                 id="btn-view-table"
-                class="tab-btn-active px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-slate-600 hover:text-slate-900"
+                class="tab-btn-active px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-slate-600 hover:text-slate-900 shrink-0"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
@@ -347,7 +381,7 @@ const userInitials = currentUser.nombre
               <button
                 type="button"
                 id="btn-view-cities"
-                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-slate-600 hover:text-slate-900"
+                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-slate-600 hover:text-slate-900 shrink-0"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -359,35 +393,46 @@ const userInitials = currentUser.nombre
               <button
                 type="button"
                 id="btn-view-drivers"
-                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-slate-600 hover:text-slate-900"
+                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-slate-600 hover:text-slate-900 shrink-0"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 <span>Estado de Choferes</span>
                 <span id="drivers-count-pill" class="text-[10px] bg-slate-300/80 px-1.5 py-0.2 rounded-full font-bold">0</span>
-            </div>
+              </button>
 
-            <!-- 4ta Pestaña: Revisar Guías Escaneadas -->
-            <button
-              type="button"
-              id="btn-view-escaneos"
-              class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-slate-600 hover:text-slate-900"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              <span>Revisar Guias</span>
-              <span id="escaneos-count-pill" class="text-[10px] bg-slate-300/80 px-1.5 py-0.2 rounded-full font-bold hidden">0</span>
-            </button>
-          </div>
+              <button
+                type="button"
+                id="btn-view-escaneos"
+                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-slate-600 hover:text-slate-900 shrink-0"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Revisar Guías</span>
+                <span id="escaneos-count-pill" class="text-[10px] bg-slate-300/80 px-1.5 py-0.2 rounded-full font-bold hidden">0</span>
+              </button>
+
+              <button
+                type="button"
+                id="btn-view-listin"
+                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-slate-600 hover:text-slate-900 shrink-0"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Crear Listín</span>
+                <span id="listin-count-pill" class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.2 rounded-full font-bold">PDF</span>
+              </button>
+            </div>
 
             <!-- Botón Principal: Abrir Planificador de Rutas (Spoke Style) -->
             <button
               type="button"
               onclick="window.openRoutePlannerModal()"
-              class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-black active:scale-95 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+              class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-black active:scale-95 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer shrink-0"
               title="Planificar secuencia de paradas de chofer"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -535,6 +580,248 @@ const userInitials = currentUser.nombre
             <p class="text-sm font-semibold text-slate-700">Sin guías pendientes</p>
             <p class="text-xs text-slate-400 mt-1">Los choferes aún no han subido guías para revisar.</p>
           </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- MODO 5: CREAR LISTÍN DE CARGA / DESPACHO   -->
+        <!-- ========================================== -->
+        <div id="view-container-listin" class="hidden p-4 sm:p-6 bg-slate-50/50 space-y-6">
+          
+          <!-- Barra Superior de Configuración del Listín -->
+          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-wrap items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
+              <!-- Selector de Chofer -->
+              <div class="space-y-1 min-w-[170px] flex-1 sm:flex-none">
+                <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Chofer Asignado</label>
+                <select
+                  id="listin-driver-select"
+                  class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer"
+                >
+                  <option value="ALL">Todos los Choferes / Flota Central</option>
+                </select>
+              </div>
+
+              <!-- Input de Placa -->
+              <div class="space-y-1 w-28">
+                <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Placa</label>
+                <input
+                  type="text"
+                  id="listin-placa-input"
+                  placeholder="Ej: A84BT9K"
+                  class="w-full text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 uppercase focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+                />
+              </div>
+
+              <!-- Input de Fecha -->
+              <div class="space-y-1 w-36">
+                <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Fecha Despacho</label>
+                <input
+                  type="date"
+                  id="listin-fecha-input"
+                  class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer"
+                />
+              </div>
+
+              <!-- Filtro de Estado -->
+              <div class="space-y-1 min-w-[140px]">
+                <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Estado de Guías</label>
+                <select
+                  id="listin-status-filter"
+                  class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer"
+                >
+                  <option value="ALL">Todas las Guías</option>
+                  <option value="En ruta">Solo En Ruta</option>
+                  <option value="Por contactar">Solo Almacén (Por contactar)</option>
+                  <option value="Contactado">Solo Contactadas</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Botones de Acción: Optimizar, Descargar PDF e Imprimir -->
+            <div class="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                id="btn-listin-auto-tsp"
+                class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                title="Ordenar zonas en orden alfabético / secuencial"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+                <span>A-Z Jerarquía</span>
+              </button>
+
+              <button
+                type="button"
+                id="btn-listin-download-pdf"
+                class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold flex items-center gap-2 shadow-xs transition-all cursor-pointer"
+                title="Descargar archivo PDF del listín de despacho"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>Descargar PDF</span>
+              </button>
+
+              <button
+                type="button"
+                id="btn-listin-print"
+                class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black active:scale-95 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+                title="Imprimir Listín de Despacho físico"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                <span>Imprimir Listín</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Contenedor Principal: 2 Columnas (Jerarquía a la Izquierda, Vista Previa a la Derecha) -->
+          <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+            
+            <!-- Columna Izquierda (xl:col-span-5): Organizador Jerárquico de Ciudades y Guías -->
+            <div class="xl:col-span-5 space-y-4">
+              <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs">
+                      1
+                    </span>
+                    <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Orden Jerárquico de Zonas</h3>
+                  </div>
+                  <span id="listin-cities-count" class="text-[11px] font-bold text-slate-500 font-mono">0 zonas</span>
+                </div>
+                <p class="text-[11px] text-slate-500">
+                  Usa los botones <span class="font-bold text-slate-700">▲</span> y <span class="font-bold text-slate-700">▼</span> para cambiar el orden jerárquico de entrega. Las guías se agruparán en el listín siguiendo exactamente esta secuencia.
+                </p>
+                <!-- Lista interactiva de ciudades -->
+                <div id="listin-hierarchy-list" class="space-y-2.5 max-h-[600px] overflow-y-auto pr-1 custom-scrollbar">
+                  <!-- JS Render -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Columna Derecha (xl:col-span-7): Vista Previa en Vivo de la Hoja de Listín -->
+            <div class="xl:col-span-7 space-y-3">
+              <div class="flex items-center justify-between px-1">
+                <div class="flex items-center gap-2">
+                  <span class="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                    2
+                  </span>
+                  <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Vista Previa de la Hoja (Formato Oficial)</h3>
+                </div>
+                <span class="text-[11px] text-slate-400 font-medium">Hoja vertical Carta / A4</span>
+              </div>
+
+              <!-- Contenedor con efecto de hoja física -->
+              <div class="overflow-x-auto bg-slate-200/70 p-3 sm:p-5 rounded-3xl border border-slate-300/80 shadow-inner flex justify-center">
+                <div id="listin-print-wrapper" class="w-full max-w-[760px] min-h-[960px] bg-white p-6 sm:p-7 rounded-xl shadow-xl text-black select-none font-sans text-xs border border-slate-300">
+                  <!-- Header del Listín Físico -->
+                  <div class="flex items-start justify-between border-b-2 border-black pb-3 mb-2.5">
+                    <div class="flex items-center gap-3">
+                      <!-- Logo Envías Oficial en Blanco y Negro / Escala de Grises para Impresión -->
+                      <div class="flex items-center gap-2.5">
+                        <svg class="w-11 h-11 text-black shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <rect x="1" y="3" width="15" height="13" rx="2" fill="#000" stroke="#000" />
+                          <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" fill="#000" stroke="#000" />
+                          <circle cx="5.5" cy="18.5" r="2.5" fill="#fff" stroke="#000" stroke-width="2" />
+                          <circle cx="18.5" cy="18.5" r="2.5" fill="#fff" stroke="#000" stroke-width="2" />
+                          <text x="3.5" y="10.5" fill="#fff" font-size="4.5" font-weight="900" font-family="sans-serif">EN</text>
+                          <text x="3" y="14" fill="#fff" font-size="3.2" font-weight="900" font-family="sans-serif">VIAS</text>
+                        </svg>
+                        <div>
+                          <h1 class="text-xl font-black tracking-tighter leading-none">ENVÍAS C.A.</h1>
+                          <p class="text-[9px] font-black uppercase tracking-widest text-slate-800">Transporte y Encomiendas</p>
+                          <p class="text-[8px] font-bold text-slate-600">Hub Central Barquisimeto &bull; Entregas Nacionales</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Cuadro de Metadatos: FECHA, PLACA, CHOFER -->
+                    <div class="border border-black rounded-lg p-2.5 w-60 space-y-1 text-[11px] bg-slate-50/50">
+                      <div class="flex items-center justify-between border-b border-slate-300 pb-0.5">
+                        <span class="font-bold">FECHA:</span>
+                        <span id="preview-listin-fecha" class="font-mono font-bold">2026-08-24</span>
+                      </div>
+                      <div class="flex items-center justify-between border-b border-slate-300 pb-0.5">
+                        <span class="font-bold">PLACA:</span>
+                        <span id="preview-listin-placa" class="font-mono font-bold">A84BT9K</span>
+                      </div>
+                      <div class="flex items-center justify-between">
+                        <span class="font-bold">CHOFER:</span>
+                        <span id="preview-listin-chofer" class="font-bold truncate max-w-[130px]">Carlos</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- TÍTULO DEL DOCUMENTO -->
+                  <div class="text-center mb-2">
+                    <h2 class="text-xs font-black uppercase tracking-widest border-y border-black py-0.5 bg-slate-100">
+                      LISTÍN DE CARGA Y DESPACHO DE GUÍAS
+                    </h2>
+                  </div>
+
+                  <!-- TABLA DUAL: 2 BLOQUES DE 3 COLUMNAS CADA UNO -->
+                  <div class="w-full mb-3">
+                    <table class="w-full border-collapse text-[10px] border-2 border-black" id="listin-dual-table">
+                      <thead>
+                        <tr class="bg-slate-200 text-black uppercase font-black text-center border-b-2 border-black">
+                          <!-- Bloque Izquierdo -->
+                          <th class="py-1 px-1.5 border-r border-black w-[17%]">NRO DE GUIA</th>
+                          <th class="py-1 px-1 border-r border-black w-[8%]">PIEZAS</th>
+                          <th class="py-1 px-2 border-r-2 border-black w-[25%]">DESTINO</th>
+                          <!-- Bloque Derecho -->
+                          <th class="py-1 px-1.5 border-r border-black w-[17%]">NRO DE GUIA</th>
+                          <th class="py-1 px-1 border-r border-black w-[8%]">PIEZAS</th>
+                          <th class="py-1 px-2 w-[25%]">DESTINO</th>
+                        </tr>
+                      </thead>
+                      <tbody id="preview-listin-tbody" class="font-mono font-semibold divide-y divide-black/40">
+                        <!-- Generado por JS -->
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- RESUMEN DE TOTALES Y FIRMAS -->
+                  <div class="mt-3 pt-2 border-t-2 border-black space-y-2.5">
+                    <!-- Resumen de Totales -->
+                    <div class="flex items-center justify-between bg-slate-100 px-3 py-1.5 rounded border border-black font-bold text-[11px]">
+                      <div>TOTAL GUÍAS: <span id="preview-total-guias" class="font-black text-black">0</span></div>
+                      <div>TOTAL PIEZAS: <span id="preview-total-piezas" class="font-black text-black">0</span></div>
+                      <div>TOTAL ZONAS/DESTINOS: <span id="preview-total-ciudades" class="font-black text-black">0</span></div>
+                    </div>
+
+                    <!-- Firmas -->
+                    <div class="grid grid-cols-2 gap-8 pt-5 pb-1 text-center text-[10px] font-bold">
+                      <div>
+                        <div class="border-t border-black w-44 mx-auto mb-1"></div>
+                        <p>Firma Despacho / Almacén</p>
+                        <p class="text-[8px] text-slate-500 font-normal">Envías C.A. - Logística Central</p>
+                      </div>
+                      <div>
+                        <div class="border-t border-black w-44 mx-auto mb-1"></div>
+                        <p>Firma Chofer Receptor</p>
+                        <p class="text-[8px] text-slate-500 font-normal">Conforme con bultos y guías físicas</p>
+                      </div>
+                    </div>
+
+                    <!-- Pie de página con código de barras -->
+                    <div class="flex items-center justify-between text-[8px] text-slate-500 pt-1.5 border-t border-slate-300">
+                      <span>Envías C.A. &bull; Sistema Oficial de Despacho y Logística</span>
+                      <div class="flex items-center gap-1 font-mono font-bold text-black text-[9px]">
+                        <span>||| | | |||| | ||||| || |</span>
+                        <span>7 599187 000185</span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+
+          </div>
+
         </div>
 
       </section>
@@ -1306,7 +1593,7 @@ const userInitials = currentUser.nombre
       let shipments: GuiaRow[] = [];
       let drivers: Driver[] = [];
       let isLoading = true;
-      let currentViewMode: 'table' | 'cities' | 'drivers' | 'escaneos' = 'table';
+      let currentViewMode: 'table' | 'cities' | 'drivers' | 'escaneos' | 'listin' = 'table';
       let expandedCities: Record<string, boolean> = {};
       let escaneosData: any[] = [];
       let drawerFotosFlat: any[] = []; // lista plana de fotos para navegar
@@ -1565,13 +1852,34 @@ const userInitials = currentUser.nombre
       const viewContainerCities = document.getElementById('view-container-cities') as HTMLElement;
       const viewContainerDrivers = document.getElementById('view-container-drivers') as HTMLElement;
       const viewContainerEscaneos = document.getElementById('view-container-escaneos') as HTMLElement;
+      const viewContainerListin = document.getElementById('view-container-listin') as HTMLElement;
       const btnViewTable = document.getElementById('btn-view-table') as HTMLButtonElement;
       const btnViewCities = document.getElementById('btn-view-cities') as HTMLButtonElement;
       const btnViewDrivers = document.getElementById('btn-view-drivers') as HTMLButtonElement;
       const btnViewEscaneos = document.getElementById('btn-view-escaneos') as HTMLButtonElement;
+      const btnViewListin = document.getElementById('btn-view-listin') as HTMLButtonElement;
       const citiesCountPill = document.getElementById('cities-count-pill') as HTMLElement;
       const driversCountPill = document.getElementById('drivers-count-pill') as HTMLElement;
       const escaneosCountPill = document.getElementById('escaneos-count-pill') as HTMLElement;
+      const listinCountPill = document.getElementById('listin-count-pill') as HTMLElement;
+
+      const listinDriverSelect = document.getElementById('listin-driver-select') as HTMLSelectElement;
+      const listinPlacaInput = document.getElementById('listin-placa-input') as HTMLInputElement;
+      const listinFechaInput = document.getElementById('listin-fecha-input') as HTMLInputElement;
+      const listinStatusFilter = document.getElementById('listin-status-filter') as HTMLSelectElement;
+      const btnListinAutoTsp = document.getElementById('btn-listin-auto-tsp') as HTMLButtonElement;
+      const btnListinDownloadPdf = document.getElementById('btn-listin-download-pdf') as HTMLButtonElement;
+      const btnListinPrint = document.getElementById('btn-listin-print') as HTMLButtonElement;
+      const listinHierarchyList = document.getElementById('listin-hierarchy-list') as HTMLElement;
+      const listinCitiesCount = document.getElementById('listin-cities-count') as HTMLElement;
+
+      const previewListinFecha = document.getElementById('preview-listin-fecha') as HTMLElement;
+      const previewListinPlaca = document.getElementById('preview-listin-placa') as HTMLElement;
+      const previewListinChofer = document.getElementById('preview-listin-chofer') as HTMLElement;
+      const previewListinTbody = document.getElementById('preview-listin-tbody') as HTMLElement;
+      const previewTotalGuias = document.getElementById('preview-total-guias') as HTMLElement;
+      const previewTotalPiezas = document.getElementById('preview-total-piezas') as HTMLElement;
+      const previewTotalCiudades = document.getElementById('preview-total-ciudades') as HTMLElement;
 
       const searchInput = document.getElementById('search-input') as HTMLInputElement;
       const filterCiudad = document.getElementById('filter-ciudad') as HTMLSelectElement;
@@ -1850,6 +2158,8 @@ const userInitials = currentUser.nombre
           renderCitiesGrouped(filtered);
         } else if (currentViewMode === 'drivers') {
           renderDriversView(filtered);
+        } else if (currentViewMode === 'listin') {
+          renderListinView();
         }
       }
 
@@ -2843,42 +3153,55 @@ const userInitials = currentUser.nombre
         if (eventsAttached) return;
         eventsAttached = true;
 
-        // Switcher de Modos de Vista
+        // Switcher de Modos de Vista (5 Tabs Unificadas)
         function updateTabStyles() {
           btnViewTable.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewCities.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewDrivers.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewEscaneos?.classList.remove('tab-btn-active', 'text-slate-600');
+          btnViewListin?.classList.remove('tab-btn-active', 'text-slate-600');
           
           viewContainerTable.classList.add('hidden');
           viewContainerCities.classList.add('hidden');
           viewContainerDrivers.classList.add('hidden');
           viewContainerEscaneos?.classList.add('hidden');
+          viewContainerListin?.classList.add('hidden');
 
           if (currentViewMode === 'table') {
             btnViewTable.classList.add('tab-btn-active');
             btnViewCities.classList.add('text-slate-600');
             btnViewDrivers.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
+            btnViewListin?.classList.add('text-slate-600');
             viewContainerTable.classList.remove('hidden');
           } else if (currentViewMode === 'cities') {
             btnViewCities.classList.add('tab-btn-active');
             btnViewTable.classList.add('text-slate-600');
             btnViewDrivers.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
+            btnViewListin?.classList.add('text-slate-600');
             viewContainerCities.classList.remove('hidden');
           } else if (currentViewMode === 'drivers') {
             btnViewDrivers.classList.add('tab-btn-active');
             btnViewTable.classList.add('text-slate-600');
             btnViewCities.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
+            btnViewListin?.classList.add('text-slate-600');
             viewContainerDrivers.classList.remove('hidden');
           } else if (currentViewMode === 'escaneos') {
             btnViewEscaneos?.classList.add('tab-btn-active');
             btnViewTable.classList.add('text-slate-600');
             btnViewCities.classList.add('text-slate-600');
             btnViewDrivers.classList.add('text-slate-600');
+            btnViewListin?.classList.add('text-slate-600');
             viewContainerEscaneos?.classList.remove('hidden');
+          } else if (currentViewMode === 'listin') {
+            btnViewListin?.classList.add('tab-btn-active');
+            btnViewTable.classList.add('text-slate-600');
+            btnViewCities.classList.add('text-slate-600');
+            btnViewDrivers.classList.add('text-slate-600');
+            btnViewEscaneos?.classList.add('text-slate-600');
+            viewContainerListin?.classList.remove('hidden');
           }
         }
 
@@ -2904,6 +3227,12 @@ const userInitials = currentUser.nombre
           currentViewMode = 'escaneos';
           updateTabStyles();
           loadAndRenderEscaneos();
+        });
+
+        btnViewListin?.addEventListener('click', () => {
+          currentViewMode = 'listin';
+          updateTabStyles();
+          renderListinView();
         });
 
         // ============================================
@@ -4994,12 +5323,364 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         showToast(`Ubicación seleccionada en el mapa: ${selectedPickerLabel}`, 'success');
       });
 
-      // Protección contra bfcache (si el usuario cierra sesión y pulsa "Atrás" en el navegador)
-      window.addEventListener('pageshow', (event) => {
-        if (event.persisted) {
-          window.location.reload();
+      // =========================================================
+      // MÓDULO 6: CREAR LISTÍN DE CARGA / DESPACHO & EXPORTACIÓN PDF
+      // =========================================================
+      let listinCitiesOrder: string[] = [];
+      let listinExcludedGuiaIds: Set<string> = new Set();
+      let listinExcludedCities: Set<string> = new Set();
+      let listinCollapsedCities: Set<string> = new Set();
+
+      // Pre-cargar fecha actual en el input de fecha
+      if (listinFechaInput && !listinFechaInput.value) {
+        listinFechaInput.value = new Date().toISOString().split('T')[0];
+      }
+
+      function populateListinDriverSelect() {
+        if (!listinDriverSelect) return;
+        const currentVal = listinDriverSelect.value || 'ALL';
+        listinDriverSelect.innerHTML = '<option value="ALL">Todos los Choferes / Flota Central</option>';
+        drivers.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.id.toString();
+          opt.textContent = `${d.nombre} (ID: ${d.id})`;
+          listinDriverSelect.appendChild(opt);
+        });
+        if (Array.from(listinDriverSelect.options).some(o => o.value === currentVal)) {
+          listinDriverSelect.value = currentVal;
+        }
+      }
+
+      function getListinSourceShipments(): GuiaRow[] {
+        const driverFilter = listinDriverSelect ? listinDriverSelect.value : 'ALL';
+        const statusFilter = listinStatusFilter ? listinStatusFilter.value : 'ALL';
+
+        return shipments.filter(g => {
+          if (driverFilter !== 'ALL') {
+            if (String(g.chofer_asignado_id) !== driverFilter) return false;
+          }
+          if (statusFilter !== 'ALL') {
+            if (g.estado !== statusFilter) return false;
+          }
+          return true;
+        });
+      }
+
+      function syncListinCitiesOrder(availableCities: string[]) {
+        // Mantener ciudades existentes en el orden ya definido por logística
+        const kept = listinCitiesOrder.filter(c => availableCities.includes(c));
+        // Agregar nuevas ciudades al final
+        availableCities.forEach(c => {
+          if (!kept.includes(c)) kept.push(c);
+        });
+        listinCitiesOrder = kept;
+      }
+
+      function renderListinView() {
+        populateListinDriverSelect();
+        const srcShipments = getListinSourceShipments();
+
+        // Obtener nombres únicos de ciudades
+        const uniqueCities = Array.from(new Set(srcShipments.map(g => (g.ciudad_destino || 'Sin Ciudad').trim()))).filter(Boolean);
+        if (listinCitiesOrder.length === 0 || !listinCitiesOrder.some(c => uniqueCities.includes(c))) {
+          uniqueCities.sort((a, b) => a.localeCompare(b));
+        }
+        syncListinCitiesOrder(uniqueCities);
+
+        if (listinCitiesCount) {
+          listinCitiesCount.textContent = `${listinCitiesOrder.length} zona${listinCitiesOrder.length !== 1 ? 's' : ''}`;
+        }
+
+        // 1. Renderizar Editor de Jerarquía (Izquierda)
+        renderListinHierarchy(srcShipments);
+
+        // 2. Renderizar Hoja del Listín en Vivo (Derecha)
+        renderListinPrintPreview(srcShipments);
+      }
+
+      function renderListinHierarchy(srcShipments: GuiaRow[]) {
+        if (!listinHierarchyList) return;
+
+        if (listinCitiesOrder.length === 0) {
+          listinHierarchyList.innerHTML = `
+            <div class="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
+              No hay guías registradas para los filtros seleccionados.
+            </div>
+          `;
+          return;
+        }
+
+        listinHierarchyList.innerHTML = listinCitiesOrder.map((cityName, idx) => {
+          const cityGuias = srcShipments.filter(g => (g.ciudad_destino || 'Sin Ciudad').trim() === cityName);
+          const totalPiezas = cityGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+          const isExcluded = listinExcludedCities.has(cityName);
+          const isCollapsed = listinCollapsedCities.has(cityName);
+
+          return `
+            <div class="bg-slate-50 border ${isExcluded ? 'border-slate-200 opacity-60' : 'border-slate-200/90'} rounded-xl p-3 space-y-2.5 transition-all">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <input
+                    type="checkbox"
+                    ${!isExcluded ? 'checked' : ''}
+                    onchange="window.toggleListinCity('${cityName.replace(/'/g, "\\'")}', this.checked)"
+                    class="w-4 h-4 rounded text-slate-900 focus:ring-slate-900 cursor-pointer"
+                    title="Incluir / excluir zona completa del listín"
+                  />
+                  <span class="w-5 h-5 rounded-md bg-slate-900 text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                    ${idx + 1}
+                  </span>
+                  <div class="min-w-0">
+                    <p class="text-xs font-bold text-slate-900 truncate">${cityName}</p>
+                    <p class="text-[10px] text-slate-500 font-medium">${cityGuias.length} guía${cityGuias.length !== 1 ? 's' : ''} &bull; ${totalPiezas} pieza${totalPiezas !== 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-1 shrink-0">
+                  <!-- Subir Prioridad -->
+                  <button
+                    type="button"
+                    onclick="window.moveListinCity('${cityName.replace(/'/g, "\\'")}', -1)"
+                    ${idx === 0 ? 'disabled' : ''}
+                    class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                    title="Subir prioridad de entrega"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                  </button>
+
+                  <!-- Bajar Prioridad -->
+                  <button
+                    type="button"
+                    onclick="window.moveListinCity('${cityName.replace(/'/g, "\\'")}', 1)"
+                    ${idx === listinCitiesOrder.length - 1 ? 'disabled' : ''}
+                    class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                    title="Bajar prioridad de entrega"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                  </button>
+
+                  <!-- Expandir / Colapsar -->
+                  <button
+                    type="button"
+                    onclick="window.toggleListinCollapse('${cityName.replace(/'/g, "\\'")}')"
+                    class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-500 transition-colors cursor-pointer ml-1"
+                    title="${isCollapsed ? 'Ver guías' : 'Ocultar guías'}"
+                  >
+                    <svg class="w-3.5 h-3.5 ${isCollapsed ? '' : 'rotate-180'} transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Lista interna de guías si no está colapsada -->
+              ${!isCollapsed ? `
+                <div class="space-y-1.5 pl-6 border-l-2 border-slate-200 text-xs">
+                  ${cityGuias.map(g => {
+                    const isGuiaExcluded = listinExcludedGuiaIds.has(g.id_guia) || isExcluded;
+                    return `
+                      <div class="flex items-center justify-between py-1 px-2 rounded-lg bg-white border border-slate-100 text-[11px] gap-2">
+                        <div class="flex items-center gap-1.5 min-w-0">
+                          <input
+                            type="checkbox"
+                            ${!isGuiaExcluded ? 'checked' : ''}
+                            onchange="window.toggleListinGuia('${g.id_guia}', this.checked)"
+                            class="w-3.5 h-3.5 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          />
+                          <span class="font-mono font-bold text-slate-800">#${g.id_guia}</span>
+                          <span class="text-slate-600 truncate max-w-[120px]">${g.destinatario}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                          <span class="bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded font-mono font-bold text-[10px]">${g.piezas || 1} pza${(g.piezas || 1) !== 1 ? 's' : ''}</span>
+                        </div>
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      }
+
+      function renderListinPrintPreview(srcShipments: GuiaRow[]) {
+        // Metadatos
+        const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
+        const driverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
+          ? selectedDriverOption.text.replace(/\s*\(ID:.*?\)\s*/g, '') 
+          : 'FLOTA CENTRAL / DESPACHO GENERAL';
+        const placa = listinPlacaInput?.value?.trim()?.toUpperCase() || 'NO ASIGNADA';
+        const fecha = listinFechaInput?.value || new Date().toISOString().split('T')[0];
+
+        if (previewListinFecha) previewListinFecha.textContent = fecha;
+        if (previewListinPlaca) previewListinPlaca.textContent = placa;
+        if (previewListinChofer) previewListinChofer.textContent = driverName;
+
+        // Construir array ordenado de guías incluidas agrupadas por zona jerárquica
+        const orderedActiveGuias: GuiaRow[] = [];
+        let activeCitiesCount = 0;
+
+        listinCitiesOrder.forEach(cityName => {
+          if (listinExcludedCities.has(cityName)) return;
+          const cityGuias = srcShipments.filter(g => 
+            (g.ciudad_destino || 'Sin Ciudad').trim() === cityName &&
+            !listinExcludedGuiaIds.has(g.id_guia)
+          );
+          if (cityGuias.length > 0) {
+            activeCitiesCount++;
+            orderedActiveGuias.push(...cityGuias);
+          }
+        });
+
+        const totalGuias = orderedActiveGuias.length;
+        const totalPiezas = orderedActiveGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+
+        if (previewTotalGuias) previewTotalGuias.textContent = totalGuias.toString();
+        if (previewTotalPiezas) previewTotalPiezas.textContent = totalPiezas.toString();
+        if (previewTotalCiudades) previewTotalCiudades.textContent = activeCitiesCount.toString();
+
+        // Calcular filas del formato dual: mínimo 22 filas para llenar la página vertical como el portapapeles real
+        const rowCount = Math.max(Math.ceil(orderedActiveGuias.length / 2), 22);
+        const leftGuias = orderedActiveGuias.slice(0, rowCount);
+        const rightGuias = orderedActiveGuias.slice(rowCount, rowCount * 2);
+
+        let tableHtml = '';
+        for (let i = 0; i < rowCount; i++) {
+          const left = leftGuias[i];
+          const right = rightGuias[i];
+
+          tableHtml += `
+            <tr class="h-6 border-b border-black/30 text-black">
+              <!-- Bloque Izquierdo -->
+              <td class="py-1 px-1.5 border-r border-black font-mono font-bold text-center">${left ? left.id_guia : ''}</td>
+              <td class="py-1 px-1 border-r border-black text-center font-bold">${left ? (left.piezas || 1) : ''}</td>
+              <td class="py-1 px-2 border-r-2 border-black font-bold uppercase truncate max-w-[140px]">${left ? left.ciudad_destino : ''}</td>
+              <!-- Bloque Derecho -->
+              <td class="py-1 px-1.5 border-r border-black font-mono font-bold text-center">${right ? right.id_guia : ''}</td>
+              <td class="py-1 px-1 border-r border-black text-center font-bold">${right ? (right.piezas || 1) : ''}</td>
+              <td class="py-1 px-2 font-bold uppercase truncate max-w-[140px]">${right ? right.ciudad_destino : ''}</td>
+            </tr>
+          `;
+        }
+
+        if (previewListinTbody) {
+          previewListinTbody.innerHTML = tableHtml;
+        }
+      }
+
+      // Funciones Globales para Control de Jerarquía en Listín
+      (window as any).moveListinCity = (cityName: string, direction: number) => {
+        const idx = listinCitiesOrder.indexOf(cityName);
+        if (idx === -1) return;
+        const newIdx = idx + direction;
+        if (newIdx < 0 || newIdx >= listinCitiesOrder.length) return;
+        const temp = listinCitiesOrder[idx];
+        listinCitiesOrder[idx] = listinCitiesOrder[newIdx];
+        listinCitiesOrder[newIdx] = temp;
+        renderListinView();
+      };
+
+      (window as any).toggleListinCity = (cityName: string, isIncluded: boolean) => {
+        if (isIncluded) {
+          listinExcludedCities.delete(cityName);
+        } else {
+          listinExcludedCities.add(cityName);
+        }
+        renderListinView();
+      };
+
+      (window as any).toggleListinGuia = (guiaId: string, isIncluded: boolean) => {
+        if (isIncluded) {
+          listinExcludedGuiaIds.delete(guiaId);
+        } else {
+          listinExcludedGuiaIds.add(guiaId);
+        }
+        renderListinView();
+      };
+
+      (window as any).toggleListinCollapse = (cityName: string) => {
+        if (listinCollapsedCities.has(cityName)) {
+          listinCollapsedCities.delete(cityName);
+        } else {
+          listinCollapsedCities.add(cityName);
+        }
+        renderListinView();
+      };
+
+      // Listeners de Cambios de Filtros y Configuración
+      listinDriverSelect?.addEventListener('change', () => {
+        renderListinView();
+      });
+      listinStatusFilter?.addEventListener('change', () => {
+        renderListinView();
+      });
+      listinPlacaInput?.addEventListener('input', () => {
+        if (previewListinPlaca) {
+          previewListinPlaca.textContent = listinPlacaInput.value.trim().toUpperCase() || 'NO ASIGNADA';
         }
       });
+      listinFechaInput?.addEventListener('change', () => {
+        if (previewListinFecha) {
+          previewListinFecha.textContent = listinFechaInput.value || '';
+        }
+      });
+
+      // Ordenar Alfabéticamente / Auto Jerarquía
+      btnListinAutoTsp?.addEventListener('click', () => {
+        listinCitiesOrder.sort((a, b) => a.localeCompare(b));
+        showToast('Jerarquía de zonas ordenada de la A a la Z', 'success');
+        renderListinView();
+      });
+
+      // Impresión Nativa Fisiológica
+      btnListinPrint?.addEventListener('click', () => {
+        window.print();
+      });
+
+      // Generar y Descargar PDF con html2pdf
+      btnListinDownloadPdf?.addEventListener('click', async () => {
+        const element = document.getElementById('listin-print-wrapper');
+        if (!element) return;
+        const origHtml = btnListinDownloadPdf.innerHTML;
+        btnListinDownloadPdf.disabled = true;
+        btnListinDownloadPdf.innerHTML = `
+          <svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span>Generando PDF...</span>
+        `;
+
+        try {
+          const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
+          const driverClean = selectedDriverOption && listinDriverSelect.value !== 'ALL'
+            ? selectedDriverOption.text.replace(/[^a-zA-Z0-9]/g, '_')
+            : 'Flota_General';
+          const fecha = listinFechaInput?.value || 'fecha';
+          const filename = `Listin_Envias_${driverClean}_${fecha}.pdf`;
+
+          const opt = {
+            margin: [6, 6, 6, 6],
+            filename: filename,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+          };
+
+          if ((window as any).html2pdf) {
+            await (window as any).html2pdf().set(opt).from(element).save();
+            showToast('PDF del Listín descargado exitosamente', 'success');
+          } else {
+            window.print();
+          }
+        } catch (err) {
+          console.error('Error al generar PDF:', err);
+          showToast('Abriendo cuadro de impresión del navegador...', 'info');
+          window.print();
+        } finally {
+          btnListinDownloadPdf.disabled = false;
+          btnListinDownloadPdf.innerHTML = origHtml;
+        }
+      });
+
 
       init();
     </script>
