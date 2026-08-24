@@ -1023,75 +1023,78 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       }
 
       // ====================================================
-      // MOTOR DE COMPRESIÓN CANVAS HTML5 (ZERO-FAIL)
+      // MOTOR DE COMPRESIÓN CANVAS HTML5 (ZERO MEMORY LEAK)
       // ====================================================
-      function compressImage(file: File, maxWidth = 1280, maxHeight = 1600, quality = 0.8): Promise<{ blob: Blob | null, dataUrl: string, sizeKb: number }> {
+      function compressImage(file: File, maxWidth = 1280, maxHeight = 1600, quality = 0.8): Promise<{ blob: Blob | File | null, dataUrl: string, sizeKb: number }> {
         return new Promise((resolve) => {
           if (!file) {
             resolve({ blob: null, dataUrl: '', sizeKb: 0 });
             return;
           }
 
-          // Safety timeout para nunca colgar la UI
+          // Safety timeout: 3 segundos máximo para nunca bloquear el proceso
           const timer = setTimeout(() => {
-            console.warn('[Compress Timeout]: Usando archivo original directo.');
+            console.warn('[Compress Timeout]: Subiendo archivo directo');
             resolve({ blob: file, dataUrl: '', sizeKb: Math.round(file.size / 1024) });
-          }, 2500);
+          }, 3000);
 
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const rawDataUrl = (e.target?.result || '') as string;
-            const img = new Image();
-            img.onload = () => {
-              clearTimeout(timer);
-              try {
-                let width = img.naturalWidth || img.width;
-                let height = img.naturalHeight || img.height;
-
-                if (width > maxWidth || height > maxHeight) {
-                  if (width > height) {
-                    height = Math.round((height * maxWidth) / width);
-                    width = maxWidth;
-                  } else {
-                    width = Math.round((width * maxHeight) / height);
-                    height = maxHeight;
-                  }
-                }
-
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                if (!ctx) {
-                  resolve({ blob: file, dataUrl: rawDataUrl, sizeKb: Math.round(file.size / 1024) });
-                  return;
-                }
-                ctx.drawImage(img, 0, 0, width, height);
-
-                const finalDataUrl = canvas.toDataURL('image/jpeg', quality);
-                canvas.toBlob((blob) => {
-                  if (blob) {
-                    resolve({ blob: blob, dataUrl: finalDataUrl, sizeKb: Math.round(blob.size / 1024) });
-                  } else {
-                    resolve({ blob: file, dataUrl: finalDataUrl || rawDataUrl, sizeKb: Math.round(file.size / 1024) });
-                  }
-                }, 'image/jpeg', quality);
-              } catch (canvasErr) {
-                console.warn('[Canvas Compress Warning]:', canvasErr);
-                resolve({ blob: file, dataUrl: rawDataUrl, sizeKb: Math.round(file.size / 1024) });
-              }
-            };
-            img.onerror = () => {
-              clearTimeout(timer);
-              resolve({ blob: file, dataUrl: rawDataUrl, sizeKb: Math.round(file.size / 1024) });
-            };
-            img.src = rawDataUrl;
-          };
-          reader.onerror = () => {
+          let objectUrl = '';
+          try {
+            objectUrl = URL.createObjectURL(file);
+          } catch(e) {
             clearTimeout(timer);
             resolve({ blob: file, dataUrl: '', sizeKb: Math.round(file.size / 1024) });
+            return;
+          }
+
+          const img = new Image();
+          img.onload = () => {
+            clearTimeout(timer);
+            try {
+              let width = img.naturalWidth || img.width;
+              let height = img.naturalHeight || img.height;
+
+              if (width > maxWidth || height > maxHeight) {
+                if (width > height) {
+                  height = Math.round((height * maxWidth) / width);
+                  width = maxWidth;
+                } else {
+                  width = Math.round((width * maxHeight) / height);
+                  height = maxHeight;
+                }
+              }
+
+              const canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              if (!ctx) {
+                URL.revokeObjectURL(objectUrl);
+                resolve({ blob: file, dataUrl: '', sizeKb: Math.round(file.size / 1024) });
+                return;
+              }
+              ctx.drawImage(img, 0, 0, width, height);
+              URL.revokeObjectURL(objectUrl);
+
+              canvas.toBlob((blob) => {
+                if (blob) {
+                  resolve({ blob: blob, dataUrl: '', sizeKb: Math.round(blob.size / 1024) });
+                } else {
+                  resolve({ blob: file, dataUrl: '', sizeKb: Math.round(file.size / 1024) });
+                }
+              }, 'image/jpeg', quality);
+            } catch (canvasErr) {
+              console.warn('[Canvas Compress Warning]:', canvasErr);
+              URL.revokeObjectURL(objectUrl);
+              resolve({ blob: file, dataUrl: '', sizeKb: Math.round(file.size / 1024) });
+            }
           };
-          reader.readAsDataURL(file);
+          img.onerror = () => {
+            clearTimeout(timer);
+            URL.revokeObjectURL(objectUrl);
+            resolve({ blob: file, dataUrl: '', sizeKb: Math.round(file.size / 1024) });
+          };
+          img.src = objectUrl;
         });
       }
 
@@ -1107,6 +1110,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       const btnHeaderScan = document.getElementById('btn-header-scan');
 
       let currentScanTargetMode = 'hero';
+      let isUploadingScans = false;
 
       function openScanModal() {
         scanModal?.classList.remove('hidden');
@@ -1128,6 +1132,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       // Manejador centralizado de archivos seleccionados
       async function handleScanFiles(files: File[]) {
         if (!files || files.length === 0) return;
+        isUploadingScans = true;
 
         const total = files.length;
         const nowScan = new Date();
@@ -1151,83 +1156,79 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         let uploadedOk = 0;
         let processed = 0;
 
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          sessionScannedCount++;
-          const itemIndex = sessionScannedCount;
+        try {
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            sessionScannedCount++;
+            const itemIndex = sessionScannedCount;
 
-          // Crear miniatura temporal en el DOM
-          const thumbDiv = document.createElement('div');
-          thumbDiv.id = `scan-thumb-${itemIndex}`;
-          thumbDiv.className = 'relative aspect-square rounded-xl overflow-hidden bg-slate-100 border-2 border-slate-200 transition-all';
-          thumbDiv.innerHTML = `
-            <div id="scan-thumb-overlay-${itemIndex}" class="absolute inset-0 bg-black/50 flex items-center justify-center">
-              <svg class="w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-              </svg>
-            </div>
-          `;
-          if (galleryGrid) galleryGrid.prepend(thumbDiv);
+            // Miniatura instantánea en el DOM con URL.createObjectURL
+            let previewUrl = '';
+            try {
+              previewUrl = URL.createObjectURL(file);
+            } catch(e) {}
 
-          try {
-            // Optimización con Canvas HTML5
-            const comp = await compressImage(file, 1280, 1600, 0.8);
+            const thumbDiv = document.createElement('div');
+            thumbDiv.id = `scan-thumb-${itemIndex}`;
+            thumbDiv.className = 'relative aspect-square rounded-xl overflow-hidden bg-slate-100 border-2 border-slate-200 transition-all';
+            thumbDiv.innerHTML = `
+              ${previewUrl ? `<img src="${previewUrl}" class="w-full h-full object-cover" />` : ''}
+              <div id="scan-thumb-overlay-${itemIndex}" class="absolute inset-0 bg-black/50 flex items-center justify-center transition-opacity">
+                <svg class="w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+              </div>
+            `;
+            if (galleryGrid) galleryGrid.prepend(thumbDiv);
 
-            if (comp.dataUrl) {
-              const imgEl = document.createElement('img');
-              imgEl.src = comp.dataUrl;
-              imgEl.className = 'w-full h-full object-cover';
-              thumbDiv.prepend(imgEl);
-            }
+            try {
+              // Optimización con Canvas HTML5 (rápida y a prueba de fallos)
+              const comp = await compressImage(file, 1280, 1600, 0.8);
 
-            const formData = new FormData();
-            if (comp.blob) {
-              formData.append('foto', comp.blob, file.name || 'escaneo.jpg');
-            } else {
-              formData.append('foto', file, file.name || 'escaneo.jpg');
-            }
-            if (comp.dataUrl) {
-              formData.append('foto_base64', comp.dataUrl);
-            }
-            formData.append('lote_id', scanLoteId);
+              const formData = new FormData();
+              formData.append('foto', comp.blob || file, file.name || 'escaneo.jpg');
+              formData.append('lote_id', scanLoteId);
 
-            const res = await fetch('/api/escaneos', {
-              method: 'POST',
-              body: formData,
-              credentials: 'include'
-            });
-            const data = await res.json().catch(() => ({ success: false, message: 'Error de respuesta del servidor' }));
+              const res = await fetch('/api/escaneos', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+              });
+              const data = await res.json().catch(() => ({ success: false, message: 'Error de respuesta del servidor' }));
 
-            const overlay = document.getElementById(`scan-thumb-overlay-${itemIndex}`);
-            if (res.ok && data.success) {
-              uploadedOk++;
-              thumbDiv.classList.replace('border-slate-200', 'border-emerald-400');
-              if (overlay) {
-                overlay.innerHTML = `<svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>`;
-                setTimeout(() => overlay.classList.add('opacity-0'), 700);
+              const overlay = document.getElementById(`scan-thumb-overlay-${itemIndex}`);
+              if (res.ok && data.success) {
+                uploadedOk++;
+                thumbDiv.classList.replace('border-slate-200', 'border-emerald-400');
+                if (overlay) {
+                  overlay.innerHTML = `<svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>`;
+                  setTimeout(() => overlay.classList.add('opacity-0'), 700);
+                }
+              } else {
+                thumbDiv.classList.replace('border-slate-200', 'border-rose-400');
+                if (overlay) {
+                  overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
+                }
+                showToast(`Error: ${data.message || 'Error al guardar foto'}`, 'error');
               }
-            } else {
+            } catch (err) {
+              console.error('Error procesando escaneo:', err);
+              const overlay = document.getElementById(`scan-thumb-overlay-${itemIndex}`);
               thumbDiv.classList.replace('border-slate-200', 'border-rose-400');
               if (overlay) {
                 overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
               }
-              showToast(`Error: ${data.message || 'Error al guardar foto'}`, 'error');
+              showToast('Error de red al subir la foto', 'error');
             }
-          } catch (err) {
-            console.error('Error procesando escaneo:', err);
-            const overlay = document.getElementById(`scan-thumb-overlay-${itemIndex}`);
-            thumbDiv.classList.replace('border-slate-200', 'border-rose-400');
-            if (overlay) {
-              overlay.innerHTML = `<svg class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>`;
-            }
-            showToast('Error de red al subir la foto', 'error');
-          }
 
-          processed++;
-          const pct = Math.round((processed / total) * 100);
-          if (progressBar) progressBar.style.width = `${pct}%`;
-          if (progressCount) progressCount.textContent = `${processed} / ${total}`;
+            processed++;
+            const pct = Math.round((processed / total) * 100);
+            if (progressBar) progressBar.style.width = `${pct}%`;
+            if (progressCount) progressCount.textContent = `${processed} / ${total}`;
+          }
+        } finally {
+          isUploadingScans = false;
         }
 
         if (progressLabel) progressLabel.textContent = `¡${uploadedOk} de ${total} guías cargadas con éxito!`;
@@ -1887,6 +1888,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       const refreshIcon = document.getElementById('refresh-icon');
 
       async function syncGuias(showToastNotification = false) {
+        if (isUploadingScans) return;
         if (refreshIcon) refreshIcon.classList.add('animate-spin');
         try {
           const res = await fetch('/api/chofer/guias');
