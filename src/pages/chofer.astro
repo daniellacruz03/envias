@@ -241,44 +241,46 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           </p>
         </div>
 
-        <!-- Inputs de archivo ocultos nativos -->
-        <input type="file" id="hero-camera-input" accept="image/*" capture="environment" class="hidden" />
-        <input type="file" id="hero-gallery-input" accept="image/*" multiple class="hidden" />
-
-        <!-- Botones de Captura Directa -->
+        <!-- Botones de Captura Directa con Input Nativo Superpuesto -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-          <button
-            type="button"
-            onclick="document.getElementById('hero-camera-input').click()"
-            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 shadow-sm transition-all cursor-pointer text-center select-none"
-          >
-            <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
+          <div class="relative w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 shadow-sm transition-all text-center select-none overflow-hidden cursor-pointer">
+            <input
+              type="file"
+              id="hero-camera-input"
+              accept="image/*"
+              capture="environment"
+              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+            />
+            <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400 pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
             </div>
-            <div>
+            <div class="pointer-events-none">
               <p class="text-xs font-bold">Tomar Foto con Cámara</p>
               <p class="text-[10px] text-slate-300">Disparo 1 a 1</p>
             </div>
-          </button>
+          </div>
 
-          <button
-            type="button"
-            onclick="document.getElementById('hero-gallery-input').click()"
-            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 transition-all cursor-pointer text-center select-none"
-          >
-            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+          <div class="relative w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center gap-2.5 transition-all text-center select-none overflow-hidden cursor-pointer">
+            <input
+              type="file"
+              id="hero-gallery-input"
+              accept="image/*"
+              multiple
+              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+            />
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
             </div>
-            <div>
+            <div class="pointer-events-none">
               <p class="text-xs font-bold">Elegir de Galería</p>
               <p class="text-[10px] text-slate-500">Seleccionar varias fotos</p>
             </div>
-          </button>
+          </div>
         </div>
 
         <!-- Barra de Progreso y Miniaturas de Subida en Vivo (Hero) -->
@@ -537,43 +539,45 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           </button>
         </div>
 
-        <!-- Inputs ocultos para el modal -->
-        <input type="file" id="modal-scan-camera-input" accept="image/*" capture="environment" class="hidden" />
-        <input type="file" id="modal-scan-gallery-input" accept="image/*" multiple class="hidden" />
-
         <div class="grid grid-cols-2 gap-2.5">
-          <button
-            type="button"
-            onclick="document.getElementById('modal-scan-camera-input').click()"
-            class="tap-active w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 shadow-sm transition-all cursor-pointer text-center select-none"
-          >
-            <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
+          <div class="relative w-full bg-slate-900 hover:bg-black text-white rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 shadow-sm transition-all text-center select-none overflow-hidden cursor-pointer">
+            <input
+              type="file"
+              id="modal-scan-camera-input"
+              accept="image/*"
+              capture="environment"
+              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+            />
+            <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400 pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
             </div>
-            <div>
+            <div class="pointer-events-none">
               <p class="text-xs font-bold">Usar Cámara</p>
               <p class="text-[9px] text-slate-300">Foto directa</p>
             </div>
-          </button>
+          </div>
 
-          <button
-            type="button"
-            onclick="document.getElementById('modal-scan-gallery-input').click()"
-            class="tap-active w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer text-center select-none"
-          >
-            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+          <div class="relative w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-2 transition-all text-center select-none overflow-hidden cursor-pointer">
+            <input
+              type="file"
+              id="modal-scan-gallery-input"
+              accept="image/*"
+              multiple
+              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+            />
+            <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center pointer-events-none">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
               </svg>
             </div>
-            <div>
+            <div class="pointer-events-none">
               <p class="text-xs font-bold">Galería</p>
               <p class="text-[9px] text-slate-500">Múltiples fotos</p>
             </div>
-          </button>
+          </div>
         </div>
 
         <!-- Progreso y Galería del Modal -->
@@ -669,11 +673,16 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               <span id="photo-size-badge" class="hidden text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">Optimizado</span>
             </div>
 
-            <!-- Input off-screen para foto de comprobante -->
-            <input type="file" id="modal-delivery-photo-input" accept="image/*" capture="environment" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;" />
-
-            <label for="modal-delivery-photo-input" id="dropzone-delivery-photo" class="border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-2xl p-3 text-center cursor-pointer transition-all bg-slate-50 hover:bg-slate-100/70 block">
-              <div id="photo-placeholder" class="py-2 space-y-1">
+            <!-- Zona de Carga de Foto de Comprobante con Input Superpuesto -->
+            <div id="dropzone-delivery-photo" class="relative border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-2xl p-3 text-center cursor-pointer transition-all bg-slate-50 hover:bg-slate-100/70 block overflow-hidden">
+              <input
+                type="file"
+                id="modal-delivery-photo-input"
+                accept="image/*"
+                capture="environment"
+                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+              />
+              <div id="photo-placeholder" class="py-2 space-y-1 pointer-events-none">
                 <div class="w-9 h-9 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-1 shadow-2xs">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -684,7 +693,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
                 <p class="text-[10px] text-slate-400">Toca aquí para abrir la cámara</p>
               </div>
 
-              <div id="photo-preview-container" class="hidden space-y-2">
+              <div id="photo-preview-container" class="hidden space-y-2 pointer-events-none">
                 <img id="photo-preview-img" class="w-full max-h-36 object-contain rounded-xl border border-slate-200 bg-white" alt="Comprobante" />
                 <div class="flex items-center justify-between px-1 text-[11px]">
                   <span class="text-emerald-700 font-bold flex items-center gap-1">
@@ -694,7 +703,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
                   <span class="text-rose-600 font-bold underline text-xs">Cambiar foto</span>
                 </div>
               </div>
-            </label>
+            </div>
           </div>
 
           <div class="space-y-1.5">
@@ -1016,17 +1025,25 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       // ====================================================
       // MOTOR DE COMPRESIÓN CANVAS HTML5 (ZERO-FAIL)
       // ====================================================
-      function compressImage(file, maxWidth = 1280, maxHeight = 1600, quality = 0.8) {
+      function compressImage(file: File, maxWidth = 1280, maxHeight = 1600, quality = 0.8): Promise<{ blob: Blob | null, dataUrl: string, sizeKb: number }> {
         return new Promise((resolve) => {
           if (!file) {
             resolve({ blob: null, dataUrl: '', sizeKb: 0 });
             return;
           }
+
+          // Safety timeout para nunca colgar la UI
+          const timer = setTimeout(() => {
+            console.warn('[Compress Timeout]: Usando archivo original directo.');
+            resolve({ blob: file, dataUrl: '', sizeKb: Math.round(file.size / 1024) });
+          }, 2500);
+
           const reader = new FileReader();
           reader.onload = (e) => {
-            const rawDataUrl = (e.target?.result || '');
+            const rawDataUrl = (e.target?.result || '') as string;
             const img = new Image();
             img.onload = () => {
+              clearTimeout(timer);
               try {
                 let width = img.naturalWidth || img.width;
                 let height = img.naturalHeight || img.height;
@@ -1065,11 +1082,13 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               }
             };
             img.onerror = () => {
+              clearTimeout(timer);
               resolve({ blob: file, dataUrl: rawDataUrl, sizeKb: Math.round(file.size / 1024) });
             };
             img.src = rawDataUrl;
           };
           reader.onerror = () => {
+            clearTimeout(timer);
             resolve({ blob: file, dataUrl: '', sizeKb: Math.round(file.size / 1024) });
           };
           reader.readAsDataURL(file);
