@@ -711,14 +711,20 @@ const userInitials = currentUser.nombre
             </div>
 
             <!-- Botones de Acción Fijos al Pie -->
-            <div class="px-5 py-4 border-t border-slate-200 bg-slate-50/80 shrink-0 flex items-center gap-3">
-              <button id="drawer-reject-btn" type="button" class="py-2.5 px-4 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-slate-700 hover:text-rose-700 font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="px-5 py-4 border-t border-slate-200 bg-slate-50/80 shrink-0 flex items-center gap-2 sm:gap-3">
+              <button id="drawer-delete-btn" type="button" class="py-2.5 px-3 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5" title="Eliminar permanentemente este escaneo y su foto">
+                <svg class="w-4 h-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span class="hidden sm:inline">Eliminar</span>
+              </button>
+              <button id="drawer-reject-btn" type="button" class="py-2.5 px-3.5 sm:px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5">
+                <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
                 Rechazar
               </button>
-              <button id="drawer-approve-btn" type="button" class="flex-1 py-2.5 px-5 rounded-xl bg-slate-900 hover:bg-black active:scale-[0.98] text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 shadow-sm">
+              <button id="drawer-approve-btn" type="button" class="flex-1 py-2.5 px-4 sm:px-5 rounded-xl bg-slate-900 hover:bg-black active:scale-[0.98] text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 shadow-sm">
                 <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
                 </svg>
@@ -1203,6 +1209,20 @@ const userInitials = currentUser.nombre
               </svg>
               <span class="hidden md:inline">Original</span>
             </a>
+
+            <!-- Botón Eliminar Foto de la Guía / Escaneo -->
+            <button
+              id="lightbox-delete-btn"
+              type="button"
+              class="px-2.5 sm:px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all border border-rose-500/30 cursor-pointer shadow-xs"
+              title="Eliminar foto permanentemente"
+            >
+              <svg class="w-3.5 h-3.5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span class="hidden sm:inline">Eliminar Foto</span>
+              <span class="sm:hidden">Borrar</span>
+            </button>
 
             <!-- Cerrar -->
             <button
@@ -1971,7 +1991,7 @@ const userInitials = currentUser.nombre
                 ${item.comprobante_url ? `
                   <button
                     type="button"
-                    onclick="window.openLightbox('${item.comprobante_url}', 'Comprobante Guía #${item.id_guia} - ${item.destinatario.replace(/'/g, "\\'")}', '${item.recibido_por ? `Recibido por: ${item.recibido_por.replace(/'/g, "\\'")}` : 'Entrega verificada'}')"
+                    onclick="window.openLightbox('${item.comprobante_url}', 'Comprobante Guía #${item.id_guia} - ${item.destinatario.replace(/'/g, "\\'")}', '${item.recibido_por ? `Recibido por: ${item.recibido_por.replace(/'/g, "\\'")}` : 'Entrega verificada'}', '${item.id_guia}', 'guia')"
                     title="Ver foto del comprobante de entrega"
                     class="inline-flex items-center gap-1 bg-slate-900 hover:bg-black active:scale-95 text-white font-semibold text-[11px] px-2.5 py-1.5 rounded-xl transition-all shadow-xs cursor-pointer"
                   >
@@ -2384,7 +2404,7 @@ const userInitials = currentUser.nombre
                             ${item.comprobante_url ? `
                               <button
                                 type="button"
-                                onclick="window.openLightbox('${item.comprobante_url}', 'Comprobante Guía #${item.id_guia} - ${item.destinatario.replace(/'/g, "\\'")}', '${item.recibido_por ? `Recibido por: ${item.recibido_por.replace(/'/g, "\\'")}` : 'Entrega verificada'}')"
+                                onclick="window.openLightbox('${item.comprobante_url}', 'Comprobante Guía #${item.id_guia} - ${item.destinatario.replace(/'/g, "\\'")}', '${item.recibido_por ? `Recibido por: ${item.recibido_por.replace(/'/g, "\\'")}` : 'Entrega verificada'}', '${item.id_guia}', 'guia')"
                                 title="Ver foto comprobante"
                                 class="inline-flex items-center gap-1 bg-slate-900 hover:bg-black text-white font-semibold text-[10px] px-2 py-1 rounded-lg transition-all shadow-xs cursor-pointer"
                               >
@@ -2735,7 +2755,7 @@ const userInitials = currentUser.nombre
                           ${g.comprobante_url ? `
                             <div
                               class="relative rounded-xl overflow-hidden border ${isNoEntregado ? 'border-rose-200' : 'border-emerald-200'} bg-slate-100 group/thumb cursor-pointer aspect-video"
-                              onclick="window.openLightbox('${g.comprobante_url}', '${isNoEntregado ? 'Evidencia de Intento Fallido' : 'Comprobante de Entrega'} - Guía #${g.id_guia}', '${g.recibido_por ? `${isNoEntregado ? 'Motivo:' : 'Recibido por:'} ${g.recibido_por.replace(/'/g, "\\'")}` : ''} • Chofer: ${driver.nombre}')"
+                              onclick="window.openLightbox('${g.comprobante_url}', '${isNoEntregado ? 'Evidencia de Intento Fallido' : 'Comprobante de Entrega'} - Guía #${g.id_guia}', '${g.recibido_por ? `${isNoEntregado ? 'Motivo:' : 'Recibido por:'} ${g.recibido_por.replace(/'/g, "\\'")}` : ''} • Chofer: ${driver.nombre}', '${g.id_guia}', 'guia')"
                               title="Haz clic para ampliar la foto"
                             >
                               <img src="${g.comprobante_url}" alt="Comprobante #${g.id_guia}" class="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-200" />
@@ -3177,6 +3197,52 @@ const userInitials = currentUser.nombre
           }
         });
 
+        const drawerDeleteBtn = document.getElementById('drawer-delete-btn') as HTMLButtonElement;
+
+        drawerDeleteBtn?.addEventListener('click', async () => {
+          if (!activeEscaneoId) return;
+
+          if (!confirm('¿Estás seguro de que deseas eliminar permanentemente este escaneo y su foto?')) {
+            return;
+          }
+
+          const originalHtml = drawerDeleteBtn.innerHTML;
+          drawerDeleteBtn.disabled = true;
+          drawerDeleteBtn.innerHTML = `
+            <svg class="animate-spin w-4 h-4 text-rose-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+          `;
+
+          try {
+            const res = await fetch(`/api/escaneos/${activeEscaneoId}`, { method: 'DELETE' });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+              showToast('Escaneo eliminado permanentemente', 'success');
+              drawerFotosFlat.splice(drawerCurrentIndex, 1);
+              if (drawerFotosFlat.length === 0) {
+                closeDrawer();
+                loadAndRenderEscaneos();
+                return;
+              }
+              if (drawerCurrentIndex >= drawerFotosFlat.length) {
+                drawerCurrentIndex = drawerFotosFlat.length - 1;
+              }
+              loadDrawerByIndex(drawerCurrentIndex);
+              loadAndRenderEscaneos();
+            } else {
+              showToast(data.message || 'Error al eliminar escaneo', 'error');
+            }
+          } catch (e) {
+            showToast('Error de conexión al eliminar escaneo', 'error');
+          } finally {
+            drawerDeleteBtn.disabled = false;
+            drawerDeleteBtn.innerHTML = originalHtml;
+          }
+        });
+
         drawerRejectBtn?.addEventListener('click', async () => {
           if (!activeEscaneoId) return;
           drawerRejectBtn.disabled = true;
@@ -3525,6 +3591,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       const lightboxTitle = document.getElementById('lightbox-title') as HTMLElement;
       const lightboxInfo = document.getElementById('lightbox-info') as HTMLElement;
       const lightboxExternalLink = document.getElementById('lightbox-external-link') as HTMLAnchorElement;
+      const lightboxDeleteBtn = document.getElementById('lightbox-delete-btn') as HTMLButtonElement;
       const lightboxViewport = document.getElementById('lightbox-viewport') as HTMLElement;
       const lightboxZoomIn = document.getElementById('lightbox-zoom-in') as HTMLButtonElement;
       const lightboxZoomOut = document.getElementById('lightbox-zoom-out') as HTMLButtonElement;
@@ -3539,6 +3606,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       let isPanning = false;
       let startX = 0;
       let startY = 0;
+
+      let currentLightboxTargetId: string | number | null = null;
+      let currentLightboxTargetType: 'guia' | 'escaneo' | null = null;
 
       function applyTransform() {
         if (!lightboxImg) return;
@@ -3565,17 +3635,88 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         applyTransform();
       }
 
-      (window as any).openLightbox = (imgUrl: string, title?: string, info?: string) => {
+      (window as any).openLightbox = (imgUrl: string, title?: string, info?: string, targetId?: string | number, targetType?: 'guia' | 'escaneo') => {
         if (!lightboxModal || !lightboxImg) return;
         resetZoom();
         lightboxImg.src = imgUrl;
         if (lightboxTitle) lightboxTitle.textContent = title || 'Visualizador de Imagen';
         if (lightboxInfo) lightboxInfo.textContent = info || '';
         if (lightboxExternalLink) lightboxExternalLink.href = imgUrl;
+
+        currentLightboxTargetId = targetId || null;
+        currentLightboxTargetType = targetType || (targetId ? 'guia' : null);
+
+        if (lightboxDeleteBtn) {
+          if (currentLightboxTargetId) {
+            lightboxDeleteBtn.classList.remove('hidden');
+          } else {
+            lightboxDeleteBtn.classList.add('hidden');
+          }
+        }
+
         lightboxModal.classList.remove('hidden');
         lightboxModal.classList.add('flex');
         document.body.style.overflow = 'hidden';
       };
+
+      // Handler para eliminar foto desde el Lightbox
+      lightboxDeleteBtn?.addEventListener('click', async () => {
+        if (!currentLightboxTargetId) return;
+
+        const isGuia = currentLightboxTargetType === 'guia' || !currentLightboxTargetType;
+        const confirmMsg = isGuia
+          ? `¿Estás seguro de que deseas eliminar la foto de la guía #${currentLightboxTargetId}?`
+          : `¿Estás seguro de que deseas eliminar esta foto de escaneo?`;
+
+        if (!confirm(confirmMsg)) return;
+
+        const originalHtml = lightboxDeleteBtn.innerHTML;
+        lightboxDeleteBtn.disabled = true;
+        lightboxDeleteBtn.innerHTML = `
+          <svg class="animate-spin w-3.5 h-3.5 text-rose-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span>Eliminando...</span>
+        `;
+
+        try {
+          const endpoint = isGuia
+            ? `/api/guias/${currentLightboxTargetId}/foto`
+            : `/api/escaneos/${currentLightboxTargetId}`;
+
+          const res = await fetch(endpoint, { method: 'DELETE' });
+          const data = await res.json();
+
+          if (res.ok && data.success) {
+            showToast(data.message || 'Foto eliminada correctamente', 'success');
+
+            if (isGuia) {
+              // Actualizar en el estado local de guías en memoria
+              const targetIdStr = currentLightboxTargetId.toString().toUpperCase();
+              const guiaFound = shipments.find(g => g.id_guia && g.id_guia.toUpperCase() === targetIdStr);
+              if (guiaFound) {
+                guiaFound.comprobante_url = null;
+                guiaFound.comprobante_base64 = null;
+                guiaFound.recibido_por = null;
+              }
+              // Re-renderizar las vistas activas
+              renderViews();
+            } else {
+              loadAndRenderEscaneos();
+            }
+
+            closeLightboxModal();
+          } else {
+            showToast(data.message || 'Error al eliminar la foto', 'error');
+          }
+        } catch (error: any) {
+          showToast('Error de conexión al eliminar la foto', 'error');
+        } finally {
+          lightboxDeleteBtn.disabled = false;
+          lightboxDeleteBtn.innerHTML = originalHtml;
+        }
+      });
 
       function closeLightboxModal() {
         lightboxModal?.classList.add('hidden');

@@ -31,7 +31,7 @@ El cliente abre el link en su telefono (sin descargar ninguna app pesada) y tien
 Listo. Al confirmar, el sistema le prende un bombillo verde de "GPS Confirmado" en la oficina. Cero llamadas y cero confusiones.
 
 PASO 3: LA COMPUTADORA LE ARMA LA RUTA AL CHOFER (CERO PENSAR A MANO)
-En el panel, el jefe de almacen elige al chofer (ejemplo: Carlos Leal), pone de donde sale (Sede Barquisimeto) y a donde termina (Sede Merida o retorno).
+En el panel, el jefe de almacen elige al chofer (ejemplo: Carlos), pone de donde sale (Sede Barquisimeto) y a donde termina (Sede Merida o retorno).
 Le da al boton "Jerarquia por Cercania".
 La plataforma hace la matematica en un segundo:
 - Agarra el paquete mas cercano a la puerta del almacen y lo pone de Parada #1.

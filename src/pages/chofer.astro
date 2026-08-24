@@ -725,9 +725,15 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             <h4 class="text-xs font-bold text-white" id="lightbox-title">Comprobante</h4>
             <p class="text-[10px] text-slate-400" id="lightbox-info"></p>
           </div>
-          <button type="button" id="lightbox-close-btn" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 cursor-pointer">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
+          <div class="flex items-center gap-2">
+            <button type="button" id="lightbox-delete-btn" class="hidden text-xs font-semibold px-2.5 py-1 bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white rounded-xl border border-rose-500/30 transition-all cursor-pointer items-center gap-1">
+              <svg class="w-3.5 h-3.5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+              <span>Eliminar</span>
+            </button>
+            <button type="button" id="lightbox-close-btn" class="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 cursor-pointer">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
         </div>
         <div class="flex items-center justify-center max-h-[70vh] overflow-hidden rounded-2xl bg-black">
           <img id="lightbox-img" src="" alt="Comprobante" class="max-h-[68vh] w-auto object-contain rounded-xl" />
@@ -1436,7 +1442,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
                 ` : isDelivered && guia.comprobante_url ? `
                   <button 
                     type="button" 
-                    onclick="window.openLightbox('${guia.comprobante_url}', 'Guía #${guia.id_guia}', '${guia.destinatario.replace(/'/g, "\\'")}')" 
+                    onclick="window.openLightbox('${guia.comprobante_url}', 'Guía #${guia.id_guia}', '${guia.destinatario.replace(/'/g, "\\'")}', '${guia.id_guia}')" 
                     class="tap-active p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-center font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer"
                   >
                     <svg class="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -1579,24 +1585,77 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       // MÓDULO 4: LIGHTBOX
       // ====================================================
       const lightboxModal = document.getElementById('lightbox-modal');
-      const lightboxImg = document.getElementById('lightbox-img');
+      const lightboxImg = document.getElementById('lightbox-img') as HTMLImageElement;
       const lightboxTitle = document.getElementById('lightbox-title');
       const lightboxInfo = document.getElementById('lightbox-info');
       const lightboxCloseBtn = document.getElementById('lightbox-close-btn');
+      const lightboxDeleteBtn = document.getElementById('lightbox-delete-btn') as HTMLButtonElement;
 
-      window.openLightbox = function(url, title, info) {
+      let currentChoferLightboxGuiaId: string | null = null;
+
+      window.openLightbox = function(url, title, info, guiaId) {
         if (!lightboxModal || !lightboxImg) return;
         lightboxImg.src = url;
         if (lightboxTitle) lightboxTitle.textContent = title || 'Comprobante';
         if (lightboxInfo) lightboxInfo.textContent = info || '';
+
+        currentChoferLightboxGuiaId = guiaId || null;
+        if (lightboxDeleteBtn) {
+          if (currentChoferLightboxGuiaId) {
+            lightboxDeleteBtn.classList.remove('hidden');
+            lightboxDeleteBtn.classList.add('flex');
+          } else {
+            lightboxDeleteBtn.classList.add('hidden');
+            lightboxDeleteBtn.classList.remove('flex');
+          }
+        }
+
         lightboxModal.classList.remove('hidden');
         lightboxModal.classList.add('flex');
       };
+
+      lightboxDeleteBtn?.addEventListener('click', async () => {
+        if (!currentChoferLightboxGuiaId) return;
+
+        if (!confirm(`¿Estás seguro de eliminar la foto de comprobante de la guía #${currentChoferLightboxGuiaId}?`)) {
+          return;
+        }
+
+        const origText = lightboxDeleteBtn.innerHTML;
+        lightboxDeleteBtn.disabled = true;
+        lightboxDeleteBtn.innerHTML = `<span>Borrando...</span>`;
+
+        try {
+          const res = await fetch(`/api/guias/${currentChoferLightboxGuiaId}/foto`, { method: 'DELETE' });
+          const data = await res.json();
+
+          if (res.ok && data.success) {
+            showToast('Foto eliminada correctamente', 'success');
+            const targetId = currentChoferLightboxGuiaId;
+            const item = guiasData.find((g: any) => g.id_guia === targetId);
+            if (item) {
+              item.comprobante_url = null;
+              item.comprobante_base64 = null;
+              item.recibido_por = null;
+            }
+            renderGuias();
+            closeLightbox();
+          } else {
+            showToast(data.message || 'Error al eliminar foto', 'error');
+          }
+        } catch(e) {
+          showToast('Error de conexión', 'error');
+        } finally {
+          lightboxDeleteBtn.disabled = false;
+          lightboxDeleteBtn.innerHTML = origText;
+        }
+      });
 
       function closeLightbox() {
         lightboxModal?.classList.add('hidden');
         lightboxModal?.classList.remove('flex');
         if (lightboxImg) lightboxImg.src = '';
+        currentChoferLightboxGuiaId = null;
       }
 
       lightboxCloseBtn?.addEventListener('click', closeLightbox);

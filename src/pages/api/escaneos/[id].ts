@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/db';
 import { getUserFromCookies } from '../../../lib/auth';
-
+import fs from 'fs';
+import path from 'path';
 
 // PATCH /api/escaneos/[id] — Logistica aprueba o rechaza un escaneo
 // Body JSON: { accion: 'procesar' | 'rechazar', datos_guia?: { id_guia, destinatario, telefono_principal, ciudad_destino, piezas, direccion_referencia } }
@@ -100,6 +101,70 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
   } catch (error: any) {
     console.error('[API PATCH /api/escaneos/[id] Error]:', error);
     return new Response(JSON.stringify({ success: false, message: 'Error al procesar el escaneo.', error: error.message }), {
+      status: 500, headers: { 'Content-Type': 'application/json' }
+    });
+  }
+};
+
+// DELETE /api/escaneos/[id] — Eliminar permanentemente un escaneo y su foto
+export const DELETE: APIRoute = async ({ params, cookies }) => {
+  try {
+    const user = getUserFromCookies(cookies);
+    if (!user) {
+      return new Response(JSON.stringify({ success: false, message: 'No autenticado.' }), {
+        status: 401, headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const escaneoId = parseInt(params.id || '0', 10);
+    if (!escaneoId) {
+      return new Response(JSON.stringify({ success: false, message: 'ID de escaneo inválido.' }), {
+        status: 400, headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const escaneoRes = await query(`SELECT id, foto_url FROM guias_escaneos WHERE id = $1`, [escaneoId]);
+    if (escaneoRes.rows.length === 0) {
+      return new Response(JSON.stringify({ success: false, message: 'Escaneo no encontrado.' }), {
+        status: 404, headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const currentUrl = escaneoRes.rows[0].foto_url;
+    if (currentUrl && currentUrl.startsWith('/uploads/')) {
+      const relPath = currentUrl.replace(/^\/uploads\//, '');
+      const possiblePaths = [
+        path.join(process.cwd(), 'public', 'uploads', relPath),
+        path.join(process.cwd(), 'dist', 'client', 'uploads', relPath),
+        path.join(process.cwd(), 'uploads', relPath)
+      ];
+
+      for (const p of possiblePaths) {
+        try {
+          if (fs.existsSync(p)) fs.unlinkSync(p);
+        } catch (e) {
+          console.warn('[DELETE Escaneo Warning]: No se pudo borrar archivo físico:', p, e);
+        }
+      }
+    }
+
+    await query(`DELETE FROM guias_escaneos WHERE id = $1`, [escaneoId]);
+
+    return new Response(JSON.stringify({
+      success: true,
+      message: 'Foto de escaneo eliminada permanentemente.',
+      data: { id: escaneoId }
+    }), {
+      status: 200, headers: { 'Content-Type': 'application/json' }
+    });
+
+  } catch (error: any) {
+    console.error('[API DELETE /api/escaneos/[id] Error]:', error);
+    return new Response(JSON.stringify({
+      success: false,
+      message: 'Error al eliminar el escaneo.',
+      error: error.message
+    }), {
       status: 500, headers: { 'Content-Type': 'application/json' }
     });
   }

@@ -44,12 +44,12 @@ Las credenciales estan almacenadas en la tabla `usuarios` de PostgreSQL en Railw
 | Admin Central | Logistica | admin@envias.com | admin123 |
 
 ### B. Choferes Registrados (Flota de Transporte)
-- **Carlos Leal:** `carlos@envias.com` | `chofer123` | ID: 4
-- **Eulogio Morales:** `eulogio@envias.com` | `chofer123` | ID: 10
-- **Albert González:** `albert@envias.com` | `chofer123` | ID: 11
-- **José Mendoza:** `mendoza@envias.com` | `chofer123` | ID: 12
-- **Mario Rivas:** `mario@envias.com` | `chofer123` | ID: 13
-- **Emiro Colmenárez:** `emiro@envias.com` | `chofer123` | ID: 14
+- **Carlos:** `carlos@envias.com` | `chofer123` | ID: 4
+- **Eulogio:** `eulogio@envias.com` | `chofer123` | ID: 10
+- **Albert:** `albert@envias.com` | `chofer123` | ID: 11
+- **José:** `jose@envias.com` | `chofer123` | ID: 12
+- **Mario:** `mario@envias.com` | `chofer123` | ID: 13
+- **Emiro:** `emiro@envias.com` | `chofer123` | ID: 14
 
 ---
 

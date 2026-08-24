@@ -88,7 +88,10 @@ export const PATCH: APIRoute = async ({ params, request }) => {
       'piezas',
       'direccion_referencia',
       'telefono_principal',
-      'telefono_secundario'
+      'telefono_secundario',
+      'comprobante_url',
+      'comprobante_base64',
+      'recibido_por'
     ];
 
     const updates: string[] = [];
