@@ -1,4 +1,4 @@
-﻿---
+---
 import Layout from '../layouts/Layout.astro';
 import { query } from '../lib/db';
 import { getCatalogoParaCliente } from '../lib/cobertura';
@@ -154,12 +154,12 @@ const catalogoCobertura = getCatalogoParaCliente();
               <span>Ubicacion GPS Actual</span>
             </button>
 
-            <button type="button" id="tab-btn-address"
+            <button type="button" id="tab-btn-coords"
               class="py-2.5 px-3 rounded-xl text-slate-600 hover:text-slate-900 transition-all flex flex-row items-center justify-center gap-2 cursor-pointer text-[12px]">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-sky-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
-              <span>Direccion Escrita</span>
+              <span>Pegar Coordenadas</span>
             </button>
           </div>
 
@@ -177,20 +177,45 @@ const catalogoCobertura = getCatalogoParaCliente();
             </p>
           </div>
 
-          <!-- Panel Direccion -->
-          <div id="tab-panel-address" class="hidden space-y-2.5 mt-3">
+          <!-- Panel Pegar Coordenadas -->
+          <div id="tab-panel-coords" class="hidden space-y-3 mt-3">
             <div class="space-y-1.5">
-              <label for="input-manual-address" class="block text-xs font-semibold text-slate-700">
-                Escribe tu direccion de entrega:
-              </label>
-              <textarea id="input-manual-address" rows="3"
-                placeholder="Ej: Calle o avenida principal, sector o urbanizacion, nombre de casa o edificio, piso, apto y punto de referencia..."
-                class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl p-3 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all resize-none"
+              <div class="flex items-center justify-between">
+                <label for="input-coords" class="block text-xs font-semibold text-slate-700">
+                  Pega tus coordenadas o enlace de mapa:
+                </label>
+                <button type="button" id="btn-paste-clipboard"
+                  class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 px-2 py-0.5 rounded-lg flex items-center gap-1 transition-all cursor-pointer">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  <span>Pegar</span>
+                </button>
+              </div>
+              <textarea id="input-coords" rows="2"
+                placeholder="Ej: 10.0808, -69.3756 o enlace de Google Maps / Plus Code..."
+                class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-2xl p-3 font-mono text-slate-900 placeholder:text-slate-400 placeholder:font-sans focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all resize-none"
               ></textarea>
             </div>
-            <p class="text-[11px] text-slate-400 text-center font-medium">
-              Escribe los detalles de tu domicilio para que el repartidor llegue con facilidad.
-            </p>
+
+            <!-- Formatos y ejemplos rápidos -->
+            <div class="space-y-1.5">
+              <p class="text-[11px] text-slate-500 font-medium">
+                Formatos compatibles: Coordenadas (Lat, Lng), enlaces de Google Maps/Waze, o Plus Code (OLC).
+              </p>
+              <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ejemplos:</span>
+                <button type="button" class="btn-coords-sample text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 cursor-pointer transition-colors" data-coords="10.0808, -69.3756">
+                  10.0808, -69.3756
+                </button>
+                <button type="button" class="btn-coords-sample text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 cursor-pointer transition-colors" data-coords="https://www.google.com/maps/place/10.0808,-69.3756/@10.0808,-69.3756,17z">
+                  Link Google Maps
+                </button>
+                <button type="button" class="btn-coords-sample text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 cursor-pointer transition-colors" data-coords="772G3JJF+8Q">
+                  772G3JJF+8Q (OLC)
+                </button>
+              </div>
+            </div>
           </div>
 
           <!-- Feedback de estado listo -->
@@ -223,7 +248,7 @@ const catalogoCobertura = getCatalogoParaCliente();
               <span id="gps-error-title">No se pudo obtener la ubicacion</span>
             </div>
             <p id="gps-error-desc" class="text-[11px] text-rose-600 leading-snug pl-6">
-              Por favor intenta de nuevo o escribe tu direccion.
+              Por favor intenta de nuevo o pega tus coordenadas.
             </p>
           </div>
         </div>
@@ -231,7 +256,7 @@ const catalogoCobertura = getCatalogoParaCliente();
         <!-- Formulario Final -->
         <form id="gps-form" class="space-y-4 mt-4">
 
-          <!-- Referencias adicionales (solo para GPS) -->
+          <!-- Referencias adicionales -->
           <div id="referencias-container" class="space-y-1.5">
             <label for="referencias" class="block text-xs font-bold text-slate-800">
               Puntos de referencia adicionales <span class="text-slate-400 font-normal">(opcional)</span>
@@ -277,7 +302,7 @@ const catalogoCobertura = getCatalogoParaCliente();
               </svg>
             </button>
             <p id="submit-hint" class="text-[10px] text-slate-400 text-center mt-2 font-medium">
-              Indica tu ubicacion mediante GPS o direccion escrita para confirmar.
+              Indica tu ubicacion mediante GPS satelital o pegando tus coordenadas para confirmar.
             </p>
           </div>
         </form>
@@ -389,7 +414,7 @@ const catalogoCobertura = getCatalogoParaCliente();
         msg.className='text-[11px] leading-snug pl-6 font-medium text-emerald-700';
         if(icon) icon.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>`;
         if(row){row.classList.remove('text-amber-800','text-red-800');row.classList.add('text-emerald-800');}
-        enableSubmit('Ubicacion GPS capturada');
+        enableSubmit('Ubicacion satelital capturada');
 
       } else if (res.zona === 'AMARILLO') {
         card.classList.add('bg-amber-50','border-amber-200','text-amber-900');
@@ -397,7 +422,7 @@ const catalogoCobertura = getCatalogoParaCliente();
         msg.className='text-[11px] leading-snug pl-6 font-medium text-amber-700';
         if(icon) icon.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>`;
         if(row){row.classList.remove('text-emerald-800','text-red-800');row.classList.add('text-amber-800');}
-        enableSubmit('Ubicacion GPS capturada (zona especial)');
+        enableSubmit('Ubicacion capturada (zona especial)');
 
       } else {
         card.classList.add('bg-red-50','border-red-200','text-red-900');
@@ -409,64 +434,195 @@ const catalogoCobertura = getCatalogoParaCliente();
       }
     }
 
+    // =====================
+    // OLC / PLUS CODE MOTOR
+    // =====================
+    const OLC_ALPHABET = '23456789CFGHJMPQRVWX';
+
+    function decodeFullOLC(code) {
+      const clean = code.toUpperCase().replace('+', '').replace(/\s+/g, '');
+      if (clean.length < 8) return null;
+      let lat = -90;
+      let lng = -180;
+      let latVal = 20;
+      let lngVal = 20;
+
+      for (let i = 0; i < Math.min(clean.length, 10); i += 2) {
+        const latDigit = OLC_ALPHABET.indexOf(clean[i]);
+        const lngDigit = OLC_ALPHABET.indexOf(clean[i + 1]);
+        if (latDigit === -1 || lngDigit === -1) return null;
+        lat += latDigit * latVal;
+        lng += lngDigit * lngVal;
+        latVal /= 20;
+        lngVal /= 20;
+      }
+      lat += latVal / 2;
+      lng += lngVal / 2;
+      return { lat, lng };
+    }
+
+    function decodeShortOLC(shortCode, refLat = 10.0808, refLng = -69.3756) {
+      const clean = shortCode.toUpperCase().replace('+', '').replace(/\s+/g, '');
+      let bestCoords = null;
+      let minDiff = Infinity;
+
+      for (let c1 of '78') {
+        for (let c2 of '67') {
+          for (let c3 of OLC_ALPHABET) {
+            for (let c4 of OLC_ALPHABET) {
+              const full = `${c1}${c2}${c3}${c4}${clean}`;
+              const decoded = decodeFullOLC(full);
+              if (decoded) {
+                const diff = Math.abs(decoded.lat - refLat) + Math.abs(decoded.lng - refLng);
+                if (diff < minDiff) {
+                  minDiff = diff;
+                  bestCoords = decoded;
+                }
+              }
+            }
+          }
+        }
+      }
+      return bestCoords;
+    }
+
+    // ====================================
+    // DECODIFICADOR UNIVERSAL DE COORDENADAS
+    // ====================================
+    function parseUniversalLocation(input) {
+      if (!input || typeof input !== 'string') return null;
+      const trimmed = input.trim();
+      if (!trimmed) return null;
+
+      // 1. Google Maps URLs / Apple Maps / Waze
+      // Ej: /@10.0808,-69.3756,17z o /place/10.0808,-69.3756 o ?q=10.0808,-69.3756 o ll=10.0808,-69.3756
+      const urlMatch = trimmed.match(/[@?&/](?:q|query|ll|loc|center|place)?[:=/]*(-?\d{1,2}\.\d{3,})[,/]+(-?\d{2,3}\.\d{3,})/i);
+      if (urlMatch) {
+        const lat = parseFloat(urlMatch[1]);
+        const lng = parseFloat(urlMatch[2]);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          return { lat, lng, type: 'url' };
+        }
+      }
+
+      // 2. Grados Minutos Segundos (DMS)
+      // Ej: 10°04'50.9"N 69°22'32.2"W o 10 4 50.9 N, 69 22 32.2 W
+      const dmsMatch = trimmed.match(/(\d{1,2})[°\s]+(\d{1,2})['\s]+([0-9.]+)?["\s]*([NSns])\s*[,;\s/|]+\s*(\d{1,3})[°\s]+(\d{1,2})['\s]+([0-9.]+)?["\s]*([EWewOo])/i);
+      if (dmsMatch) {
+        let lat = parseFloat(dmsMatch[1]) + (parseFloat(dmsMatch[2]) || 0)/60 + (parseFloat(dmsMatch[3]) || 0)/3600;
+        let lng = parseFloat(dmsMatch[5]) + (parseFloat(dmsMatch[6]) || 0)/60 + (parseFloat(dmsMatch[7]) || 0)/3600;
+        if (dmsMatch[4].toUpperCase() === 'S') lat = -lat;
+        if (['W', 'O'].includes(dmsMatch[8].toUpperCase())) lng = -lng;
+        return { lat, lng, type: 'dms' };
+      }
+
+      // 3. Coordenadas Decimales Directas (con o sin letras N/S/E/W/O y °)
+      // Ej: "10.0808, -69.3756", "10.0808 -69.3756", "10.0808° N, 69.3756° W", "10.0808 / -69.3756"
+      const coordMatch = trimmed.match(/(-?\d{1,2}\.\d{3,})\s*(?:°\s*)?([NSns])?\s*[,;\s/|]+\s*(-?\d{1,3}\.\d{3,})\s*(?:°\s*)?([EWewOo])?/i);
+      if (coordMatch) {
+        let lat = parseFloat(coordMatch[1]);
+        let lng = parseFloat(coordMatch[3]);
+        if (coordMatch[2] && coordMatch[2].toUpperCase() === 'S') lat = -Math.abs(lat);
+        if (coordMatch[4] && ['W', 'O'].includes(coordMatch[4].toUpperCase())) lng = -Math.abs(lng);
+        // Si no tiene signo y lng parece positivo en longitud de Venezuela, invertir a negativo
+        if (lng > 50 && lng < 80) lng = -lng;
+        return { lat, lng, type: 'decimal' };
+      }
+
+      // 4. Código OLC Completo (Plus Code de 8 a 11 chars con +)
+      // Ej: 772G3JJF+8Q
+      const fullOlcMatch = trimmed.match(/([23456789CFGHJMPQRVWX]{8}\+[23456789CFGHJMPQRVWX]{2,3})/i);
+      if (fullOlcMatch) {
+        const decoded = decodeFullOLC(fullOlcMatch[1]);
+        if (decoded) return { lat: decoded.lat, lng: decoded.lng, type: 'olc_full' };
+      }
+
+      // 5. Código OLC Corto (ej: 3M33+54 Barquisimeto)
+      const shortOlcMatch = trimmed.match(/([23456789CFGHJMPQRVWX]{4,7}\+[23456789CFGHJMPQRVWX]{2,3})/i);
+      if (shortOlcMatch) {
+        let refLat = 10.0808;
+        let refLng = -69.3756;
+        const normalized = trimmed.toLowerCase();
+        for (const c of catalogoCobertura) {
+          if (normalized.includes(c.nombre.toLowerCase())) {
+            refLat = c.lat;
+            refLng = c.lng;
+            break;
+          }
+        }
+        const decoded = decodeShortOLC(shortOlcMatch[1], refLat, refLng);
+        if (decoded) return { lat: decoded.lat, lng: decoded.lng, type: 'olc_short' };
+      }
+
+      return null;
+    }
+
     // DOM refs
-    const tabBtnGps      = document.getElementById('tab-btn-gps');
-    const tabBtnAddress  = document.getElementById('tab-btn-address');
-    const tabPanelGps    = document.getElementById('tab-panel-gps');
-    const tabPanelAddress= document.getElementById('tab-panel-address');
-    const btnGetGps      = document.getElementById('btn-get-gps');
-    const gpsBtnText     = document.getElementById('gps-btn-text');
-    const inputManual    = document.getElementById('input-manual-address');
-    const refContainer   = document.getElementById('referencias-container');
-    const statusCard     = document.getElementById('coords-status-card');
-    const sourceBadge    = document.getElementById('coords-source-badge');
-    const latlngRow      = document.getElementById('coords-latlng-row');
-    const latEl          = document.getElementById('coords-lat');
-    const lngEl          = document.getElementById('coords-lng');
-    const errorCard      = document.getElementById('gps-error-card');
-    const errorTitle     = document.getElementById('gps-error-title');
-    const errorDesc      = document.getElementById('gps-error-desc');
-    const refInput       = document.getElementById('referencias');
-    const horaInput      = document.getElementById('hora-disponible');
-    const btnSubmit      = document.getElementById('btn-submit-confirmation');
-    const submitHint     = document.getElementById('submit-hint');
-    const gpsForm        = document.getElementById('gps-form');
-    const container      = document.getElementById('confirmation-container');
-    const successScreen  = document.getElementById('success-screen');
+    const tabBtnGps        = document.getElementById('tab-btn-gps');
+    const tabBtnCoords     = document.getElementById('tab-btn-coords');
+    const tabPanelGps      = document.getElementById('tab-panel-gps');
+    const tabPanelCoords   = document.getElementById('tab-panel-coords');
+    const btnGetGps        = document.getElementById('btn-get-gps');
+    const gpsBtnText       = document.getElementById('gps-btn-text');
+    const inputCoords      = document.getElementById('input-coords');
+    const btnPasteClip     = document.getElementById('btn-paste-clipboard');
+    const refContainer     = document.getElementById('referencias-container');
+    const statusCard       = document.getElementById('coords-status-card');
+    const sourceBadge      = document.getElementById('coords-source-badge');
+    const latlngRow        = document.getElementById('coords-latlng-row');
+    const latEl            = document.getElementById('coords-lat');
+    const lngEl            = document.getElementById('coords-lng');
+    const errorCard        = document.getElementById('gps-error-card');
+    const errorTitle       = document.getElementById('gps-error-title');
+    const errorDesc        = document.getElementById('gps-error-desc');
+    const refInput         = document.getElementById('referencias');
+    const horaInput        = document.getElementById('hora-disponible');
+    const btnSubmit        = document.getElementById('btn-submit-confirmation');
+    const submitHint       = document.getElementById('submit-hint');
+    const gpsForm          = document.getElementById('gps-form');
+    const container        = document.getElementById('confirmation-container');
+    const successScreen    = document.getElementById('success-screen');
 
     // =====================
     // TABS
     // =====================
     function switchTab(tab) {
       currentActiveTab = tab;
-      [[tabBtnGps, tabPanelGps, 'gps'],[tabBtnAddress, tabPanelAddress, 'address']].forEach(([btn,panel,id]) => {
+      [[tabBtnGps, tabPanelGps, 'gps'], [tabBtnCoords, tabPanelCoords, 'coords']].forEach(([btn, panel, id]) => {
         if (id === tab) {
-          btn?.classList.add('tab-active'); btn?.classList.remove('text-slate-600'); panel?.classList.remove('hidden');
+          btn?.classList.add('tab-active');
+          btn?.classList.remove('text-slate-600');
+          panel?.classList.remove('hidden');
         } else {
-          btn?.classList.remove('tab-active'); btn?.classList.add('text-slate-600'); panel?.classList.add('hidden');
+          btn?.classList.remove('tab-active');
+          btn?.classList.add('text-slate-600');
+          panel?.classList.add('hidden');
         }
       });
-      if (tab === 'address') {
-        refContainer?.classList.add('hidden');
-        document.getElementById('cobertura-badge')?.classList.add('hidden');
-        document.getElementById('cobertura-msg')?.classList.add('hidden');
-        latlngRow?.classList.add('hidden');
-        validateManualAddress();
+
+      if (tab === 'coords') {
+        validatePastedCoords();
       } else {
-        refContainer?.classList.remove('hidden');
-        if (currentCoords) enableSubmit(sourceBadge?.textContent || 'Ubicacion lista');
-        else disableSubmit();
+        if (currentCoords) {
+          updateCoordsState(currentCoords.latitude, currentCoords.longitude, 'Ubicacion GPS satelital');
+        } else {
+          disableSubmit();
+          statusCard?.classList.add('hidden');
+        }
       }
     }
 
     tabBtnGps?.addEventListener('click', () => switchTab('gps'));
-    tabBtnAddress?.addEventListener('click', () => switchTab('address'));
+    tabBtnCoords?.addEventListener('click', () => switchTab('coords'));
 
     // =====================
     // GPS NATIVO
     // =====================
     btnGetGps?.addEventListener('click', () => {
-      if (!navigator.geolocation) { showError('Geolocalizacion no disponible','Tu navegador no soporta GPS.'); return; }
+      if (!navigator.geolocation) {
+        showError('Geolocalizacion no disponible', 'Tu navegador no soporta GPS.');
+        return;
+      }
       hideError();
       if (gpsBtnText) gpsBtnText.textContent = 'Obteniendo senal GPS...';
       btnGetGps.disabled = true;
@@ -479,47 +635,91 @@ const catalogoCobertura = getCatalogoParaCliente();
         (err) => {
           btnGetGps.disabled = false;
           if (gpsBtnText) gpsBtnText.textContent = 'Reintentar capturar GPS';
-          let t='Error al obtener ubicacion', d='Activa el GPS y concede permisos.';
-          if(err.code===err.PERMISSION_DENIED){t='Permiso GPS Denegado';d='Debes otorgar permiso de ubicacion en los ajustes de tu navegador.';}
-          else if(err.code===err.TIMEOUT){t='Tiempo agotado';d='No se pudo obtener senal. Intenta de nuevo o escribe tu direccion.';}
-          showError(t,d);
+          let t = 'Error al obtener ubicacion';
+          let d = 'Activa el GPS y concede permisos.';
+          if (err.code === err.PERMISSION_DENIED) {
+            t = 'Permiso GPS Denegado';
+            d = 'Debes otorgar permiso de ubicacion en los ajustes de tu navegador o usar la pestana de Pegar Coordenadas.';
+          } else if (err.code === err.TIMEOUT) {
+            t = 'Tiempo agotado';
+            d = 'No se pudo obtener senal satelital. Intenta de nuevo o pega tus coordenadas.';
+          }
+          showError(t, d);
         },
-        { enableHighAccuracy:true, timeout:10000, maximumAge:0 }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     });
 
     // =====================
-    // DIRECCION MANUAL
+    // PEGAR COORDENADAS
     // =====================
-    function validateManualAddress() {
-      const txt = inputManual?.value?.trim()||'';
-      if (txt.length >= 4) {
-        enableSubmit('Direccion escrita registrada');
-        if (statusCard) {
-          statusCard.classList.remove('hidden');
-          statusCard.classList.remove('bg-amber-50','border-amber-200','text-amber-900','bg-red-50','border-red-200','text-red-900');
-          statusCard.classList.add('bg-emerald-50','border-emerald-200','text-emerald-900');
-          if(sourceBadge) sourceBadge.textContent='Direccion lista para guardar';
-          latlngRow?.classList.add('hidden');
-          const ic=document.getElementById('coords-status-icon');
-          if(ic) ic.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>`;
-          const sr=document.getElementById('coords-source-row');
-          if(sr){sr.classList.remove('text-amber-800','text-red-800');sr.classList.add('text-emerald-800');}
+    function validatePastedCoords() {
+      const raw = inputCoords?.value?.trim() || '';
+      if (!raw) {
+        if (currentActiveTab === 'coords') {
+          currentCoords = null;
+          statusCard?.classList.add('hidden');
+          disableSubmit('Pega tus coordenadas o enlace de mapa para continuar.');
         }
+        return;
+      }
+
+      const parsed = parseUniversalLocation(raw);
+      if (parsed) {
+        hideError();
+        let sourceLabel = 'Coordenadas validadas';
+        if (parsed.type === 'url') sourceLabel = 'Enlace de mapa decodificado';
+        else if (parsed.type.startsWith('olc')) sourceLabel = 'Plus Code OLC decodificado';
+        updateCoordsState(parsed.lat, parsed.lng, sourceLabel);
       } else {
-        if (!currentCoords) { disableSubmit(); statusCard?.classList.add('hidden'); }
+        currentCoords = null;
+        statusCard?.classList.add('hidden');
+        showError('Formato no reconocido', 'Ingresa coordenadas como "10.0808, -69.3756", un enlace de Google Maps o un Plus Code (OLC).');
+        disableSubmit('Formato de coordenadas no valido.');
       }
     }
-    inputManual?.addEventListener('input', validateManualAddress);
+
+    inputCoords?.addEventListener('input', validatePastedCoords);
+    inputCoords?.addEventListener('paste', () => {
+      setTimeout(validatePastedCoords, 60);
+    });
+
+    // Botón de pegar portapapeles
+    btnPasteClip?.addEventListener('click', async () => {
+      try {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+          const clipText = await navigator.clipboard.readText();
+          if (clipText && inputCoords) {
+            inputCoords.value = clipText.trim();
+            validatePastedCoords();
+          }
+        } else if (inputCoords) {
+          inputCoords.focus();
+        }
+      } catch (e) {
+        if (inputCoords) inputCoords.focus();
+      }
+    });
+
+    // Botones de ejemplos rápidos
+    document.querySelectorAll('.btn-coords-sample').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const sample = btn.getAttribute('data-coords');
+        if (sample && inputCoords) {
+          inputCoords.value = sample;
+          validatePastedCoords();
+        }
+      });
+    });
 
     // =====================
     // UPDATE COORDS STATE
     // =====================
     function updateCoordsState(lat, lng, label) {
       currentCoords = { latitude: lat, longitude: lng };
-      if(latEl) latEl.textContent = lat.toFixed(6);
-      if(lngEl) lngEl.textContent = lng.toFixed(6);
-      if(sourceBadge&&label) sourceBadge.textContent = label;
+      if (latEl) latEl.textContent = lat.toFixed(6);
+      if (lngEl) lngEl.textContent = lng.toFixed(6);
+      if (sourceBadge && label) sourceBadge.textContent = label;
       statusCard?.classList.remove('hidden');
       latlngRow?.classList.remove('hidden');
       hideError();
@@ -527,55 +727,103 @@ const catalogoCobertura = getCatalogoParaCliente();
     }
 
     function enableSubmit(label) {
-      if(btnSubmit){btnSubmit.disabled=false;btnSubmit.classList.remove('bg-slate-400','cursor-not-allowed');btnSubmit.classList.add('bg-emerald-600','hover:bg-emerald-700');}
-      if(submitHint){
-        submitHint.textContent = zonaActual==='AMARILLO'?'Zona especial: el equipo validara tu entrega. Puedes confirmar.':'Informacion lista. Presiona "Confirmar Entrega" para finalizar.';
-        submitHint.classList.remove('text-slate-400','text-red-600');
-        submitHint.classList.add(zonaActual==='AMARILLO'?'text-amber-600':'text-emerald-600','font-semibold');
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.classList.remove('bg-slate-400', 'cursor-not-allowed');
+        btnSubmit.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+      }
+      if (submitHint) {
+        submitHint.textContent = zonaActual === 'AMARILLO'
+          ? 'Zona especial: el equipo validara tu entrega. Puedes confirmar.'
+          : 'Ubicacion lista. Presiona "Confirmar Entrega" para finalizar.';
+        submitHint.classList.remove('text-slate-400', 'text-red-600');
+        submitHint.classList.add(zonaActual === 'AMARILLO' ? 'text-amber-600' : 'text-emerald-600', 'font-semibold');
       }
     }
+
     function disableSubmit(reason) {
-      if(btnSubmit) btnSubmit.disabled=true;
-      if(submitHint){submitHint.textContent=reason||'Indica tu ubicacion mediante GPS o direccion escrita para confirmar.';submitHint.classList.remove('text-emerald-600','text-amber-600','font-semibold');submitHint.classList.add(reason?'text-red-600':'text-slate-400');}
+      if (btnSubmit) btnSubmit.disabled = true;
+      if (submitHint) {
+        submitHint.textContent = reason || 'Indica tu ubicacion mediante GPS satelital o pegando tus coordenadas para confirmar.';
+        submitHint.classList.remove('text-emerald-600', 'text-amber-600', 'font-semibold');
+        submitHint.classList.add(reason ? 'text-red-600' : 'text-slate-400');
+      }
     }
-    function showError(t,d){if(errorTitle)errorTitle.textContent=t;if(errorDesc)errorDesc.textContent=d;errorCard?.classList.remove('hidden');}
-    function hideError(){errorCard?.classList.add('hidden');}
+
+    function showError(t, d) {
+      if (errorTitle) errorTitle.textContent = t;
+      if (errorDesc) errorDesc.textContent = d;
+      errorCard?.classList.remove('hidden');
+    }
+
+    function hideError() {
+      errorCard?.classList.add('hidden');
+    }
 
     // =====================
     // SUBMIT
     // =====================
     gpsForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if(isSubmitting) return;
-      const manual   = inputManual?.value?.trim()||'';
-      const refs     = refInput?.value?.trim()||'';
-      const hora     = horaInput?.value?.trim()||null;
-      const address  = currentActiveTab==='address' ? (manual||refs) : (refs||manual);
-      if(!currentCoords && !address){showError('Faltan datos','Por favor ingresa tu direccion o captura tu posicion GPS antes de confirmar.');return;}
-      isSubmitting=true; btnSubmit.disabled=true;
+      if (isSubmitting) return;
+
+      if (!currentCoords) {
+        showError('Faltan coordenadas', 'Por favor captura tu posicion GPS o pega tus coordenadas antes de confirmar.');
+        return;
+      }
+
+      if (zonaActual === 'ROJO') {
+        showError('Fuera de cobertura', 'La ubicacion indicada esta fuera de la zona de cobertura de Envias C.A.');
+        return;
+      }
+
+      const refs = refInput?.value?.trim() || '';
+      const hora = horaInput?.value?.trim() || null;
+
+      isSubmitting = true;
+      btnSubmit.disabled = true;
       const orig = btnSubmit.innerHTML;
-      btnSubmit.innerHTML=`<svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Guardando confirmacion...</span>`;
+      btnSubmit.innerHTML = `<svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Guardando confirmacion...</span>`;
+
       try {
         const res = await fetch('/api/confirmar', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ id_guia:guiaData.id_guia, latitud:currentCoords?.latitude||null, longitud:currentCoords?.longitude||null, direccion_referencia:address||undefined, hora_disponible:hora||undefined })
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id_guia: guiaData.id_guia,
+            latitud: currentCoords.latitude,
+            longitud: currentCoords.longitude,
+            direccion_referencia: refs || undefined,
+            hora_disponible: hora || undefined
+          })
         });
+
         const json = await res.json();
-        if(res.ok && json.success){
-          if(hora){
-            const [h,m] = hora.split(':');
-            const h12 = new Date(0,0,0,+h,+m).toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit',hour12:true});
-            const el=document.getElementById('success-hora-value'); if(el) el.textContent=h12;
-            const row=document.getElementById('success-hora-row'); if(row){row.classList.remove('hidden');row.style.display='flex';}
+        if (res.ok && json.success) {
+          if (hora) {
+            const [h, m] = hora.split(':');
+            const h12 = new Date(0, 0, 0, +h, +m).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit', hour12: true });
+            const el = document.getElementById('success-hora-value');
+            if (el) el.textContent = h12;
+            const row = document.getElementById('success-hora-row');
+            if (row) {
+              row.classList.remove('hidden');
+              row.style.display = 'flex';
+            }
           }
-          container?.classList.add('hidden'); successScreen?.classList.remove('hidden');
+          container?.classList.add('hidden');
+          successScreen?.classList.remove('hidden');
         } else {
-          showError('Error al guardar', json.message||'No se pudo guardar en el servidor.');
-          btnSubmit.disabled=false; btnSubmit.innerHTML=orig; isSubmitting=false;
+          showError('Error al guardar', json.message || 'No se pudo guardar en el servidor.');
+          btnSubmit.disabled = false;
+          btnSubmit.innerHTML = orig;
+          isSubmitting = false;
         }
-      } catch(err) {
-        showError('Error de conexion','Hubo un fallo de conexion. Por favor reintenta.');
-        btnSubmit.disabled=false; btnSubmit.innerHTML=orig; isSubmitting=false;
+      } catch (err) {
+        showError('Error de conexion', 'Hubo un fallo de conexion. Por favor reintenta.');
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = orig;
+        isSubmitting = false;
       }
     });
   }

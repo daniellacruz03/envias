@@ -353,26 +353,40 @@ const userInitials = currentUser.nombre
       <section class="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col">
         
         <!-- Barra Superior de Control y Switcher de Modos -->
-        <div class="p-4 sm:p-5 border-b border-slate-200/80 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-50/40">
+        <div class="p-4 sm:p-5 border-b border-slate-200/80 flex flex-col gap-3.5 bg-slate-50/40">
           
-          <div class="flex flex-wrap items-center gap-3">
-            <div>
-              <h3 class="text-sm font-bold text-slate-900">Envíos Registrados</h3>
-              <span id="filtered-count-badge" class="text-[11px] font-semibold text-slate-500">
+          <!-- Fila 1: Título y Acción Principal "Planificar Ruta Spoke" -->
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+              <h3 class="text-sm sm:text-base font-bold text-slate-900">Envíos Registrados</h3>
+              <span id="filtered-count-badge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-200/80 text-slate-700 font-mono">
                 0 guías
               </span>
             </div>
 
-            <div class="h-4 w-px bg-slate-200 hidden sm:block"></div>
+            <!-- Botón Principal: Abrir Planificador de Rutas (Spoke Style) -->
+            <button
+              type="button"
+              onclick="window.openRoutePlannerModal()"
+              class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black active:scale-95 text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer shrink-0"
+              title="Planificar secuencia de paradas de chofer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+              <span>Planificar Ruta Spoke</span>
+            </button>
+          </div>
 
-            <!-- Selector de Modo de Vista (5 Tabs Unificadas) -->
-            <div class="flex items-center p-1 bg-slate-200/70 rounded-xl text-xs font-semibold gap-1 overflow-x-auto max-w-full">
+          <!-- Fila 2: Selector de Modo de Vista (Pestañas con ancho completo y sin barra de scroll) -->
+          <div class="w-full">
+            <div class="flex flex-wrap items-center p-1.5 bg-slate-200/70 rounded-2xl text-xs font-semibold gap-1.5 w-full">
               <button
                 type="button"
                 id="btn-view-table"
-                class="tab-btn-active px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-slate-600 hover:text-slate-900 shrink-0"
+                class="tab-btn-active px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                 </svg>
                 <span>Lista General</span>
@@ -381,79 +395,79 @@ const userInitials = currentUser.nombre
               <button
                 type="button"
                 id="btn-view-cities"
-                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-slate-600 hover:text-slate-900 shrink-0"
+                class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
                 <span>Agrupado por Ciudad</span>
-                <span id="cities-count-pill" class="text-[10px] bg-slate-300/80 px-1.5 py-0.2 rounded-full font-bold">0</span>
+                <span id="cities-count-pill" class="text-[10px] bg-slate-300/80 px-2 py-0.5 rounded-full font-bold">0</span>
               </button>
 
               <button
                 type="button"
                 id="btn-view-drivers"
-                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-slate-600 hover:text-slate-900 shrink-0"
+                class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 <span>Estado de Choferes</span>
-                <span id="drivers-count-pill" class="text-[10px] bg-slate-300/80 px-1.5 py-0.2 rounded-full font-bold">0</span>
+                <span id="drivers-count-pill" class="text-[10px] bg-slate-300/80 px-2 py-0.5 rounded-full font-bold">0</span>
+              </button>
+
+              <button
+                type="button"
+                id="btn-view-mapa"
+                class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Ubicaciones de Clientes</span>
+                <span id="mapa-count-pill" class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">0</span>
               </button>
 
               <button
                 type="button"
                 id="btn-view-escaneos"
-                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-slate-600 hover:text-slate-900 shrink-0"
+                class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <span>Revisar Guías</span>
-                <span id="escaneos-count-pill" class="text-[10px] bg-slate-300/80 px-1.5 py-0.2 rounded-full font-bold hidden">0</span>
+                <span id="escaneos-count-pill" class="text-[10px] bg-slate-300/80 px-2 py-0.5 rounded-full font-bold hidden">0</span>
               </button>
 
               <button
                 type="button"
                 id="btn-view-listin"
-                class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer text-slate-600 hover:text-slate-900 shrink-0"
+                class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 <span>Crear Listín</span>
-                <span id="listin-count-pill" class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.2 rounded-full font-bold">PDF</span>
+                <span id="listin-count-pill" class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">PDF</span>
               </button>
             </div>
-
-            <!-- Botón Principal: Abrir Planificador de Rutas (Spoke Style) -->
-            <button
-              type="button"
-              onclick="window.openRoutePlannerModal()"
-              class="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-black active:scale-95 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer shrink-0"
-              title="Planificar secuencia de paradas de chofer"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-              </svg>
-              <span>Planificar Ruta Spoke</span>
-            </button>
           </div>
 
-          <!-- Filtros y Buscador -->
-          <div class="flex flex-wrap items-center gap-2.5">
+          <!-- Fila 3: Filtros y Buscador Espaciosos -->
+          <div class="flex flex-wrap items-center gap-3 pt-1">
             <!-- Buscador -->
-            <div class="relative min-w-[180px] flex-1 sm:flex-none">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="relative flex-1 min-w-[240px]">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
                 type="text"
                 id="search-input"
                 placeholder="Buscar por guía o nombre..."
-                class="w-full text-xs bg-white border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+                class="w-full text-xs bg-white border border-slate-200 rounded-xl pl-9 pr-3.5 py-2.5 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-2xs"
               />
             </div>
 
@@ -461,7 +475,7 @@ const userInitials = currentUser.nombre
             <select
               id="filter-ciudad"
               aria-label="Filtrar por ciudad"
-              class="text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer"
+              class="text-xs bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer shadow-2xs min-w-[160px]"
             >
               <option value="ALL">Todas las Ciudades</option>
             </select>
@@ -470,7 +484,7 @@ const userInitials = currentUser.nombre
             <select
               id="filter-empresa"
               aria-label="Filtrar por empresa"
-              class="text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer font-medium"
+              class="text-xs bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer font-medium shadow-2xs min-w-[160px]"
             >
               <option value="ALL">Todas las Empresas</option>
               <option value="Troop">Troop</option>
@@ -497,7 +511,7 @@ const userInitials = currentUser.nombre
             <select
               id="filter-estado"
               aria-label="Filtrar por estado de entrega"
-              class="text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer"
+              class="text-xs bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer shadow-2xs min-w-[160px]"
             >
               <option value="ALL">Todos los Estados</option>
               <option value="Por contactar">Por contactar</option>
@@ -557,7 +571,141 @@ const userInitials = currentUser.nombre
         </div>
 
         <!-- ========================================== -->
-        <!-- MODO 4: REVISIÓN DE GUÍAS ESCANEADAS       -->
+        <!-- MODO 4: UBICACIONES DE CLIENTES Y MAPA GPS -->
+        <!-- ========================================== -->
+        <div id="view-container-mapa" class="hidden p-4 sm:p-6 bg-slate-50/50 space-y-6">
+          
+          <!-- Barra Superior de Control y Métricas de Ubicaciones -->
+          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+            
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <h4 class="text-base font-extrabold text-slate-900 tracking-tight">Ubicaciones y Puntos de Clientes</h4>
+                <span id="mapa-live-sync-badge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>En vivo</span>
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">Puntos satelitales GPS y direcciones exactas enviadas por los destinatarios para armado de rutas.</p>
+            </div>
+
+            <!-- Métricas Rápidas de Confirmación -->
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+              <div class="bg-emerald-50/80 border border-emerald-200/80 rounded-xl px-3 py-1.5 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span class="text-[11px] font-bold text-emerald-900">GPS Satelital: <span id="mapa-kpi-gps" class="text-emerald-700 font-extrabold">0</span></span>
+              </div>
+              <div class="bg-indigo-50/80 border border-indigo-200/80 rounded-xl px-3 py-1.5 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                <span class="text-[11px] font-bold text-indigo-900">Ref. Escrita: <span id="mapa-kpi-ref" class="text-indigo-700 font-extrabold">0</span></span>
+              </div>
+              <div class="bg-amber-50/80 border border-amber-200/80 rounded-xl px-3 py-1.5 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span class="text-[11px] font-bold text-amber-900">Pendientes: <span id="mapa-kpi-pend" class="text-amber-700 font-extrabold">0</span></span>
+              </div>
+
+              <!-- Botón Armar Ruta Spoke -->
+              <button
+                type="button"
+                onclick="window.openRoutePlannerModal()"
+                class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer active:scale-95 whitespace-nowrap"
+                title="Abrir planificador de ruta secuencial con estos puntos"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                <span>Armar Rutas con Puntos</span>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Mapa Interactivo Principal -->
+          <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
+            <!-- Barra de Controles Rápidos sobre el Mapa -->
+            <div class="p-3.5 border-b border-slate-100 bg-slate-50/70 flex flex-wrap items-center justify-between gap-2.5">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1">Vistas Rápidas:</span>
+                <button
+                  type="button"
+                  onclick="window.flyMapToCoords(10.0808, -69.3756, 12, 'Barquisimeto')"
+                  class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 transition-all cursor-pointer"
+                >
+                  Barquisimeto
+                </button>
+                <button
+                  type="button"
+                  onclick="window.flyMapToCoords(10.4934, -66.9299, 12, 'Caracas')"
+                  class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 transition-all cursor-pointer"
+                >
+                  Caracas
+                </button>
+                <button
+                  type="button"
+                  onclick="window.flyMapToCoords(8.5738, -71.1851, 12, 'Mérida')"
+                  class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 transition-all cursor-pointer"
+                >
+                  Mérida
+                </button>
+                <button
+                  type="button"
+                  onclick="window.flyMapToCoords(10.1620, -68.0077, 12, 'Valencia')"
+                  class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 transition-all cursor-pointer"
+                >
+                  Valencia
+                </button>
+                <button
+                  type="button"
+                  onclick="window.fitMapToAllPins()"
+                  class="px-3 py-1 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-lg transition-all cursor-pointer shadow-2xs"
+                >
+                  Ver Todos los Puntos
+                </button>
+              </div>
+
+              <!-- Filtro de tipo de punto en mapa -->
+              <div class="flex items-center gap-1.5">
+                <select
+                  id="mapa-filter-type"
+                  class="text-xs bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 text-slate-700 font-semibold focus:outline-none focus:border-slate-900 cursor-pointer"
+                  onchange="window.renderClientLocationsMap()"
+                >
+                  <option value="ALL">Todos los Destinos</option>
+                  <option value="GPS_CONFIRMED">Solo con GPS Confirmado</option>
+                  <option value="REF_ONLY">Solo con Dirección Escrita</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Contenedor del Mapa Leaflet -->
+            <div id="clientes-main-map" class="w-full h-[460px] bg-slate-100 relative z-0"></div>
+          </div>
+
+          <!-- Listado y Fichas de Ubicaciones Confirmadas -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h5 class="text-sm font-bold text-slate-900">Detalle de Envíos y Ubicaciones de Clientes</h5>
+                <p class="text-xs text-slate-400">Direcciones, referencias escritas, horarios de entrega y asignación de chofer</p>
+              </div>
+              <span id="mapa-cards-count" class="text-xs font-bold text-slate-600 bg-white border border-slate-200 px-2.5 py-1 rounded-xl">0 registros</span>
+            </div>
+
+            <div id="clientes-locations-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              <!-- Render dinámico de tarjetas por JS -->
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ========================================== -->
+        <!-- MODO 5: REVISIÓN DE GUÍAS ESCANEADAS       -->
         <!-- ========================================== -->
         <div id="view-container-escaneos" class="hidden p-4 sm:p-6 bg-slate-50/50 space-y-5">
           <!-- Cargando -->
@@ -669,19 +817,68 @@ const userInitials = currentUser.nombre
             <!-- Columna Izquierda (xl:col-span-5): Organizador Jerárquico de Ciudades y Guías -->
             <div class="xl:col-span-5 space-y-4">
               <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm space-y-3">
-                <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-2.5 gap-2 flex-wrap">
                   <div class="flex items-center gap-2">
                     <span class="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs">
                       1
                     </span>
-                    <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Orden Jerárquico de Zonas</h3>
+                    <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider" id="listin-panel-title">Organizar Listín</h3>
                   </div>
-                  <span id="listin-cities-count" class="text-[11px] font-bold text-slate-500 font-mono">0 zonas</span>
+
+                  <!-- Selector de Modo de Ordenación -->
+                  <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-[11px]">
+                    <button
+                      type="button"
+                      id="btn-listin-mode-zones"
+                      class="px-2.5 py-1 rounded-lg font-bold transition-all bg-white text-slate-900 shadow-xs cursor-pointer"
+                      title="Organizar por grupos de zonas/ciudades y ordenar guías internas"
+                    >
+                      Por Zonas
+                    </button>
+                    <button
+                      type="button"
+                      id="btn-listin-mode-flat"
+                      class="px-2.5 py-1 rounded-lg font-bold text-slate-500 hover:text-slate-900 transition-all cursor-pointer"
+                      title="Ver lista corrida de todas las guías del 1 al N y reordenar libremente"
+                    >
+                      Lista (1..N)
+                    </button>
+                  </div>
                 </div>
-                <p class="text-[11px] text-slate-500">
-                  Usa los botones <span class="font-bold text-slate-700">▲</span> y <span class="font-bold text-slate-700">▼</span> para cambiar el orden jerárquico de entrega. Las guías se agruparán en el listín siguiendo exactamente esta secuencia.
-                </p>
-                <!-- Lista interactiva de ciudades -->
+
+                <!-- Buscador rápido y acciones de colapsar -->
+                <div class="flex items-center gap-2">
+                  <div class="relative flex-1">
+                    <input
+                      type="text"
+                      id="listin-search-input"
+                      placeholder="Buscar guía # o destinatario..."
+                      class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl pl-7 pr-3 py-1.5 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+                    />
+                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <button
+                    type="button"
+                    id="btn-listin-toggle-all-collapse"
+                    class="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold transition-colors cursor-pointer shrink-0"
+                    title="Expandir / Colapsar todas las zonas"
+                  >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+                  <p id="listin-instructions-text" class="leading-tight">
+                    Usa las flechas <span class="font-bold text-slate-700">▲</span> <span class="font-bold text-slate-700">▼</span> o arrastra <span class="font-bold text-slate-700">⠿</span> las guías para cambiar su orden en la hoja.
+                  </p>
+                  <span id="listin-cities-count" class="text-[11px] font-bold text-slate-600 font-mono shrink-0 ml-2">0 zonas</span>
+                </div>
+
+                <!-- Lista interactiva de ciudades y guías -->
                 <div id="listin-hierarchy-list" class="space-y-2.5 max-h-[600px] overflow-y-auto pr-1 custom-scrollbar">
                   <!-- JS Render -->
                 </div>
@@ -1159,7 +1356,13 @@ const userInitials = currentUser.nombre
             <div id="planner-route-map-wrapper" class="hidden rounded-2xl overflow-hidden border border-slate-200 shadow-inner bg-slate-100 relative animate-fadeIn">
               <div id="planner-full-route-map" class="h-80 w-full z-10"></div>
               <div class="absolute bottom-2 left-2 right-2 bg-white/95 backdrop-blur-xs p-2 rounded-xl border border-slate-200/80 text-[11px] flex items-center justify-between shadow-md z-20">
-                <span class="text-slate-600 font-semibold">🔵 Origen (Salida) ➔ 🟢 Paradas 1 a 25 ➔ 🏁 Cierre</span>
+                <div class="flex items-center gap-2 text-slate-600 font-semibold text-[11px]">
+                  <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-indigo-600"></span> Salida</span>
+                  <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                  <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Paradas 1 a 25</span>
+                  <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                  <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Cierre</span>
+                </div>
                 <span id="route-map-status-pill" class="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md">Todas las paradas trazadas</span>
               </div>
             </div>
@@ -1839,7 +2042,7 @@ const userInitials = currentUser.nombre
       let shipments: GuiaRow[] = [];
       let drivers: Driver[] = [];
       let isLoading = true;
-      let currentViewMode: 'table' | 'cities' | 'drivers' | 'escaneos' | 'listin' = 'table';
+      let currentViewMode: 'table' | 'cities' | 'drivers' | 'mapa' | 'escaneos' | 'listin' = 'table';
       let expandedCities: Record<string, boolean> = {};
       let escaneosData: any[] = [];
       let drawerFotosFlat: any[] = []; // lista plana de fotos para navegar
@@ -2097,15 +2300,24 @@ const userInitials = currentUser.nombre
       const viewContainerTable = document.getElementById('view-container-table') as HTMLElement;
       const viewContainerCities = document.getElementById('view-container-cities') as HTMLElement;
       const viewContainerDrivers = document.getElementById('view-container-drivers') as HTMLElement;
+      const viewContainerMapa = document.getElementById('view-container-mapa') as HTMLElement;
       const viewContainerEscaneos = document.getElementById('view-container-escaneos') as HTMLElement;
       const viewContainerListin = document.getElementById('view-container-listin') as HTMLElement;
       const btnViewTable = document.getElementById('btn-view-table') as HTMLButtonElement;
       const btnViewCities = document.getElementById('btn-view-cities') as HTMLButtonElement;
       const btnViewDrivers = document.getElementById('btn-view-drivers') as HTMLButtonElement;
+      const btnViewMapa = document.getElementById('btn-view-mapa') as HTMLButtonElement;
       const btnViewEscaneos = document.getElementById('btn-view-escaneos') as HTMLButtonElement;
       const btnViewListin = document.getElementById('btn-view-listin') as HTMLButtonElement;
       const citiesCountPill = document.getElementById('cities-count-pill') as HTMLElement;
       const driversCountPill = document.getElementById('drivers-count-pill') as HTMLElement;
+      const mapaCountPill = document.getElementById('mapa-count-pill') as HTMLElement;
+      const mapaKpiGps = document.getElementById('mapa-kpi-gps') as HTMLElement;
+      const mapaKpiRef = document.getElementById('mapa-kpi-ref') as HTMLElement;
+      const mapaKpiPend = document.getElementById('mapa-kpi-pend') as HTMLElement;
+      const mapaCardsCount = document.getElementById('mapa-cards-count') as HTMLElement;
+      const clientesLocationsGrid = document.getElementById('clientes-locations-grid') as HTMLElement;
+      const mapaFilterType = document.getElementById('mapa-filter-type') as HTMLSelectElement;
       const escaneosCountPill = document.getElementById('escaneos-count-pill') as HTMLElement;
       const listinCountPill = document.getElementById('listin-count-pill') as HTMLElement;
 
@@ -2117,6 +2329,12 @@ const userInitials = currentUser.nombre
       const btnListinSend = document.getElementById('btn-listin-send') as HTMLButtonElement;
       const listinHierarchyList = document.getElementById('listin-hierarchy-list') as HTMLElement;
       const listinCitiesCount = document.getElementById('listin-cities-count') as HTMLElement;
+      const btnListinModeZones = document.getElementById('btn-listin-mode-zones') as HTMLButtonElement;
+      const btnListinModeFlat = document.getElementById('btn-listin-mode-flat') as HTMLButtonElement;
+      const listinSearchInput = document.getElementById('listin-search-input') as HTMLInputElement;
+      const btnListinToggleAllCollapse = document.getElementById('btn-listin-toggle-all-collapse') as HTMLButtonElement;
+      const listinPanelTitle = document.getElementById('listin-panel-title') as HTMLElement;
+      const listinInstructionsText = document.getElementById('listin-instructions-text') as HTMLElement;
 
       const previewListinFecha = document.getElementById('preview-listin-fecha') as HTMLElement;
       const previewListinPlaca = document.getElementById('preview-listin-placa') as HTMLElement;
@@ -2355,6 +2573,14 @@ const userInitials = currentUser.nombre
         kpiContactar.textContent = shipments.filter(s => s.estado === 'Por contactar').length.toString();
         kpiRuta.textContent = shipments.filter(s => s.estado === 'En ruta').length.toString();
         kpiGps.textContent = shipments.filter(s => s.gps_confirmado === true).length.toString();
+
+        const gpsCount = shipments.filter(s => s.gps_confirmado && s.gps_latitud && s.gps_longitud).length;
+        if (mapaCountPill) {
+          mapaCountPill.textContent = gpsCount.toString();
+          mapaCountPill.className = gpsCount > 0
+            ? 'text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded-full font-bold'
+            : 'text-[10px] bg-slate-300/80 text-slate-700 px-1.5 py-0.2 rounded-full font-bold';
+        }
       }
 
       // Filtrar guías según búsqueda y selects
@@ -2403,6 +2629,8 @@ const userInitials = currentUser.nombre
           renderCitiesGrouped(filtered);
         } else if (currentViewMode === 'drivers') {
           renderDriversView(filtered);
+        } else if (currentViewMode === 'mapa') {
+          renderClientLocationsSection();
         } else if (currentViewMode === 'listin') {
           renderListinView();
         }
@@ -3401,6 +3629,399 @@ const userInitials = currentUser.nombre
         }).join('');
       }
 
+      // ==========================================
+      // RENDER VISTA 4: UBICACIONES DE CLIENTES Y MAPA GPS
+      // ==========================================
+      let clientLocationsMap: any = null;
+      let clientLocationsMarkerGroup: any = null;
+      let clientMarkersMap: Record<string, any> = {};
+
+      function renderClientLocationsSection() {
+        const gpsCount = shipments.filter(s => s.gps_confirmado && s.gps_latitud && s.gps_longitud).length;
+        const refCount = shipments.filter(s => s.direccion_referencia && (!s.gps_confirmado || !s.gps_latitud)).length;
+        const pendCount = shipments.filter(s => !s.gps_confirmado && !s.direccion_referencia).length;
+
+        if (mapaKpiGps) mapaKpiGps.textContent = gpsCount.toString();
+        if (mapaKpiRef) mapaKpiRef.textContent = refCount.toString();
+        if (mapaKpiPend) mapaKpiPend.textContent = pendCount.toString();
+        if (mapaCountPill) {
+          mapaCountPill.textContent = gpsCount.toString();
+          mapaCountPill.className = gpsCount > 0
+            ? 'text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded-full font-bold'
+            : 'text-[10px] bg-slate-200 text-slate-600 px-1.5 py-0.2 rounded-full font-bold';
+        }
+
+        renderClientLocationsMap();
+        renderClientLocationsCards();
+      }
+
+      function initClientLocationsMap() {
+        const mapEl = document.getElementById('clientes-main-map');
+        if (!mapEl || clientLocationsMap) return;
+
+        if (typeof (window as any).L === 'undefined') {
+          setTimeout(initClientLocationsMap, 100);
+          return;
+        }
+
+        const L = (window as any).L;
+        clientLocationsMap = L.map('clientes-main-map', {
+          zoomControl: true,
+          attributionControl: false
+        }).setView([10.0808, -69.3756], 7);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19,
+          subdomains: 'abcd'
+        }).addTo(clientLocationsMap);
+
+        clientLocationsMarkerGroup = L.layerGroup().addTo(clientLocationsMap);
+      }
+
+      (window as any).renderClientLocationsMap = () => {
+        renderClientLocationsMap();
+      };
+
+      function renderClientLocationsMap() {
+        if (!clientLocationsMap) {
+          initClientLocationsMap();
+        }
+
+        if (!clientLocationsMap || !clientLocationsMarkerGroup) return;
+
+        const L = (window as any).L;
+        if (!L) return;
+
+        setTimeout(() => {
+          if (clientLocationsMap) clientLocationsMap.invalidateSize();
+        }, 120);
+
+        clientLocationsMarkerGroup.clearLayers();
+        clientMarkersMap = {};
+
+        const filterType = mapaFilterType ? mapaFilterType.value : 'ALL';
+        const filtered = getFilteredShipments();
+        const latlngs: [number, number][] = [];
+
+        filtered.forEach(g => {
+          let lat: number | null = null;
+          let lon: number | null = null;
+          let isExactGps = false;
+
+          if (g.gps_confirmado && g.gps_latitud && g.gps_longitud) {
+            lat = Number(g.gps_latitud);
+            lon = Number(g.gps_longitud);
+            isExactGps = true;
+          } else if (filterType !== 'GPS_CONFIRMED') {
+            const parsed = parseUniversalLocation(g.ciudad_destino || '');
+            if (parsed) {
+              lat = parsed.lat;
+              lon = parsed.lon;
+              isExactGps = false;
+            }
+          }
+
+          if (filterType === 'GPS_CONFIRMED' && !isExactGps) return;
+          if (filterType === 'REF_ONLY' && isExactGps) return;
+
+          if (lat !== null && lon !== null && !isNaN(lat) && !isNaN(lon)) {
+            latlngs.push([lat, lon]);
+
+            const driver = drivers.find(d => d.id === g.chofer_asignado_id);
+            const driverName = driver ? driver.nombre : 'Sin Asignar';
+            const phoneFormatted = formatPhoneForWhatsApp(g.telefono_principal || '');
+
+            const pinHtml = isExactGps ? `
+              <div class="relative flex items-center justify-center w-8 h-8 rounded-full bg-emerald-600 border-2 border-white shadow-lg text-white font-extrabold text-[10px] cursor-pointer transform hover:scale-110 transition-transform">
+                <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-400 rounded-full animate-ping"></span>
+                <span>${g.id_guia.slice(-3)}</span>
+              </div>
+            ` : `
+              <div class="relative flex items-center justify-center w-7 h-7 rounded-full bg-slate-800 border-2 border-indigo-300 shadow-md text-indigo-200 font-extrabold text-[9px] cursor-pointer transform hover:scale-110 transition-transform">
+                <span>${g.id_guia.slice(-3)}</span>
+              </div>
+            `;
+
+            const icon = L.divIcon({
+              html: pinHtml,
+              className: 'client-map-pin',
+              iconSize: [32, 32],
+              iconAnchor: [16, 16],
+              popupAnchor: [0, -16]
+            });
+
+            const popupContent = `
+              <div class="p-1 min-w-[220px] text-slate-800 font-sans text-left">
+                <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-1.5 mb-1.5">
+                  <div class="flex items-center gap-1">
+                    <span class="font-mono font-extrabold text-xs text-slate-900">#${g.id_guia}</span>
+                    ${g.empresa ? `<span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200">${g.empresa}</span>` : ''}
+                  </div>
+                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isExactGps ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-600'}">
+                    ${isExactGps ? 'GPS Confirmado' : 'Ref. Ciudad'}
+                  </span>
+                </div>
+
+                <p class="font-extrabold text-xs text-slate-900 leading-tight">${g.destinatario}</p>
+                <p class="text-[11px] text-slate-500 font-mono mt-0.5">${g.telefono_principal}</p>
+
+                <div class="mt-2 p-2 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] space-y-1">
+                  <div><span class="font-bold text-slate-600">Ciudad:</span> <span class="font-semibold text-slate-900">${g.ciudad_destino}</span></div>
+                  ${g.direccion_referencia ? `<div><span class="font-bold text-slate-600">Referencia:</span> <span class="text-slate-800 font-medium">${g.direccion_referencia}</span></div>` : ''}
+                  ${g.hora_disponible ? `<div><span class="font-bold text-indigo-600">Horario:</span> <span class="font-semibold text-indigo-800">${g.hora_disponible}</span></div>` : ''}
+                  <div><span class="font-bold text-slate-600">Chofer:</span> <span class="font-bold ${driver ? 'text-emerald-700' : 'text-slate-400'}">${driverName}</span></div>
+                </div>
+
+                <div class="mt-2.5 flex items-center justify-between gap-1.5">
+                  <a
+                    href="https://wa.me/${phoneFormatted}?text=${encodeURIComponent(`Hola ${g.destinatario}, te contactamos de Envías C.A. sobre tu guía #${g.id_guia}`)}"
+                    target="_blank"
+                    class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg transition-colors inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    WhatsApp
+                  </a>
+                  ${isExactGps ? `
+                    <a
+                      href="https://www.google.com/maps?q=${lat},${lon}"
+                      target="_blank"
+                      class="px-2 py-1 bg-slate-900 hover:bg-black text-white text-[10px] font-bold rounded-lg transition-colors"
+                    >
+                      Google Maps
+                    </a>
+                  ` : ''}
+                  <button
+                    type="button"
+                    onclick="window.openEditGuiaModal('${g.id_guia}')"
+                    class="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                  >
+                    Editar
+                  </button>
+                </div>
+              </div>
+            `;
+
+            const marker = L.marker([lat, lon], { icon }).addTo(clientLocationsMarkerGroup)
+              .bindPopup(popupContent);
+
+            clientMarkersMap[g.id_guia] = marker;
+          }
+        });
+
+        if (latlngs.length >= 2) {
+          try {
+            const bounds = L.latLngBounds(latlngs);
+            clientLocationsMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
+          } catch(e) {}
+        } else if (latlngs.length === 1) {
+          clientLocationsMap.setView(latlngs[0], 13);
+        }
+      }
+
+      function renderClientLocationsCards() {
+        if (!clientesLocationsGrid) return;
+
+        const filtered = getFilteredShipments();
+        if (mapaCardsCount) mapaCardsCount.textContent = `${filtered.length} envíos`;
+
+        if (filtered.length === 0) {
+          clientesLocationsGrid.innerHTML = `
+            <div class="col-span-full p-12 text-center bg-white rounded-3xl border border-slate-200 text-slate-400">
+              No hay envíos que coincidan con la búsqueda o filtros.
+            </div>
+          `;
+          return;
+        }
+
+        clientesLocationsGrid.innerHTML = filtered.map(g => {
+          const isGpsConfirmed = g.gps_confirmado && g.gps_latitud && g.gps_longitud;
+          const hasWrittenRef = Boolean(g.direccion_referencia);
+          const driver = drivers.find(d => d.id === g.chofer_asignado_id);
+          const phoneFormatted = formatPhoneForWhatsApp(g.telefono_principal || '');
+
+          const driverOptions = `
+            <option value="">Sin Asignar</option>
+            ${drivers.map(d => `
+              <option value="${d.id}" ${g.chofer_asignado_id === d.id ? 'selected' : ''}>
+                ${d.nombre}
+              </option>
+            `).join('')}
+          `;
+
+          return `
+            <div class="bg-white border border-slate-200/90 rounded-3xl p-4 sm:p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between gap-3">
+              
+              <!-- Cabecera de la Tarjeta -->
+              <div>
+                <div class="flex items-center justify-between gap-2 border-b border-slate-100 pb-2.5 mb-2.5">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <a href="/confirmar?guia=${encodeURIComponent(g.id_guia)}" target="_blank" class="font-mono font-extrabold text-sm text-slate-900 hover:text-indigo-600 underline-offset-2 hover:underline">
+                      #${g.id_guia}
+                    </a>
+                    ${g.empresa ? `
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                        ${g.empresa}
+                      </span>
+                    ` : ''}
+                    <span class="text-[11px] font-semibold text-slate-400">
+                      ${g.piezas || 1} ${(g.piezas || 1) === 1 ? 'pz' : 'pzs'}
+                    </span>
+                  </div>
+
+                  <!-- Badge de Estado de Ubicación -->
+                  ${isGpsConfirmed ? `
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      <span>GPS Listo</span>
+                    </span>
+                  ` : hasWrittenRef ? `
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      Ref. Escrita
+                    </span>
+                  ` : `
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                      Pendiente
+                    </span>
+                  `}
+                </div>
+
+                <!-- Info del Cliente -->
+                <div>
+                  <h5 class="text-sm font-extrabold text-slate-900">${g.destinatario}</h5>
+                  <div class="flex items-center gap-2 text-xs text-slate-500 font-mono mt-0.5">
+                    <span>${g.telefono_principal}</span>
+                    ${g.telefono_secundario ? `<span class="text-[10px] text-slate-400 font-sans">Alt: ${g.telefono_secundario}</span>` : ''}
+                  </div>
+                </div>
+
+                <!-- Recuadro Destacado de Dirección y Referencias del Cliente -->
+                <div class="mt-3 p-3 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-1.5 text-xs">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-slate-500 uppercase text-[10px] tracking-wider">Ciudad de Entrega:</span>
+                    <span class="font-extrabold text-slate-900">${g.ciudad_destino}</span>
+                  </div>
+
+                  ${g.direccion_referencia ? `
+                    <div class="pt-1.5 border-t border-slate-200/60">
+                      <span class="font-bold text-slate-600 block text-[10px] uppercase tracking-wider">Dirección / Referencia Enviada:</span>
+                      <p class="text-slate-800 font-medium leading-snug mt-0.5 bg-white p-2 rounded-xl border border-slate-200/60">${g.direccion_referencia}</p>
+                    </div>
+                  ` : `
+                    <div class="pt-1.5 border-t border-slate-200/60 text-slate-400 italic text-[11px]">
+                      Sin referencias escritas adicionales
+                    </div>
+                  `}
+
+                  ${g.hora_disponible ? `
+                    <div class="pt-1 flex items-center gap-1.5 text-indigo-700 font-bold text-[11px]">
+                      <svg class="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Horario de entrega: ${g.hora_disponible}</span>
+                    </div>
+                  ` : ''}
+                </div>
+
+              </div>
+
+              <!-- Selector de Chofer & Acciones Rápidas -->
+              <div class="pt-3 border-t border-slate-100 space-y-2.5">
+                
+                <!-- Selector rápido de Chofer -->
+                <div class="flex items-center justify-between gap-2">
+                  <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider whitespace-nowrap">Chofer:</label>
+                  <select
+                    onchange="window.updateShipmentDriver('${g.id_guia}', this.value)"
+                    class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-slate-800 font-semibold focus:bg-white focus:outline-none focus:border-slate-900 transition-all cursor-pointer flex-1"
+                  >
+                    ${driverOptions}
+                  </select>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="flex items-center justify-between gap-1.5">
+                  <div class="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onclick="window.flyToClientMarker('${g.id_guia}')"
+                      class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                      title="Centrar en el mapa"
+                    >
+                      <svg class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <span>Mapa</span>
+                    </button>
+
+                    ${isGpsConfirmed ? `
+                      <a
+                        href="https://www.google.com/maps?q=${g.gps_latitud},${g.gps_longitud}"
+                        target="_blank"
+                        class="px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition-colors flex items-center gap-1"
+                        title="Abrir coordenadas satelitales en Google Maps"
+                      >
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        <span>GPS</span>
+                      </a>
+                    ` : ''}
+                  </div>
+
+                  <div class="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onclick="window.openEditGuiaModal('${g.id_guia}')"
+                      class="p-1.5 rounded-xl text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors cursor-pointer"
+                      title="Editar datos de la guía"
+                    >
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+
+                    <button
+                      type="button"
+                      onclick="window.sendWhatsApp('${g.id_guia}')"
+                      class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                      title="Contactar al cliente por WhatsApp"
+                    >
+                      <span>WhatsApp</span>
+                    </button>
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+          `;
+        }).join('');
+      }
+
+      (window as any).flyMapToCoords = (lat: number, lon: number, zoom: number = 12, label?: string) => {
+        if (!clientLocationsMap) initClientLocationsMap();
+        if (clientLocationsMap) {
+          clientLocationsMap.flyTo([lat, lon], zoom, { duration: 1.2 });
+          if (label) showToast(`Centrando mapa en ${label}`, 'info');
+        }
+      };
+
+      (window as any).fitMapToAllPins = () => {
+        renderClientLocationsMap();
+      };
+
+      (window as any).flyToClientMarker = (id_guia: string) => {
+        const marker = clientMarkersMap[id_guia];
+        if (marker && clientLocationsMap) {
+          const latLng = marker.getLatLng();
+          clientLocationsMap.flyTo(latLng, 15, { duration: 1.0 });
+          marker.openPopup();
+          const mapEl = document.getElementById('clientes-main-map');
+          mapEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          showToast(`Ubicación de guía #${id_guia} no encontrada en mapa`, 'info');
+        }
+      };
+
       // Asignar Chofer a toda la ciudad
       (window as any).assignDriverToCity = async (cityName: string) => {
         const cityKey = encodeURIComponent(cityName);
@@ -3456,17 +4077,19 @@ const userInitials = currentUser.nombre
         if (eventsAttached) return;
         eventsAttached = true;
 
-        // Switcher de Modos de Vista (5 Tabs Unificadas)
+        // Switcher de Modos de Vista (6 Tabs Unificadas)
         function updateTabStyles() {
           btnViewTable.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewCities.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewDrivers.classList.remove('tab-btn-active', 'text-slate-600');
+          btnViewMapa?.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewEscaneos?.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewListin?.classList.remove('tab-btn-active', 'text-slate-600');
           
           viewContainerTable.classList.add('hidden');
           viewContainerCities.classList.add('hidden');
           viewContainerDrivers.classList.add('hidden');
+          viewContainerMapa?.classList.add('hidden');
           viewContainerEscaneos?.classList.add('hidden');
           viewContainerListin?.classList.add('hidden');
 
@@ -3474,6 +4097,7 @@ const userInitials = currentUser.nombre
             btnViewTable.classList.add('tab-btn-active');
             btnViewCities.classList.add('text-slate-600');
             btnViewDrivers.classList.add('text-slate-600');
+            btnViewMapa?.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
             btnViewListin?.classList.add('text-slate-600');
             viewContainerTable.classList.remove('hidden');
@@ -3481,6 +4105,7 @@ const userInitials = currentUser.nombre
             btnViewCities.classList.add('tab-btn-active');
             btnViewTable.classList.add('text-slate-600');
             btnViewDrivers.classList.add('text-slate-600');
+            btnViewMapa?.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
             btnViewListin?.classList.add('text-slate-600');
             viewContainerCities.classList.remove('hidden');
@@ -3488,14 +4113,24 @@ const userInitials = currentUser.nombre
             btnViewDrivers.classList.add('tab-btn-active');
             btnViewTable.classList.add('text-slate-600');
             btnViewCities.classList.add('text-slate-600');
+            btnViewMapa?.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
             btnViewListin?.classList.add('text-slate-600');
             viewContainerDrivers.classList.remove('hidden');
+          } else if (currentViewMode === 'mapa') {
+            btnViewMapa?.classList.add('tab-btn-active');
+            btnViewTable.classList.add('text-slate-600');
+            btnViewCities.classList.add('text-slate-600');
+            btnViewDrivers.classList.add('text-slate-600');
+            btnViewEscaneos?.classList.add('text-slate-600');
+            btnViewListin?.classList.add('text-slate-600');
+            viewContainerMapa?.classList.remove('hidden');
           } else if (currentViewMode === 'escaneos') {
             btnViewEscaneos?.classList.add('tab-btn-active');
             btnViewTable.classList.add('text-slate-600');
             btnViewCities.classList.add('text-slate-600');
             btnViewDrivers.classList.add('text-slate-600');
+            btnViewMapa?.classList.add('text-slate-600');
             btnViewListin?.classList.add('text-slate-600');
             viewContainerEscaneos?.classList.remove('hidden');
           } else if (currentViewMode === 'listin') {
@@ -3503,6 +4138,7 @@ const userInitials = currentUser.nombre
             btnViewTable.classList.add('text-slate-600');
             btnViewCities.classList.add('text-slate-600');
             btnViewDrivers.classList.add('text-slate-600');
+            btnViewMapa?.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
             viewContainerListin?.classList.remove('hidden');
           }
@@ -3522,6 +4158,12 @@ const userInitials = currentUser.nombre
 
         btnViewDrivers.addEventListener('click', () => {
           currentViewMode = 'drivers';
+          updateTabStyles();
+          renderViews();
+        });
+
+        btnViewMapa?.addEventListener('click', () => {
+          currentViewMode = 'mapa';
           updateTabStyles();
           renderViews();
         });
@@ -5375,8 +6017,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         if (end.lat && end.lon) {
           latlngs.push([end.lat, end.lon]);
           const endHtml = `
-            <div class="relative flex items-center justify-center w-8 h-8 rounded-full bg-amber-500 border-2 border-white shadow-lg text-white text-[11px] font-black">
-              🏁
+            <div class="relative flex items-center justify-center w-8 h-8 rounded-full bg-amber-500 border-2 border-white shadow-lg text-white">
+              <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
             </div>
           `;
           const endIcon = L.divIcon({ html: endHtml, className: 'end-pin', iconSize: [32, 32], iconAnchor: [16, 16] });
@@ -5773,9 +6415,18 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       // MÓDULO 6: CREAR LISTÍN DE CARGA / DESPACHO & EXPORTACIÓN PDF
       // =========================================================
       let listinCitiesOrder: string[] = [];
+      let listinCityGuiasOrder: Record<string, string[]> = {};
+      let listinFlatGuiasOrder: string[] = [];
       let listinExcludedGuiaIds: Set<string> = new Set();
       let listinExcludedCities: Set<string> = new Set();
       let listinCollapsedCities: Set<string> = new Set();
+      let listinViewSubMode: 'zones' | 'flat' = 'zones';
+      let listinSearchQuery: string = '';
+
+      // Drag and drop tracking
+      let draggedGuiaId: string | null = null;
+      let draggedCityName: string | null = null;
+      let draggedZoneName: string | null = null;
 
       // Pre-cargar fecha actual en el input de fecha
       if (listinFechaInput && !listinFechaInput.value) {
@@ -5808,31 +6459,119 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       }
 
       function syncListinCitiesOrder(availableCities: string[]) {
-        // Mantener ciudades existentes en el orden ya definido por logística
         const kept = listinCitiesOrder.filter(c => availableCities.includes(c));
-        // Agregar nuevas ciudades al final
         availableCities.forEach(c => {
           if (!kept.includes(c)) kept.push(c);
         });
         listinCitiesOrder = kept;
       }
 
-      function renderListinView() {
-        populateListinDriverSelect();
-        const srcShipments = getListinSourceShipments();
-
-        // Obtener nombres únicos de ciudades
+      function syncListinState(srcShipments: GuiaRow[]) {
         const uniqueCities = Array.from(new Set(srcShipments.map(g => (g.ciudad_destino || 'Sin Ciudad').trim()))).filter(Boolean);
         if (listinCitiesOrder.length === 0 || !listinCitiesOrder.some(c => uniqueCities.includes(c))) {
           uniqueCities.sort((a, b) => a.localeCompare(b));
         }
         syncListinCitiesOrder(uniqueCities);
 
-        if (listinCitiesCount) {
-          listinCitiesCount.textContent = `${listinCitiesOrder.length} zona${listinCitiesOrder.length !== 1 ? 's' : ''}`;
+        // Sincronizar orden de guías por cada ciudad
+        uniqueCities.forEach(cityName => {
+          const cityShipments = srcShipments.filter(g => (g.ciudad_destino || 'Sin Ciudad').trim() === cityName);
+          const existingOrder = listinCityGuiasOrder[cityName] || [];
+          const kept = existingOrder.filter(id => cityShipments.some(g => g.id_guia === id));
+          cityShipments.forEach(g => {
+            if (!kept.includes(g.id_guia)) kept.push(g.id_guia);
+          });
+          listinCityGuiasOrder[cityName] = kept;
+        });
+
+        // Sincronizar orden plano de guías
+        const allSrcIds = srcShipments.map(g => g.id_guia);
+        if (listinFlatGuiasOrder.length === 0) {
+          const flat: string[] = [];
+          listinCitiesOrder.forEach(cityName => {
+            const gIds = listinCityGuiasOrder[cityName] || [];
+            flat.push(...gIds);
+          });
+          listinFlatGuiasOrder = flat;
+        } else {
+          const kept = listinFlatGuiasOrder.filter(id => allSrcIds.includes(id));
+          allSrcIds.forEach(id => {
+            if (!kept.includes(id)) kept.push(id);
+          });
+          listinFlatGuiasOrder = kept;
+        }
+      }
+
+      function syncFlatFromZones() {
+        const flat: string[] = [];
+        listinCitiesOrder.forEach(cityName => {
+          const gIds = listinCityGuiasOrder[cityName] || [];
+          flat.push(...gIds);
+        });
+        listinFlatGuiasOrder = flat;
+      }
+
+      function getOrderedActiveGuias(srcShipments: GuiaRow[]): GuiaRow[] {
+        const mapById = new Map(srcShipments.map(g => [g.id_guia, g]));
+        const ordered: GuiaRow[] = [];
+
+        if (listinViewSubMode === 'flat') {
+          listinFlatGuiasOrder.forEach(id => {
+            if (listinExcludedGuiaIds.has(id)) return;
+            const g = mapById.get(id);
+            if (g) {
+              const city = (g.ciudad_destino || 'Sin Ciudad').trim();
+              if (!listinExcludedCities.has(city)) {
+                ordered.push(g);
+              }
+            }
+          });
+        } else {
+          listinCitiesOrder.forEach(cityName => {
+            if (listinExcludedCities.has(cityName)) return;
+            const guiaIds = listinCityGuiasOrder[cityName] || [];
+            guiaIds.forEach(id => {
+              if (listinExcludedGuiaIds.has(id)) return;
+              const g = mapById.get(id);
+              if (g) ordered.push(g);
+            });
+          });
         }
 
-        // 1. Renderizar Editor de Jerarquía (Izquierda)
+        return ordered;
+      }
+
+      function renderListinView() {
+        populateListinDriverSelect();
+        const srcShipments = getListinSourceShipments();
+
+        syncListinState(srcShipments);
+
+        if (listinCitiesCount) {
+          if (listinViewSubMode === 'zones') {
+            listinCitiesCount.textContent = `${listinCitiesOrder.length} zona${listinCitiesOrder.length !== 1 ? 's' : ''}`;
+          } else {
+            const activeCount = getOrderedActiveGuias(srcShipments).length;
+            listinCitiesCount.textContent = `${activeCount} guía${activeCount !== 1 ? 's' : ''}`;
+          }
+        }
+
+        // Actualizar botones de submodo en UI
+        if (btnListinModeZones && btnListinModeFlat) {
+          if (listinViewSubMode === 'zones') {
+            btnListinModeZones.className = 'px-2.5 py-1 rounded-lg font-bold transition-all bg-white text-slate-900 shadow-xs cursor-pointer';
+            btnListinModeFlat.className = 'px-2.5 py-1 rounded-lg font-bold text-slate-500 hover:text-slate-900 transition-all cursor-pointer';
+            if (listinPanelTitle) listinPanelTitle.textContent = 'Orden Jerárquico de Zonas';
+            if (listinInstructionsText) listinInstructionsText.innerHTML = 'Usa las flechas <span class="font-bold text-slate-700">▲</span> <span class="font-bold text-slate-700">▼</span> o arrastra <span class="font-bold text-slate-700">⠿</span> las zonas y guías para cambiar el orden.';
+          } else {
+            btnListinModeFlat.className = 'px-2.5 py-1 rounded-lg font-bold transition-all bg-white text-slate-900 shadow-xs cursor-pointer';
+            btnListinModeZones.className = 'px-2.5 py-1 rounded-lg font-bold text-slate-500 hover:text-slate-900 transition-all cursor-pointer';
+            if (listinPanelTitle) listinPanelTitle.textContent = 'Lista Continua de Guías (1..N)';
+            if (listinInstructionsText) listinInstructionsText.innerHTML = 'Orden libre continuo del 1 al N. Usa <span class="font-bold text-slate-700">▲</span> <span class="font-bold text-slate-700">▼</span> o arrastra <span class="font-bold text-slate-700">⠿</span> para ubicar cada guía.';
+          }
+        }
+
+        // 1. Renderizar Editor de Jerarquía y Guías (Izquierda)
         renderListinHierarchy(srcShipments);
 
         // 2. Renderizar Hoja del Listín en Vivo (Derecha)
@@ -5842,7 +6581,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       function renderListinHierarchy(srcShipments: GuiaRow[]) {
         if (!listinHierarchyList) return;
 
-        if (listinCitiesOrder.length === 0) {
+        if (srcShipments.length === 0) {
           listinHierarchyList.innerHTML = `
             <div class="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-400 text-xs">
               No hay guías registradas para los filtros seleccionados.
@@ -5851,95 +6590,251 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           return;
         }
 
-        listinHierarchyList.innerHTML = listinCitiesOrder.map((cityName, idx) => {
-          const cityGuias = srcShipments.filter(g => (g.ciudad_destino || 'Sin Ciudad').trim() === cityName);
-          const totalPiezas = cityGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
-          const isExcluded = listinExcludedCities.has(cityName);
-          const isCollapsed = listinCollapsedCities.has(cityName);
+        const query = listinSearchQuery.trim().toLowerCase();
+        const mapById = new Map(srcShipments.map(g => [g.id_guia, g]));
 
-          return `
-            <div class="bg-slate-50 border ${isExcluded ? 'border-slate-200 opacity-60' : 'border-slate-200/90'} rounded-xl p-3 space-y-2.5 transition-all">
-              <div class="flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2 min-w-0">
-                  <input
-                    type="checkbox"
-                    ${!isExcluded ? 'checked' : ''}
-                    onchange="window.toggleListinCity('${cityName.replace(/'/g, "\\'")}', this.checked)"
-                    class="w-4 h-4 rounded text-slate-900 focus:ring-slate-900 cursor-pointer"
-                    title="Incluir / excluir zona completa del listín"
-                  />
-                  <span class="w-5 h-5 rounded-md bg-slate-900 text-white text-[10px] font-bold flex items-center justify-center shrink-0">
-                    ${idx + 1}
-                  </span>
-                  <div class="min-w-0">
-                    <p class="text-xs font-bold text-slate-900 truncate">${cityName}</p>
-                    <p class="text-[10px] text-slate-500 font-medium">${cityGuias.length} guía${cityGuias.length !== 1 ? 's' : ''} &bull; ${totalPiezas} pieza${totalPiezas !== 1 ? 's' : ''}</p>
+        // ==========================================
+        // MODO 1: AGRUPADO POR ZONAS (Jerárquico)
+        // ==========================================
+        if (listinViewSubMode === 'zones') {
+          listinHierarchyList.innerHTML = listinCitiesOrder.map((cityName, cityIdx) => {
+            const rawGuiaIds = listinCityGuiasOrder[cityName] || [];
+            let cityGuias = rawGuiaIds.map(id => mapById.get(id)).filter(Boolean) as GuiaRow[];
+
+            // Filtro de búsqueda
+            if (query) {
+              const matchesCity = cityName.toLowerCase().includes(query);
+              if (!matchesCity) {
+                cityGuias = cityGuias.filter(g => 
+                  g.id_guia.toLowerCase().includes(query) || 
+                  (g.destinatario || '').toLowerCase().includes(query)
+                );
+                if (cityGuias.length === 0) return '';
+              }
+            }
+
+            const totalPiezas = cityGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+            const isExcluded = listinExcludedCities.has(cityName);
+            const isCollapsed = listinCollapsedCities.has(cityName);
+
+            return `
+              <div
+                class="bg-slate-50 border ${isExcluded ? 'border-slate-200 opacity-60' : 'border-slate-200/90'} rounded-xl p-3 space-y-2.5 transition-all"
+                ondragover="window.onListinZoneDragOver(event)"
+                ondrop="window.onListinZoneDrop(event, '${cityName.replace(/'/g, "\\'")}')"
+              >
+                <!-- Encabezado de la Zona -->
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <!-- Grip de Arrastre de Zona -->
+                    <div
+                      draggable="true"
+                      ondragstart="window.onListinZoneDragStart(event, '${cityName.replace(/'/g, "\\'")}')"
+                      class="text-slate-400 hover:text-slate-700 cursor-grab active:cursor-grabbing p-0.5"
+                      title="Arrastrar para mover zona completa"
+                    >
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+                    </div>
+
+                    <input
+                      type="checkbox"
+                      ${!isExcluded ? 'checked' : ''}
+                      onchange="window.toggleListinCity('${cityName.replace(/'/g, "\\'")}', this.checked)"
+                      class="w-4 h-4 rounded text-slate-900 focus:ring-slate-900 cursor-pointer"
+                      title="Incluir / excluir zona completa del listín"
+                    />
+                    <span class="w-5 h-5 rounded-md bg-slate-900 text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                      ${cityIdx + 1}
+                    </span>
+                    <div class="min-w-0">
+                      <p class="text-xs font-bold text-slate-900 truncate">${cityName}</p>
+                      <p class="text-[10px] text-slate-500 font-medium">${cityGuias.length} guía${cityGuias.length !== 1 ? 's' : ''} &bull; ${totalPiezas} pieza${totalPiezas !== 1 ? 's' : ''}</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-1 shrink-0">
+                    <!-- Subir Prioridad de Zona -->
+                    <button
+                      type="button"
+                      onclick="window.moveListinCity('${cityName.replace(/'/g, "\\'")}', -1)"
+                      ${cityIdx === 0 ? 'disabled' : ''}
+                      class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                      title="Subir prioridad de zona"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                    </button>
+
+                    <!-- Bajar Prioridad de Zona -->
+                    <button
+                      type="button"
+                      onclick="window.moveListinCity('${cityName.replace(/'/g, "\\'")}', 1)"
+                      ${cityIdx === listinCitiesOrder.length - 1 ? 'disabled' : ''}
+                      class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                      title="Bajar prioridad de zona"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+
+                    <!-- Expandir / Colapsar -->
+                    <button
+                      type="button"
+                      onclick="window.toggleListinCollapse('${cityName.replace(/'/g, "\\'")}')"
+                      class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-500 transition-colors cursor-pointer ml-1"
+                      title="${isCollapsed ? 'Ver guías' : 'Ocultar guías'}"
+                    >
+                      <svg class="w-3.5 h-3.5 ${isCollapsed ? '' : 'rotate-180'} transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
                   </div>
                 </div>
 
-                <div class="flex items-center gap-1 shrink-0">
-                  <!-- Subir Prioridad -->
-                  <button
-                    type="button"
-                    onclick="window.moveListinCity('${cityName.replace(/'/g, "\\'")}', -1)"
-                    ${idx === 0 ? 'disabled' : ''}
-                    class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                    title="Subir prioridad de entrega"
-                  >
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
-                  </button>
+                <!-- Lista interna de guías con controles de reordenación individual -->
+                ${!isCollapsed ? `
+                  <div class="space-y-1 pl-4 sm:pl-5 border-l-2 border-slate-200 text-xs">
+                    ${cityGuias.map((g, gIdx) => {
+                      const isGuiaExcluded = listinExcludedGuiaIds.has(g.id_guia) || isExcluded;
+                      return `
+                        <div
+                          draggable="true"
+                          ondragstart="window.onListinGuiaDragStart(event, '${g.id_guia}', '${cityName.replace(/'/g, "\\'")}')"
+                          ondragend="window.onListinGuiaDragEnd(event)"
+                          ondragover="window.onListinGuiaDragOver(event)"
+                          ondrop="window.onListinGuiaDrop(event, '${g.id_guia}', '${cityName.replace(/'/g, "\\'")}')"
+                          class="flex items-center justify-between py-1.5 px-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs hover:border-slate-300 text-[11px] gap-2 transition-all"
+                        >
+                          <!-- Grip, Checkbox, Posición, Guía y Destinatario -->
+                          <div class="flex items-center gap-1.5 min-w-0">
+                            <span class="text-slate-300 hover:text-slate-600 cursor-grab active:cursor-grabbing shrink-0" title="Arrastrar para reordenar guía">
+                              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9h8M8 15h8"/></svg>
+                            </span>
+                            <input
+                              type="checkbox"
+                              ${!isGuiaExcluded ? 'checked' : ''}
+                              onchange="window.toggleListinGuia('${g.id_guia}', this.checked)"
+                              class="w-3.5 h-3.5 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer shrink-0"
+                              title="Incluir / excluir guía del listín"
+                            />
+                            <span class="w-4 h-4 rounded bg-slate-100 text-slate-600 font-mono font-bold text-[9px] flex items-center justify-center shrink-0">
+                              ${gIdx + 1}
+                            </span>
+                            <span class="font-mono font-bold text-slate-900 shrink-0">#${g.id_guia}</span>
+                            <span class="text-slate-600 truncate max-w-[110px] sm:max-w-[130px] font-medium" title="${g.destinatario}">${g.destinatario}</span>
+                          </div>
 
-                  <!-- Bajar Prioridad -->
-                  <button
-                    type="button"
-                    onclick="window.moveListinCity('${cityName.replace(/'/g, "\\'")}', 1)"
-                    ${idx === listinCitiesOrder.length - 1 ? 'disabled' : ''}
-                    class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                    title="Bajar prioridad de entrega"
-                  >
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-                  </button>
+                          <!-- Piezas y Botones ▲ ▼ de Guía -->
+                          <div class="flex items-center gap-1 shrink-0">
+                            <span class="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono font-bold text-[9px]">${g.piezas || 1} pza${(g.piezas || 1) !== 1 ? 's' : ''}</span>
+                            
+                            <!-- Subir Guía -->
+                            <button
+                              type="button"
+                              onclick="window.moveListinGuia('${cityName.replace(/'/g, "\\'")}', '${g.id_guia}', -1)"
+                              ${gIdx === 0 ? 'disabled' : ''}
+                              class="p-1 rounded-md bg-slate-50 hover:bg-slate-200 text-slate-700 border border-slate-200 disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
+                              title="Subir esta guía en el orden de entrega"
+                            >
+                              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                            </button>
 
-                  <!-- Expandir / Colapsar -->
-                  <button
-                    type="button"
-                    onclick="window.toggleListinCollapse('${cityName.replace(/'/g, "\\'")}')"
-                    class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-500 transition-colors cursor-pointer ml-1"
-                    title="${isCollapsed ? 'Ver guías' : 'Ocultar guías'}"
-                  >
-                    <svg class="w-3.5 h-3.5 ${isCollapsed ? '' : 'rotate-180'} transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                  </button>
-                </div>
+                            <!-- Bajar Guía -->
+                            <button
+                              type="button"
+                              onclick="window.moveListinGuia('${cityName.replace(/'/g, "\\'")}', '${g.id_guia}', 1)"
+                              ${gIdx === cityGuias.length - 1 ? 'disabled' : ''}
+                              class="p-1 rounded-md bg-slate-50 hover:bg-slate-200 text-slate-700 border border-slate-200 disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
+                              title="Bajar esta guía en el orden de entrega"
+                            >
+                              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                          </div>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                ` : ''}
               </div>
+            `;
+          }).join('');
 
-              <!-- Lista interna de guías si no está colapsada -->
-              ${!isCollapsed ? `
-                <div class="space-y-1.5 pl-6 border-l-2 border-slate-200 text-xs">
-                  ${cityGuias.map(g => {
-                    const isGuiaExcluded = listinExcludedGuiaIds.has(g.id_guia) || isExcluded;
-                    return `
-                      <div class="flex items-center justify-between py-1 px-2 rounded-lg bg-white border border-slate-100 text-[11px] gap-2">
-                        <div class="flex items-center gap-1.5 min-w-0">
-                          <input
-                            type="checkbox"
-                            ${!isGuiaExcluded ? 'checked' : ''}
-                            onchange="window.toggleListinGuia('${g.id_guia}', this.checked)"
-                            class="w-3.5 h-3.5 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                          />
-                          <span class="font-mono font-bold text-slate-800">#${g.id_guia}</span>
-                          <span class="text-slate-600 truncate max-w-[120px]">${g.destinatario}</span>
+        // ==========================================
+        // MODO 2: LISTA CONTINUA (1..N)
+        // ==========================================
+        } else {
+          let flatGuias = listinFlatGuiasOrder.map(id => mapById.get(id)).filter(Boolean) as GuiaRow[];
+
+          if (query) {
+            flatGuias = flatGuias.filter(g => 
+              g.id_guia.toLowerCase().includes(query) || 
+              (g.destinatario || '').toLowerCase().includes(query) ||
+              (g.ciudad_destino || '').toLowerCase().includes(query)
+            );
+          }
+
+          listinHierarchyList.innerHTML = `
+            <div class="space-y-1.5">
+              ${flatGuias.map((g, idx) => {
+                const isGuiaExcluded = listinExcludedGuiaIds.has(g.id_guia) || listinExcludedCities.has((g.ciudad_destino || '').trim());
+                return `
+                  <div
+                    draggable="true"
+                    ondragstart="window.onListinGuiaDragStart(event, '${g.id_guia}', '')"
+                    ondragend="window.onListinGuiaDragEnd(event)"
+                    ondragover="window.onListinGuiaDragOver(event)"
+                    ondrop="window.onListinGuiaDrop(event, '${g.id_guia}', '')"
+                    class="flex items-center justify-between py-2 px-2.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs hover:border-slate-300 text-xs gap-2 transition-all"
+                  >
+                    <div class="flex items-center gap-2 min-w-0">
+                      <span class="text-slate-300 hover:text-slate-600 cursor-grab active:cursor-grabbing shrink-0" title="Arrastrar para mover posición">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9h8M8 15h8"/></svg>
+                      </span>
+                      <input
+                        type="checkbox"
+                        ${!isGuiaExcluded ? 'checked' : ''}
+                        onchange="window.toggleListinGuia('${g.id_guia}', this.checked)"
+                        class="w-3.5 h-3.5 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer shrink-0"
+                      />
+                      <span class="w-5 h-5 rounded-md bg-slate-900 text-white font-mono font-bold text-[10px] flex items-center justify-center shrink-0">
+                        ${idx + 1}
+                      </span>
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-1.5">
+                          <span class="font-mono font-bold text-slate-900">#${g.id_guia}</span>
+                          <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200 uppercase">${g.ciudad_destino || 'Sin Ciudad'}</span>
                         </div>
-                        <div class="flex items-center gap-1.5 shrink-0">
-                          <span class="bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded font-mono font-bold text-[10px]">${g.piezas || 1} pza${(g.piezas || 1) !== 1 ? 's' : ''}</span>
-                        </div>
+                        <p class="text-[11px] text-slate-500 truncate max-w-[150px] sm:max-w-[200px]">${g.destinatario}</p>
                       </div>
-                    `;
-                  }).join('')}
-                </div>
-              ` : ''}
+                    </div>
+
+                    <div class="flex items-center gap-1 shrink-0">
+                      <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono font-bold text-[10px]">${g.piezas || 1} pza${(g.piezas || 1) !== 1 ? 's' : ''}</span>
+                      
+                      <!-- Subir Guía Plana -->
+                      <button
+                        type="button"
+                        onclick="window.moveListinFlatGuia('${g.id_guia}', -1)"
+                        ${idx === 0 ? 'disabled' : ''}
+                        class="p-1 rounded-lg bg-slate-50 hover:bg-slate-200 text-slate-700 border border-slate-200 disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
+                        title="Subir esta guía"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                      </button>
+
+                      <!-- Bajar Guía Plana -->
+                      <button
+                        type="button"
+                        onclick="window.moveListinFlatGuia('${g.id_guia}', 1)"
+                        ${idx === flatGuias.length - 1 ? 'disabled' : ''}
+                        class="p-1 rounded-lg bg-slate-50 hover:bg-slate-200 text-slate-700 border border-slate-200 disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
+                        title="Bajar esta guía"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
             </div>
           `;
-        }).join('');
+        }
       }
 
       function renderListinPrintPreview(srcShipments: GuiaRow[]) {
@@ -5955,28 +6850,16 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         if (previewListinPlaca) previewListinPlaca.textContent = placa;
         if (previewListinChofer) previewListinChofer.textContent = driverName;
 
-        // Construir array ordenado de guías incluidas agrupadas por zona jerárquica
-        const orderedActiveGuias: GuiaRow[] = [];
-        let activeCitiesCount = 0;
-
-        listinCitiesOrder.forEach(cityName => {
-          if (listinExcludedCities.has(cityName)) return;
-          const cityGuias = srcShipments.filter(g => 
-            (g.ciudad_destino || 'Sin Ciudad').trim() === cityName &&
-            !listinExcludedGuiaIds.has(g.id_guia)
-          );
-          if (cityGuias.length > 0) {
-            activeCitiesCount++;
-            orderedActiveGuias.push(...cityGuias);
-          }
-        });
+        // Construir array de guías respetando exactamente el orden configurado
+        const orderedActiveGuias = getOrderedActiveGuias(srcShipments);
 
         const totalGuias = orderedActiveGuias.length;
         const totalPiezas = orderedActiveGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+        const uniqueActiveCities = new Set(orderedActiveGuias.map(g => (g.ciudad_destino || '').trim())).size;
 
         if (previewTotalGuias) previewTotalGuias.textContent = totalGuias.toString();
         if (previewTotalPiezas) previewTotalPiezas.textContent = totalPiezas.toString();
-        if (previewTotalCiudades) previewTotalCiudades.textContent = activeCitiesCount.toString();
+        if (previewTotalCiudades) previewTotalCiudades.textContent = uniqueActiveCities.toString();
 
         // Calcular filas del formato dual: mínimo 22 filas para llenar la página vertical como el portapapeles real
         const rowCount = Math.max(Math.ceil(orderedActiveGuias.length / 2), 22);
@@ -6007,7 +6890,38 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
       }
 
-      // Funciones Globales para Control de Jerarquía en Listín
+      // ==========================================
+      // FUNCIONES GLOBALES DE REORDENACIÓN
+      // ==========================================
+
+      // 1. Mover Guía dentro de una Zona
+      (window as any).moveListinGuia = (cityName: string, guiaId: string, direction: number) => {
+        const arr = listinCityGuiasOrder[cityName];
+        if (!arr) return;
+        const idx = arr.indexOf(guiaId);
+        if (idx === -1) return;
+        const newIdx = idx + direction;
+        if (newIdx < 0 || newIdx >= arr.length) return;
+        const temp = arr[idx];
+        arr[idx] = arr[newIdx];
+        arr[newIdx] = temp;
+        syncFlatFromZones();
+        renderListinView();
+      };
+
+      // 2. Mover Guía en Vista Plana Continua (1..N)
+      (window as any).moveListinFlatGuia = (guiaId: string, direction: number) => {
+        const idx = listinFlatGuiasOrder.indexOf(guiaId);
+        if (idx === -1) return;
+        const newIdx = idx + direction;
+        if (newIdx < 0 || newIdx >= listinFlatGuiasOrder.length) return;
+        const temp = listinFlatGuiasOrder[idx];
+        listinFlatGuiasOrder[idx] = listinFlatGuiasOrder[newIdx];
+        listinFlatGuiasOrder[newIdx] = temp;
+        renderListinView();
+      };
+
+      // 3. Mover Zona Completa
       (window as any).moveListinCity = (cityName: string, direction: number) => {
         const idx = listinCitiesOrder.indexOf(cityName);
         if (idx === -1) return;
@@ -6016,9 +6930,105 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         const temp = listinCitiesOrder[idx];
         listinCitiesOrder[idx] = listinCitiesOrder[newIdx];
         listinCitiesOrder[newIdx] = temp;
+        syncFlatFromZones();
         renderListinView();
       };
 
+      // 4. Drag & Drop de Guías
+      (window as any).onListinGuiaDragStart = (e: DragEvent, guiaId: string, cityName: string) => {
+        draggedGuiaId = guiaId;
+        draggedCityName = cityName;
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', guiaId);
+        }
+        const el = (e.currentTarget || e.target) as HTMLElement;
+        el?.classList.add('opacity-40');
+      };
+
+      (window as any).onListinGuiaDragEnd = (e: DragEvent) => {
+        const el = (e.currentTarget || e.target) as HTMLElement;
+        el?.classList.remove('opacity-40');
+      };
+
+      (window as any).onListinGuiaDragOver = (e: DragEvent) => {
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+      };
+
+      (window as any).onListinGuiaDrop = (e: DragEvent, targetGuiaId: string, targetCityName: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!draggedGuiaId || draggedGuiaId === targetGuiaId) return;
+
+        if (listinViewSubMode === 'zones') {
+          if (draggedCityName === targetCityName) {
+            const arr = listinCityGuiasOrder[targetCityName];
+            if (arr) {
+              const fromIdx = arr.indexOf(draggedGuiaId);
+              const toIdx = arr.indexOf(targetGuiaId);
+              if (fromIdx !== -1 && toIdx !== -1) {
+                arr.splice(fromIdx, 1);
+                arr.splice(toIdx, 0, draggedGuiaId);
+              }
+            }
+          } else if (draggedCityName) {
+            // Mover guía entre diferentes zonas
+            const srcArr = listinCityGuiasOrder[draggedCityName];
+            const destArr = listinCityGuiasOrder[targetCityName];
+            if (srcArr && destArr) {
+              const fromIdx = srcArr.indexOf(draggedGuiaId);
+              if (fromIdx !== -1) srcArr.splice(fromIdx, 1);
+              const toIdx = destArr.indexOf(targetGuiaId);
+              if (toIdx !== -1) destArr.splice(toIdx, 0, draggedGuiaId);
+              else destArr.push(draggedGuiaId);
+            }
+          }
+          syncFlatFromZones();
+        } else {
+          const fromIdx = listinFlatGuiasOrder.indexOf(draggedGuiaId);
+          const toIdx = listinFlatGuiasOrder.indexOf(targetGuiaId);
+          if (fromIdx !== -1 && toIdx !== -1) {
+            listinFlatGuiasOrder.splice(fromIdx, 1);
+            listinFlatGuiasOrder.splice(toIdx, 0, draggedGuiaId);
+          }
+        }
+
+        draggedGuiaId = null;
+        draggedCityName = null;
+        renderListinView();
+      };
+
+      // 5. Drag & Drop de Zonas
+      (window as any).onListinZoneDragStart = (e: DragEvent, cityName: string) => {
+        draggedZoneName = cityName;
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', cityName);
+        }
+      };
+
+      (window as any).onListinZoneDragOver = (e: DragEvent) => {
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+      };
+
+      (window as any).onListinZoneDrop = (e: DragEvent, targetCityName: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!draggedZoneName || draggedZoneName === targetCityName) return;
+        const fromIdx = listinCitiesOrder.indexOf(draggedZoneName);
+        const toIdx = listinCitiesOrder.indexOf(targetCityName);
+        if (fromIdx !== -1 && toIdx !== -1) {
+          listinCitiesOrder.splice(fromIdx, 1);
+          listinCitiesOrder.splice(toIdx, 0, draggedZoneName);
+        }
+        syncFlatFromZones();
+        draggedZoneName = null;
+        renderListinView();
+      };
+
+      // 6. Excluir / Incluir y Colapsar
       (window as any).toggleListinCity = (cityName: string, isIncluded: boolean) => {
         if (isIncluded) {
           listinExcludedCities.delete(cityName);
@@ -6061,10 +7071,43 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
       });
 
+      // Selector de Submodo (Por Zonas vs Lista Plana)
+      btnListinModeZones?.addEventListener('click', () => {
+        listinViewSubMode = 'zones';
+        renderListinView();
+      });
+      btnListinModeFlat?.addEventListener('click', () => {
+        listinViewSubMode = 'flat';
+        renderListinView();
+      });
+
+      // Buscador Rápido de Guías en el Listín
+      listinSearchInput?.addEventListener('input', () => {
+        listinSearchQuery = listinSearchInput.value || '';
+        const srcShipments = getListinSourceShipments();
+        renderListinHierarchy(srcShipments);
+      });
+
+      // Botón Expandir / Colapsar Todas las Zonas
+      btnListinToggleAllCollapse?.addEventListener('click', () => {
+        if (listinCollapsedCities.size >= listinCitiesOrder.length) {
+          listinCollapsedCities.clear();
+        } else {
+          listinCitiesOrder.forEach(c => listinCollapsedCities.add(c));
+        }
+        const srcShipments = getListinSourceShipments();
+        renderListinHierarchy(srcShipments);
+      });
+
       // Ordenar Alfabéticamente / Auto Jerarquía
       btnListinAutoTsp?.addEventListener('click', () => {
         listinCitiesOrder.sort((a, b) => a.localeCompare(b));
-        showToast('Jerarquía de zonas ordenada de la A a la Z', 'success');
+        // Ordenar también internamente cada ciudad por # de guía
+        Object.keys(listinCityGuiasOrder).forEach(city => {
+          listinCityGuiasOrder[city].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+        });
+        syncFlatFromZones();
+        showToast('Jerarquía de zonas y guías ordenadas de la A a la Z', 'success');
         renderListinView();
       });
 
@@ -6083,18 +7126,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         const driverName = driverObj ? driverObj.nombre : (selectedDriverOption?.text || 'Chofer');
 
         const srcShipments = getListinSourceShipments();
-        const orderedActiveGuias: GuiaRow[] = [];
-
-        listinCitiesOrder.forEach(cityName => {
-          if (listinExcludedCities.has(cityName)) return;
-          const cityGuias = srcShipments.filter(g => 
-            (g.ciudad_destino || 'Sin Ciudad').trim() === cityName &&
-            !listinExcludedGuiaIds.has(g.id_guia)
-          );
-          if (cityGuias.length > 0) {
-            orderedActiveGuias.push(...cityGuias);
-          }
-        });
+        const orderedActiveGuias = getOrderedActiveGuias(srcShipments);
 
         const totalGuias = orderedActiveGuias.length;
         const totalPiezas = orderedActiveGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);

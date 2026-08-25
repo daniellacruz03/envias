@@ -92,9 +92,11 @@ Las credenciales estan almacenadas en la tabla `usuarios` de PostgreSQL en Railw
 
 ### C. Portal Autoservicio del Cliente (/confirmar?guia=ID_GUIA)
 - Ruta: `src/pages/confirmar.astro`
-- Consulta SSR protegida por `id_guia`.
-- 3 Metodos de Captura de Ubicacion: GPS nativo, Direccion escrita, Mapa Leaflet con pin arrastrable.
+- **Métodos de Confirmación Satelital:**
+  1. **GPS Satelital Directo:** Captura 1-toque con alta precisión vía navegador.
+  2. **Pegar Coordenadas Universales:** Acepta coordenadas decimales (`10.0808, -69.3756`), grados minutos segundos (DMS), enlaces de Google Maps/Waze/Apple Maps y códigos Open Location Code (Plus Codes OLC completos y cortos). Incluye botón de pegado de portapapeles y botones de prueba rápida.
 - Sistema GIS/Geofencing integrado (ver Seccion 8).
+- Selector opcional de hora disponible de entrega y referencias de domicilio.
 - Meta tags Open Graph para tarjetas de vista previa enriquecidas en WhatsApp.
 
 ### D. Portal Móvil para Choferes (/chofer)
