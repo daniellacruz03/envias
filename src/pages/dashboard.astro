@@ -1290,26 +1290,44 @@ const userInitials = currentUser.nombre
         <!-- Contenido desplazable -->
         <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5 custom-scrollbar">
 
-          <!-- PASO 1: Chofer + Zona del Circuito -->
+          <!-- PASO 1: Chofer + Zonas del Circuito -->
           <div class="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-4 space-y-3">
-            <div class="flex items-center gap-2">
-              <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-black shrink-0">1</span>
-              <span class="text-xs font-extrabold text-indigo-950 uppercase tracking-wider">Chofer y Zona del Circuito</span>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div class="space-y-1">
-                <label class="block text-xs font-bold text-slate-700">Chofer Asignado <span class="text-rose-500">*</span></label>
-                <select id="planner-driver-select" class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer">
-                  <!-- Dinámico por JS -->
-                </select>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-black shrink-0">1</span>
+                <span class="text-xs font-extrabold text-indigo-950 uppercase tracking-wider">Chofer y Zonas del Circuito</span>
               </div>
-              <div class="space-y-1">
-                <label class="block text-xs font-bold text-slate-700">Zona / Ciudad del Circuito <span class="text-rose-500">*</span></label>
-                <select id="planner-zone-select" class="w-full text-xs font-bold bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer">
-                  <option value="">-- Selecciona la ciudad de entrega --</option>
-                </select>
+              <span class="text-[10px] font-bold text-indigo-600 bg-white border border-indigo-200 px-2 py-0.5 rounded-full">Selección múltiple</span>
+            </div>
+
+            <!-- Selector de Chofer -->
+            <div class="space-y-1">
+              <label class="block text-xs font-bold text-slate-700">Chofer Asignado <span class="text-rose-500">*</span></label>
+              <select id="planner-driver-select" class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer">
+                <!-- Dinámico por JS -->
+              </select>
+            </div>
+
+            <!-- Selector de Zonas (chips multi-selección) -->
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <label class="block text-xs font-bold text-slate-700">Zonas / Ciudades del Circuito <span class="text-rose-500">*</span></label>
+                <button type="button" id="planner-zone-clear-btn" class="hidden text-[10px] font-bold text-slate-500 hover:text-rose-600 transition-colors cursor-pointer">
+                  Limpiar selección
+                </button>
+              </div>
+              <!-- Chips de zonas disponibles -->
+              <div id="planner-zone-chips" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto custom-scrollbar rounded-xl bg-white border border-slate-200 p-2.5">
+                <span class="text-[11px] text-slate-400 font-medium italic">Abre el planificador para ver las zonas disponibles...</span>
+              </div>
+              <!-- Zonas seleccionadas (resumen) -->
+              <div id="planner-selected-zones-display" class="hidden flex flex-wrap items-center gap-1.5">
+                <span class="text-[10px] font-bold text-indigo-700 uppercase tracking-wide">Circuito:</span>
+                <span id="planner-selected-zones-labels" class="text-[11px] font-bold text-slate-800"></span>
               </div>
             </div>
+
+            <!-- Contadores combinados -->
             <div id="planner-zone-summary" class="hidden flex flex-wrap items-center gap-2 text-[11px]">
               <span class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -1321,7 +1339,12 @@ const userInitials = currentUser.nombre
               <span class="bg-slate-100 border border-slate-200 text-slate-700 px-2.5 py-1 rounded-lg font-bold">
                 <span id="planner-zone-total-count">0</span> guías total
               </span>
+              <span id="planner-zone-count-badge" class="bg-indigo-100 border border-indigo-200 text-indigo-800 px-2.5 py-1 rounded-lg font-bold">
+                <span id="planner-zone-zones-count">0</span> zonas agrupadas
+              </span>
             </div>
+
+            <!-- Advertencia GPS -->
             <div id="planner-no-gps-warning" class="hidden bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2.5 text-xs text-amber-900 font-semibold flex items-start gap-2">
               <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
               <span id="planner-no-gps-warning-text">Algunas guías no tienen coordenadas GPS. Solo las guías con GPS se incluyen en el circuito optimizado.</span>
@@ -6592,7 +6615,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       // ============================================================
 
       // Estado del planificador
-      let circuitStops: GuiaRow[] = [];       // Guías con GPS de la zona seleccionada
+      let circuitStops: GuiaRow[] = [];
+      let selectedZones = new Set<string>();   // Zonas seleccionadas (multi)
       let circuitOptimized = false;
       let plannerMapInstance: any = null;
       let plannerMapVisible = false;
@@ -6600,11 +6624,11 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       // Elementos del modal del planificador
       const routePlannerModal = document.getElementById('route-planner-modal');
       const plannerDriverSelect = document.getElementById('planner-driver-select') as HTMLSelectElement;
-      const plannerZoneSelect = document.getElementById('planner-zone-select') as HTMLSelectElement;
       const plannerZoneSummary = document.getElementById('planner-zone-summary');
       const plannerZoneGpsCount = document.getElementById('planner-zone-gps-count');
       const plannerZonePendingCount = document.getElementById('planner-zone-pending-count');
       const plannerZoneTotalCount = document.getElementById('planner-zone-total-count');
+      const plannerZoneZonesCount = document.getElementById('planner-zone-zones-count');
       const plannerNoGpsWarning = document.getElementById('planner-no-gps-warning');
       const plannerNoGpsWarningText = document.getElementById('planner-no-gps-warning-text');
       const plannerStartInput = document.getElementById('planner-start-input') as HTMLInputElement;
@@ -6621,6 +6645,117 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       const plannerCancelBtn = document.getElementById('planner-cancel-btn');
       const plannerCloseBtn = document.getElementById('route-planner-close-btn');
 
+      // Función: renderizar los chips de zonas disponibles
+      function renderZoneChips() {
+        const chipsContainer = document.getElementById('planner-zone-chips');
+        if (!chipsContainer) return;
+
+        const activeShipments = shipments.filter(g =>
+          g.estado !== 'Entregado' && g.estado !== 'No entregado'
+        );
+        const ciudadesUnicas = [...new Set(
+          activeShipments.map(g => (g.ciudad_destino || '').trim()).filter(Boolean)
+        )].sort();
+
+        if (ciudadesUnicas.length === 0) {
+          chipsContainer.innerHTML = '<span class="text-[11px] text-slate-400 italic">No hay guías activas con ciudad asignada.</span>';
+          return;
+        }
+
+        chipsContainer.innerHTML = ciudadesUnicas.map(ciudad => {
+          const isSelected = selectedZones.has(ciudad);
+          const guiasZona = activeShipments.filter(g =>
+            (g.ciudad_destino || '').trim().toLowerCase() === ciudad.toLowerCase()
+          );
+          const conGps = guiasZona.filter(g =>
+            g.gps_confirmado && g.gps_latitud != null && g.gps_longitud != null &&
+            !isNaN(Number(g.gps_latitud)) && !isNaN(Number(g.gps_longitud))
+          ).length;
+
+          return `<button
+            type="button"
+            data-zone="${ciudad}"
+            onclick="window.toggleZoneChip('${ciudad.replace(/'/g, "\\'")}')"
+            class="zone-chip inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+              isSelected
+                ? 'bg-indigo-600 border-indigo-700 text-white shadow-sm shadow-indigo-200'
+                : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-400 hover:text-indigo-700 hover:bg-indigo-50'
+            }"
+          >
+            ${ciudad}
+            <span class="text-[10px] font-black ${isSelected ? 'text-indigo-200' : 'text-slate-400'}">${guiasZona.length}g/${conGps}GPS</span>
+          </button>`;
+        }).join('');
+      }
+
+      // Función: toggle de zona chip
+      window.toggleZoneChip = function(ciudad: string) {
+        if (selectedZones.has(ciudad)) {
+          selectedZones.delete(ciudad);
+        } else {
+          selectedZones.add(ciudad);
+        }
+        renderZoneChips();
+        actualizarCircuitoDesdeZonas();
+      };
+
+      // Función: actualizar circuito a partir de las zonas seleccionadas
+      function actualizarCircuitoDesdeZonas() {
+        const zoneClearBtn = document.getElementById('planner-zone-clear-btn');
+        const selectedDisplay = document.getElementById('planner-selected-zones-display');
+        const selectedLabels = document.getElementById('planner-selected-zones-labels');
+
+        if (selectedZones.size === 0) {
+          if (plannerZoneSummary) plannerZoneSummary.classList.add('hidden');
+          if (plannerNoGpsWarning) plannerNoGpsWarning.classList.add('hidden');
+          if (zoneClearBtn) zoneClearBtn.classList.add('hidden');
+          if (selectedDisplay) selectedDisplay.classList.add('hidden');
+          circuitStops = [];
+          renderCircuitStops();
+          return;
+        }
+
+        // Mostrar botón limpiar y resumen de zonas
+        if (zoneClearBtn) zoneClearBtn.classList.remove('hidden');
+        if (selectedDisplay) selectedDisplay.classList.remove('hidden');
+        if (selectedLabels) {
+          selectedLabels.textContent = [...selectedZones].join(' + ');
+        }
+
+        // Filtrar guías de TODAS las zonas seleccionadas (activas)
+        const guiasZonas = shipments.filter(g =>
+          selectedZones.has((g.ciudad_destino || '').trim()) &&
+          g.estado !== 'Entregado' && g.estado !== 'No entregado'
+        );
+
+        const guiasConGps = guiasZonas.filter(g =>
+          g.gps_confirmado && g.gps_latitud != null && g.gps_longitud != null &&
+          !isNaN(Number(g.gps_latitud)) && !isNaN(Number(g.gps_longitud))
+        );
+        const guiasSinGps = guiasZonas.length - guiasConGps.length;
+
+        // Actualizar contadores
+        if (plannerZoneGpsCount) plannerZoneGpsCount.textContent = String(guiasConGps.length);
+        if (plannerZonePendingCount) plannerZonePendingCount.textContent = String(guiasSinGps);
+        if (plannerZoneTotalCount) plannerZoneTotalCount.textContent = String(guiasZonas.length);
+        if (plannerZoneZonesCount) plannerZoneZonesCount.textContent = String(selectedZones.size);
+        if (plannerZoneSummary) plannerZoneSummary.classList.remove('hidden');
+
+        // Advertencia GPS
+        if (guiasSinGps > 0 && plannerNoGpsWarning && plannerNoGpsWarningText) {
+          const zonasList = [...selectedZones].join(', ');
+          plannerNoGpsWarningText.textContent = `${guiasSinGps} guía${guiasSinGps > 1 ? 's' : ''} en (${zonasList}) no tienen GPS confirmado. Solo las ${guiasConGps.length} guías con GPS se incluirán.`;
+          plannerNoGpsWarning.classList.remove('hidden');
+        } else if (plannerNoGpsWarning) {
+          plannerNoGpsWarning.classList.add('hidden');
+        }
+
+        // Cargar paradas combinadas
+        circuitStops = [...guiasConGps];
+        circuitOptimized = false;
+        renderCircuitStops();
+      }
+
       // Función: abrir el modal del planificador
       window.openRoutePlannerModal = function() {
         if (!routePlannerModal) return;
@@ -6636,25 +6771,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           });
         }
 
-        // Poblar selector de zonas con ciudades únicas que tienen guías activas
-        if (plannerZoneSelect) {
-          const activeShipments = shipments.filter(g =>
-            g.estado !== 'Entregado' && g.estado !== 'No entregado'
-          );
-          const ciudadesUnicas = [...new Set(
-            activeShipments.map(g => (g.ciudad_destino || '').trim()).filter(Boolean)
-          )].sort();
-
-          plannerZoneSelect.innerHTML = '<option value="">-- Selecciona la ciudad de entrega --</option>';
-          ciudadesUnicas.forEach(ciudad => {
-            const opt = document.createElement('option');
-            opt.value = ciudad;
-            opt.textContent = ciudad;
-            plannerZoneSelect.appendChild(opt);
-          });
-        }
-
         // Resetear estado
+        selectedZones.clear();
         circuitStops = [];
         circuitOptimized = false;
         plannerMapVisible = false;
@@ -6662,56 +6780,29 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         if (btnToggleMapText) btnToggleMapText.textContent = 'Ver Mapa';
         if (plannerZoneSummary) plannerZoneSummary.classList.add('hidden');
         if (plannerNoGpsWarning) plannerNoGpsWarning.classList.add('hidden');
+        const zoneClearBtn = document.getElementById('planner-zone-clear-btn');
+        if (zoneClearBtn) zoneClearBtn.classList.add('hidden');
+        const selectedDisplay = document.getElementById('planner-selected-zones-display');
+        if (selectedDisplay) selectedDisplay.classList.add('hidden');
+
+        // Renderizar chips y paradas
+        renderZoneChips();
         renderCircuitStops();
 
         routePlannerModal.classList.remove('hidden');
         routePlannerModal.classList.add('flex');
       };
 
-      // Listener: cambio de zona seleccionada
-      if (plannerZoneSelect) {
-        plannerZoneSelect.addEventListener('change', () => {
-          const zona = plannerZoneSelect.value;
-          if (!zona) {
-            if (plannerZoneSummary) plannerZoneSummary.classList.add('hidden');
-            if (plannerNoGpsWarning) plannerNoGpsWarning.classList.add('hidden');
-            circuitStops = [];
-            renderCircuitStops();
-            return;
-          }
-
-          // Filtrar guías de la zona seleccionada (activas = no entregadas)
-          const guiasZona = shipments.filter(g =>
-            (g.ciudad_destino || '').trim().toLowerCase() === zona.toLowerCase() &&
-            g.estado !== 'Entregado' && g.estado !== 'No entregado'
-          );
-
-          const guiasConGps = guiasZona.filter(g =>
-            g.gps_confirmado && g.gps_latitud != null && g.gps_longitud != null &&
-            !isNaN(Number(g.gps_latitud)) && !isNaN(Number(g.gps_longitud))
-          );
-          const guiasSinGps = guiasZona.length - guiasConGps.length;
-
-          // Actualizar contadores
-          if (plannerZoneGpsCount) plannerZoneGpsCount.textContent = String(guiasConGps.length);
-          if (plannerZonePendingCount) plannerZonePendingCount.textContent = String(guiasSinGps);
-          if (plannerZoneTotalCount) plannerZoneTotalCount.textContent = String(guiasZona.length);
-          if (plannerZoneSummary) plannerZoneSummary.classList.remove('hidden');
-
-          // Advertencia si hay guías sin GPS
-          if (guiasSinGps > 0 && plannerNoGpsWarning && plannerNoGpsWarningText) {
-            plannerNoGpsWarningText.textContent = `${guiasSinGps} guía${guiasSinGps > 1 ? 's' : ''} en ${zona} no tienen coordenadas GPS confirmadas. Solo las ${guiasConGps.length} guías con GPS se incluirán en el circuito.`;
-            plannerNoGpsWarning.classList.remove('hidden');
-          } else if (plannerNoGpsWarning) {
-            plannerNoGpsWarning.classList.add('hidden');
-          }
-
-          // Cargar paradas con GPS como circuito inicial (sin optimizar)
-          circuitStops = [...guiasConGps];
-          circuitOptimized = false;
-          renderCircuitStops();
+      // Botón limpiar selección de zonas
+      const zoneClearBtnEl = document.getElementById('planner-zone-clear-btn');
+      if (zoneClearBtnEl) {
+        zoneClearBtnEl.addEventListener('click', () => {
+          selectedZones.clear();
+          renderZoneChips();
+          actualizarCircuitoDesdeZonas();
         });
       }
+
 
       // Función: renderizar las tarjetas de paradas con ETA
       function renderCircuitStops() {
@@ -7060,9 +7151,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           return;
         }
 
-        const zona = plannerZoneSelect?.value;
+        const zona = [...selectedZones].join(' + ');
         if (!zona) {
-          showToast('Selecciona una zona para el circuito.', 'error');
+          showToast('Selecciona al menos una zona para el circuito.', 'error');
           return;
         }
 
