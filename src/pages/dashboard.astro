@@ -7165,46 +7165,33 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
 
         try {
-          // Guardar orden de ruta y asignación de chofer para cada guía
-          const savePromises = circuitStops.map((stop, idx) =>
-            fetch('/api/guias/ruta', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
+          // Una sola request con el formato correcto de /api/guias/ruta
+          const res = await fetch('/api/guias/ruta', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chofer_id: parseInt(driverId, 10),
+              ruta_origen: getStartCoordinates().label,
+              ruta_destino: zona,
+              despachar_en_ruta: dispatchToRoute,
+              paradas: circuitStops.map((stop, idx) => ({
                 id_guia: stop.id_guia,
-                chofer_asignado_id: parseInt(driverId, 10),
-                orden_ruta: idx + 1,
-                ruta_origen: getStartCoordinates().label,
-                ruta_destino: zona
-              })
+                orden: idx + 1
+              }))
             })
-          );
+          });
 
-          const results = await Promise.allSettled(savePromises);
-          const errors = results.filter(r => r.status === 'rejected').length;
+          const data = await res.json();
 
-          if (errors > 0) {
-            showToast(`${errors} guías no se pudieron guardar. Verifica la conexión.`, 'error');
-          } else {
-            const action = dispatchToRoute ? 'despachado a ruta' : 'guardado en almacén';
+          if (data.success) {
+            const action = dispatchToRoute ? 'despachado a ruta' : 'guardado en almacen';
             showToast(`Circuito de ${circuitStops.length} paradas ${action} exitosamente.`, 'success');
-
-            // Si es despacho a ruta, cambiar estado a "En ruta"
-            if (dispatchToRoute) {
-              const rutaPromises = circuitStops.map(stop =>
-                fetch(`/api/guias/${stop.id_guia}/estado`, {
-                  method: 'PATCH',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ estado: 'En ruta' })
-                }).catch(() => {})
-              );
-              await Promise.allSettled(rutaPromises);
-            }
-
-            // Cerrar modal y refrescar datos
             closeRoutePlannerModal();
             await fetchData();
+          } else {
+            showToast(data.message || 'Error al guardar el circuito.', 'error');
           }
+
         } catch (err) {
           console.error('Error guardando circuito:', err);
           showToast('Error al guardar el circuito. Intenta nuevamente.', 'error');
