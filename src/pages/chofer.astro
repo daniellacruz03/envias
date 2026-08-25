@@ -100,6 +100,14 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       .animate-fadeIn {
         animation: fadeIn 0.2s ease-out forwards;
       }
+      @keyframes pulse-ring {
+        0% { transform: scale(0.96); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+        70% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+        100% { transform: scale(0.96); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+      }
+      .active-stop-pulse {
+        animation: pulse-ring 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+      }
 
       /* Estilos de Impresión (@media print) para el Listín del Chofer */
       @media print {
@@ -377,6 +385,9 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             </div>
           </div>
         </section>
+
+        <!-- Tarjeta Spoke: Siguiente Parada Activa en Ruta -->
+        <div id="active-stop-card-container"></div>
 
         <!-- Mapa Interactivo de Paradas -->
         <section class="space-y-2">
@@ -1561,6 +1572,65 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         if (!cardsContainer) return;
 
         var filtered = getFilteredGuias();
+        var activeStopContainer = document.getElementById('active-stop-card-container');
+
+        // Buscar siguiente parada pendiente en todo el conjunto de guías
+        var nextPendingGuia = (guiasData || []).find(function(g) {
+          return g.estado !== 'Entregado' && g.estado !== 'No entregado';
+        });
+
+        if (activeStopContainer) {
+          if (nextPendingGuia) {
+            var nextStopNum = nextPendingGuia.orden_ruta && nextPendingGuia.orden_ruta > 0 ? nextPendingGuia.orden_ruta : 1;
+            var nextPhoneClean = formatPhoneForWhatsApp(nextPendingGuia.telefono_principal);
+            var nextMsgWhatsApp = encodeURIComponent('Hola ' + nextPendingGuia.destinatario + ', soy tu chofer de Envías C.A. Voy en camino a entregarte tu paquete (Guía #' + nextPendingGuia.id_guia + ').');
+            var nextLinkWhatsApp = 'https://wa.me/' + nextPhoneClean + '?text=' + nextMsgWhatsApp;
+            var nextDestEscaped = (nextPendingGuia.destinatario || '').replace(/'/g, "\\'");
+            var nextDirEscaped = (nextPendingGuia.direccion_referencia || '').replace(/'/g, "\\'");
+
+            activeStopContainer.innerHTML =
+              '<div class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-4 sm:p-5 shadow-lg border border-indigo-500/20 space-y-3 animate-fadeIn">' +
+                '<div class="flex items-center justify-between">' +
+                  '<div class="flex items-center gap-2.5">' +
+                    '<span class="w-8 h-8 rounded-xl bg-indigo-600 text-white font-black text-xs flex items-center justify-center shadow-md active-stop-pulse shrink-0">#' + nextStopNum + '</span>' +
+                    '<div class="min-w-0">' +
+                      '<span class="text-[10px] font-black uppercase tracking-wider text-indigo-300 block leading-tight">Siguiente Parada Activa</span>' +
+                      '<span class="font-mono text-xs font-bold text-slate-200 truncate block">Guía #' + nextPendingGuia.id_guia + ' &bull; ' + (nextPendingGuia.piezas || 1) + ' pza(s)</span>' +
+                    '</div>' +
+                  '</div>' +
+                  '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-extrabold shrink-0">' +
+                    '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>' +
+                    'En Ruta' +
+                  '</span>' +
+                '</div>' +
+                '<div class="space-y-1 bg-white/5 rounded-2xl p-3 border border-white/10 text-xs">' +
+                  '<p class="text-sm font-extrabold text-white leading-snug truncate">' + nextPendingGuia.destinatario + '</p>' +
+                  '<div class="flex items-center gap-1.5 text-slate-300 text-xs font-medium">' +
+                    '<svg class="w-3.5 h-3.5 text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
+                    '<span class="truncate">' + nextPendingGuia.ciudad_destino + (nextPendingGuia.direccion_referencia ? ' &bull; ' + nextPendingGuia.direccion_referencia : '') + '</span>' +
+                  '</div>' +
+                  (nextPendingGuia.hora_disponible ? '<p class="text-[10px] text-amber-300 font-bold mt-1">Horario de entrega: Hasta las ' + nextPendingGuia.hora_disponible + '</p>' : '') +
+                '</div>' +
+                '<div class="grid grid-cols-3 gap-2">' +
+                  '<a href="' + nextLinkWhatsApp + '" target="_blank" class="tap-active py-2 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-sm">' +
+                    '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.961.947 3.224.947 3.182 0 5.768-2.586 5.768-5.766 0-3.18-2.586-5.766-5.766-5.766zm9.969 5.828c0 5.518-4.482 10-10 10-1.748 0-3.385-.45-4.818-1.237l-5.182 1.409 1.433-5.068c-.89-1.488-1.433-3.232-1.433-5.104 0-5.518 4.482-10 10-10s10 4.482 10 10z"/></svg>' +
+                    '<span>WhatsApp</span>' +
+                  '</a>' +
+                  '<button type="button" onclick="window.focusStopOnMap(\'' + nextPendingGuia.id_guia + '\')" class="tap-active py-2 px-2.5 rounded-xl bg-indigo-600/80 hover:bg-indigo-600 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all border border-indigo-400/30 cursor-pointer">' +
+                    '<svg class="w-3.5 h-3.5 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
+                    '<span>Ver en Mapa</span>' +
+                  '</button>' +
+                  '<button type="button" onclick="window.openDeliveryModal(\'' + nextPendingGuia.id_guia + '\', \'' + nextDestEscaped + '\', \'' + nextDirEscaped + '\', ' + nextStopNum + ')" class="tap-active py-2 px-2.5 rounded-xl bg-white text-slate-950 hover:bg-slate-100 font-extrabold text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer">' +
+                    '<svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>' +
+                    '<span>Entregar</span>' +
+                  '</button>' +
+                '</div>' +
+              '</div>';
+          } else {
+            activeStopContainer.innerHTML = '';
+          }
+        }
+
         if (filtered.length === 0) {
           cardsContainer.innerHTML = '';
           if (emptyState) emptyState.classList.remove('hidden');
@@ -1578,17 +1648,6 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           var phoneClean = formatPhoneForWhatsApp(guia.telefono_principal);
           var msgWhatsApp = encodeURIComponent('Hola ' + guia.destinatario + ', soy tu chofer de Envías C.A. Voy en camino a entregarte tu paquete (Guía #' + guia.id_guia + ').');
           var linkWhatsApp = 'https://wa.me/' + phoneClean + '?text=' + msgWhatsApp;
-
-          var gmapsUrl = '';
-          var wazeUrl = '';
-          if (guia.gps_confirmado && guia.gps_latitud && guia.gps_longitud) {
-            gmapsUrl = 'https://www.google.com/maps/dir/?api=1&destination=' + guia.gps_latitud + ',' + guia.gps_longitud;
-            wazeUrl = 'https://waze.com/ul?ll=' + guia.gps_latitud + ',' + guia.gps_longitud + '&navigate=yes';
-          } else {
-            var destQuery = encodeURIComponent((guia.direccion_referencia || '') + ' ' + (guia.ciudad_destino || '') + ' Venezuela');
-            gmapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + destQuery;
-            wazeUrl = 'https://waze.com/ul?q=' + destQuery + '&navigate=yes';
-          }
 
           var badgeStatusHtml = '';
           if (isDelivered) {
@@ -1685,11 +1744,12 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       });
 
       // ----------------------------------------------------
-      // DICCIONARIO GEO Y MOTOR DEL MAPA DEL CHOFER
+      // MOTOR GEOGRÁFICO Y PLANIFICADOR SPOKE CIRCUIT
       // ----------------------------------------------------
       var map = null;
       var markersLayer = null;
       var routePolyline = null;
+      var routeGlowPolyline = null;
       var isMapVisible = true;
       var markersByGuiaId = {};
 
@@ -1764,6 +1824,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         'el tocuyo': [9.7833, -69.8000],
         'sanare': [9.7500, -69.6500],
         'sarare': [9.7833, -69.1667],
+        'la miel': [9.7554, -69.1873],
         'cabimas': [10.3925, -71.4547],
         'ciudad ojeda': [10.1997, -71.3063],
         'bachaquero': [9.9333, -71.1167],
@@ -1786,7 +1847,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       }
 
       function getGuiaCoords(guia) {
-        if (!guia) return null;
+        if (!guia) return [10.0808, -69.3756];
         if (guia.gps_latitud && guia.gps_longitud) {
           var lat = parseFloat(guia.gps_latitud);
           var lng = parseFloat(guia.gps_longitud);
@@ -1814,6 +1875,86 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         return [10.0808, -69.3756]; // Fallback Barquisimeto
       }
 
+      function haversineDistance(lat1, lon1, lat2, lon2) {
+        var R = 6371;
+        var dLat = (lat2 - lat1) * Math.PI / 180;
+        var dLon = (lon2 - lon1) * Math.PI / 180;
+        var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      }
+
+      // Algoritmo TSP 2-Opt para garantizar cero cruces de ruta
+      function solveTSPWith2Opt(origin, stops) {
+        if (!stops || stops.length <= 1) return stops;
+        var remaining = stops.slice();
+        var tour = [];
+        var curr = origin;
+        while (remaining.length > 0) {
+          var bestIdx = 0;
+          var bestDist = Infinity;
+          for (var i = 0; i < remaining.length; i++) {
+            var c = getGuiaCoords(remaining[i]);
+            var d = haversineDistance(curr[0], curr[1], c[0], c[1]);
+            if (d < bestDist) { bestDist = d; bestIdx = i; }
+          }
+          var next = remaining.splice(bestIdx, 1)[0];
+          tour.push(next);
+          curr = getGuiaCoords(next);
+        }
+        var improved = true;
+        var iterations = 0;
+        while (improved && iterations < 50) {
+          improved = false;
+          iterations++;
+          for (var i = 0; i < tour.length - 1; i++) {
+            for (var k = i + 1; k < tour.length; k++) {
+              var pA = i === 0 ? origin : getGuiaCoords(tour[i - 1]);
+              var pB = getGuiaCoords(tour[i]);
+              var pC = getGuiaCoords(tour[k]);
+              var pD = k + 1 < tour.length ? getGuiaCoords(tour[k + 1]) : origin;
+              var dCurrent = haversineDistance(pA[0], pA[1], pB[0], pB[1]) + haversineDistance(pC[0], pC[1], pD[0], pD[1]);
+              var dNew = haversineDistance(pA[0], pA[1], pC[0], pC[1]) + haversineDistance(pB[0], pB[1], pD[0], pD[1]);
+              if (dNew < dCurrent - 0.001) {
+                var sub = tour.slice(i, k + 1).reverse();
+                tour.splice(i, k - i + 1);
+                for (var s = 0; s < sub.length; s++) { tour.splice(i + s, 0, sub[s]); }
+                improved = true;
+              }
+            }
+          }
+        }
+        return tour;
+      }
+
+      // Consulta de geometría vial real vía OSRM
+      async function fetchOSRMRouteGeometry(waypoints) {
+        if (!waypoints || waypoints.length < 2) return waypoints;
+        try {
+          var pointsToRequest = waypoints.slice(0, 25);
+          var url = 'https://router.project-osrm.org/route/v1/driving/' +
+            pointsToRequest.map(function(p) { return p[1].toFixed(5) + ',' + p[0].toFixed(5); }).join(';') +
+            '?overview=full&geometries=geojson';
+
+          var controller = new AbortController();
+          var timeoutId = setTimeout(function() { controller.abort(); }, 3500);
+          var res = await fetch(url, { signal: controller.signal });
+          clearTimeout(timeoutId);
+
+          if (!res.ok) return waypoints;
+          var data = await res.json();
+          if (data.code === 'Ok' && data.routes && data.routes[0] && data.routes[0].geometry) {
+            return data.routes[0].geometry.coordinates.map(function(c) {
+              return [c[1], c[0]];
+            });
+          }
+        } catch (e) {
+          console.warn('[OSRM Routing Fallback to Direct Geometry]:', e);
+        }
+        return waypoints;
+      }
+
       // Inicialización segura del mapa Leaflet
       function initMap() {
         try {
@@ -1834,19 +1975,24 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         }
       }
 
-      function updateMapMarkers() {
+      async function updateMapMarkers() {
         if (!map || !markersLayer || typeof L === 'undefined') return;
         markersLayer.clearLayers();
         markersByGuiaId = {};
 
-        var sortedGuias = (guiasData || []).slice().sort(function(a, b) {
-          var ordA = a.orden_ruta && a.orden_ruta > 0 ? a.orden_ruta : 9999;
-          var ordB = b.orden_ruta && b.orden_ruta > 0 ? b.orden_ruta : 9999;
-          return ordA - ordB;
-        });
+        var startLabel = (guiasData[0] && guiasData[0].ruta_origen) ? guiasData[0].ruta_origen : 'Sede Principal Barquisimeto';
+        var endLabel = (guiasData[0] && guiasData[0].ruta_destino) ? guiasData[0].ruta_destino : 'Retorno a Sede Principal Barquisimeto';
+        var startCoords = VENEZUELA_COORDS_MAP[normalizeGeoText(startLabel)] || [10.0808, -69.3756];
 
-        var startLabel = (sortedGuias[0] && sortedGuias[0].ruta_origen) ? sortedGuias[0].ruta_origen : 'Sede Principal Barquisimeto';
-        var endLabel = (sortedGuias[0] && sortedGuias[0].ruta_destino) ? sortedGuias[0].ruta_destino : 'Retorno a Sede Principal Barquisimeto';
+        // Verificar si las guías necesitan ordenamiento 2-Opt
+        var needsSorting = guiasData.some(function(g) { return !g.orden_ruta || g.orden_ruta <= 0; });
+        var sortedGuias = guiasData.slice();
+        if (needsSorting) {
+          sortedGuias = solveTSPWith2Opt(startCoords, sortedGuias);
+          sortedGuias.forEach(function(g, i) { g.orden_ruta = i + 1; });
+        } else {
+          sortedGuias.sort(function(a, b) { return (a.orden_ruta || 999) - (b.orden_ruta || 999); });
+        }
 
         // Actualizar textos del banner de itinerario
         var routeStartText = document.getElementById('route-start-text');
@@ -1856,72 +2002,107 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         if (routeEndText) routeEndText.textContent = endLabel;
         if (routeStopsCountText) routeStopsCountText.textContent = sortedGuias.length + ' parada(s)';
 
-        var latLngs = [];
+        // Buscar la siguiente parada pendiente
+        var nextPendingGuia = sortedGuias.find(function(g) { return g.estado !== 'Entregado' && g.estado !== 'No entregado'; });
+
+        var waypoints = [];
 
         // 1. Marcador de Salida / Almacén (Hub)
-        var startCoords = VENEZUELA_COORDS_MAP[normalizeGeoText(startLabel)] || [10.0808, -69.3756];
         var hubIcon = L.divIcon({
-          html: '<div style="background:#4338ca;width:30px;height:30px;border-radius:10px;border:2.5px solid white;color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;box-shadow:0 3px 8px rgba(0,0,0,0.3);">' +
-                  '<svg style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>' +
+          html: '<div style="background:#4338ca;width:32px;height:32px;border-radius:10px;border:2.5px solid white;color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;box-shadow:0 3px 10px rgba(67,56,202,0.4);">' +
+                  '<svg style="width:17px;height:17px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>' +
                 '</div>',
           className: '',
-          iconSize: [30, 30],
-          iconAnchor: [15, 15]
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
         });
         var startMarker = L.marker(startCoords, { icon: hubIcon }).addTo(markersLayer);
         startMarker.bindPopup('<div style="font-family:inherit;font-size:12px;"><b style="color:#4338ca;">Punto de Salida</b><br/>' + startLabel + '</div>');
-        latLngs.push(startCoords);
+        waypoints.push(startCoords);
 
-        // 2. Marcadores de las paradas en orden del circuito
+        // 2. Marcadores de las paradas en orden del circuito Spoke
         sortedGuias.forEach(function(g, idx) {
           var coords = getGuiaCoords(g);
           if (coords) {
             var stopNum = g.orden_ruta && g.orden_ruta > 0 ? g.orden_ruta : (idx + 1);
             var isDelivered = g.estado === 'Entregado';
             var isIncident = g.estado === 'No entregado';
-            var bgColor = isDelivered ? '#059669' : isIncident ? '#e11d48' : '#0f172a';
+            var isNextActive = nextPendingGuia && nextPendingGuia.id_guia === g.id_guia;
 
-            var iconHtml = '<div style="background:' + bgColor + ';width:28px;height:28px;border-radius:50%;border:2px solid white;color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;box-shadow:0 2px 6px rgba(0,0,0,0.3);">' +
+            var bgColor = isDelivered ? '#059669' : isIncident ? '#e11d48' : isNextActive ? '#4f46e5' : '#0f172a';
+            var pulseClass = isNextActive ? 'active-stop-pulse' : '';
+            var size = isNextActive ? 32 : 28;
+
+            var iconHtml = '<div class="' + pulseClass + '" style="background:' + bgColor + ';width:' + size + 'px;height:' + size + 'px;border-radius:50%;border:2.5px solid white;color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;box-shadow:0 3px 8px rgba(0,0,0,0.35);">' +
                 stopNum +
               '</div>';
-            var icon = L.divIcon({ html: iconHtml, className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+            var icon = L.divIcon({ html: iconHtml, className: '', iconSize: [size, size], iconAnchor: [size/2, size/2] });
             var marker = L.marker(coords, { icon: icon }).addTo(markersLayer);
 
-            var popupContent = '<div style="font-family:inherit;font-size:12px;min-width:160px;">' +
-              '<div style="font-weight:800;color:#0f172a;margin-bottom:2px;">Parada #' + stopNum + ' &bull; Guía #' + g.id_guia + '</div>' +
-              '<div style="font-weight:700;color:#4338ca;">' + (g.destinatario || 'Destinatario') + '</div>' +
+            var popupContent = '<div style="font-family:inherit;font-size:12px;min-width:170px;">' +
+              '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">' +
+                '<span style="font-weight:900;color:#0f172a;font-size:12px;">Parada #' + stopNum + '</span>' +
+                '<span style="font-family:monospace;font-weight:700;color:#64748b;font-size:10px;">#' + g.id_guia + '</span>' +
+              '</div>' +
+              '<div style="font-weight:800;color:#4338ca;font-size:12px;">' + (g.destinatario || 'Destinatario') + '</div>' +
               '<div style="font-size:11px;color:#64748b;margin-top:2px;">' + (g.ciudad_destino || '') + (g.direccion_referencia ? ' &bull; ' + g.direccion_referencia : '') + '</div>' +
-              '<div style="margin-top:6px;"><span style="background:' + (isDelivered ? '#ecfdf5;color:#065f46;' : isIncident ? '#fff1f2;color:#9f1239;' : '#f8fafc;color:#334155;') + 'padding:2px 6px;border-radius:6px;font-weight:700;font-size:10px;border:1px solid #cbd5e1;">' + (g.estado || 'Pendiente') + '</span></div>' +
+              '<div style="margin-top:6px;"><span style="background:' + (isDelivered ? '#ecfdf5;color:#065f46;' : isIncident ? '#fff1f2;color:#9f1239;' : isNextActive ? '#eef2ff;color:#4338ca;' : '#f8fafc;color:#334155;') + 'padding:2px 7px;border-radius:6px;font-weight:800;font-size:10px;border:1px solid #cbd5e1;">' + (isDelivered ? 'Entregado' : isIncident ? 'No entregado' : isNextActive ? 'Siguiente Parada' : 'Pendiente') + '</span></div>' +
             '</div>';
 
             marker.bindPopup(popupContent);
-            markersByGuiaId[g.id_guia] = { marker: marker, latLng: coords };
-            latLngs.push(coords);
+            markersByGuiaId[g.id_guia] = { marker: marker, latLng: coords, stopNum: stopNum };
+            waypoints.push(coords);
           }
         });
 
-        // 3. Conexión de retorno si es circuito cerrado
+        // 3. Conexión de retorno
         var normEnd = normalizeGeoText(endLabel);
         if (normEnd.indexOf('retorno') !== -1 || normEnd.indexOf('sede') !== -1 || normEnd.indexOf('barquisimeto') !== -1) {
-          latLngs.push(startCoords);
+          waypoints.push(startCoords);
         }
 
-        // 4. Polilínea del circuito
-        if (routePolyline) {
-          map.removeLayer(routePolyline);
-          routePolyline = null;
-        }
+        // 4. Trazado de Carretera Real con OSRM
+        if (routePolyline) { map.removeLayer(routePolyline); routePolyline = null; }
+        if (routeGlowPolyline) { map.removeLayer(routeGlowPolyline); routeGlowPolyline = null; }
 
-        if (latLngs.length > 1) {
-          routePolyline = L.polyline(latLngs, { color: '#4f46e5', weight: 3.5, opacity: 0.85, dashArray: '6, 6' }).addTo(map);
-        }
+        if (waypoints.length > 1) {
+          // Primero dibujar polyline provisional rápido
+          routePolyline = L.polyline(waypoints, { color: '#6366f1', weight: 4, opacity: 0.9 }).addTo(map);
 
-        if (latLngs.length > 0) {
-          map.fitBounds(L.latLngBounds(latLngs), { padding: [35, 35] });
+          if (waypoints.length > 0) {
+            map.fitBounds(L.latLngBounds(waypoints), { padding: [40, 40] });
+          }
+
+          // Luego consultar OSRM para reemplazar con la ruta real exacta
+          fetchOSRMRouteGeometry(waypoints).then(function(roadCoords) {
+            if (!roadCoords || roadCoords.length < 2 || !map) return;
+            if (routePolyline) map.removeLayer(routePolyline);
+            if (routeGlowPolyline) map.removeLayer(routeGlowPolyline);
+
+            // Capa de resplandor / casing
+            routeGlowPolyline = L.polyline(roadCoords, {
+              color: '#312e81',
+              weight: 7,
+              opacity: 0.35,
+              lineCap: 'round',
+              lineJoin: 'round'
+            }).addTo(map);
+
+            // Capa principal carretera
+            routePolyline = L.polyline(roadCoords, {
+              color: '#4f46e5',
+              weight: 4,
+              opacity: 0.95,
+              lineCap: 'round',
+              lineJoin: 'round'
+            }).addTo(map);
+          });
+        } else if (waypoints.length === 1) {
+          map.setView(waypoints[0], 14);
         }
       }
 
-      // Función interactiva para centrar y abrir popup de parada desde tarjeta
+      // Centrar y enfocar parada desde tarjeta
       window.focusStopOnMap = function(guiaId) {
         var item = markersByGuiaId[guiaId];
         var mapWrapper = document.getElementById('map-wrapper');
@@ -1940,7 +2121,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
 
         if (map && item) {
           setTimeout(function() {
-            map.setView(item.latLng, 15, { animate: true });
+            map.setView(item.latLng, 16, { animate: true });
             item.marker.openPopup();
           }, 300);
         }
@@ -1971,6 +2152,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           updateMapMarkers();
         });
       }
+
 
 
       // ====================================================
