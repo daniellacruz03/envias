@@ -771,13 +771,13 @@ const userInitials = currentUser.nombre
               </div>
             </div>
 
-            <!-- Botones de Acción: Optimizar, Descargar PDF y Enviar Listín al Chofer -->
+            <!-- Botones de Acción: Optimizar, Descargar PDF individual / lote y Enviar Listín -->
             <div class="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 id="btn-listin-auto-tsp"
                 class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                title="Ordenar zonas en orden alfabético / secuencial"
+                title="Ordenar zonas en orden alfabético"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
@@ -788,13 +788,25 @@ const userInitials = currentUser.nombre
               <button
                 type="button"
                 id="btn-listin-download-pdf"
-                class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold flex items-center gap-2 shadow-xs transition-all cursor-pointer"
-                title="Descargar archivo PDF del listín de despacho"
+                class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                title="Descargar hoja PDF de la zona seleccionada"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                <span>Descargar PDF</span>
+                <span>PDF Zona</span>
+              </button>
+
+              <button
+                type="button"
+                id="btn-listin-download-all-pdf"
+                class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                title="Descargar un archivo PDF multipágina con 1 hoja oficial por cada zona"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                </svg>
+                <span>PDF Todas las Zonas</span>
               </button>
 
               <button
@@ -808,6 +820,50 @@ const userInitials = currentUser.nombre
                 </svg>
                 <span>Enviar Listín</span>
               </button>
+            </div>
+          </div>
+
+          <!-- Selector y Píldoras de Zona Activa (Un Listín por Cada Zona) -->
+          <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs space-y-2">
+            <div class="flex items-center justify-between gap-3 flex-wrap">
+              <div class="flex items-center gap-2">
+                <span class="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  <span>Zona del Listín Actual:</span>
+                </span>
+                <select
+                  id="listin-zone-select"
+                  class="text-xs font-bold bg-slate-100 border border-slate-300 rounded-lg px-2.5 py-1 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                >
+                  <option value="ALL">Todas las Zonas (Lote Consolidado)</option>
+                </select>
+              </div>
+
+              <div class="flex items-center gap-1">
+                <button
+                  type="button"
+                  id="btn-listin-prev-zone"
+                  class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                  title="Zona anterior"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                  <span>Anterior</span>
+                </button>
+                <button
+                  type="button"
+                  id="btn-listin-next-zone"
+                  class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                  title="Siguiente zona"
+                >
+                  <span>Siguiente</span>
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Píldoras de Zonas Disponibles -->
+            <div id="listin-zone-pills" class="flex flex-wrap items-center gap-1.5 pt-1">
+              <!-- JS Render -->
             </div>
           </div>
 
@@ -894,7 +950,10 @@ const userInitials = currentUser.nombre
                   </span>
                   <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Vista Previa de la Hoja (Formato Oficial)</h3>
                 </div>
-                <span class="text-[11px] text-slate-400 font-medium">Hoja vertical Carta / A4</span>
+                <div class="flex items-center gap-2">
+                  <span id="preview-listin-current-badge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-900 text-white font-mono uppercase">ZONA: TODAS</span>
+                  <span class="text-[11px] text-slate-400 font-medium hidden sm:inline">Carta / A4</span>
+                </div>
               </div>
 
               <!-- Contenedor con efecto de hoja física -->
@@ -914,27 +973,33 @@ const userInitials = currentUser.nombre
                       </div>
                     </div>
 
-                    <!-- Cuadro de Metadatos: FECHA, PLACA, CHOFER -->
-                    <div class="border border-black rounded-lg p-2.5 w-60 space-y-1 text-[11px] bg-slate-50/50">
+                    <!-- Cuadro de Metadatos: FECHA, PLACA, CHOFER, DESTINO -->
+                    <div class="border border-black rounded-lg p-2.5 w-64 space-y-1 text-[11px] bg-slate-50/50">
                       <div class="flex items-center justify-between border-b border-slate-300 pb-0.5">
                         <span class="font-bold">FECHA:</span>
-                        <span id="preview-listin-fecha" class="font-mono font-bold">2026-08-24</span>
+                        <span id="preview-listin-fecha" class="font-mono font-bold">2026-08-25</span>
                       </div>
                       <div class="flex items-center justify-between border-b border-slate-300 pb-0.5">
                         <span class="font-bold">PLACA:</span>
                         <span id="preview-listin-placa" class="font-mono font-bold">A84BT9K</span>
                       </div>
-                      <div class="flex items-center justify-between">
+                      <div class="flex items-center justify-between border-b border-slate-300 pb-0.5">
                         <span class="font-bold">CHOFER:</span>
                         <span id="preview-listin-chofer" class="font-bold truncate max-w-[130px]">Carlos</span>
+                      </div>
+                      <div class="flex items-center justify-between pt-0.5">
+                        <span class="font-black text-black">DESTINO / ZONA:</span>
+                        <span id="preview-listin-destino" class="font-black font-mono uppercase text-black truncate max-w-[130px]">TODAS</span>
                       </div>
                     </div>
                   </div>
 
                   <!-- TÍTULO DEL DOCUMENTO -->
                   <div class="text-center mb-2">
-                    <h2 class="text-xs font-black uppercase tracking-widest border-y border-black py-0.5 bg-slate-100">
-                      LISTÍN DE CARGA Y DESPACHO DE GUÍAS
+                    <h2 class="text-xs font-black uppercase tracking-widest border-y border-black py-0.5 bg-slate-100 flex items-center justify-center gap-2">
+                      <span>LISTÍN DE CARGA Y DESPACHO DE GUÍAS</span>
+                      <span class="text-black">&bull;</span>
+                      <span id="preview-listin-title-zona" class="font-mono uppercase font-black">DESTINO: TODAS LAS ZONAS</span>
                     </h2>
                   </div>
 
@@ -2326,7 +2391,12 @@ const userInitials = currentUser.nombre
       const listinFechaInput = document.getElementById('listin-fecha-input') as HTMLInputElement;
       const btnListinAutoTsp = document.getElementById('btn-listin-auto-tsp') as HTMLButtonElement;
       const btnListinDownloadPdf = document.getElementById('btn-listin-download-pdf') as HTMLButtonElement;
+      const btnListinDownloadAllPdf = document.getElementById('btn-listin-download-all-pdf') as HTMLButtonElement;
       const btnListinSend = document.getElementById('btn-listin-send') as HTMLButtonElement;
+      const listinZoneSelect = document.getElementById('listin-zone-select') as HTMLSelectElement;
+      const listinZonePills = document.getElementById('listin-zone-pills') as HTMLElement;
+      const btnListinPrevZone = document.getElementById('btn-listin-prev-zone') as HTMLButtonElement;
+      const btnListinNextZone = document.getElementById('btn-listin-next-zone') as HTMLButtonElement;
       const listinHierarchyList = document.getElementById('listin-hierarchy-list') as HTMLElement;
       const listinCitiesCount = document.getElementById('listin-cities-count') as HTMLElement;
       const btnListinModeZones = document.getElementById('btn-listin-mode-zones') as HTMLButtonElement;
@@ -2339,6 +2409,9 @@ const userInitials = currentUser.nombre
       const previewListinFecha = document.getElementById('preview-listin-fecha') as HTMLElement;
       const previewListinPlaca = document.getElementById('preview-listin-placa') as HTMLElement;
       const previewListinChofer = document.getElementById('preview-listin-chofer') as HTMLElement;
+      const previewListinDestino = document.getElementById('preview-listin-destino') as HTMLElement;
+      const previewListinTitleZona = document.getElementById('preview-listin-title-zona') as HTMLElement;
+      const previewListinCurrentBadge = document.getElementById('preview-listin-current-badge') as HTMLElement;
       const previewListinTbody = document.getElementById('preview-listin-tbody') as HTMLElement;
       const previewTotalGuias = document.getElementById('preview-total-guias') as HTMLElement;
       const previewTotalPiezas = document.getElementById('preview-total-piezas') as HTMLElement;
@@ -6414,6 +6487,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       // =========================================================
       // MÓDULO 6: CREAR LISTÍN DE CARGA / DESPACHO & EXPORTACIÓN PDF
       // =========================================================
+      let listinActiveZone: string = 'ALL';
       let listinCitiesOrder: string[] = [];
       let listinCityGuiasOrder: Record<string, string[]> = {};
       let listinFlatGuiasOrder: string[] = [];
@@ -6473,6 +6547,11 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
         syncListinCitiesOrder(uniqueCities);
 
+        // Validar que listinActiveZone sea válida
+        if (listinActiveZone !== 'ALL' && !listinCitiesOrder.includes(listinActiveZone)) {
+          listinActiveZone = listinCitiesOrder[0] || 'ALL';
+        }
+
         // Sincronizar orden de guías por cada ciudad
         uniqueCities.forEach(cityName => {
           const cityShipments = srcShipments.filter(g => (g.ciudad_destino || 'Sin Ciudad').trim() === cityName);
@@ -6511,9 +6590,21 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         listinFlatGuiasOrder = flat;
       }
 
-      function getOrderedActiveGuias(srcShipments: GuiaRow[]): GuiaRow[] {
+      function getOrderedActiveGuias(srcShipments: GuiaRow[], specificZone?: string): GuiaRow[] {
         const mapById = new Map(srcShipments.map(g => [g.id_guia, g]));
         const ordered: GuiaRow[] = [];
+        const zoneFilter = specificZone !== undefined ? specificZone : listinActiveZone;
+
+        if (zoneFilter && zoneFilter !== 'ALL') {
+          // Obtener solo las guías de la zona seleccionada
+          const guiaIds = listinCityGuiasOrder[zoneFilter] || [];
+          guiaIds.forEach(id => {
+            if (listinExcludedGuiaIds.has(id)) return;
+            const g = mapById.get(id);
+            if (g) ordered.push(g);
+          });
+          return ordered;
+        }
 
         if (listinViewSubMode === 'flat') {
           listinFlatGuiasOrder.forEach(id => {
@@ -6541,14 +6632,60 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         return ordered;
       }
 
+      function renderListinZoneControls(srcShipments: GuiaRow[]) {
+        if (!listinZoneSelect || !listinZonePills) return;
+
+        // Actualizar Select de Zonas
+        let selectHtml = `<option value="ALL" ${listinActiveZone === 'ALL' ? 'selected' : ''}>Todas las Zonas (Lote Consolidado - ${srcShipments.length} guías)</option>`;
+        listinCitiesOrder.forEach(cityName => {
+          const count = srcShipments.filter(g => (g.ciudad_destino || 'Sin Ciudad').trim() === cityName).length;
+          const isSelected = listinActiveZone === cityName ? 'selected' : '';
+          selectHtml += `<option value="${cityName}" ${isSelected}>📍 ${cityName} (${count} guías)</option>`;
+        });
+        listinZoneSelect.innerHTML = selectHtml;
+
+        // Actualizar Píldoras de Zonas Rápidas
+        let pillsHtml = `
+          <button
+            type="button"
+            onclick="window.selectListinZone('ALL')"
+            class="px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${listinActiveZone === 'ALL' ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}"
+          >
+            <span>Todas las Zonas</span>
+            <span class="text-[10px] px-1.5 py-0.2 rounded-full ${listinActiveZone === 'ALL' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'} font-mono">${srcShipments.length}</span>
+          </button>
+        `;
+
+        listinCitiesOrder.forEach(cityName => {
+          const count = srcShipments.filter(g => (g.ciudad_destino || 'Sin Ciudad').trim() === cityName).length;
+          const isActive = listinActiveZone === cityName;
+          pillsHtml += `
+            <button
+              type="button"
+              onclick="window.selectListinZone('${cityName.replace(/'/g, "\\'")}')"
+              class="px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${isActive ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}"
+            >
+              <span>${cityName}</span>
+              <span class="text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'} font-mono">${count}</span>
+            </button>
+          `;
+        });
+
+        listinZonePills.innerHTML = pillsHtml;
+      }
+
       function renderListinView() {
         populateListinDriverSelect();
         const srcShipments = getListinSourceShipments();
 
         syncListinState(srcShipments);
+        renderListinZoneControls(srcShipments);
 
         if (listinCitiesCount) {
-          if (listinViewSubMode === 'zones') {
+          if (listinActiveZone !== 'ALL') {
+            const zoneGuiasCount = getOrderedActiveGuias(srcShipments, listinActiveZone).length;
+            listinCitiesCount.textContent = `Zona: ${listinActiveZone} (${zoneGuiasCount} guías)`;
+          } else if (listinViewSubMode === 'zones') {
             listinCitiesCount.textContent = `${listinCitiesOrder.length} zona${listinCitiesOrder.length !== 1 ? 's' : ''}`;
           } else {
             const activeCount = getOrderedActiveGuias(srcShipments).length;
@@ -6561,7 +6698,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           if (listinViewSubMode === 'zones') {
             btnListinModeZones.className = 'px-2.5 py-1 rounded-lg font-bold transition-all bg-white text-slate-900 shadow-xs cursor-pointer';
             btnListinModeFlat.className = 'px-2.5 py-1 rounded-lg font-bold text-slate-500 hover:text-slate-900 transition-all cursor-pointer';
-            if (listinPanelTitle) listinPanelTitle.textContent = 'Orden Jerárquico de Zonas';
+            if (listinPanelTitle) listinPanelTitle.textContent = listinActiveZone !== 'ALL' ? `Organizar Zona: ${listinActiveZone}` : 'Orden Jerárquico de Zonas';
             if (listinInstructionsText) listinInstructionsText.innerHTML = 'Usa las flechas <span class="font-bold text-slate-700">▲</span> <span class="font-bold text-slate-700">▼</span> o arrastra <span class="font-bold text-slate-700">⠿</span> las zonas y guías para cambiar el orden.';
           } else {
             btnListinModeFlat.className = 'px-2.5 py-1 rounded-lg font-bold transition-all bg-white text-slate-900 shadow-xs cursor-pointer';
@@ -6597,7 +6734,11 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         // MODO 1: AGRUPADO POR ZONAS (Jerárquico)
         // ==========================================
         if (listinViewSubMode === 'zones') {
-          listinHierarchyList.innerHTML = listinCitiesOrder.map((cityName, cityIdx) => {
+          const displayCities = listinActiveZone !== 'ALL' 
+            ? listinCitiesOrder.filter(c => c === listinActiveZone) 
+            : listinCitiesOrder;
+
+          listinHierarchyList.innerHTML = displayCities.map((cityName, cityIdx) => {
             const rawGuiaIds = listinCityGuiasOrder[cityName] || [];
             let cityGuias = rawGuiaIds.map(id => mapById.get(id)).filter(Boolean) as GuiaRow[];
 
@@ -6615,11 +6756,12 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
             const totalPiezas = cityGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
             const isExcluded = listinExcludedCities.has(cityName);
-            const isCollapsed = listinCollapsedCities.has(cityName);
+            const isCollapsed = listinCollapsedCities.has(cityName) && listinActiveZone === 'ALL';
+            const isFocused = listinActiveZone === cityName;
 
             return `
               <div
-                class="bg-slate-50 border ${isExcluded ? 'border-slate-200 opacity-60' : 'border-slate-200/90'} rounded-xl p-3 space-y-2.5 transition-all"
+                class="bg-slate-50 border ${isFocused ? 'border-indigo-400 ring-2 ring-indigo-500/20 bg-indigo-50/10' : (isExcluded ? 'border-slate-200 opacity-60' : 'border-slate-200/90')} rounded-xl p-3 space-y-2.5 transition-all"
                 ondragover="window.onListinZoneDragOver(event)"
                 ondrop="window.onListinZoneDrop(event, '${cityName.replace(/'/g, "\\'")}')"
               >
@@ -6643,7 +6785,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                       class="w-4 h-4 rounded text-slate-900 focus:ring-slate-900 cursor-pointer"
                       title="Incluir / excluir zona completa del listín"
                     />
-                    <span class="w-5 h-5 rounded-md bg-slate-900 text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                    <span class="w-5 h-5 rounded-md ${isFocused ? 'bg-indigo-600' : 'bg-slate-900'} text-white text-[10px] font-bold flex items-center justify-center shrink-0">
                       ${cityIdx + 1}
                     </span>
                     <div class="min-w-0">
@@ -6653,6 +6795,16 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                   </div>
 
                   <div class="flex items-center gap-1 shrink-0">
+                    <!-- Botón de Enfocar Esta Zona -->
+                    <button
+                      type="button"
+                      onclick="window.selectListinZone('${cityName.replace(/'/g, "\\'")}')"
+                      class="px-2 py-1 rounded-lg ${isFocused ? 'bg-indigo-600 text-white' : 'bg-white hover:bg-slate-200 text-slate-700 border border-slate-200'} text-[10px] font-bold transition-all cursor-pointer"
+                      title="Ver y editar exclusivamente la hoja de esta zona"
+                    >
+                      ${isFocused ? 'Hoja Activa' : 'Ver Hoja'}
+                    </button>
+
                     <!-- Subir Prioridad de Zona -->
                     <button
                       type="button"
@@ -6679,7 +6831,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                     <button
                       type="button"
                       onclick="window.toggleListinCollapse('${cityName.replace(/'/g, "\\'")}')"
-                      class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-500 transition-colors cursor-pointer ml-1"
+                      class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-500 transition-colors cursor-pointer ml-0.5"
                       title="${isCollapsed ? 'Ver guías' : 'Ocultar guías'}"
                     >
                       <svg class="w-3.5 h-3.5 ${isCollapsed ? '' : 'rotate-180'} transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
@@ -6850,7 +7002,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         if (previewListinPlaca) previewListinPlaca.textContent = placa;
         if (previewListinChofer) previewListinChofer.textContent = driverName;
 
-        // Construir array de guías respetando exactamente el orden configurado
+        // Construir array de guías respetando la zona activa y el orden exacto configurado
         const orderedActiveGuias = getOrderedActiveGuias(srcShipments);
 
         const totalGuias = orderedActiveGuias.length;
@@ -6861,7 +7013,18 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         if (previewTotalPiezas) previewTotalPiezas.textContent = totalPiezas.toString();
         if (previewTotalCiudades) previewTotalCiudades.textContent = uniqueActiveCities.toString();
 
-        // Calcular filas del formato dual: mínimo 22 filas para llenar la página vertical como el portapapeles real
+        // Actualizar Encabezado de Destino en la Hoja Física Oficial
+        if (listinActiveZone !== 'ALL') {
+          if (previewListinDestino) previewListinDestino.textContent = listinActiveZone;
+          if (previewListinTitleZona) previewListinTitleZona.textContent = `DESTINO: ${listinActiveZone} (${totalGuias} GUÍAS, ${totalPiezas} PZAS)`;
+          if (previewListinCurrentBadge) previewListinCurrentBadge.textContent = `ZONA: ${listinActiveZone}`;
+        } else {
+          if (previewListinDestino) previewListinDestino.textContent = 'TODAS (MULTIDESTINO)';
+          if (previewListinTitleZona) previewListinTitleZona.textContent = `DESTINO: TODAS LAS ZONAS (${totalGuias} GUÍAS, ${totalPiezas} PZAS)`;
+          if (previewListinCurrentBadge) previewListinCurrentBadge.textContent = `ZONA: TODAS (${uniqueActiveCities} CIUDADES)`;
+        }
+
+        // Calcular filas del formato dual: mínimo 22 filas para llenar la página vertical como el listín físico
         const rowCount = Math.max(Math.ceil(orderedActiveGuias.length / 2), 22);
         const leftGuias = orderedActiveGuias.slice(0, rowCount);
         const rightGuias = orderedActiveGuias.slice(rowCount, rowCount * 2);
@@ -6891,8 +7054,14 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       }
 
       // ==========================================
-      // FUNCIONES GLOBALES DE REORDENACIÓN
+      // FUNCIONES GLOBALES DE REORDENACIÓN Y ZONAS
       // ==========================================
+
+      // 0. Seleccionar Zona Activa
+      (window as any).selectListinZone = (zoneName: string) => {
+        listinActiveZone = zoneName;
+        renderListinView();
+      };
 
       // 1. Mover Guía dentro de una Zona
       (window as any).moveListinGuia = (cityName: string, guiaId: string, direction: number) => {
@@ -7071,6 +7240,43 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
       });
 
+      // Selector de Zona por Dropdown
+      listinZoneSelect?.addEventListener('change', () => {
+        listinActiveZone = listinZoneSelect.value || 'ALL';
+        renderListinView();
+      });
+
+      // Navegación Anterior / Siguiente Zona
+      btnListinPrevZone?.addEventListener('click', () => {
+        if (listinCitiesOrder.length === 0) return;
+        if (listinActiveZone === 'ALL') {
+          listinActiveZone = listinCitiesOrder[listinCitiesOrder.length - 1];
+        } else {
+          const currIdx = listinCitiesOrder.indexOf(listinActiveZone);
+          if (currIdx <= 0) {
+            listinActiveZone = 'ALL';
+          } else {
+            listinActiveZone = listinCitiesOrder[currIdx - 1];
+          }
+        }
+        renderListinView();
+      });
+
+      btnListinNextZone?.addEventListener('click', () => {
+        if (listinCitiesOrder.length === 0) return;
+        if (listinActiveZone === 'ALL') {
+          listinActiveZone = listinCitiesOrder[0];
+        } else {
+          const currIdx = listinCitiesOrder.indexOf(listinActiveZone);
+          if (currIdx >= listinCitiesOrder.length - 1) {
+            listinActiveZone = 'ALL';
+          } else {
+            listinActiveZone = listinCitiesOrder[currIdx + 1];
+          }
+        }
+        renderListinView();
+      });
+
       // Selector de Submodo (Por Zonas vs Lista Plana)
       btnListinModeZones?.addEventListener('click', () => {
         listinViewSubMode = 'zones';
@@ -7169,7 +7375,77 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
       });
 
-      // Generar y Descargar PDF con html2pdf
+      // Helper para generar el HTML de una hoja de zona específica
+      function buildZoneSheetHtml(cityName: string, zoneGuias: GuiaRow[], driverName: string, placa: string, fecha: string): string {
+        const totalGuias = zoneGuias.length;
+        const totalPiezas = zoneGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+        const rowCount = Math.max(Math.ceil(zoneGuias.length / 2), 22);
+        const leftGuias = zoneGuias.slice(0, rowCount);
+        const rightGuias = zoneGuias.slice(rowCount, rowCount * 2);
+
+        let tableRows = '';
+        for (let i = 0; i < rowCount; i++) {
+          const left = leftGuias[i];
+          const right = rightGuias[i];
+          tableRows += `
+            <tr class="h-6 border-b border-black/30 text-black">
+              <td class="py-1 px-1.5 border-r border-black font-mono font-bold text-center">${left ? left.id_guia : ''}</td>
+              <td class="py-1 px-1 border-r border-black text-center font-bold">${left ? (left.piezas || 1) : ''}</td>
+              <td class="py-1 px-2 border-r-2 border-black font-bold uppercase truncate max-w-[140px]">${left ? left.ciudad_destino : ''}</td>
+              <td class="py-1 px-1.5 border-r border-black font-mono font-bold text-center">${right ? right.id_guia : ''}</td>
+              <td class="py-1 px-1 border-r border-black text-center font-bold">${right ? (right.piezas || 1) : ''}</td>
+              <td class="py-1 px-2 font-bold uppercase truncate max-w-[140px]">${right ? right.ciudad_destino : ''}</td>
+            </tr>
+          `;
+        }
+
+        return `
+          <div class="w-full max-w-[760px] min-h-[960px] bg-white p-6 sm:p-7 rounded-xl text-black font-sans text-xs border border-slate-300 my-4" style="page-break-after: always; break-after: page;">
+            <div class="flex items-start justify-between border-b-2 border-black pb-3 mb-2.5">
+              <div class="flex items-center gap-3">
+                <img src="/logo.png" alt="Envías C.A." class="h-12 w-auto object-contain shrink-0 mix-blend-multiply" />
+                <div>
+                  <h1 class="text-xl font-black tracking-tighter leading-none">ENVÍAS C.A.</h1>
+                  <p class="text-[9px] font-black uppercase tracking-widest text-slate-800">Transporte y Encomiendas</p>
+                  <p class="text-[8px] font-bold text-slate-600">Hub Central Barquisimeto &bull; Entregas Nacionales</p>
+                </div>
+              </div>
+              <div class="border border-black rounded-lg p-2.5 w-64 space-y-1 text-[11px] bg-slate-50">
+                <div class="flex items-center justify-between border-b border-slate-300 pb-0.5"><span class="font-bold">FECHA:</span><span class="font-mono font-bold">${fecha}</span></div>
+                <div class="flex items-center justify-between border-b border-slate-300 pb-0.5"><span class="font-bold">PLACA:</span><span class="font-mono font-bold">${placa}</span></div>
+                <div class="flex items-center justify-between border-b border-slate-300 pb-0.5"><span class="font-bold">CHOFER:</span><span class="font-bold truncate max-w-[130px]">${driverName}</span></div>
+                <div class="flex items-center justify-between pt-0.5"><span class="font-black">DESTINO / ZONA:</span><span class="font-black font-mono uppercase truncate max-w-[130px]">${cityName}</span></div>
+              </div>
+            </div>
+            <div class="text-center mb-2">
+              <h2 class="text-xs font-black uppercase tracking-widest border-y border-black py-0.5 bg-slate-100 flex items-center justify-center gap-2">
+                <span>LISTÍN DE CARGA Y DESPACHO DE GUÍAS</span>
+                <span class="text-black">&bull;</span>
+                <span class="font-mono uppercase font-black">DESTINO: ${cityName} (${totalGuias} GUÍAS, ${totalPiezas} PZAS)</span>
+              </h2>
+            </div>
+            <div class="w-full mb-3">
+              <table class="w-full border-collapse text-[10px] border-2 border-black">
+                <thead>
+                  <tr class="bg-slate-200 text-black uppercase font-black text-center border-b-2 border-black">
+                    <th class="py-1 px-1.5 border-r border-black w-[17%]">NRO DE GUIA</th>
+                    <th class="py-1 px-1 border-r border-black w-[8%]">PIEZAS</th>
+                    <th class="py-1 px-2 border-r-2 border-black w-[25%]">DESTINO</th>
+                    <th class="py-1 px-1.5 border-r border-black w-[17%]">NRO DE GUIA</th>
+                    <th class="py-1 px-1 border-r border-black w-[8%]">PIEZAS</th>
+                    <th class="py-1 px-2 w-[25%]">DESTINO</th>
+                  </tr>
+                </thead>
+                <tbody class="font-mono font-semibold divide-y divide-black/40">
+                  ${tableRows}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+
+      // 1. Descargar PDF (Zona Activa)
       btnListinDownloadPdf?.addEventListener('click', async () => {
         const element = document.getElementById('listin-print-wrapper');
         if (!element) return;
@@ -7188,8 +7464,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           const driverClean = selectedDriverOption && listinDriverSelect.value !== 'ALL'
             ? selectedDriverOption.text.replace(/[^a-zA-Z0-9]/g, '_')
             : 'Flota_General';
+          const zoneClean = listinActiveZone !== 'ALL' ? listinActiveZone.replace(/[^a-zA-Z0-9]/g, '_') : 'Todas_Zonas';
           const fecha = listinFechaInput?.value || 'fecha';
-          const filename = `Listin_Envias_${driverClean}_${fecha}.pdf`;
+          const filename = `Listin_Envias_${zoneClean}_${driverClean}_${fecha}.pdf`;
 
           const opt = {
             margin: [6, 6, 6, 6],
@@ -7201,7 +7478,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
           if ((window as any).html2pdf) {
             await (window as any).html2pdf().set(opt).from(element).save();
-            showToast('PDF del Listín descargado exitosamente', 'success');
+            showToast(`PDF de la zona ${listinActiveZone} descargado exitosamente`, 'success');
           } else {
             window.print();
           }
@@ -7212,6 +7489,78 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         } finally {
           btnListinDownloadPdf.disabled = false;
           btnListinDownloadPdf.innerHTML = origHtml;
+        }
+      });
+
+      // 2. Descargar Todos los Listines (1 Hoja Oficial por cada Zona)
+      btnListinDownloadAllPdf?.addEventListener('click', async () => {
+        const srcShipments = getListinSourceShipments();
+        if (srcShipments.length === 0 || listinCitiesOrder.length === 0) {
+          showToast('No hay zonas con guías registradas para generar listines', 'error');
+          return;
+        }
+
+        const origHtml = btnListinDownloadAllPdf.innerHTML;
+        btnListinDownloadAllPdf.disabled = true;
+        btnListinDownloadAllPdf.innerHTML = `
+          <svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <span>Generando ${listinCitiesOrder.length} listines...</span>
+        `;
+
+        try {
+          const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
+          const driverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
+            ? selectedDriverOption.text.replace(/\s*\(ID:.*?\)\s*/g, '') 
+            : 'FLOTA CENTRAL / DESPACHO GENERAL';
+          const placa = listinPlacaInput?.value?.trim()?.toUpperCase() || 'NO ASIGNADA';
+          const fecha = listinFechaInput?.value || new Date().toISOString().split('T')[0];
+
+          // Construir contenedor temporal con 1 hoja por cada zona
+          const tempContainer = document.createElement('div');
+          tempContainer.id = 'temp-multi-listin-pdf';
+          tempContainer.style.position = 'absolute';
+          tempContainer.style.left = '-9999px';
+          tempContainer.style.top = '0';
+          tempContainer.style.width = '760px';
+
+          let combinedHtml = '';
+          listinCitiesOrder.forEach(cityName => {
+            if (listinExcludedCities.has(cityName)) return;
+            const zoneGuias = getOrderedActiveGuias(srcShipments, cityName);
+            if (zoneGuias.length === 0) return;
+            combinedHtml += buildZoneSheetHtml(cityName, zoneGuias, driverName, placa, fecha);
+          });
+
+          tempContainer.innerHTML = combinedHtml;
+          document.body.appendChild(tempContainer);
+
+          const opt = {
+            margin: [6, 6, 6, 6],
+            filename: `Listines_Envias_Todas_Las_Zonas_${fecha}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
+            jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
+            pagebreak: { mode: ['css', 'legacy'] }
+          };
+
+          if ((window as any).html2pdf) {
+            await (window as any).html2pdf().set(opt).from(tempContainer).save();
+            showToast(`¡Documento PDF de todas las zonas (${listinCitiesOrder.length} hojas) descargado exitosamente!`, 'success');
+          } else {
+            window.print();
+          }
+
+          document.body.removeChild(tempContainer);
+        } catch (err) {
+          console.error('Error al generar PDF de todas las zonas:', err);
+          showToast('Error al exportar lote de listines. Abriendo impresión...', 'error');
+          window.print();
+        } finally {
+          btnListinDownloadAllPdf.disabled = false;
+          btnListinDownloadAllPdf.innerHTML = origHtml;
         }
       });
 
