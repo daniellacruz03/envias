@@ -1587,6 +1587,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             var nextLinkWhatsApp = 'https://wa.me/' + nextPhoneClean + '?text=' + nextMsgWhatsApp;
             var nextDestEscaped = (nextPendingGuia.destinatario || '').replace(/'/g, "\\'");
             var nextDirEscaped = (nextPendingGuia.direccion_referencia || '').replace(/'/g, "\\'");
+            var nextHasCoords = !!getGuiaCoords(nextPendingGuia);
 
             activeStopContainer.innerHTML =
               '<div class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-4 sm:p-5 shadow-lg border border-indigo-500/20 space-y-3 animate-fadeIn">' +
@@ -1629,6 +1630,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
                   '</button>' +
                 '</div>' +
               '</div>';
+
           } else {
             activeStopContainer.innerHTML = '';
           }
@@ -1769,122 +1771,6 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       var routeGlowPolyline = null;
       var isMapVisible = true;
       var markersByGuiaId = {};
-
-      var VENEZUELA_COORDS_MAP = {
-        'barquisimeto': [10.0808, -69.3756],
-        'sede principal barquisimeto': [10.0808, -69.3756],
-        'sede barquisimeto': [10.0808, -69.3756],
-        'principal barquisimeto': [10.0808, -69.3756],
-        'retorno barquisimeto': [10.0808, -69.3756],
-        'retorno a sede principal barquisimeto': [10.0808, -69.3756],
-        'caracas': [10.4934, -66.9299],
-        'sede caracas': [10.4934, -66.9299],
-        'valencia': [10.1620, -68.0077],
-        'maracaibo': [10.6544, -71.6385],
-        'maracay': [10.2469, -67.5958],
-        'puerto ordaz': [8.3000, -62.7333],
-        'san felix': [8.2667, -62.6167],
-        'ciudad bolivar': [8.1220, -63.5497],
-        'maturin': [9.7469, -63.1832],
-        'barcelona': [10.1339, -64.6861],
-        'puerto la cruz': [10.2138, -64.6320],
-        'lecheria': [10.1667, -64.6833],
-        'anaco': [9.4333, -64.4833],
-        'cantaura': [9.3000, -64.3667],
-        'el tigre': [8.8889, -64.2500],
-        'cumana': [10.4536, -64.1750],
-        'merida': [8.5738, -71.1851],
-        'el vigia': [8.6250, -71.6500],
-        'ejido': [8.5500, -71.2333],
-        'tovar': [8.3380, -71.7560],
-        'santa cruz de mora': [8.3833, -71.5833],
-        'nueva bolivia': [9.0833, -71.0500],
-        'tucani': [8.7667, -71.2833],
-        'santa elena de arenales': [8.8500, -71.4500],
-        'san cristobal': [7.7669, -72.2250],
-        'tariba': [7.8208, -72.2364],
-        'palmira': [7.7500, -72.3833],
-        'san juan de colon': [8.0322, -72.2747],
-        'la fria': [8.2167, -72.2500],
-        'coloncito': [8.1667, -72.0833],
-        'ureña': [7.9167, -72.4333],
-        'san antonio del tachira': [7.8167, -72.4500],
-        'rubio': [7.7000, -72.3500],
-        'el piñal': [7.9000, -71.6833],
-        'la pedrera': [7.9333, -71.5500],
-        'barinas': [8.6226, -70.2075],
-        'socopo': [8.2333, -70.8167],
-        'sabaneta': [8.7500, -70.0000],
-        'santa barbara': [7.8076, -71.1679],
-        'valera': [9.3178, -70.6036],
-        'trujillo': [9.3664, -70.4356],
-        'bocono': [9.2500, -70.2667],
-        'carache': [9.6167, -70.2333],
-        'sabana de mendoza': [9.4500, -70.7833],
-        'acarigua': [9.5545, -69.2006],
-        'araure': [9.5703, -69.2189],
-        'guanare': [9.0439, -69.7421],
-        'guanarito': [8.7000, -69.2000],
-        'ospino': [9.3000, -69.4500],
-        'san felipe': [10.3397, -68.7425],
-        'chivacoa': [10.1667, -68.9000],
-        'yaritagua': [10.0763, -69.1272],
-        'nirgua': [10.1554, -68.5713],
-        'san carlos': [9.6694, -68.5752],
-        'tinaquillo': [9.9167, -68.3000],
-        'tinaco': [9.7167, -68.4000],
-        'coro': [11.4045, -69.6734],
-        'punto fijo': [11.6956, -70.1996],
-        'cabudare': [10.0333, -69.2667],
-        'carora': [10.1755, -70.0827],
-        'quibor': [9.9333, -69.6167],
-        'el tocuyo': [9.7833, -69.8000],
-        'sanare': [9.7500, -69.6500],
-        'sarare': [9.7833, -69.1667],
-        'la miel': [9.7554, -69.1873],
-        'cabimas': [10.3925, -71.4547],
-        'ciudad ojeda': [10.1997, -71.3063],
-        'bachaquero': [9.9333, -71.1167],
-        'mene grande': [9.8167, -70.9333],
-        'santa rita': [10.5333, -71.5167],
-        'san francisco': [10.6057, -71.6548],
-        'san francisco zulia': [10.6057, -71.6548],
-        'caja seca': [8.8167, -71.6667],
-        'santa barbara del zulia': [9.1250, -71.1667],
-        'san carlos del zulia': [9.0089, -71.9278]
-      };
-
-      var BARQUISIMETO_SECTORS_MAP = {
-        'las industrias': [10.0748, -69.3840],
-        'sidetur': [10.0748, -69.3840],
-        'magna partes': [10.0748, -69.3840],
-        'ruiz pineda': [10.0820, -69.3650],
-        'la salle': [10.0657, -69.3675],
-        'pastor oropeza': [10.0657, -69.3675],
-        'hogar canario': [10.0657, -69.3675],
-        'babilon': [10.0775, -69.3389],
-        'carrera 29': [10.0754, -69.3290],
-        'calle 37': [10.0754, -69.3290],
-        'calle 33': [10.0631, -69.3239],
-        'calle 26': [10.0645, -69.3170],
-        'carrera 17': [10.0631, -69.3239],
-        'carrera 18': [10.0645, -69.3170],
-        'fundalara': [10.0731, -69.2821],
-        'tacagua': [10.0731, -69.2821],
-        'rodeo grill': [10.0731, -69.2821],
-        'trinitarias': [10.0710, -69.2780],
-        'club hipico': [10.0710, -69.2780],
-        'los pinos': [10.0710, -69.2780],
-        'avenida lara': [10.0620, -69.2850],
-        'av lara': [10.0620, -69.2850],
-        'monte real': [10.0610, -69.2830],
-        'monterreal': [10.0610, -69.2830],
-        'calle rodeo': [10.0610, -69.2830],
-        'tiuna': [10.0610, -69.2830],
-        'residencias larenses': [10.0647, -69.3571],
-        'la miel': [9.7554, -69.1873],
-        'sarare': [9.7833, -69.1667]
-      };
 
       function normalizeGeoText(text) {
         if (!text) return '';
@@ -2061,7 +1947,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
 
         var startLabel = (guiasData[0] && guiasData[0].ruta_origen) ? guiasData[0].ruta_origen : 'Sede Principal Barquisimeto';
         var endLabel = (guiasData[0] && guiasData[0].ruta_destino) ? guiasData[0].ruta_destino : 'Retorno a Sede Principal Barquisimeto';
-        var startCoords = VENEZUELA_COORDS_MAP[normalizeGeoText(startLabel)] || [10.0808, -69.3756];
+        var startCoords = [10.0808, -69.3756]; // Hub Central Barquisimeto
 
         // Verificar si las guías necesitan ordenamiento 2-Opt
         var needsSorting = guiasData.some(function(g) { return !g.orden_ruta || g.orden_ruta <= 0; });
