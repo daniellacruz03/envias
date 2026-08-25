@@ -592,22 +592,18 @@ const userInitials = currentUser.nombre
                   <span>En vivo</span>
                 </span>
               </div>
-              <p class="text-xs text-slate-500 mt-1">Puntos satelitales GPS y direcciones exactas enviadas por los destinatarios para armado de rutas.</p>
+              <p class="text-xs text-slate-500 mt-1">Puntos satelitales y coordenadas GPS enviadas por los destinatarios para armado y optimización de rutas.</p>
             </div>
 
             <!-- Métricas Rápidas de Confirmación -->
             <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-              <div class="bg-emerald-50/80 border border-emerald-200/80 rounded-xl px-3 py-1.5 flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span class="text-[11px] font-bold text-emerald-900">GPS Satelital: <span id="mapa-kpi-gps" class="text-emerald-700 font-extrabold">0</span></span>
+              <div class="bg-emerald-50/80 border border-emerald-200/80 rounded-xl px-3.5 py-1.5 flex items-center gap-2 shadow-2xs">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="text-[11px] font-bold text-emerald-900">GPS / Coordenadas Confirmadas: <span id="mapa-kpi-gps" class="text-emerald-700 font-extrabold">0</span></span>
               </div>
-              <div class="bg-indigo-50/80 border border-indigo-200/80 rounded-xl px-3 py-1.5 flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
-                <span class="text-[11px] font-bold text-indigo-900">Ref. Escrita: <span id="mapa-kpi-ref" class="text-indigo-700 font-extrabold">0</span></span>
-              </div>
-              <div class="bg-amber-50/80 border border-amber-200/80 rounded-xl px-3 py-1.5 flex items-center gap-2">
+              <div class="bg-amber-50/80 border border-amber-200/80 rounded-xl px-3.5 py-1.5 flex items-center gap-2 shadow-2xs">
                 <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                <span class="text-[11px] font-bold text-amber-900">Pendientes: <span id="mapa-kpi-pend" class="text-amber-700 font-extrabold">0</span></span>
+                <span class="text-[11px] font-bold text-amber-900">Pendientes por Confirmar: <span id="mapa-kpi-pend" class="text-amber-700 font-extrabold">0</span></span>
               </div>
 
               <!-- Botón Armar Ruta Spoke -->
@@ -677,8 +673,8 @@ const userInitials = currentUser.nombre
                   onchange="window.renderClientLocationsMap()"
                 >
                   <option value="ALL">Todos los Destinos</option>
-                  <option value="GPS_CONFIRMED">Solo con GPS Confirmado</option>
-                  <option value="REF_ONLY">Solo con Dirección Escrita</option>
+                  <option value="GPS_CONFIRMED">Solo con Coordenadas / GPS Confirmado</option>
+                  <option value="PENDING">Solo Pendientes por Confirmar</option>
                 </select>
               </div>
             </div>
@@ -692,7 +688,7 @@ const userInitials = currentUser.nombre
             <div class="flex items-center justify-between">
               <div>
                 <h5 class="text-sm font-bold text-slate-900">Detalle de Envíos y Ubicaciones de Clientes</h5>
-                <p class="text-xs text-slate-400">Direcciones, referencias escritas, horarios de entrega y asignación de chofer</p>
+                <p class="text-xs text-slate-400">Coordenadas GPS satelitales, referencias de entrega, horarios y asignación de chofer</p>
               </div>
               <span id="mapa-cards-count" class="text-xs font-bold text-slate-600 bg-white border border-slate-200 px-2.5 py-1 rounded-xl">0 registros</span>
             </div>
@@ -1271,10 +1267,10 @@ const userInitials = currentUser.nombre
     <!-- MODAL PLANIFICADOR DE RUTA SECUENCIAL (SPOKE) -->
     <!-- ========================================== -->
     <div id="route-planner-modal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-5 transition-all">
-      <div class="relative max-w-2xl w-full bg-white rounded-3xl p-5 sm:p-7 shadow-2xl space-y-5 animate-fadeIn max-h-[92vh] flex flex-col">
-        
+      <div class="relative max-w-3xl w-full bg-white rounded-3xl shadow-2xl animate-fadeIn max-h-[94vh] flex flex-col overflow-hidden">
+
         <!-- Cabecera del Modal -->
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3.5 shrink-0">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0 bg-slate-50/60">
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-sm shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1282,8 +1278,8 @@ const userInitials = currentUser.nombre
               </svg>
             </div>
             <div>
-              <h3 class="text-base font-extrabold text-slate-900 tracking-tight">Planificador de Ruta Secuencial</h3>
-              <p class="text-xs text-slate-500 font-medium">Define el punto de salida, orden de paradas y destino final (Spoke Dispatch)</p>
+              <h3 class="text-base font-extrabold text-slate-900 tracking-tight">Planificador de Circuito — Spoke Dispatch</h3>
+              <p class="text-xs text-slate-500 font-medium">Selecciona zona, configura el circuito y optimiza la ruta de entrega</p>
             </div>
           </div>
           <button id="route-planner-close-btn" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
@@ -1292,263 +1288,186 @@ const userInitials = currentUser.nombre
         </div>
 
         <!-- Contenido desplazable -->
-        <div class="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar">
-          
-          <!-- Fila 1: Selección de Chofer -->
-          <div class="space-y-1">
-            <label class="block text-xs font-bold text-slate-700">Chofer Asignado <span class="text-rose-500">*</span></label>
-            <select
-              id="planner-driver-select"
-              class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:border-slate-900 transition-all cursor-pointer"
-            >
-              <!-- Dinámico por JS -->
-            </select>
-          </div>
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5 custom-scrollbar">
 
-          <!-- Fila 2: Punto de Inicio (Origen) -->
-          <div class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-3.5 space-y-2">
-            <div class="flex items-center justify-between">
-              <label for="planner-start-input" class="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span>Punto de Salida / Origen (¿Dónde inicia el chofer?)</span>
-              </label>
-              
-              <!-- Botón Marcar en el Mapa (Origen) -->
-              <button
-                type="button"
-                id="btn-open-start-map-picker"
-                onclick="window.openMapPicker('start')"
-                class="text-[11px] font-bold text-indigo-700 bg-indigo-100/90 hover:bg-indigo-200 px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all cursor-pointer shadow-2xs"
-              >
-                <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span>Marcar en Mapa</span>
-              </button>
+          <!-- PASO 1: Chofer + Zona del Circuito -->
+          <div class="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-4 space-y-3">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-black shrink-0">1</span>
+              <span class="text-xs font-extrabold text-indigo-950 uppercase tracking-wider">Chofer y Zona del Circuito</span>
             </div>
-            <div class="relative">
-              <div class="relative">
-                <input
-                  type="text"
-                  id="planner-start-input"
-                  value="Sede Principal Barquisimeto"
-                  autocomplete="off"
-                  placeholder="Escribe una ciudad, zona o sede (ej: Barquisimeto, El Vigía, Caracas, Maracay)..."
-                  class="w-full text-xs font-semibold bg-white border border-indigo-200 rounded-xl pl-9 pr-8 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
-                />
-                <svg class="w-4 h-4 text-indigo-500 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <button
-                  type="button"
-                  id="btn-clear-start-input"
-                  class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
-                  title="Limpiar"
-                >
-                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <label class="block text-xs font-bold text-slate-700">Chofer Asignado <span class="text-rose-500">*</span></label>
+                <select id="planner-driver-select" class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer">
+                  <!-- Dinámico por JS -->
+                </select>
               </div>
-
-              <!-- Menú Desplegable de Autocompletado (Origen) -->
-              <div
-                id="start-autocomplete-dropdown"
-                class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 max-h-56 overflow-y-auto custom-scrollbar animate-fadeIn p-1.5 space-y-0.5"
-              >
-                <!-- Opciones dinámicas por JS -->
+              <div class="space-y-1">
+                <label class="block text-xs font-bold text-slate-700">Zona / Ciudad del Circuito <span class="text-rose-500">*</span></label>
+                <select id="planner-zone-select" class="w-full text-xs font-bold bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer">
+                  <option value="">-- Selecciona la ciudad de entrega --</option>
+                </select>
               </div>
             </div>
-
-            <!-- Chips rápidos de Sedes -->
-            <div class="flex items-center gap-1.5 flex-wrap pt-0.5 text-[10px]">
-              <span class="text-slate-400 font-medium">Sede Oficial:</span>
-              <button type="button" onclick="window.selectStartLocation('Sede Principal Barquisimeto')" class="px-2.5 py-1 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-800 hover:bg-indigo-100 font-bold cursor-pointer transition-colors">Sede Principal Barquisimeto (Zona Ind. II)</button>
+            <div id="planner-zone-summary" class="hidden flex flex-wrap items-center gap-2 text-[11px]">
+              <span class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span id="planner-zone-gps-count">0</span> con GPS listo
+              </span>
+              <span class="bg-amber-50 border border-amber-200 text-amber-800 px-2.5 py-1 rounded-lg font-bold">
+                <span id="planner-zone-pending-count">0</span> pendientes
+              </span>
+              <span class="bg-slate-100 border border-slate-200 text-slate-700 px-2.5 py-1 rounded-lg font-bold">
+                <span id="planner-zone-total-count">0</span> guías total
+              </span>
+            </div>
+            <div id="planner-no-gps-warning" class="hidden bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2.5 text-xs text-amber-900 font-semibold flex items-start gap-2">
+              <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <span id="planner-no-gps-warning-text">Algunas guías no tienen coordenadas GPS. Solo las guías con GPS se incluyen en el circuito optimizado.</span>
             </div>
           </div>
 
-          <!-- Fila 3: Secuencia de Paradas (Itinerario) -->
+          <!-- PASO 2: Configuración del Circuito -->
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-slate-700 text-white flex items-center justify-center text-xs font-black shrink-0">2</span>
+              <span class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Configuración del Circuito</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- Punto de Salida -->
+              <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-700">Punto de Salida / Almacén</label>
+                <div class="flex flex-col gap-1">
+                  <button type="button" onclick="window.selectStartLocation('Sede Principal Barquisimeto')" class="text-left px-3 py-2 rounded-xl border-2 border-indigo-500 bg-indigo-50 text-indigo-800 text-xs font-bold cursor-pointer">
+                    Hub Central Barquisimeto (Zona Ind. II)
+                  </button>
+                  <div class="relative">
+                    <input type="text" id="planner-start-input" value="Sede Principal Barquisimeto" autocomplete="off" placeholder="O escribe otra sede..." class="w-full text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" />
+                    <button type="button" id="btn-clear-start-input" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5">
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                    <div id="start-autocomplete-dropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto custom-scrollbar p-1 space-y-0.5"></div>
+                  </div>
+                </div>
+              </div>
+              <!-- Tipo de Circuito -->
+              <div class="space-y-1.5">
+                <label class="block text-xs font-bold text-slate-700">Tipo de Circuito</label>
+                <div class="space-y-1.5">
+                  <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 bg-white cursor-pointer has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50">
+                    <input type="radio" id="circuit-type-roundtrip" name="circuit-type" value="roundtrip" class="accent-indigo-600 cursor-pointer" checked />
+                    <div>
+                      <p class="text-xs font-bold text-slate-900">Retorno al Almacén (Bucle)</p>
+                      <p class="text-[10px] text-slate-500">El circuito regresa a la sede al finalizar</p>
+                    </div>
+                  </label>
+                  <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 bg-white cursor-pointer has-[:checked]:border-slate-700 has-[:checked]:bg-slate-50">
+                    <input type="radio" id="circuit-type-oneway" name="circuit-type" value="oneway" class="accent-slate-700 cursor-pointer" />
+                    <div>
+                      <p class="text-xs font-bold text-slate-900">Fin en Última Parada</p>
+                      <p class="text-[10px] text-slate-500">Sin retorno, termina en el último cliente</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+              <!-- Hora de Inicio -->
+              <div class="space-y-1">
+                <label class="block text-xs font-bold text-slate-700">Hora de Inicio de Ruta</label>
+                <input type="time" id="planner-start-time" value="08:00" class="w-full text-xs font-mono font-bold bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer" />
+              </div>
+              <!-- Tiempo de Servicio por Parada -->
+              <div class="space-y-1">
+                <label class="block text-xs font-bold text-slate-700">Tiempo de Servicio por Parada</label>
+                <select id="planner-service-time" class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer">
+                  <option value="5">5 minutos (entrega rápida)</option>
+                  <option value="8" selected>8 minutos (estándar)</option>
+                  <option value="12">12 minutos (bultos múltiples)</option>
+                  <option value="20">20 minutos (entrega compleja)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- PASO 3: Itinerario Optimizado -->
           <div class="space-y-3">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-900 text-white p-3.5 rounded-2xl shadow-sm">
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <h4 class="text-xs font-extrabold uppercase tracking-wider">Itinerario y Jerarquía Satelital</h4>
-                  <span id="planner-stops-count-badge" class="text-[10px] bg-white/20 text-white px-2 py-0.2 rounded-full font-bold">0 paradas</span>
+            <div class="bg-slate-900 text-white p-3.5 rounded-2xl shadow-sm">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-white/15 text-white flex items-center justify-center text-xs font-black shrink-0">3</span>
+                    <h4 class="text-xs font-extrabold uppercase tracking-wider">Itinerario y Secuencia de Paradas</h4>
+                    <span id="planner-stops-count-badge" class="text-[10px] bg-white/20 text-white px-2 py-0.5 rounded-full font-bold">0 paradas</span>
+                  </div>
+                  <div class="flex items-center gap-2.5 text-[11px] text-slate-300 font-medium mt-1.5 pl-8">
+                    <span class="text-emerald-400 font-bold" id="planner-total-km">~0.0 km totales</span>
+                    <span>&bull;</span>
+                    <span class="text-slate-200" id="planner-total-time">~0 min estimado</span>
+                    <span>&bull;</span>
+                    <span class="text-indigo-300 font-bold" id="planner-eta-end">Llegada: --:--</span>
+                  </div>
                 </div>
-                <!-- Métricas de Ruta (Distancia acumulada y Tiempo estimado) -->
-                <div id="planner-route-metrics" class="flex items-center gap-2.5 text-[11px] text-slate-300 font-medium mt-1">
-                  <span class="text-emerald-400 font-bold" id="planner-total-km">~0.0 km totales</span>
-                  <span>&bull;</span>
-                  <span class="text-slate-200" id="planner-total-time">~0 min estimado</span>
+                <div class="flex items-center gap-1.5 flex-wrap pl-8 sm:pl-0">
+                  <button type="button" id="btn-optimize-circuit" onclick="window.optimizeCircuit()" class="px-3 py-1.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95" title="Optimizar secuencia TSP por cercanía GPS">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    <span>Optimizar Circuito</span>
+                  </button>
+                  <button type="button" id="btn-toggle-route-map" onclick="window.togglePlannerRouteMap()" class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95">
+                    <svg class="w-3.5 h-3.5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                    <span id="btn-toggle-map-text">Ver Mapa</span>
+                  </button>
                 </div>
-              </div>
-
-              <!-- Botones de Optimización y Mapa -->
-              <div class="flex items-center gap-2 flex-wrap">
-                <!-- Botón Optimizar por Jerarquía desde Salida -->
-                <button
-                  type="button"
-                  id="btn-auto-optimize-gps"
-                  onclick="window.optimizeRouteStopsByGPS()"
-                  class="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
-                  title="Ordenar paradas automáticamente por cercanía partiendo desde el punto de salida"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <span>Jerarquía por Cercanía (TSP)</span>
-                </button>
-
-                <!-- Botón Ver Mapa de la Ruta -->
-                <button
-                  type="button"
-                  id="btn-toggle-route-map"
-                  onclick="window.togglePlannerRouteMap()"
-                  class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95"
-                  title="Mostrar/Ocultar mapa interactivo con todas las paradas conectadas"
-                >
-                  <svg class="w-3.5 h-3.5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-                  <span id="btn-toggle-map-text">Ver Mapa de Ruta</span>
-                </button>
               </div>
             </div>
 
-            <!-- Contenedor del Mapa Interactivo de Toda la Ruta (Desplegable) -->
+            <!-- Mapa Interactivo (Desplegable) -->
             <div id="planner-route-map-wrapper" class="hidden rounded-2xl overflow-hidden border border-slate-200 shadow-inner bg-slate-100 relative animate-fadeIn">
-              <div id="planner-full-route-map" class="h-80 w-full z-10"></div>
+              <div id="planner-full-route-map" class="h-72 w-full z-10"></div>
               <div class="absolute bottom-2 left-2 right-2 bg-white/95 backdrop-blur-xs p-2 rounded-xl border border-slate-200/80 text-[11px] flex items-center justify-between shadow-md z-20">
-                <div class="flex items-center gap-2 text-slate-600 font-semibold text-[11px]">
+                <div class="flex items-center gap-2 text-slate-600 font-semibold">
                   <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-indigo-600"></span> Salida</span>
                   <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                  <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Paradas 1 a 25</span>
+                  <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Paradas GPS</span>
                   <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                   <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Cierre</span>
                 </div>
-                <span id="route-map-status-pill" class="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md">Todas las paradas trazadas</span>
+                <span id="route-map-status-pill" class="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md text-[10px]">Circuito trazado</span>
               </div>
             </div>
 
-            <!-- Desglose de Enlaces para Google Maps (Superando el límite de 10 paradas de Google) -->
+            <!-- Desglose de enlaces Google Maps por Tramos -->
             <div id="planner-gmaps-batches-wrapper" class="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-3 space-y-1.5">
               <div class="flex items-center justify-between">
                 <span class="text-[11px] font-bold text-indigo-950 flex items-center gap-1.5">
                   <svg class="w-3.5 h-3.5 text-indigo-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                  <span>Abrir en Google Maps (Desglose por Tramos)</span>
+                  <span>Navegar en Google Maps (Desglose por Tramos)</span>
                 </span>
                 <span class="text-[9px] font-bold text-indigo-700 bg-white border border-indigo-200 px-2 py-0.5 rounded-full">Sin límite de paradas</span>
               </div>
               <div id="planner-gmaps-batch-buttons" class="flex items-center gap-1.5 flex-wrap pt-0.5">
-                <!-- Generado dinámicamente con JS -->
+                <!-- Generado dinámicamente -->
               </div>
             </div>
 
-            <!-- Contenedor de Tarjetas de Paradas Ordenables con Distancia Individual -->
+            <!-- Tarjetas de Paradas con ETA -->
             <div id="planner-stops-list" class="space-y-2">
               <!-- Render dinámico por JS -->
             </div>
           </div>
 
-          <!-- Fila 4: Punto de Finalización (Destino) -->
-          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-2">
-            <div class="flex items-center justify-between">
-              <label for="planner-end-input" class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                <span>Punto Final / Destino de Cierre (¿Dónde culmina la ruta?)</span>
-              </label>
-              
-              <!-- Botón Marcar en el Mapa (Destino/Cierre) -->
-              <button
-                type="button"
-                id="btn-open-end-map-picker"
-                onclick="window.openMapPicker('end')"
-                class="text-[11px] font-bold text-slate-700 bg-slate-200 hover:bg-slate-300 px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all cursor-pointer shadow-2xs"
-              >
-                <svg class="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span>Marcar en Mapa</span>
-              </button>
-            </div>
-            <div class="relative">
-              <div class="relative">
-                <input
-                  type="text"
-                  id="planner-end-input"
-                  value="Retorno a Sede Principal Barquisimeto"
-                  autocomplete="off"
-                  placeholder="Escribe una ciudad, zona o lugar de cierre (ej: Valencia, El Vigía, San Cristóbal, Última Parada)..."
-                  class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-xl pl-9 pr-8 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
-                />
-                <svg class="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                <button
-                  type="button"
-                  id="btn-clear-end-input"
-                  class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
-                  title="Limpiar"
-                >
-                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-              </div>
-
-              <!-- Menú Desplegable de Autocompletado (Destino/Cierre) -->
-              <div
-                id="end-autocomplete-dropdown"
-                class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 max-h-56 overflow-y-auto custom-scrollbar animate-fadeIn p-1.5 space-y-0.5"
-              >
-                <!-- Opciones dinámicas por JS -->
-              </div>
-            </div>
-
-            <!-- Chips rápidos de Cierre -->
-            <div class="flex items-center gap-1.5 flex-wrap pt-0.5 text-[10px]">
-              <span class="text-slate-400 font-medium">Sugerencias:</span>
-              <button type="button" onclick="window.selectEndLocation('Última Parada de Entrega (En Destino)')" class="px-2.5 py-1 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 hover:bg-emerald-100 font-bold cursor-pointer transition-colors">Última Parada</button>
-              <button type="button" onclick="window.selectEndLocation('Retorno a Sede Principal Barquisimeto')" class="px-2.5 py-1 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-800 hover:bg-indigo-100 font-bold cursor-pointer transition-colors">Retorno Barquisimeto</button>
-            </div>
-          </div>
-
         </div>
 
-        <!-- Botones de Acción del Modal -->
-        <div class="flex items-center justify-between border-t border-slate-100 pt-3.5 shrink-0 gap-2 flex-wrap sm:flex-nowrap">
-          <button
-            type="button"
-            id="planner-cancel-btn"
-            class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-all cursor-pointer"
-          >
+        <!-- Botones de Acción Fijos al Pie -->
+        <div class="flex items-center justify-between px-6 py-4 border-t border-slate-100 shrink-0 gap-2 flex-wrap sm:flex-nowrap bg-slate-50/60">
+          <button type="button" id="planner-cancel-btn" class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-all cursor-pointer">
             Cancelar
           </button>
-
           <div class="flex items-center gap-2">
-            <!-- Botón 1: Guardar en Almacén -->
-            <button
-              type="button"
-              id="planner-save-almacen-btn"
-              onclick="window.savePlannedRoute(false)"
-              class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-slate-200 active:scale-98"
-              title="Guardar asignación y orden sin cambiar estado (permanece en Almacén)"
-            >
+            <button type="button" id="planner-save-almacen-btn" onclick="window.savePlannedRoute(false)" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-slate-200 active:scale-98">
               <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
               <span>Guardar en Almacén</span>
             </button>
-
-            <!-- Botón 2: Guardar y Despachar a Ruta -->
-            <button
-              type="button"
-              id="planner-save-btn"
-              onclick="window.savePlannedRoute(true)"
-              class="px-4.5 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-slate-900/15 transition-all active:scale-98 cursor-pointer"
-              title="Guardar orden y marcar chofer en ruta de entrega"
-            >
+            <button type="button" id="planner-save-btn" onclick="window.savePlannedRoute(true)" class="px-4.5 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-slate-900/15 transition-all active:scale-98 cursor-pointer">
               <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
               <span>Despachar a Ruta</span>
             </button>
@@ -1558,8 +1477,6 @@ const userInitials = currentUser.nombre
       </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- MODAL SELECTOR DE MAPA GPS PARA ORIGEN Y DESTINO -->
     <!-- ========================================== -->
     <div id="map-picker-modal" class="fixed inset-0 z-[9999] bg-slate-900/80 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-5">
       <div class="relative max-w-xl w-full bg-white rounded-3xl p-5 shadow-2xl space-y-3.5 animate-fadeIn flex flex-col">
@@ -3580,7 +3497,7 @@ const userInitials = currentUser.nombre
                                   <span>GPS</span>
                                 </a>
                               ` : `
-                                <span class="text-[10px] text-slate-400 font-semibold">Ref. Escrita</span>
+                                <span class="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded font-semibold">Pendiente GPS</span>
                               `}
                             </div>
                           </div>
@@ -3711,11 +3628,9 @@ const userInitials = currentUser.nombre
 
       function renderClientLocationsSection() {
         const gpsCount = shipments.filter(s => s.gps_confirmado && s.gps_latitud && s.gps_longitud).length;
-        const refCount = shipments.filter(s => s.direccion_referencia && (!s.gps_confirmado || !s.gps_latitud)).length;
-        const pendCount = shipments.filter(s => !s.gps_confirmado && !s.direccion_referencia).length;
+        const pendCount = shipments.filter(s => !s.gps_confirmado || !s.gps_latitud).length;
 
         if (mapaKpiGps) mapaKpiGps.textContent = gpsCount.toString();
-        if (mapaKpiRef) mapaKpiRef.textContent = refCount.toString();
         if (mapaKpiPend) mapaKpiPend.textContent = pendCount.toString();
         if (mapaCountPill) {
           mapaCountPill.textContent = gpsCount.toString();
@@ -3795,7 +3710,7 @@ const userInitials = currentUser.nombre
           }
 
           if (filterType === 'GPS_CONFIRMED' && !isExactGps) return;
-          if (filterType === 'REF_ONLY' && isExactGps) return;
+          if (filterType === 'PENDING' && isExactGps) return;
 
           if (lat !== null && lon !== null && !isNaN(lat) && !isNaN(lon)) {
             latlngs.push([lat, lon]);
@@ -3946,13 +3861,9 @@ const userInitials = currentUser.nombre
                       <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                       <span>GPS Listo</span>
                     </span>
-                  ` : hasWrittenRef ? `
-                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-                      Ref. Escrita
-                    </span>
                   ` : `
                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                      Pendiente
+                      Pendiente Confirmar
                     </span>
                   `}
                 </div>
@@ -3975,12 +3886,12 @@ const userInitials = currentUser.nombre
 
                   ${g.direccion_referencia ? `
                     <div class="pt-1.5 border-t border-slate-200/60">
-                      <span class="font-bold text-slate-600 block text-[10px] uppercase tracking-wider">Dirección / Referencia Enviada:</span>
+                      <span class="font-bold text-slate-600 block text-[10px] uppercase tracking-wider">Referencias / Indicaciones de Entrega:</span>
                       <p class="text-slate-800 font-medium leading-snug mt-0.5 bg-white p-2 rounded-xl border border-slate-200/60">${g.direccion_referencia}</p>
                     </div>
                   ` : `
                     <div class="pt-1.5 border-t border-slate-200/60 text-slate-400 italic text-[11px]">
-                      Sin referencias escritas adicionales
+                      Sin notas o indicaciones adicionales
                     </div>
                   `}
 
@@ -5364,896 +5275,6 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
       });
 
-      // ==========================================
-      // PLANIFICADOR DE RUTA SECUENCIAL (SPOKE)
-      // ==========================================
-      let plannedStops: GuiaRow[] = [];
-
-      const routePlannerModal = document.getElementById('route-planner-modal') as HTMLElement;
-      const plannerCloseBtn = document.getElementById('route-planner-close-btn') as HTMLElement;
-      const plannerCancelBtn = document.getElementById('planner-cancel-btn') as HTMLElement;
-      const plannerDriverSelect = document.getElementById('planner-driver-select') as HTMLSelectElement;
-      const plannerStartInput = document.getElementById('planner-start-input') as HTMLInputElement;
-      const plannerEndInput = document.getElementById('planner-end-input') as HTMLInputElement;
-      const startAutocompleteDropdown = document.getElementById('start-autocomplete-dropdown') as HTMLElement;
-      const endAutocompleteDropdown = document.getElementById('end-autocomplete-dropdown') as HTMLElement;
-      const btnClearStartInput = document.getElementById('btn-clear-start-input') as HTMLButtonElement;
-      const btnClearEndInput = document.getElementById('btn-clear-end-input') as HTMLButtonElement;
-
-      const plannerStopsList = document.getElementById('planner-stops-list') as HTMLElement;
-      const plannerStopsCountBadge = document.getElementById('planner-stops-count-badge') as HTMLElement;
-      const plannerSaveBtn = document.getElementById('planner-save-btn') as HTMLButtonElement;
-
-      // Dataset Completo de Ciudades, Municipios y Sedes de Venezuela (Estilo Maps/Spoke)
-      const VENEZUELA_LOCATIONS = [
-        // Sedes Principales y Especiales
-        { name: 'Sede Principal Barquisimeto', state: 'Estado Lara', category: 'Sede Principal / Hub Central', isHub: true },
-        { name: 'Última Parada de Entrega (En Destino)', state: 'Sin Retorno / Cierre en Ruta', category: 'Destino Final', isSpecial: true },
-
-        // Lara
-        { name: 'Barquisimeto', state: 'Estado Lara', category: 'Ciudad Principal' },
-        { name: 'Cabudare', state: 'Estado Lara', category: 'Área Metropolitana' },
-        { name: 'Carora', state: 'Estado Lara', category: 'Municipio Torres' },
-        { name: 'El Tocuyo', state: 'Estado Lara', category: 'Municipio Morán' },
-        { name: 'Quíbor', state: 'Estado Lara', category: 'Municipio Jiménez' },
-        { name: 'Duaca', state: 'Estado Lara', category: 'Municipio Crespo' },
-        { name: 'Sanare', state: 'Estado Lara', category: 'Municipio Andrés Eloy Blanco' },
-
-        // Mérida
-        { name: 'Mérida', state: 'Estado Mérida', category: 'Ciudad Capital' },
-        { name: 'El Vigía', state: 'Estado Mérida', category: 'Centro Logístico Sur del Lago' },
-        { name: 'Ejido', state: 'Estado Mérida', category: 'Área Metropolitana' },
-        { name: 'Tovar', state: 'Estado Mérida', category: 'Valle del Mocotíes' },
-        { name: 'Tabay', state: 'Estado Mérida', category: 'Municipio Santos Marquina' },
-        { name: 'Lagunillas', state: 'Estado Mérida', category: 'Municipio Sucre' },
-        { name: 'Santa Cruz de Mora', state: 'Estado Mérida', category: 'Municipio Pinto Salinas' },
-        { name: 'Nueva Bolivia', state: 'Estado Mérida', category: 'Panamericana' },
-
-        // Distrito Capital & Miranda
-        { name: 'Caracas (Libertador)', state: 'Distrito Capital', category: 'Gran Caracas' },
-        { name: 'Caracas (Chacao)', state: 'Miranda / Caracas', category: 'Este de Caracas' },
-        { name: 'Caracas (Baruta)', state: 'Miranda / Caracas', category: 'Sureste de Caracas' },
-        { name: 'Caracas (El Hatillo)', state: 'Miranda / Caracas', category: 'Sureste de Caracas' },
-        { name: 'Caracas (Petare / Sucre)', state: 'Miranda / Caracas', category: 'Gran Caracas' },
-        { name: 'Caracas (Catia)', state: 'Distrito Capital', category: 'Oeste de Caracas' },
-        { name: 'Los Teques', state: 'Estado Miranda', category: 'Altos Mirandinos' },
-        { name: 'Guarenas / Guatire', state: 'Estado Miranda', category: 'Eje Plaza-Zamora' },
-        { name: 'Charallave / Valles del Tuy', state: 'Estado Miranda', category: 'Valles del Tuy' },
-
-        // Táchira
-        { name: 'San Cristóbal', state: 'Estado Táchira', category: 'Ciudad Capital' },
-        { name: 'Táriba', state: 'Estado Táchira', category: 'Área Metropolitana' },
-        { name: 'Rubio', state: 'Estado Táchira', category: 'Municipio Junín' },
-        { name: 'San Antonio del Táchira', state: 'Estado Táchira', category: 'Zona Fronteriza' },
-        { name: 'La Grita', state: 'Estado Táchira', category: 'Zona Alta' },
-        { name: 'Colón (San Juan de Colón)', state: 'Estado Táchira', category: 'Municipio Ayacucho' },
-
-        // Zulia
-        { name: 'Maracaibo', state: 'Estado Zulia', category: 'Ciudad Capital' },
-        { name: 'San Francisco', state: 'Estado Zulia', category: 'Área Metropolitana' },
-        { name: 'Cabimas', state: 'Estado Zulia', category: 'Costa Oriental del Lago' },
-        { name: 'Ciudad Ojeda', state: 'Estado Zulia', category: 'Costa Oriental del Lago' },
-        { name: 'Machiques', state: 'Estado Zulia', category: 'Perijá' },
-        { name: 'Santa Bárbara del Zulia', state: 'Estado Zulia', category: 'Sur del Lago' },
-
-        // Carabobo
-        { name: 'Valencia', state: 'Estado Carabobo', category: 'Ciudad Capital' },
-        { name: 'Naguanagua', state: 'Estado Carabobo', category: 'Gran Valencia' },
-        { name: 'San Diego', state: 'Estado Carabobo', category: 'Gran Valencia' },
-        { name: 'Guacara', state: 'Estado Carabobo', category: 'Eje Oriental' },
-        { name: 'Puerto Cabello', state: 'Estado Carabobo', category: 'Zona Portuaria' },
-
-        // Aragua
-        { name: 'Maracay', state: 'Estado Aragua', category: 'Ciudad Capital' },
-        { name: 'Turmero', state: 'Estado Aragua', category: 'Municipio Mariño' },
-        { name: 'Cagua', state: 'Estado Aragua', category: 'Municipio Sucre' },
-        { name: 'La Victoria', state: 'Estado Aragua', category: 'Eje Este' },
-        { name: 'El Limón', state: 'Estado Aragua', category: 'Municipio Mario Briceño' },
-
-        // Barinas
-        { name: 'Barinas', state: 'Estado Barinas', category: 'Ciudad Capital' },
-        { name: 'Socopó', state: 'Estado Barinas', category: 'Municipio Sucre' },
-        { name: 'Santa Bárbara de Barinas', state: 'Estado Barinas', category: 'Municipio Zamora' },
-        { name: 'Pedraza (Ciudad Bolivia)', state: 'Estado Barinas', category: 'Eje Andino-Llanero' },
-
-        // Trujillo
-        { name: 'Valera', state: 'Estado Trujillo', category: 'Centro Comercial' },
-        { name: 'Trujillo', state: 'Estado Trujillo', category: 'Ciudad Capital' },
-        { name: 'Boconó', state: 'Estado Trujillo', category: 'Jardín de Venezuela' },
-        { name: 'Sabana de Mendoza', state: 'Estado Trujillo', category: 'Panamericana' },
-
-        // Portuguesa
-        { name: 'Acarigua / Araure', state: 'Estado Portuguesa', category: 'Eje Agroindustrial' },
-        { name: 'Guanare', state: 'Estado Portuguesa', category: 'Ciudad Capital' },
-        { name: 'Turén', state: 'Estado Portuguesa', category: 'Zona Agrícola' },
-
-        // Yaracuy
-        { name: 'San Felipe', state: 'Estado Yaracuy', category: 'Ciudad Capital' },
-        { name: 'Yaritagua', state: 'Estado Yaracuy', category: 'Municipio Peña' },
-        { name: 'Chivacoa', state: 'Estado Yaracuy', category: 'Municipio Bruzual' },
-
-        // Falcón
-        { name: 'Punto Fijo', state: 'Estado Falcón', category: 'Península de Paraguaná' },
-        { name: 'Coro', state: 'Estado Falcón', category: 'Ciudad Capital' },
-        { name: 'Tucacas / Chichiriviche', state: 'Estado Falcón', category: 'Costa Oriental' },
-
-        // Anzoátegui
-        { name: 'Barcelona / Puerto La Cruz', state: 'Estado Anzoátegui', category: 'Área Metropolitana' },
-        { name: 'Lechería', state: 'Estado Anzoátegui', category: 'Municipio Urbaneja' },
-        { name: 'El Tigre', state: 'Estado Anzoátegui', category: 'Zona Sur' },
-        { name: 'Anaco', state: 'Estado Anzoátegui', category: 'Zona Centro' },
-
-        // Bolívar
-        { name: 'Ciudad Guayana (Puerto Ordaz / San Félix)', state: 'Estado Bolívar', category: 'Zona Industrial' },
-        { name: 'Ciudad Bolívar', state: 'Estado Bolívar', category: 'Ciudad Capital' },
-        { name: 'Upata', state: 'Estado Bolívar', category: 'Municipio Piar' },
-
-        // Monagas & Sucre
-        { name: 'Maturín', state: 'Estado Monagas', category: 'Ciudad Capital' },
-        { name: 'Punta de Mata', state: 'Estado Monagas', category: 'Zona Petrolera' },
-        { name: 'Cumaná', state: 'Estado Sucre', category: 'Ciudad Capital' },
-        { name: 'Carúpano', state: 'Estado Sucre', category: 'Municipio Bermúdez' },
-
-        // La Guaira & Nueva Esparta
-        { name: 'La Guaira / Maiquetía', state: 'Estado La Guaira', category: 'Eje Aeroportuario' },
-        { name: 'Porlamar / Pampatar', state: 'Nueva Esparta', category: 'Isla de Margarita' },
-
-        // Llanos Centrales y Sur
-        { name: 'San Juan de los Morros', state: 'Estado Guárico', category: 'Ciudad Capital' },
-        { name: 'Calabozo', state: 'Estado Guárico', category: 'Zona Arrocera' },
-        { name: 'Valle de la Pascua', state: 'Estado Guárico', category: 'Llanos Orientales' },
-        { name: 'San Fernando de Apure', state: 'Estado Apure', category: 'Ciudad Capital' },
-        { name: 'San Carlos / Tinaquillo', state: 'Estado Cojedes', category: 'Eje Centro-Occidente' },
-        { name: 'Puerto Ayacucho', state: 'Estado Amazonas', category: 'Ciudad Capital' },
-        { name: 'Tucupita', state: 'Estado Delta Amacuro', category: 'Ciudad Capital' }
-      ];
-
-      // Helpers de Autocompletado
-      function setupAutocomplete(
-        inputEl: HTMLInputElement,
-        dropdownEl: HTMLElement,
-        clearBtnEl: HTMLButtonElement | null,
-        onSelectCallback: (name: string) => void
-      ) {
-        if (!inputEl || !dropdownEl) return;
-
-        function updateDropdown(query: string) {
-          const cleanQuery = normalizeText(query);
-          let filtered = VENEZUELA_LOCATIONS;
-
-          // Verificar si el texto ingresado es un código OLC o Coordenadas
-          const parsedOlc = typeof parseUniversalLocation === 'function' ? parseUniversalLocation(query) : null;
-
-          if (cleanQuery) {
-            filtered = VENEZUELA_LOCATIONS.filter(item => 
-              normalizeText(item.name).includes(cleanQuery) || 
-              normalizeText(item.state).includes(cleanQuery) ||
-              normalizeText(item.category).includes(cleanQuery)
-            );
-          }
-
-          let htmlItems = '';
-
-          // Si es OLC o coordenadas válidas, mostrarlo de primero
-          if (parsedOlc) {
-            htmlItems += `
-              <div
-                class="autocomplete-item p-2.5 rounded-xl bg-indigo-50/80 hover:bg-indigo-100 cursor-pointer flex items-center justify-between gap-2.5 transition-colors border border-indigo-200"
-                data-name="${parsedOlc.label}"
-              >
-                <div class="flex items-center gap-2.5 min-w-0">
-                  <div class="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
-                  </div>
-                  <div class="min-w-0">
-                    <p class="text-xs font-extrabold text-indigo-950 truncate">${parsedOlc.label}</p>
-                    <p class="text-[10px] text-indigo-700 font-mono font-semibold truncate">GPS: ${parsedOlc.lat.toFixed(4)}, ${parsedOlc.lon.toFixed(4)} &bull; OLC Decodificado</p>
-                  </div>
-                </div>
-                <span class="text-[10px] font-bold text-indigo-700 bg-white px-2 py-0.5 rounded-md border border-indigo-200 shrink-0">Fijar GPS</span>
-              </div>
-            `;
-          }
-
-          if (filtered.length === 0 && !parsedOlc) {
-            dropdownEl.innerHTML = `
-              <div class="p-3 text-center text-[11px] text-slate-400">
-                <span>No se encontró coincidencia directa. Puedes presionar Enter o usar: <b>"${query}"</b></span>
-              </div>
-            `;
-            dropdownEl.classList.remove('hidden');
-            return;
-          }
-
-          dropdownEl.innerHTML = htmlItems + filtered.slice(0, 8).map(loc => {
-            const iconSvg = loc.isSpecial
-              ? `<svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
-              : loc.isHub
-              ? `<svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>`
-              : `<svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>`;
-
-            return `
-              <div
-                class="autocomplete-item p-2.5 rounded-xl hover:bg-slate-50 cursor-pointer flex items-center justify-between gap-2.5 transition-colors group"
-                data-name="${loc.name}"
-              >
-                <div class="flex items-center gap-2.5 min-w-0">
-                  <div class="w-7 h-7 rounded-lg ${loc.isHub ? 'bg-indigo-50 text-indigo-600' : loc.isSpecial ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'} flex items-center justify-center shrink-0">
-                    ${iconSvg}
-                  </div>
-                  <div class="min-w-0">
-                    <p class="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition-colors truncate">${loc.name}</p>
-                    <p class="text-[10px] text-slate-400 font-medium truncate">${loc.state} &bull; ${loc.category}</p>
-                  </div>
-                </div>
-                <span class="text-[10px] font-bold text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">Seleccionar</span>
-              </div>
-            `;
-          }).join('');
-
-          // Click listeners en cada item
-          dropdownEl.querySelectorAll('.autocomplete-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-              e.stopPropagation();
-              const name = (item as HTMLElement).dataset.name || '';
-              inputEl.value = name;
-              dropdownEl.classList.add('hidden');
-              updateClearBtn();
-              onSelectCallback(name);
-            });
-          });
-
-          dropdownEl.classList.remove('hidden');
-        }
-
-        function updateClearBtn() {
-          if (clearBtnEl) {
-            if (inputEl.value.trim().length > 0) {
-              clearBtnEl.classList.remove('hidden');
-            } else {
-              clearBtnEl.classList.add('hidden');
-            }
-          }
-        }
-
-        inputEl.addEventListener('input', (e) => {
-          updateClearBtn();
-          updateDropdown((e.target as HTMLInputElement).value);
-        });
-
-        inputEl.addEventListener('focus', () => {
-          updateClearBtn();
-          updateDropdown(inputEl.value);
-        });
-
-        clearBtnEl?.addEventListener('click', (e) => {
-          e.stopPropagation();
-          inputEl.value = '';
-          updateClearBtn();
-          inputEl.focus();
-          updateDropdown('');
-          onSelectCallback('');
-        });
-      }
-
-      // Reaccionar inmediatamente cuando cambia el Punto de Origen / Salida
-      function onOriginLocationChanged(autoOptimize: boolean = true) {
-        const start = getStartCoordinates();
-        if (autoOptimize && plannedStops.length > 1) {
-          const withGPS = plannedStops.filter(g => g.gps_confirmado && g.gps_latitud && g.gps_longitud);
-          if (withGPS.length >= 2) {
-            (window as any).optimizeRouteStopsByGPS(true);
-            return;
-          }
-        }
-        renderRoutePlannerStops();
-        if (isPlannerRouteMapVisible) {
-          drawPlannerRouteMap();
-        }
-        showToast(`Sede de salida establecida: ${start.label}`, 'info');
-      }
-
-      // Reaccionar inmediatamente cuando cambia el Punto de Destino / Cierre
-      function onDestinationLocationChanged() {
-        renderRoutePlannerStops();
-        if (isPlannerRouteMapVisible) {
-          drawPlannerRouteMap();
-        }
-        const end = getEndCoordinates();
-        showToast(`Destino establecido: ${end.label}`, 'info');
-      }
-
-      // Inicializar Autocompletado para Inicio y Cierre con reactividad total
-      setupAutocomplete(plannerStartInput, startAutocompleteDropdown, btnClearStartInput, (val) => {
-        onOriginLocationChanged(true);
-      });
-
-      setupAutocomplete(plannerEndInput, endAutocompleteDropdown, btnClearEndInput, (val) => {
-        onDestinationLocationChanged();
-      });
-
-      // Escuchar cambios directos o tipeo en los campos de entrada
-      plannerStartInput?.addEventListener('input', () => {
-        const val = plannerStartInput.value.trim();
-        const parsed = parseUniversalLocation(val);
-        if (parsed) onOriginLocationChanged(true);
-      });
-
-      plannerStartInput?.addEventListener('change', () => {
-        onOriginLocationChanged(true);
-      });
-
-      plannerEndInput?.addEventListener('input', () => {
-        const val = plannerEndInput.value.trim();
-        const parsed = parseUniversalLocation(val);
-        if (parsed) onDestinationLocationChanged();
-      });
-
-      plannerEndInput?.addEventListener('change', () => {
-        onDestinationLocationChanged();
-      });
-
-      // Cerrar dropdowns si se hace clic afuera
-      document.addEventListener('click', (e) => {
-        const target = e.target as HTMLElement;
-        if (!plannerStartInput?.contains(target) && !startAutocompleteDropdown?.contains(target)) {
-          startAutocompleteDropdown?.classList.add('hidden');
-        }
-        if (!plannerEndInput?.contains(target) && !endAutocompleteDropdown?.contains(target)) {
-          endAutocompleteDropdown?.classList.add('hidden');
-        }
-      });
-
-      (window as any).selectStartLocation = (locationName: string) => {
-        if (plannerStartInput) {
-          plannerStartInput.value = locationName;
-          if (btnClearStartInput) btnClearStartInput.classList.remove('hidden');
-          startAutocompleteDropdown?.classList.add('hidden');
-          onOriginLocationChanged(true);
-        }
-      };
-
-      (window as any).selectEndLocation = (locationName: string) => {
-        if (plannerEndInput) {
-          plannerEndInput.value = locationName;
-          if (btnClearEndInput) btnClearEndInput.classList.remove('hidden');
-          endAutocompleteDropdown?.classList.add('hidden');
-          onDestinationLocationChanged();
-        }
-      };
-
-      // Abrir Modal de Planificación
-      (window as any).openRoutePlannerModal = (presetDriverId?: number | null, presetCity?: string | null) => {
-        if (!routePlannerModal) return;
-
-        // 1. Poblar choferes en el select
-        plannerDriverSelect.innerHTML = `
-          <option value="">Selecciona el chofer que realizará la ruta...</option>
-          ${drivers.map(d => `<option value="${d.id}">${d.nombre} (${d.telefono || 'Sin telf'})</option>`).join('')}
-        `;
-
-        // Si se especificó un chofer o hay alguno por defecto
-        if (presetDriverId) {
-          plannerDriverSelect.value = String(presetDriverId);
-        } else if (drivers.length > 0) {
-          plannerDriverSelect.value = String(drivers[0].id);
-        }
-
-        // Si se abrió desde una ciudad, seleccionar las guías de esa ciudad
-        if (presetCity) {
-          plannerStartInput.value = `Sede ${presetCity}`;
-          plannerEndInput.value = `Retorno a Sede ${presetCity}`;
-          plannedStops = shipments.filter(g => 
-            g.ciudad_destino?.toLowerCase() === presetCity.toLowerCase() && 
-            g.estado !== 'Entregado'
-          );
-        } else {
-          const currentDriverId = parseInt(plannerDriverSelect.value, 10);
-          const driverGuias = shipments.filter(g => 
-            g.chofer_asignado_id === currentDriverId && 
-            g.estado !== 'Entregado'
-          );
-
-          if (driverGuias.length > 0) {
-            plannedStops = driverGuias;
-          } else {
-            plannedStops = shipments.filter(g => g.estado !== 'Entregado').slice(0, 12);
-          }
-        }
-
-        // Ordenar por orden_ruta existente si lo tienen
-        plannedStops.sort((a, b) => (a.orden_ruta || 999) - (b.orden_ruta || 999));
-
-        renderRoutePlannerStops();
-        routePlannerModal.classList.remove('hidden');
-        routePlannerModal.classList.add('flex');
-      };
-
-      // Cambiar chofer en el modal
-      plannerDriverSelect?.addEventListener('change', () => {
-        const selectedId = parseInt(plannerDriverSelect.value, 10);
-        if (!selectedId) return;
-
-        const driverGuias = shipments.filter(g => 
-          g.chofer_asignado_id === selectedId && 
-          g.estado !== 'Entregado'
-        );
-
-        if (driverGuias.length > 0) {
-          plannedStops = driverGuias;
-          plannedStops.sort((a, b) => (a.orden_ruta || 999) - (b.orden_ruta || 999));
-          renderRoutePlannerStops();
-        }
-      });
-
-      function closeRoutePlannerModal() {
-        routePlannerModal?.classList.add('hidden');
-        routePlannerModal?.classList.remove('flex');
-        plannedStops = [];
-      }
-
-      plannerCloseBtn?.addEventListener('click', closeRoutePlannerModal);
-      plannerCancelBtn?.addEventListener('click', closeRoutePlannerModal);
-
-      function updateRouteMetrics(totalKm: number) {
-        const kmEl = document.getElementById('planner-total-km');
-        const timeEl = document.getElementById('planner-total-time');
-        if (kmEl) kmEl.textContent = `~${totalKm.toFixed(1)} km totales`;
-        if (timeEl) {
-          // Estimado: velocidad promedio 28 km/h en ciudad + 4 min por entrega
-          const driveMinutes = (totalKm / 28) * 60;
-          const stopMinutes = plannedStops.length * 4;
-          const totalMinutes = Math.round(driveMinutes + stopMinutes);
-          const hours = Math.floor(totalMinutes / 60);
-          const mins = totalMinutes % 60;
-          timeEl.textContent = hours > 0 ? `~${hours}h ${mins}m estimado` : `~${mins} min estimado`;
-        }
-      }
-
-      // Desglose de enlaces de Google Maps por tramos (superando límite de 10 destinos)
-      function renderGoogleMapsBatches() {
-        const container = document.getElementById('planner-gmaps-batch-buttons');
-        if (!container) return;
-
-        const gpsStops = plannedStops.filter(g => g.gps_confirmado && g.gps_latitud && g.gps_longitud);
-        if (gpsStops.length === 0) {
-          container.innerHTML = `<span class="text-[11px] text-slate-400 italic">No hay paradas con GPS confirmado para trazar en Google Maps.</span>`;
-          return;
-        }
-
-        const start = getStartCoordinates();
-        const end = getEndCoordinates();
-
-        const CHUNK_SIZE = 8; // Máximo 8 paradas por enlace para que Google Maps nunca trunque
-        const chunks: { label: string, url: string }[] = [];
-
-        for (let i = 0; i < gpsStops.length; i += CHUNK_SIZE) {
-          const slice = gpsStops.slice(i, i + CHUNK_SIZE);
-          const fromNum = i + 1;
-          const toNum = i + slice.length;
-
-          let originCoord = i === 0 ? `${start.lat.toFixed(6)},${start.lon.toFixed(6)}` : `${Number(gpsStops[i - 1].gps_latitud).toFixed(6)},${Number(gpsStops[i - 1].gps_longitud).toFixed(6)}`;
-          let path = [originCoord];
-
-          slice.forEach(g => {
-            path.push(`${Number(g.gps_latitud).toFixed(6)},${Number(g.gps_longitud).toFixed(6)}`);
-          });
-
-          if (toNum === gpsStops.length) {
-            const isToMerida = (end.label || '').toLowerCase().includes('merida') || (end.lat === 8.5738);
-            if (isToMerida) {
-              // Asegurar paso por el Páramo (Apartaderos / Troncal 7) para evitar desvío por El Vigía
-              path.push('8.800000,-70.850000');
-            }
-            path.push(`${end.lat.toFixed(6)},${end.lon.toFixed(6)}`);
-          }
-
-          const gmapsUrl = `https://www.google.com/maps/dir/${path.join('/')}`;
-          chunks.push({
-            label: `Tramo ${chunks.length + 1}: Paradas #${fromNum} a #${toNum}`,
-            url: gmapsUrl
-          });
-        }
-
-        container.innerHTML = chunks.map(chunk => `
-          <a
-            href="${chunk.url}"
-            target="_blank"
-            class="px-2.5 py-1 rounded-xl bg-white border border-indigo-200 hover:border-indigo-300 text-indigo-800 hover:bg-indigo-50 text-[11px] font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
-          >
-            <span>${chunk.label}</span>
-            <svg class="w-3 h-3 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-          </a>
-        `).join('');
-      }
-
-      // Renderizar paradas en el modal con cálculo de distancias por tramo
-      function renderRoutePlannerStops() {
-        if (!plannerStopsList || !plannerStopsCountBadge) return;
-
-        plannerStopsCountBadge.textContent = `${plannedStops.length} ${plannedStops.length === 1 ? 'parada' : 'paradas'}`;
-
-        if (plannedStops.length === 0) {
-          plannerStopsList.innerHTML = `
-            <div class="p-6 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-400 text-xs">
-              No hay paradas seleccionadas en esta ruta.
-            </div>
-          `;
-          updateRouteMetrics(0);
-          return;
-        }
-
-        const start = getStartCoordinates();
-        let prevLat = start.lat;
-        let prevLon = start.lon;
-        let totalKm = 0;
-
-        plannerStopsList.innerHTML = plannedStops.map((item, index) => {
-          const stopNumber = index + 1;
-          const isFirst = index === 0;
-          const isLast = index === plannedStops.length - 1;
-          const hasGPS = item.gps_confirmado && item.gps_latitud && item.gps_longitud;
-
-          let legDistanceKm = 0;
-          if (hasGPS) {
-            legDistanceKm = calculateDistance(prevLat, prevLon, Number(item.gps_latitud), Number(item.gps_longitud));
-            totalKm += legDistanceKm;
-            prevLat = Number(item.gps_latitud);
-            prevLon = Number(item.gps_longitud);
-          }
-
-          return `
-            <div class="p-3 bg-white border border-slate-200/90 rounded-2xl shadow-2xs hover:border-slate-300 transition-all flex items-center justify-between gap-3">
-              <!-- Número de Parada & Info -->
-              <div class="flex items-center gap-3 min-w-0 flex-1">
-                <!-- Badge de Número -->
-                <div class="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-extrabold text-xs shrink-0 shadow-xs">
-                  ${stopNumber}
-                </div>
-
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <span class="font-bold text-slate-900 text-xs truncate max-w-[200px]">${item.destinatario}</span>
-                    <span class="font-mono text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">#${item.id_guia}</span>
-                    <span class="text-[10px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded">${item.ciudad_destino}</span>
-                    ${item.piezas ? `<span class="text-[10px] text-slate-400 font-semibold">${item.piezas} pz</span>` : ''}
-                  </div>
-
-                  <div class="flex items-center gap-2 text-[10px] mt-1 flex-wrap">
-                    ${hasGPS ? `
-                      <span class="text-emerald-700 font-bold flex items-center gap-1 bg-emerald-50 border border-emerald-200/80 px-2 py-0.2 rounded-md">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span>+${legDistanceKm.toFixed(1)} km</span>
-                        <span class="text-emerald-600 font-normal">(${isFirst ? 'desde Salida' : 'desde anterior'})</span>
-                      </span>
-                    ` : `
-                      <span class="text-slate-400 font-medium">${item.direccion_referencia || 'Dirección de referencia'}</span>
-                    `}
-                    ${item.hora_disponible ? `
-                      <span class="text-indigo-600 font-bold flex items-center gap-0.5 bg-indigo-50 px-2 py-0.2 rounded-md border border-indigo-100">
-                        <svg class="w-3 h-3 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <span>Hasta ${item.hora_disponible}</span>
-                      </span>
-                    ` : ''}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Controles de Reordenamiento (Subir / Bajar / Eliminar) -->
-              <div class="flex items-center gap-1 shrink-0">
-                <!-- Botón Subir -->
-                <button
-                  type="button"
-                  onclick="window.moveRouteStopUp(${index})"
-                  ${isFirst ? 'disabled class="p-1.5 text-slate-300 rounded-lg cursor-not-allowed"' : 'class="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"'}
-                  title="Mover antes en la ruta"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-                </button>
-
-                <!-- Botón Bajar -->
-                <button
-                  type="button"
-                  onclick="window.moveRouteStopDown(${index})"
-                  ${isLast ? 'disabled class="p-1.5 text-slate-300 rounded-lg cursor-not-allowed"' : 'class="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors"'}
-                  title="Mover después en la ruta"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                </button>
-
-                <!-- Botón Quitar de Ruta -->
-                <button
-                  type="button"
-                  onclick="window.removeRouteStop(${index})"
-                  class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer transition-colors"
-                  title="Quitar de esta ruta"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-              </div>
-            </div>
-          `;
-        }).join('');
-
-        updateRouteMetrics(totalKm);
-        renderGoogleMapsBatches();
-        if (isPlannerRouteMapVisible) {
-          drawPlannerRouteMap();
-        }
-      }
-
-      // Mover parada hacia arriba
-      (window as any).moveRouteStopUp = (index: number) => {
-        if (index <= 0 || index >= plannedStops.length) return;
-        const temp = plannedStops[index];
-        plannedStops[index] = plannedStops[index - 1];
-        plannedStops[index - 1] = temp;
-        renderRoutePlannerStops();
-      };
-
-      // Mover parada hacia abajo
-      (window as any).moveRouteStopDown = (index: number) => {
-        if (index < 0 || index >= plannedStops.length - 1) return;
-        const temp = plannedStops[index];
-        plannedStops[index] = plannedStops[index + 1];
-        plannedStops[index + 1] = temp;
-        renderRoutePlannerStops();
-      };
-
-      // Quitar parada de la ruta
-      (window as any).removeRouteStop = (index: number) => {
-        if (index < 0 || index >= plannedStops.length) return;
-        plannedStops.splice(index, 1);
-        renderRoutePlannerStops();
-      };
-
-      // ==========================================
-      // VISOR SATELITAL DE TODAS LAS 25 PARADAS (LEAFLET)
-      // ==========================================
-      let plannerRouteMap: any = null;
-      let plannerRouteLayerGroup: any = null;
-      let isPlannerRouteMapVisible = false;
-
-      (window as any).togglePlannerRouteMap = () => {
-        const wrapper = document.getElementById('planner-route-map-wrapper');
-        const btnText = document.getElementById('btn-toggle-map-text');
-        if (!wrapper) return;
-
-        isPlannerRouteMapVisible = !isPlannerRouteMapVisible;
-        if (isPlannerRouteMapVisible) {
-          wrapper.classList.remove('hidden');
-          if (btnText) btnText.textContent = 'Ocultar Mapa';
-          setTimeout(() => {
-            drawPlannerRouteMap();
-          }, 100);
-        } else {
-          wrapper.classList.add('hidden');
-          if (btnText) btnText.textContent = 'Ver Mapa de Ruta';
-        }
-      };
-
-      function drawPlannerRouteMap() {
-        if (typeof (window as any).L === 'undefined') return;
-        const L = (window as any).L;
-
-        if (!plannerRouteMap) {
-          plannerRouteMap = L.map('planner-full-route-map', {
-            zoomControl: true,
-            attributionControl: false
-          }).setView([10.0808, -69.3756], 12);
-
-          L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            maxZoom: 19,
-            subdomains: 'abcd'
-          }).addTo(plannerRouteMap);
-
-          plannerRouteLayerGroup = L.layerGroup().addTo(plannerRouteMap);
-        }
-
-        plannerRouteMap.invalidateSize();
-        plannerRouteLayerGroup.clearLayers();
-
-        const start = getStartCoordinates();
-        const end = getEndCoordinates();
-        const latlngs: [number, number][] = [];
-
-        // 1. Origen / Salida (Pin Azul)
-        const startHtml = `
-          <div class="relative flex items-center justify-center w-8 h-8 rounded-full bg-indigo-600 border-2 border-white shadow-lg text-white text-[11px] font-black">
-            S
-          </div>
-        `;
-        const startIcon = L.divIcon({ html: startHtml, className: 'start-pin', iconSize: [32, 32], iconAnchor: [16, 16] });
-        L.marker([start.lat, start.lon], { icon: startIcon }).addTo(plannerRouteLayerGroup)
-          .bindPopup(`<b>Punto de Salida / Origen:</b><br>${start.label}`);
-        latlngs.push([start.lat, start.lon]);
-
-        // 2. Paradas Secuenciales Numeradas (1 a 25)
-        plannedStops.forEach((g, idx) => {
-          if (g.gps_confirmado && g.gps_latitud && g.gps_longitud) {
-            const lat = Number(g.gps_latitud);
-            const lon = Number(g.gps_longitud);
-            latlngs.push([lat, lon]);
-
-            const pinHtml = `
-              <div class="relative flex items-center justify-center w-7 h-7 rounded-full bg-slate-900 border-2 border-emerald-400 shadow-md text-emerald-300 text-[10px] font-extrabold">
-                ${idx + 1}
-              </div>
-            `;
-            const icon = L.divIcon({ html: pinHtml, className: 'stop-pin', iconSize: [28, 28], iconAnchor: [14, 14] });
-            L.marker([lat, lon], { icon }).addTo(plannerRouteLayerGroup)
-              .bindPopup(`<b>Parada #${idx + 1} (Guía #${g.id_guia}):</b><br>${g.destinatario}<br><span class="text-xs text-slate-500">${g.ciudad_destino}</span>`);
-          }
-        });
-
-        // 3. Destino / Cierre (Pin Dorado)
-        if (end.lat && end.lon) {
-          latlngs.push([end.lat, end.lon]);
-          const endHtml = `
-            <div class="relative flex items-center justify-center w-8 h-8 rounded-full bg-amber-500 border-2 border-white shadow-lg text-white">
-              <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
-            </div>
-          `;
-          const endIcon = L.divIcon({ html: endHtml, className: 'end-pin', iconSize: [32, 32], iconAnchor: [16, 16] });
-          L.marker([end.lat, end.lon], { icon: endIcon }).addTo(plannerRouteLayerGroup)
-            .bindPopup(`<b>Punto Final / Cierre:</b><br>${end.label}`);
-        }
-
-        // 4. Polilínea conectando la trayectoria completa
-        if (latlngs.length >= 2) {
-          L.polyline(latlngs, {
-            color: '#4f46e5',
-            weight: 4,
-            opacity: 0.85,
-            dashArray: '6, 8',
-            lineJoin: 'round'
-          }).addTo(plannerRouteLayerGroup);
-
-          const bounds = L.latLngBounds(latlngs);
-          plannerRouteMap.fitBounds(bounds, { padding: [40, 40] });
-        }
-      }
-
-      // Optimizar Secuencia de Paradas por Jerarquía de Cercanía desde el Punto de Salida (TSP)
-      (window as any).optimizeRouteStopsByGPS = (showNotification: boolean = true) => {
-        if (plannedStops.length <= 1) {
-          if (showNotification) showToast('Agrega más paradas para calcular la jerarquía de la ruta', 'info');
-          return;
-        }
-
-        const withGPS = plannedStops.filter(g => g.gps_confirmado && g.gps_latitud && g.gps_longitud);
-        const withoutGPS = plannedStops.filter(g => !g.gps_confirmado || !g.gps_latitud || !g.gps_longitud);
-
-        if (withGPS.length < 2) {
-          if (showNotification) showToast('Se necesitan al menos 2 paradas con GPS confirmado para auto-optimizar', 'info');
-          renderRoutePlannerStops();
-          return;
-        }
-
-        const start = getStartCoordinates();
-        let currentLat = start.lat;
-        let currentLon = start.lon;
-
-        // Algoritmo Vecino Más Cercano arrancando desde el Punto de Salida
-        const optimized: GuiaRow[] = [];
-        const unvisited = [...withGPS];
-
-        while (unvisited.length > 0) {
-          let nearestIdx = 0;
-          let minDistance = Infinity;
-
-          for (let i = 0; i < unvisited.length; i++) {
-            const dist = calculateDistance(
-              currentLat,
-              currentLon,
-              Number(unvisited[i].gps_latitud),
-              Number(unvisited[i].gps_longitud)
-            );
-            if (dist < minDistance) {
-              minDistance = dist;
-              nearestIdx = i;
-            }
-          }
-
-          const nextStop = unvisited.splice(nearestIdx, 1)[0];
-          optimized.push(nextStop);
-          currentLat = Number(nextStop.gps_latitud);
-          currentLon = Number(nextStop.gps_longitud);
-        }
-
-        // Unir paradas optimizadas + paradas sin GPS al final
-        plannedStops = [...optimized, ...withoutGPS];
-        renderRoutePlannerStops();
-        if (showNotification) {
-          showToast(`¡Secuencia ordenada por cercanía partiendo desde ${start.label}!`, 'success');
-        }
-      };
-
-      // Guardar y Despachar Ruta al Chofer
-      (window as any).savePlannedRoute = async (despacharEnRuta: boolean = false) => {
-        const driverId = parseInt(plannerDriverSelect.value, 10);
-        if (!driverId) {
-          showToast('Debes seleccionar un chofer para asignar la ruta', 'error');
-          return;
-        }
-
-        if (plannedStops.length === 0) {
-          showToast('Debes agregar al menos una parada en la ruta', 'error');
-          return;
-        }
-
-        const startPoint = plannerStartInput.value.trim() || 'Sede Principal Barquisimeto';
-        const endPoint = plannerEndInput.value.trim() || 'Retorno a Sede Principal Barquisimeto';
-
-        const actionBtn = despacharEnRuta ? plannerSaveBtn : (document.getElementById('planner-save-almacen-btn') as HTMLButtonElement) || plannerSaveBtn;
-        actionBtn.disabled = true;
-        const originalHtml = actionBtn.innerHTML;
-        actionBtn.innerHTML = `
-          <svg class="animate-spin w-4 h-4 text-slate-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <span>Guardando...</span>
-        `;
-
-        try {
-          const payload = {
-            chofer_id: driverId,
-            ruta_origen: startPoint,
-            ruta_destino: endPoint,
-            paradas: plannedStops.map((g, idx) => ({
-              id_guia: g.id_guia,
-              orden: idx + 1
-            })),
-            despachar_en_ruta: despacharEnRuta
-          };
-
-          const res = await fetch('/api/guias/ruta', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-
-          const data = await res.json();
-
-          if (res.ok && data.success) {
-            // Actualizar localmente
-            const driverObj = drivers.find(d => d.id === driverId);
-            plannedStops.forEach((p, idx) => {
-              const target = shipments.find(s => s.id_guia === p.id_guia);
-              if (target) {
-                target.chofer_asignado_id = driverId;
-                target.chofer_nombre = driverObj?.nombre || 'Chofer Asignado';
-                target.orden_ruta = idx + 1;
-                target.ruta_origen = startPoint;
-                target.ruta_destino = endPoint;
-                if (despacharEnRuta && target.estado !== 'Entregado') {
-                  target.estado = 'En ruta';
-                }
-              }
-            });
-
-            closeRoutePlannerModal();
-            renderViews();
-            updateKPIs();
-            populateCityFilter();
-            
-            if (despacharEnRuta) {
-              showToast(`¡Ruta de ${plannedStops.length} paradas despachada En Ruta con éxito!`, 'success');
-            } else {
-              showToast(`¡Secuencia de ${plannedStops.length} paradas guardada en Almacén!`, 'info');
-            }
-          } else {
-            showToast(data.message || 'Error al guardar la ruta', 'error');
-          }
-        } catch (err) {
-          console.error('Error guardando ruta:', err);
-          showToast('Error al procesar la ruta. Verifica los datos.', 'error');
-        } finally {
-          actionBtn.disabled = false;
-          actionBtn.innerHTML = originalHtml;
-        }
-      };
 
       // Despachar a Ruta directamente desde la vista de choferes
       (window as any).dispatchDriverToRoute = async (driverId: number) => {
@@ -7565,7 +6586,618 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       });
 
 
+
+      // ============================================================
+      // MOTOR DEL PLANIFICADOR DE CIRCUITO — SPOKE DISPATCH ENGINE
+      // ============================================================
+
+      // Estado del planificador
+      let circuitStops: GuiaRow[] = [];       // Guías con GPS de la zona seleccionada
+      let circuitOptimized = false;
+      let plannerMapInstance: any = null;
+      let plannerMapVisible = false;
+
+      // Elementos del modal del planificador
+      const routePlannerModal = document.getElementById('route-planner-modal');
+      const plannerDriverSelect = document.getElementById('planner-driver-select') as HTMLSelectElement;
+      const plannerZoneSelect = document.getElementById('planner-zone-select') as HTMLSelectElement;
+      const plannerZoneSummary = document.getElementById('planner-zone-summary');
+      const plannerZoneGpsCount = document.getElementById('planner-zone-gps-count');
+      const plannerZonePendingCount = document.getElementById('planner-zone-pending-count');
+      const plannerZoneTotalCount = document.getElementById('planner-zone-total-count');
+      const plannerNoGpsWarning = document.getElementById('planner-no-gps-warning');
+      const plannerNoGpsWarningText = document.getElementById('planner-no-gps-warning-text');
+      const plannerStartInput = document.getElementById('planner-start-input') as HTMLInputElement;
+      const plannerStartTimeInput = document.getElementById('planner-start-time') as HTMLInputElement;
+      const plannerServiceTimeSelect = document.getElementById('planner-service-time') as HTMLSelectElement;
+      const plannerStopsList = document.getElementById('planner-stops-list');
+      const plannerStopsCountBadge = document.getElementById('planner-stops-count-badge');
+      const plannerTotalKm = document.getElementById('planner-total-km');
+      const plannerTotalTime = document.getElementById('planner-total-time');
+      const plannerEtaEnd = document.getElementById('planner-eta-end');
+      const plannerGmapsBatchButtons = document.getElementById('planner-gmaps-batch-buttons');
+      const plannerRouteMapWrapper = document.getElementById('planner-route-map-wrapper');
+      const btnToggleMapText = document.getElementById('btn-toggle-map-text');
+      const plannerCancelBtn = document.getElementById('planner-cancel-btn');
+      const plannerCloseBtn = document.getElementById('route-planner-close-btn');
+
+      // Función: abrir el modal del planificador
+      window.openRoutePlannerModal = function() {
+        if (!routePlannerModal) return;
+
+        // Poblar selector de choferes
+        if (plannerDriverSelect) {
+          plannerDriverSelect.innerHTML = '<option value="">-- Selecciona un chofer --</option>';
+          drivers.filter(d => d.rol === 'chofer').forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = String(d.id);
+            opt.textContent = d.nombre;
+            plannerDriverSelect.appendChild(opt);
+          });
+        }
+
+        // Poblar selector de zonas con ciudades únicas que tienen guías activas
+        if (plannerZoneSelect) {
+          const activeShipments = shipments.filter(g =>
+            g.estado !== 'Entregado' && g.estado !== 'No entregado'
+          );
+          const ciudadesUnicas = [...new Set(
+            activeShipments.map(g => (g.ciudad_destino || '').trim()).filter(Boolean)
+          )].sort();
+
+          plannerZoneSelect.innerHTML = '<option value="">-- Selecciona la ciudad de entrega --</option>';
+          ciudadesUnicas.forEach(ciudad => {
+            const opt = document.createElement('option');
+            opt.value = ciudad;
+            opt.textContent = ciudad;
+            plannerZoneSelect.appendChild(opt);
+          });
+        }
+
+        // Resetear estado
+        circuitStops = [];
+        circuitOptimized = false;
+        plannerMapVisible = false;
+        if (plannerRouteMapWrapper) plannerRouteMapWrapper.classList.add('hidden');
+        if (btnToggleMapText) btnToggleMapText.textContent = 'Ver Mapa';
+        if (plannerZoneSummary) plannerZoneSummary.classList.add('hidden');
+        if (plannerNoGpsWarning) plannerNoGpsWarning.classList.add('hidden');
+        renderCircuitStops();
+
+        routePlannerModal.classList.remove('hidden');
+        routePlannerModal.classList.add('flex');
+      };
+
+      // Listener: cambio de zona seleccionada
+      if (plannerZoneSelect) {
+        plannerZoneSelect.addEventListener('change', () => {
+          const zona = plannerZoneSelect.value;
+          if (!zona) {
+            if (plannerZoneSummary) plannerZoneSummary.classList.add('hidden');
+            if (plannerNoGpsWarning) plannerNoGpsWarning.classList.add('hidden');
+            circuitStops = [];
+            renderCircuitStops();
+            return;
+          }
+
+          // Filtrar guías de la zona seleccionada (activas = no entregadas)
+          const guiasZona = shipments.filter(g =>
+            (g.ciudad_destino || '').trim().toLowerCase() === zona.toLowerCase() &&
+            g.estado !== 'Entregado' && g.estado !== 'No entregado'
+          );
+
+          const guiasConGps = guiasZona.filter(g =>
+            g.gps_confirmado && g.gps_latitud != null && g.gps_longitud != null &&
+            !isNaN(Number(g.gps_latitud)) && !isNaN(Number(g.gps_longitud))
+          );
+          const guiasSinGps = guiasZona.length - guiasConGps.length;
+
+          // Actualizar contadores
+          if (plannerZoneGpsCount) plannerZoneGpsCount.textContent = String(guiasConGps.length);
+          if (plannerZonePendingCount) plannerZonePendingCount.textContent = String(guiasSinGps);
+          if (plannerZoneTotalCount) plannerZoneTotalCount.textContent = String(guiasZona.length);
+          if (plannerZoneSummary) plannerZoneSummary.classList.remove('hidden');
+
+          // Advertencia si hay guías sin GPS
+          if (guiasSinGps > 0 && plannerNoGpsWarning && plannerNoGpsWarningText) {
+            plannerNoGpsWarningText.textContent = `${guiasSinGps} guía${guiasSinGps > 1 ? 's' : ''} en ${zona} no tienen coordenadas GPS confirmadas. Solo las ${guiasConGps.length} guías con GPS se incluirán en el circuito.`;
+            plannerNoGpsWarning.classList.remove('hidden');
+          } else if (plannerNoGpsWarning) {
+            plannerNoGpsWarning.classList.add('hidden');
+          }
+
+          // Cargar paradas con GPS como circuito inicial (sin optimizar)
+          circuitStops = [...guiasConGps];
+          circuitOptimized = false;
+          renderCircuitStops();
+        });
+      }
+
+      // Función: renderizar las tarjetas de paradas con ETA
+      function renderCircuitStops() {
+        if (!plannerStopsList) return;
+
+        const count = circuitStops.length;
+        if (plannerStopsCountBadge) plannerStopsCountBadge.textContent = `${count} parada${count !== 1 ? 's' : ''}`;
+
+        if (count === 0) {
+          plannerStopsList.innerHTML = `
+            <div class="text-center py-10 text-slate-400">
+              <svg class="w-10 h-10 mx-auto mb-2 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+              </svg>
+              <p class="text-xs font-semibold text-slate-400">Selecciona una zona para cargar las paradas del circuito</p>
+              <p class="text-[10px] text-slate-300 mt-1">Solo se incluyen guías con coordenadas GPS confirmadas</p>
+            </div>`;
+          if (plannerTotalKm) plannerTotalKm.textContent = '~0.0 km totales';
+          if (plannerTotalTime) plannerTotalTime.textContent = '~0 min estimado';
+          if (plannerEtaEnd) plannerEtaEnd.textContent = 'Llegada: --:--';
+          if (plannerGmapsBatchButtons) plannerGmapsBatchButtons.innerHTML = '';
+          return;
+        }
+
+        // Calcular métricas y ETAs
+        const startCoords = getStartCoordinates();
+        const serviceMinutes = parseInt(plannerServiceTimeSelect?.value || '8', 10);
+        const startTimeStr = plannerStartTimeInput?.value || '08:00';
+        const [startHour, startMin] = startTimeStr.split(':').map(Number);
+        const isRoundTrip = (document.querySelector('input[name="circuit-type"]:checked') as HTMLInputElement)?.value === 'roundtrip';
+
+        let totalKm = 0;
+        let currentMinutes = startHour * 60 + startMin;
+        let prevLat = startCoords.lat;
+        let prevLon = startCoords.lon;
+
+        // Velocidad promedio Venezuela urbana: 25 km/h
+        const AVG_SPEED_KMH = 25;
+
+        const stopData = circuitStops.map((stop, idx) => {
+          const lat = Number(stop.gps_latitud);
+          const lon = Number(stop.gps_longitud);
+          const distKm = calculateDistance(prevLat, prevLon, lat, lon);
+          const travelMin = Math.round((distKm / AVG_SPEED_KMH) * 60);
+          currentMinutes += travelMin;
+          const etaHora = Math.floor(currentMinutes / 60) % 24;
+          const etaMin = currentMinutes % 60;
+          const etaStr = `${String(etaHora).padStart(2, '0')}:${String(etaMin).padStart(2, '0')}`;
+
+          totalKm += distKm;
+          prevLat = lat;
+          prevLon = lon;
+
+          // Verificar ventana de tiempo del cliente
+          let horaAlert = '';
+          if (stop.hora_disponible) {
+            const [hDisp, mDisp] = stop.hora_disponible.split(':').map(Number);
+            const minDisponible = hDisp * 60 + mDisp;
+            if (currentMinutes < minDisponible) {
+              const espera = minDisponible - currentMinutes;
+              horaAlert = `<span class="text-amber-600 font-bold text-[10px]">Llega ${espera}min antes (disponible a las ${stop.hora_disponible})</span>`;
+              currentMinutes = minDisponible; // Esperar hasta la ventana
+            } else if (currentMinutes > minDisponible + 120) {
+              horaAlert = `<span class="text-rose-600 font-bold text-[10px]">Posible retraso (disponible ${stop.hora_disponible})</span>`;
+            }
+          }
+
+          const result = { stop, idx, distKm, travelMin, etaStr, horaAlert };
+          currentMinutes += serviceMinutes;
+          return result;
+        });
+
+        // Distancia de retorno (si es round-trip)
+        if (isRoundTrip && circuitStops.length > 0) {
+          const last = circuitStops[circuitStops.length - 1];
+          const retDist = calculateDistance(Number(last.gps_latitud), Number(last.gps_longitud), startCoords.lat, startCoords.lon);
+          totalKm += retDist;
+          const retMin = Math.round((retDist / AVG_SPEED_KMH) * 60);
+          currentMinutes += retMin;
+        }
+
+        const totalMin = currentMinutes - (startHour * 60 + startMin);
+        const horaFin = Math.floor(currentMinutes / 60) % 24;
+        const minFin = currentMinutes % 60;
+        if (plannerTotalKm) plannerTotalKm.textContent = `~${totalKm.toFixed(1)} km totales`;
+        if (plannerTotalTime) plannerTotalTime.textContent = `~${totalMin} min estimado`;
+        if (plannerEtaEnd) plannerEtaEnd.textContent = `Llegada: ${String(horaFin).padStart(2, '0')}:${String(minFin).padStart(2, '0')}`;
+
+        // Renderizar tarjetas
+        plannerStopsList.innerHTML = stopData.map(({ stop, idx, distKm, travelMin, etaStr, horaAlert }) => {
+          const lat = Number(stop.gps_latitud);
+          const lon = Number(stop.gps_longitud);
+          const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+
+          return `
+            <div class="group flex items-start gap-2.5 bg-white border border-slate-200 rounded-2xl p-3.5 hover:border-slate-300 hover:shadow-sm transition-all">
+              <!-- Número de parada -->
+              <div class="flex flex-col items-center gap-0.5 shrink-0 pt-0.5">
+                <span class="w-7 h-7 rounded-xl ${circuitOptimized ? 'bg-indigo-600' : 'bg-slate-800'} text-white text-[11px] font-black flex items-center justify-center shadow-sm">${idx + 1}</span>
+                ${idx < circuitStops.length - 1 ? '<div class="w-px h-3 bg-slate-200 rounded-full"></div>' : ''}
+              </div>
+
+              <!-- Info de la parada -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <p class="text-xs font-extrabold text-slate-900 truncate">${stop.destinatario || '—'}</p>
+                    <p class="text-[10px] text-slate-500 font-medium truncate">${stop.ciudad_destino || ''} · Guía #${stop.id_guia}</p>
+                  </div>
+                  <!-- ETA badge -->
+                  <div class="shrink-0 text-right">
+                    <span class="text-[11px] font-black text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg block">${etaStr}</span>
+                    <span class="text-[9px] text-slate-400 font-medium block mt-0.5">${travelMin} min · ${distKm.toFixed(1)} km</span>
+                  </div>
+                </div>
+
+                <!-- Coordenadas GPS y alertas -->
+                <div class="flex items-center justify-between mt-1.5 gap-2">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-mono font-bold">${lat.toFixed(4)}, ${lon.toFixed(4)}</span>
+                    ${stop.piezas ? `<span class="text-[10px] text-slate-500 font-bold">${stop.piezas} pza${stop.piezas > 1 ? 's' : ''}</span>` : ''}
+                    ${horaAlert}
+                  </div>
+                  <!-- Botones de acción -->
+                  <div class="flex items-center gap-1">
+                    <a href="${gmapsUrl}" target="_blank" rel="noopener" class="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors" title="Ver en Google Maps">
+                      <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                    </a>
+                    <button type="button" onclick="window.moveCircuitStop(${idx}, -1)" class="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors ${idx === 0 ? 'opacity-30 cursor-default' : 'cursor-pointer'}" title="Subir parada" ${idx === 0 ? 'disabled' : ''}>
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                    </button>
+                    <button type="button" onclick="window.moveCircuitStop(${idx}, 1)" class="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors ${idx === circuitStops.length - 1 ? 'opacity-30 cursor-default' : 'cursor-pointer'}" title="Bajar parada" ${idx === circuitStops.length - 1 ? 'disabled' : ''}>
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Generar botones de Google Maps por tramos de 9 paradas
+        if (plannerGmapsBatchButtons) {
+          const startCoords2 = getStartCoordinates();
+          const batchSize = 9;
+          const batches: string[] = [];
+
+          for (let i = 0; i < circuitStops.length; i += batchSize) {
+            const batch = circuitStops.slice(i, Math.min(i + batchSize, circuitStops.length));
+            const batchStart = i === 0 ? `${startCoords2.lat},${startCoords2.lon}` : `${Number(circuitStops[i-1].gps_latitud)},${Number(circuitStops[i-1].gps_longitud)}`;
+            const batchEnd = `${Number(batch[batch.length-1].gps_latitud)},${Number(batch[batch.length-1].gps_longitud)}`;
+            const waypoints = batch.slice(0, -1).map(s => `${Number(s.gps_latitud)},${Number(s.gps_longitud)}`).join('|');
+            const url = `https://www.google.com/maps/dir/?api=1&origin=${batchStart}&destination=${batchEnd}${waypoints ? `&waypoints=${encodeURIComponent(waypoints)}` : ''}&travelmode=driving`;
+
+            batches.push(`<a href="${url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-indigo-200 text-indigo-800 text-[11px] font-bold hover:bg-indigo-50 hover:border-indigo-400 transition-all shadow-xs">
+              <svg class="w-3 h-3 text-indigo-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+              Tramo ${batches.length + 1} (Paradas ${i+1}–${Math.min(i+batchSize, circuitStops.length)})
+            </a>`);
+          }
+
+          plannerGmapsBatchButtons.innerHTML = batches.length > 0 ? batches.join('') : '<span class="text-[11px] text-slate-400">Optimiza el circuito para generar los enlaces de navegación</span>';
+        }
+
+        // Actualizar mapa si está visible
+        if (plannerMapVisible) renderCircuitMap();
+      }
+
+      // Función: mover una parada del circuito
+      window.moveCircuitStop = function(idx: number, direction: number) {
+        const newIdx = idx + direction;
+        if (newIdx < 0 || newIdx >= circuitStops.length) return;
+        [circuitStops[idx], circuitStops[newIdx]] = [circuitStops[newIdx], circuitStops[idx]];
+        circuitOptimized = false;
+        renderCircuitStops();
+      };
+
+      // Función: optimizar el circuito con TSP Greedy Nearest Neighbor
+      window.optimizeCircuit = function() {
+        if (circuitStops.length < 2) {
+          showToast('Selecciona una zona con al menos 2 guías con GPS para optimizar el circuito.', 'error');
+          return;
+        }
+
+        const btn = document.getElementById('btn-optimize-circuit');
+        if (btn) {
+          btn.textContent = 'Optimizando...';
+          (btn as HTMLButtonElement).disabled = true;
+        }
+
+        setTimeout(() => {
+          try {
+            const startCoords2 = getStartCoordinates();
+            let currentLat = startCoords2.lat;
+            let currentLon = startCoords2.lon;
+            const remaining = [...circuitStops];
+            const optimized: GuiaRow[] = [];
+
+            // TSP Greedy Nearest Neighbor desde el punto de salida
+            while (remaining.length > 0) {
+              let minDist = Infinity;
+              let closestIdx = 0;
+
+              for (let i = 0; i < remaining.length; i++) {
+                const lat = Number(remaining[i].gps_latitud);
+                const lon = Number(remaining[i].gps_longitud);
+                const dist = calculateDistance(currentLat, currentLon, lat, lon);
+                if (dist < minDist) {
+                  minDist = dist;
+                  closestIdx = i;
+                }
+              }
+
+              const chosen = remaining.splice(closestIdx, 1)[0];
+              optimized.push(chosen);
+              currentLat = Number(chosen.gps_latitud);
+              currentLon = Number(chosen.gps_longitud);
+            }
+
+            circuitStops = optimized;
+            circuitOptimized = true;
+            renderCircuitStops();
+
+            showToast(`Circuito optimizado: ${optimized.length} paradas ordenadas por cercanía desde el punto de salida.`, 'success');
+          } catch (err) {
+            console.error('Error optimizando circuito:', err);
+            showToast('Error al optimizar el circuito.', 'error');
+          } finally {
+            if (btn) {
+              btn.textContent = 'Optimizar Circuito';
+              (btn as HTMLButtonElement).disabled = false;
+            }
+          }
+        }, 50);
+      };
+
+      // Función: mostrar/ocultar mapa del circuito
+      window.togglePlannerRouteMap = function() {
+        if (!plannerRouteMapWrapper) return;
+        plannerMapVisible = !plannerMapVisible;
+
+        if (plannerMapVisible) {
+          plannerRouteMapWrapper.classList.remove('hidden');
+          if (btnToggleMapText) btnToggleMapText.textContent = 'Ocultar Mapa';
+          // Pequeño delay para que el div sea visible antes de inicializar Leaflet
+          setTimeout(() => renderCircuitMap(), 100);
+        } else {
+          plannerRouteMapWrapper.classList.add('hidden');
+          if (btnToggleMapText) btnToggleMapText.textContent = 'Ver Mapa';
+        }
+      };
+
+      // Función: renderizar el mapa Leaflet del circuito
+      function renderCircuitMap() {
+        if (!(window as any).L) return;
+        const L = (window as any).L;
+        const mapContainer = document.getElementById('planner-full-route-map');
+        if (!mapContainer) return;
+
+        // Destruir mapa previo si existe
+        if (plannerMapInstance) {
+          try { plannerMapInstance.remove(); } catch (_) {}
+          plannerMapInstance = null;
+        }
+        mapContainer.innerHTML = '';
+
+        const startCoords2 = getStartCoordinates();
+        const centerLat = circuitStops.length > 0 ? Number(circuitStops[0].gps_latitud) : startCoords2.lat;
+        const centerLon = circuitStops.length > 0 ? Number(circuitStops[0].gps_longitud) : startCoords2.lon;
+
+        plannerMapInstance = L.map(mapContainer, { zoomControl: true, attributionControl: false }).setView([centerLat, centerLon], 13);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19, attribution: ''
+        }).addTo(plannerMapInstance);
+
+        const allPoints: [number, number][] = [];
+
+        // Marcador de inicio
+        const startIcon = L.divIcon({
+          html: `<div style="width:22px;height:22px;border-radius:50%;background:#4f46e5;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center">
+                   <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                 </div>`,
+          className: '', iconSize: [22, 22], iconAnchor: [11, 11]
+        });
+        L.marker([startCoords2.lat, startCoords2.lon], { icon: startIcon })
+          .addTo(plannerMapInstance)
+          .bindPopup(`<b>Salida</b><br>${startCoords2.label}`);
+        allPoints.push([startCoords2.lat, startCoords2.lon]);
+
+        // Marcadores de paradas
+        circuitStops.forEach((stop, idx) => {
+          const lat = Number(stop.gps_latitud);
+          const lon = Number(stop.gps_longitud);
+          allPoints.push([lat, lon]);
+
+          const isLast = idx === circuitStops.length - 1;
+          const color = isLast ? '#f59e0b' : '#10b981';
+          const stopIcon = L.divIcon({
+            html: `<div style="width:24px;height:24px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:white">${idx + 1}</div>`,
+            className: '', iconSize: [24, 24], iconAnchor: [12, 12]
+          });
+
+          L.marker([lat, lon], { icon: stopIcon })
+            .addTo(plannerMapInstance)
+            .bindPopup(`<b>Parada ${idx + 1}</b><br>${stop.destinatario || ''}<br>Guía #${stop.id_guia}`);
+        });
+
+        // Polilínea de la ruta
+        if (allPoints.length > 1) {
+          L.polyline(allPoints, {
+            color: '#4f46e5', weight: 2.5, opacity: 0.75, dashArray: '6 4'
+          }).addTo(plannerMapInstance);
+
+          // Línea de retorno (bucle)
+          const isRoundTrip2 = (document.querySelector('input[name="circuit-type"]:checked') as HTMLInputElement)?.value === 'roundtrip';
+          if (isRoundTrip2 && circuitStops.length > 0) {
+            const last = circuitStops[circuitStops.length - 1];
+            L.polyline([
+              [Number(last.gps_latitud), Number(last.gps_longitud)],
+              [startCoords2.lat, startCoords2.lon]
+            ], { color: '#f59e0b', weight: 2, opacity: 0.5, dashArray: '4 6' }).addTo(plannerMapInstance);
+          }
+
+          plannerMapInstance.fitBounds(allPoints, { padding: [20, 20] });
+        }
+      }
+
+      // Función: seleccionar punto de inicio
+      window.selectStartLocation = function(name: string) {
+        if (plannerStartInput) {
+          plannerStartInput.value = name;
+        }
+        if (plannerMapVisible) renderCircuitMap();
+      };
+
+      // Función: guardar el circuito planificado en la BD
+      window.savePlannedRoute = async function(dispatchToRoute: boolean) {
+        if (circuitStops.length === 0) {
+          showToast('No hay paradas en el circuito. Selecciona una zona primero.', 'error');
+          return;
+        }
+
+        const driverId = plannerDriverSelect?.value;
+        if (!driverId) {
+          showToast('Selecciona un chofer para el circuito.', 'error');
+          return;
+        }
+
+        const zona = plannerZoneSelect?.value;
+        if (!zona) {
+          showToast('Selecciona una zona para el circuito.', 'error');
+          return;
+        }
+
+        const btn = document.getElementById(dispatchToRoute ? 'planner-save-btn' : 'planner-save-almacen-btn');
+        const origHtml = btn?.innerHTML || '';
+        if (btn) {
+          btn.innerHTML = '<span class="opacity-60">Guardando...</span>';
+          (btn as HTMLButtonElement).disabled = true;
+        }
+
+        try {
+          // Guardar orden de ruta y asignación de chofer para cada guía
+          const savePromises = circuitStops.map((stop, idx) =>
+            fetch('/api/guias/ruta', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id_guia: stop.id_guia,
+                chofer_asignado_id: parseInt(driverId, 10),
+                orden_ruta: idx + 1,
+                ruta_origen: getStartCoordinates().label,
+                ruta_destino: zona
+              })
+            })
+          );
+
+          const results = await Promise.allSettled(savePromises);
+          const errors = results.filter(r => r.status === 'rejected').length;
+
+          if (errors > 0) {
+            showToast(`${errors} guías no se pudieron guardar. Verifica la conexión.`, 'error');
+          } else {
+            const action = dispatchToRoute ? 'despachado a ruta' : 'guardado en almacén';
+            showToast(`Circuito de ${circuitStops.length} paradas ${action} exitosamente.`, 'success');
+
+            // Si es despacho a ruta, cambiar estado a "En ruta"
+            if (dispatchToRoute) {
+              const rutaPromises = circuitStops.map(stop =>
+                fetch(`/api/guias/${stop.id_guia}/estado`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ estado: 'En ruta' })
+                }).catch(() => {})
+              );
+              await Promise.allSettled(rutaPromises);
+            }
+
+            // Cerrar modal y refrescar datos
+            closeRoutePlannerModal();
+            await fetchData();
+          }
+        } catch (err) {
+          console.error('Error guardando circuito:', err);
+          showToast('Error al guardar el circuito. Intenta nuevamente.', 'error');
+        } finally {
+          if (btn) {
+            btn.innerHTML = origHtml;
+            (btn as HTMLButtonElement).disabled = false;
+          }
+        }
+      };
+
+      // Función: cerrar modal del planificador
+      function closeRoutePlannerModal() {
+        if (!routePlannerModal) return;
+        routePlannerModal.classList.add('hidden');
+        routePlannerModal.classList.remove('flex');
+        circuitStops = [];
+        if (plannerMapInstance) {
+          try { plannerMapInstance.remove(); } catch (_) {}
+          plannerMapInstance = null;
+        }
+        plannerMapVisible = false;
+      }
+
+      // Event listeners del planificador
+      if (plannerCloseBtn) plannerCloseBtn.addEventListener('click', closeRoutePlannerModal);
+      if (plannerCancelBtn) plannerCancelBtn.addEventListener('click', closeRoutePlannerModal);
+      if (routePlannerModal) {
+        routePlannerModal.addEventListener('click', (e) => {
+          if (e.target === routePlannerModal) closeRoutePlannerModal();
+        });
+      }
+
+      // Recalcular ETAs cuando cambian hora de inicio o tiempo de servicio
+      if (plannerStartTimeInput) plannerStartTimeInput.addEventListener('change', () => { if (circuitStops.length > 0) renderCircuitStops(); });
+      if (plannerServiceTimeSelect) plannerServiceTimeSelect.addEventListener('change', () => { if (circuitStops.length > 0) renderCircuitStops(); });
+      document.querySelectorAll('input[name="circuit-type"]').forEach(radio => {
+        radio.addEventListener('change', () => { if (circuitStops.length > 0) renderCircuitStops(); });
+      });
+
+      // Autocomplete del punto de salida
+      if (plannerStartInput) {
+        plannerStartInput.addEventListener('input', () => {
+          const val = plannerStartInput.value;
+          const clearBtn = document.getElementById('btn-clear-start-input');
+          if (clearBtn) clearBtn.classList.toggle('hidden', !val);
+
+          const dropdown = document.getElementById('start-autocomplete-dropdown');
+          if (!dropdown) return;
+          if (val.length < 2) { dropdown.classList.add('hidden'); return; }
+
+          const norm = normalizeText(val);
+          const matches = Object.keys(VENEZUELA_COORDS_MAP).filter(k => k.includes(norm) || norm.includes(k));
+
+          if (matches.length === 0) { dropdown.classList.add('hidden'); return; }
+
+          dropdown.innerHTML = matches.slice(0, 8).map(k =>
+            `<button type="button" class="w-full text-left px-3 py-2 text-xs text-slate-800 font-semibold hover:bg-indigo-50 hover:text-indigo-800 rounded-lg transition-colors" onclick="window.selectStartLocation('${k}')">${k.charAt(0).toUpperCase() + k.slice(1)}</button>`
+          ).join('');
+          dropdown.classList.remove('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+          const dropdown = document.getElementById('start-autocomplete-dropdown');
+          if (dropdown && !plannerStartInput.contains(e.target as Node) && !dropdown.contains(e.target as Node)) {
+            dropdown.classList.add('hidden');
+          }
+        });
+      }
+
+      const btnClearStartInput = document.getElementById('btn-clear-start-input');
+      if (btnClearStartInput) {
+        btnClearStartInput.addEventListener('click', () => {
+          if (plannerStartInput) plannerStartInput.value = '';
+          btnClearStartInput.classList.add('hidden');
+        });
+      }
+
+      // ============================================================
+      // FIN MOTOR PLANIFICADOR DE CIRCUITO
+      // ============================================================
+
       init();
+
     </script>
   </body>
 </html>

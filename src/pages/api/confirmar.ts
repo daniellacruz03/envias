@@ -32,9 +32,9 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    if (latitud === null && longitud === null && !direccion_referencia) {
+    if (latitud === null && longitud === null) {
       return new Response(
-        JSON.stringify({ success: false, message: 'Debes proporcionar tu ubicación GPS o tu dirección escrita' }),
+        JSON.stringify({ success: false, message: 'Debes proporcionar tu ubicación satelital GPS o pegar tus coordenadas' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
