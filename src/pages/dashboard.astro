@@ -6979,11 +6979,37 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         renderCircuitStops();
       };
 
-      // Algoritmo TSP con 2-Opt para eliminar cruces de ruta
+      // Algoritmo TSP con Agrupamiento Atómico y 2-Opt para eliminar cruces de ruta
       function solveDashboard2Opt(originLat: number, originLon: number, stops: GuiaRow[]): GuiaRow[] {
         if (stops.length <= 1) return stops;
-        let remaining = [...stops];
-        let tour: GuiaRow[] = [];
+        
+        // 1. Agrupar paradas colindantes (< 180m)
+        const clusters: { lat: number; lon: number; items: GuiaRow[] }[] = [];
+        const visited = new Set<number>();
+
+        for (let i = 0; i < stops.length; i++) {
+          if (visited.has(i)) continue;
+          const group: GuiaRow[] = [stops[i]];
+          visited.add(i);
+          const latI = Number(stops[i].gps_latitud);
+          const lonI = Number(stops[i].gps_longitud);
+
+          for (let j = i + 1; j < stops.length; j++) {
+            if (visited.has(j)) continue;
+            const latJ = Number(stops[j].gps_latitud);
+            const lonJ = Number(stops[j].gps_longitud);
+            const dist = calculateDistance(latI, lonI, latJ, lonJ);
+            if (dist < 0.18) {
+              group.push(stops[j]);
+              visited.add(j);
+            }
+          }
+          clusters.push({ lat: latI, lon: lonI, items: group });
+        }
+
+        // 2. Nearest Neighbor en clusters
+        let remaining = [...clusters];
+        let tour: { lat: number; lon: number; items: GuiaRow[] }[] = [];
         let currLat = originLat;
         let currLon = originLon;
 
@@ -6991,32 +7017,31 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           let bestIdx = 0;
           let bestDist = Infinity;
           for (let i = 0; i < remaining.length; i++) {
-            const lat = Number(remaining[i].gps_latitud);
-            const lon = Number(remaining[i].gps_longitud);
-            const d = calculateDistance(currLat, currLon, lat, lon);
+            const d = calculateDistance(currLat, currLon, remaining[i].lat, remaining[i].lon);
             if (d < bestDist) { bestDist = d; bestIdx = i; }
           }
           const next = remaining.splice(bestIdx, 1)[0];
           tour.push(next);
-          currLat = Number(next.gps_latitud);
-          currLon = Number(next.gps_longitud);
+          currLat = next.lat;
+          currLon = next.lon;
         }
 
+        // 3. Refinamiento 2-Opt
         let improved = true;
         let iterations = 0;
-        while (improved && iterations < 50) {
+        while (improved && iterations < 60) {
           improved = false;
           iterations++;
           for (let i = 0; i < tour.length - 1; i++) {
             for (let k = i + 1; k < tour.length; k++) {
-              const pALat = i === 0 ? originLat : Number(tour[i - 1].gps_latitud);
-              const pALon = i === 0 ? originLon : Number(tour[i - 1].gps_longitud);
-              const pBLat = Number(tour[i].gps_latitud);
-              const pBLon = Number(tour[i].gps_longitud);
-              const pCLat = Number(tour[k].gps_latitud);
-              const pCLon = Number(tour[k].gps_longitud);
-              const pDLat = k + 1 < tour.length ? Number(tour[k + 1].gps_latitud) : originLat;
-              const pDLon = k + 1 < tour.length ? Number(tour[k + 1].gps_longitud) : originLon;
+              const pALat = i === 0 ? originLat : tour[i - 1].lat;
+              const pALon = i === 0 ? originLon : tour[i - 1].lon;
+              const pBLat = tour[i].lat;
+              const pBLon = tour[i].lon;
+              const pCLat = tour[k].lat;
+              const pCLon = tour[k].lon;
+              const pDLat = k + 1 < tour.length ? tour[k + 1].lat : originLat;
+              const pDLon = k + 1 < tour.length ? tour[k + 1].lon : originLon;
 
               const dCurrent = calculateDistance(pALat, pALon, pBLat, pBLon) + calculateDistance(pCLat, pCLon, pDLat, pDLon);
               const dNew = calculateDistance(pALat, pALon, pCLat, pCLon) + calculateDistance(pBLat, pBLon, pDLat, pDLon);

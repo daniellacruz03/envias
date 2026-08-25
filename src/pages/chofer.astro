@@ -1837,6 +1837,38 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         'san carlos del zulia': [9.0089, -71.9278]
       };
 
+      var BARQUISIMETO_SECTORS_MAP = {
+        'las industrias': [10.0748, -69.3840],
+        'sidetur': [10.0748, -69.3840],
+        'magna partes': [10.0748, -69.3840],
+        'ruiz pineda': [10.0820, -69.3650],
+        'la salle': [10.0657, -69.3675],
+        'pastor oropeza': [10.0657, -69.3675],
+        'hogar canario': [10.0657, -69.3675],
+        'babilon': [10.0775, -69.3389],
+        'carrera 29': [10.0754, -69.3290],
+        'calle 37': [10.0754, -69.3290],
+        'calle 33': [10.0631, -69.3239],
+        'calle 26': [10.0645, -69.3170],
+        'carrera 17': [10.0631, -69.3239],
+        'carrera 18': [10.0645, -69.3170],
+        'fundalara': [10.0731, -69.2821],
+        'tacagua': [10.0731, -69.2821],
+        'rodeo grill': [10.0731, -69.2821],
+        'trinitarias': [10.0710, -69.2780],
+        'club hipico': [10.0710, -69.2780],
+        'los pinos': [10.0710, -69.2780],
+        'avenida lara': [10.0620, -69.2850],
+        'av lara': [10.0620, -69.2850],
+        'monte real': [10.0610, -69.2830],
+        'monterreal': [10.0610, -69.2830],
+        'calle rodeo': [10.0610, -69.2830],
+        'tiuna': [10.0610, -69.2830],
+        'residencias larenses': [10.0647, -69.3571],
+        'la miel': [9.7554, -69.1873],
+        'sarare': [9.7833, -69.1667]
+      };
+
       function normalizeGeoText(text) {
         if (!text) return '';
         return text
@@ -1855,6 +1887,12 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             return [lat, lng];
           }
         }
+        var searchTxt = (normalizeGeoText(guia.direccion_referencia) + ' ' + normalizeGeoText(guia.destinatario)).toLowerCase();
+        for (var sec in BARQUISIMETO_SECTORS_MAP) {
+          if (searchTxt.indexOf(sec) !== -1) {
+            return BARQUISIMETO_SECTORS_MAP[sec];
+          }
+        }
         var normCity = normalizeGeoText(guia.ciudad_destino);
         if (normCity && VENEZUELA_COORDS_MAP[normCity]) {
           return VENEZUELA_COORDS_MAP[normCity];
@@ -1864,15 +1902,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             return VENEZUELA_COORDS_MAP[key];
           }
         }
-        var normRef = normalizeGeoText(guia.direccion_referencia);
-        if (normRef) {
-          for (var k in VENEZUELA_COORDS_MAP) {
-            if (normRef.indexOf(k) !== -1) {
-              return VENEZUELA_COORDS_MAP[k];
-            }
-          }
-        }
-        return [10.0808, -69.3756]; // Fallback Barquisimeto
+        return [10.0808, -69.3756];
       }
 
       function haversineDistance(lat1, lon1, lat2, lon2) {
@@ -1885,48 +1915,79 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       }
 
-      // Algoritmo TSP 2-Opt para garantizar cero cruces de ruta
+      // Algoritmo TSP 2-Opt con agrupamiento atómico de paradas colindantes
       function solveTSPWith2Opt(origin, stops) {
         if (!stops || stops.length <= 1) return stops;
-        var remaining = stops.slice();
+        
+        // 1. Agrupar puntos colindantes (< 150m) para no separarlos jamás
+        var clusters = [];
+        var visited = {};
+        for (var i = 0; i < stops.length; i++) {
+          if (visited[i]) continue;
+          var group = [stops[i]];
+          visited[i] = true;
+          var cI = getGuiaCoords(stops[i]);
+          for (var j = i + 1; j < stops.length; j++) {
+            if (visited[j]) continue;
+            var cJ = getGuiaCoords(stops[j]);
+            var d = haversineDistance(cI[0], cI[1], cJ[0], cJ[1]);
+            if (d < 0.18) { // Menos de 180 metros
+              group.push(stops[j]);
+              visited[j] = true;
+            }
+          }
+          clusters.push({ coords: cI, items: group });
+        }
+
+        // 2. Nearest Neighbor en representantes de cluster
+        var remaining = clusters.slice();
         var tour = [];
         var curr = origin;
         while (remaining.length > 0) {
           var bestIdx = 0;
           var bestDist = Infinity;
-          for (var i = 0; i < remaining.length; i++) {
-            var c = getGuiaCoords(remaining[i]);
-            var d = haversineDistance(curr[0], curr[1], c[0], c[1]);
-            if (d < bestDist) { bestDist = d; bestIdx = i; }
+          for (var r = 0; r < remaining.length; r++) {
+            var c = remaining[r].coords;
+            var dist = haversineDistance(curr[0], curr[1], c[0], c[1]);
+            if (dist < bestDist) { bestDist = dist; bestIdx = r; }
           }
           var next = remaining.splice(bestIdx, 1)[0];
           tour.push(next);
-          curr = getGuiaCoords(next);
+          curr = next.coords;
         }
+
+        // 3. Refinamiento 2-Opt para garantizar cero cruces
         var improved = true;
         var iterations = 0;
-        while (improved && iterations < 50) {
+        while (improved && iterations < 60) {
           improved = false;
           iterations++;
-          for (var i = 0; i < tour.length - 1; i++) {
-            for (var k = i + 1; k < tour.length; k++) {
-              var pA = i === 0 ? origin : getGuiaCoords(tour[i - 1]);
-              var pB = getGuiaCoords(tour[i]);
-              var pC = getGuiaCoords(tour[k]);
-              var pD = k + 1 < tour.length ? getGuiaCoords(tour[k + 1]) : origin;
+          for (var a = 0; a < tour.length - 1; a++) {
+            for (var b = a + 1; b < tour.length; b++) {
+              var pA = a === 0 ? origin : tour[a - 1].coords;
+              var pB = tour[a].coords;
+              var pC = tour[b].coords;
+              var pD = b + 1 < tour.length ? tour[b + 1].coords : origin;
               var dCurrent = haversineDistance(pA[0], pA[1], pB[0], pB[1]) + haversineDistance(pC[0], pC[1], pD[0], pD[1]);
               var dNew = haversineDistance(pA[0], pA[1], pC[0], pC[1]) + haversineDistance(pB[0], pB[1], pD[0], pD[1]);
               if (dNew < dCurrent - 0.001) {
-                var sub = tour.slice(i, k + 1).reverse();
-                tour.splice(i, k - i + 1);
-                for (var s = 0; s < sub.length; s++) { tour.splice(i + s, 0, sub[s]); }
+                var sub = tour.slice(a, b + 1).reverse();
+                tour.splice(a, b - a + 1);
+                for (var s = 0; s < sub.length; s++) { tour.splice(a + s, 0, sub[s]); }
                 improved = true;
               }
             }
           }
         }
-        return tour;
+
+        // 4. Aplanar de vuelta a lista de guías ordenadas
+        var finalStops = [];
+        tour.forEach(function(cl) {
+          cl.items.forEach(function(item) { finalStops.push(item); });
+        });
+        return finalStops;
       }
+
 
       // Consulta de geometría vial real vía OSRM
       async function fetchOSRMRouteGeometry(waypoints) {
