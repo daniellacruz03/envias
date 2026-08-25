@@ -1616,10 +1616,13 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
                     '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.961.947 3.224.947 3.182 0 5.768-2.586 5.768-5.766 0-3.18-2.586-5.766-5.766-5.766zm9.969 5.828c0 5.518-4.482 10-10 10-1.748 0-3.385-.45-4.818-1.237l-5.182 1.409 1.433-5.068c-.89-1.488-1.433-3.232-1.433-5.104 0-5.518 4.482-10 10-10s10 4.482 10 10z"/></svg>' +
                     '<span>WhatsApp</span>' +
                   '</a>' +
-                  '<button type="button" onclick="window.focusStopOnMap(\'' + nextPendingGuia.id_guia + '\')" class="tap-active py-2 px-2.5 rounded-xl bg-indigo-600/80 hover:bg-indigo-600 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all border border-indigo-400/30 cursor-pointer">' +
+                  (nextHasCoords ? '<button type="button" onclick="window.focusStopOnMap(\'' + nextPendingGuia.id_guia + '\')" class="tap-active py-2 px-2.5 rounded-xl bg-indigo-600/80 hover:bg-indigo-600 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all border border-indigo-400/30 cursor-pointer">' +
                     '<svg class="w-3.5 h-3.5 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
                     '<span>Ver en Mapa</span>' +
-                  '</button>' +
+                  '</button>' : '<div class="py-2 px-2.5 rounded-xl bg-amber-500/20 text-amber-200 border border-amber-400/30 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 select-none">' +
+                      '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>' +
+                      '<span>Sin GPS</span>' +
+                    '</div>') +
                   '<button type="button" onclick="window.openDeliveryModal(\'' + nextPendingGuia.id_guia + '\', \'' + nextDestEscaped + '\', \'' + nextDirEscaped + '\', ' + nextStopNum + ')" class="tap-active py-2 px-2.5 rounded-xl bg-white text-slate-950 hover:bg-slate-100 font-extrabold text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer">' +
                     '<svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>' +
                     '<span>Entregar</span>' +
@@ -1644,6 +1647,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           var isDelivered = guia.estado === 'Entregado';
           var isIncident = guia.estado === 'No entregado';
           var isPending = !isDelivered && !isIncident;
+          var hasGps = !!getGuiaCoords(guia);
 
           var phoneClean = formatPhoneForWhatsApp(guia.telefono_principal);
           var msgWhatsApp = encodeURIComponent('Hola ' + guia.destinatario + ', soy tu chofer de Envías C.A. Voy en camino a entregarte tu paquete (Guía #' + guia.id_guia + ').');
@@ -1661,10 +1665,23 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           var destEscaped = (guia.destinatario || '').replace(/'/g, "\\'");
           var dirEscaped = (guia.direccion_referencia || '').replace(/'/g, "\\'");
 
+          var mapActionHtml = '';
+          if (hasGps) {
+            mapActionHtml = '<button type="button" onclick="window.focusStopOnMap(\'' + guia.id_guia + '\')" class="tap-active p-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer">' +
+              '<svg class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
+              '<span>Ver en Mapa</span>' +
+            '</button>';
+          } else {
+            mapActionHtml = '<div class="p-2.5 rounded-xl bg-amber-50/70 text-amber-800 border border-amber-200/60 text-center font-bold text-[10px] flex items-center justify-center gap-1.5 select-none">' +
+              '<span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>' +
+              '<span>Sin GPS</span>' +
+            '</div>';
+          }
+
           return '<div class="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm space-y-3 transition-all ' + (isDelivered ? 'opacity-75 bg-slate-50/50' : '') + '">' +
             '<div class="flex items-center justify-between border-b border-slate-100 pb-2.5">' +
               '<div class="flex items-center gap-2">' +
-                '<div class="w-7 h-7 rounded-xl ' + (isDelivered ? 'bg-emerald-600' : isIncident ? 'bg-rose-600' : 'bg-slate-900') + ' text-white flex items-center justify-center font-extrabold text-xs shrink-0 shadow-xs">' +
+                '<div class="w-7 h-7 rounded-xl ' + (isDelivered ? 'bg-emerald-600' : isIncident ? 'bg-rose-600' : hasGps ? 'bg-slate-900' : 'bg-slate-700') + ' text-white flex items-center justify-center font-extrabold text-xs shrink-0 shadow-xs">' +
                   '#' + stopNum +
                 '</div>' +
                 '<div>' +
@@ -1672,7 +1689,10 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
                   '<span class="text-[10px] text-slate-400 font-medium ml-1">&bull; ' + (guia.piezas || 1) + ' pza(s)</span>' +
                 '</div>' +
               '</div>' +
-              badgeStatusHtml +
+              '<div class="flex items-center gap-1.5">' +
+                (!hasGps ? '<span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[9px] font-bold border border-slate-200">Sin Coordenadas</span>' : '') +
+                badgeStatusHtml +
+              '</div>' +
             '</div>' +
             '<div class="space-y-1 text-xs">' +
               '<p class="font-bold text-slate-900 text-sm leading-snug">' + guia.destinatario + '</p>' +
@@ -1687,10 +1707,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
                 '<svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.961.947 3.224.947 3.182 0 5.768-2.586 5.768-5.766 0-3.18-2.586-5.766-5.766-5.766zm9.969 5.828c0 5.518-4.482 10-10 10-1.748 0-3.385-.45-4.818-1.237l-5.182 1.409 1.433-5.068c-.89-1.488-1.433-3.232-1.433-5.104 0-5.518 4.482-10 10-10s10 4.482 10 10z"/></svg>' +
                 '<span>WhatsApp</span>' +
               '</a>' +
-              '<button type="button" onclick="window.focusStopOnMap(\'' + guia.id_guia + '\')" class="tap-active p-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer">' +
-                '<svg class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
-                '<span>Ver en Mapa</span>' +
-              '</button>' +
+              mapActionHtml +
               (isPending ?
                 '<button type="button" onclick="window.openDeliveryModal(\'' + guia.id_guia + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ')" class="tap-active p-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-center font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs">' +
                   '<svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>' +
@@ -1879,7 +1896,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       }
 
       function getGuiaCoords(guia) {
-        if (!guia) return [10.0808, -69.3756];
+        if (!guia) return null;
         if (guia.gps_latitud && guia.gps_longitud) {
           var lat = parseFloat(guia.gps_latitud);
           var lng = parseFloat(guia.gps_longitud);
@@ -1887,22 +1904,8 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             return [lat, lng];
           }
         }
-        var searchTxt = (normalizeGeoText(guia.direccion_referencia) + ' ' + normalizeGeoText(guia.destinatario)).toLowerCase();
-        for (var sec in BARQUISIMETO_SECTORS_MAP) {
-          if (searchTxt.indexOf(sec) !== -1) {
-            return BARQUISIMETO_SECTORS_MAP[sec];
-          }
-        }
-        var normCity = normalizeGeoText(guia.ciudad_destino);
-        if (normCity && VENEZUELA_COORDS_MAP[normCity]) {
-          return VENEZUELA_COORDS_MAP[normCity];
-        }
-        for (var key in VENEZUELA_COORDS_MAP) {
-          if (normCity && (normCity.indexOf(key) !== -1 || key.indexOf(normCity) !== -1)) {
-            return VENEZUELA_COORDS_MAP[key];
-          }
-        }
-        return [10.0808, -69.3756];
+        // Estricto: Cero coordenadas inventadas. Solo coordenadas explícitas enviadas por cliente o logística.
+        return null;
       }
 
       function haversineDistance(lat1, lon1, lat2, lon2) {
@@ -1915,31 +1918,44 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       }
 
-      // Algoritmo TSP 2-Opt con agrupamiento atómico de paradas colindantes
+      // Algoritmo TSP 2-Opt que optimiza exclusivamente paradas con GPS real
       function solveTSPWith2Opt(origin, stops) {
         if (!stops || stops.length <= 1) return stops;
         
-        // 1. Agrupar puntos colindantes (< 150m) para no separarlos jamás
+        var withGps = [];
+        var withoutGps = [];
+        
+        stops.forEach(function(g) {
+          if (getGuiaCoords(g)) {
+            withGps.push(g);
+          } else {
+            withoutGps.push(g);
+          }
+        });
+
+        if (withGps.length <= 1) return stops;
+
+        // 1. Agrupar puntos colindantes (< 180m)
         var clusters = [];
         var visited = {};
-        for (var i = 0; i < stops.length; i++) {
+        for (var i = 0; i < withGps.length; i++) {
           if (visited[i]) continue;
-          var group = [stops[i]];
+          var group = [withGps[i]];
           visited[i] = true;
-          var cI = getGuiaCoords(stops[i]);
-          for (var j = i + 1; j < stops.length; j++) {
+          var cI = getGuiaCoords(withGps[i]);
+          for (var j = i + 1; j < withGps.length; j++) {
             if (visited[j]) continue;
-            var cJ = getGuiaCoords(stops[j]);
+            var cJ = getGuiaCoords(withGps[j]);
             var d = haversineDistance(cI[0], cI[1], cJ[0], cJ[1]);
-            if (d < 0.18) { // Menos de 180 metros
-              group.push(stops[j]);
+            if (d < 0.18) {
+              group.push(withGps[j]);
               visited[j] = true;
             }
           }
           clusters.push({ coords: cI, items: group });
         }
 
-        // 2. Nearest Neighbor en representantes de cluster
+        // 2. Nearest Neighbor en clusters con GPS
         var remaining = clusters.slice();
         var tour = [];
         var curr = origin;
@@ -1956,7 +1972,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           curr = next.coords;
         }
 
-        // 3. Refinamiento 2-Opt para garantizar cero cruces
+        // 3. Refinamiento 2-Opt
         var improved = true;
         var iterations = 0;
         while (improved && iterations < 60) {
@@ -1980,13 +1996,15 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           }
         }
 
-        // 4. Aplanar de vuelta a lista de guías ordenadas
+        // 4. Aplanar lista con GPS + añadir guías sin GPS al final
         var finalStops = [];
         tour.forEach(function(cl) {
           cl.items.forEach(function(item) { finalStops.push(item); });
         });
+        withoutGps.forEach(function(item) { finalStops.push(item); });
         return finalStops;
       }
+
 
 
       // Consulta de geometría vial real vía OSRM
