@@ -1623,29 +1623,25 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               '</div>' +
               (guia.hora_disponible ? '<p class="text-[10px] text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded-md inline-block">Horario: Hasta las ' + guia.hora_disponible + '</p>' : '') +
             '</div>' +
-            '<div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-1 border-t border-slate-100">' +
-              '<a href="' + linkWhatsApp + '" target="_blank" class="tap-active p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-center font-bold text-[11px] flex items-center justify-center gap-1 transition-colors">' +
+            '<div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100">' +
+              '<a href="' + linkWhatsApp + '" target="_blank" class="tap-active p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors">' +
                 '<svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.961.947 3.224.947 3.182 0 5.768-2.586 5.768-5.766 0-3.18-2.586-5.766-5.766-5.766zm9.969 5.828c0 5.518-4.482 10-10 10-1.748 0-3.385-.45-4.818-1.237l-5.182 1.409 1.433-5.068c-.89-1.488-1.433-3.232-1.433-5.104 0-5.518 4.482-10 10-10s10 4.482 10 10z"/></svg>' +
                 '<span>WhatsApp</span>' +
               '</a>' +
-              '<a href="' + gmapsUrl + '" target="_blank" class="tap-active p-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-center font-bold text-[11px] flex items-center justify-center gap-1 transition-colors">' +
-                '<svg class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>' +
-                '<span>Google Maps</span>' +
-              '</a>' +
-              '<a href="' + wazeUrl + '" target="_blank" class="tap-active p-2 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-center font-bold text-[11px] flex items-center justify-center gap-1 transition-colors">' +
-                '<svg class="w-3.5 h-3.5 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>' +
-                '<span>Waze</span>' +
-              '</a>' +
+              '<button type="button" onclick="window.focusStopOnMap(\'' + guia.id_guia + '\')" class="tap-active p-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer">' +
+                '<svg class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
+                '<span>Ver en Mapa</span>' +
+              '</button>' +
               (isPending ?
-                '<button type="button" onclick="window.openDeliveryModal(\'' + guia.id_guia + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ')" class="tap-active p-2 rounded-xl bg-slate-900 hover:bg-black text-white text-center font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-xs">' +
+                '<button type="button" onclick="window.openDeliveryModal(\'' + guia.id_guia + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ')" class="tap-active p-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-center font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs">' +
                   '<svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>' +
                   '<span>Entregar</span>' +
                 '</button>' : (isDelivered && guia.comprobante_url ?
-                '<button type="button" onclick="window.openLightbox(\'' + guia.comprobante_url + '\', \'Guía #' + guia.id_guia + '\', \'' + destEscaped + '\', \'' + guia.id_guia + '\')" class="tap-active p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-center font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer">' +
+                '<button type="button" onclick="window.openLightbox(\'' + guia.comprobante_url + '\', \'Guía #' + guia.id_guia + '\', \'' + destEscaped + '\', \'' + guia.id_guia + '\')" class="tap-active p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer">' +
                   '<svg class="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>' +
                   '<span>Comprobante</span>' +
                 '</button>' :
-                '<button type="button" onclick="window.openDeliveryModal(\'' + guia.id_guia + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ')" class="tap-active p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-center font-bold text-[11px] flex items-center justify-center gap-1 cursor-pointer">' +
+                '<button type="button" onclick="window.openDeliveryModal(\'' + guia.id_guia + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ')" class="tap-active p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer">' +
                   '<span>Actualizar</span>' +
                 '</button>'
               )) +
@@ -1688,6 +1684,136 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         renderCards();
       });
 
+      // ----------------------------------------------------
+      // DICCIONARIO GEO Y MOTOR DEL MAPA DEL CHOFER
+      // ----------------------------------------------------
+      var map = null;
+      var markersLayer = null;
+      var routePolyline = null;
+      var isMapVisible = true;
+      var markersByGuiaId = {};
+
+      var VENEZUELA_COORDS_MAP = {
+        'barquisimeto': [10.0808, -69.3756],
+        'sede principal barquisimeto': [10.0808, -69.3756],
+        'sede barquisimeto': [10.0808, -69.3756],
+        'principal barquisimeto': [10.0808, -69.3756],
+        'retorno barquisimeto': [10.0808, -69.3756],
+        'retorno a sede principal barquisimeto': [10.0808, -69.3756],
+        'caracas': [10.4934, -66.9299],
+        'sede caracas': [10.4934, -66.9299],
+        'valencia': [10.1620, -68.0077],
+        'maracaibo': [10.6544, -71.6385],
+        'maracay': [10.2469, -67.5958],
+        'puerto ordaz': [8.3000, -62.7333],
+        'san felix': [8.2667, -62.6167],
+        'ciudad bolivar': [8.1220, -63.5497],
+        'maturin': [9.7469, -63.1832],
+        'barcelona': [10.1339, -64.6861],
+        'puerto la cruz': [10.2138, -64.6320],
+        'lecheria': [10.1667, -64.6833],
+        'anaco': [9.4333, -64.4833],
+        'cantaura': [9.3000, -64.3667],
+        'el tigre': [8.8889, -64.2500],
+        'cumana': [10.4536, -64.1750],
+        'merida': [8.5738, -71.1851],
+        'el vigia': [8.6250, -71.6500],
+        'ejido': [8.5500, -71.2333],
+        'tovar': [8.3380, -71.7560],
+        'santa cruz de mora': [8.3833, -71.5833],
+        'nueva bolivia': [9.0833, -71.0500],
+        'tucani': [8.7667, -71.2833],
+        'santa elena de arenales': [8.8500, -71.4500],
+        'san cristobal': [7.7669, -72.2250],
+        'tariba': [7.8208, -72.2364],
+        'palmira': [7.7500, -72.3833],
+        'san juan de colon': [8.0322, -72.2747],
+        'la fria': [8.2167, -72.2500],
+        'coloncito': [8.1667, -72.0833],
+        'ureña': [7.9167, -72.4333],
+        'san antonio del tachira': [7.8167, -72.4500],
+        'rubio': [7.7000, -72.3500],
+        'el piñal': [7.9000, -71.6833],
+        'la pedrera': [7.9333, -71.5500],
+        'barinas': [8.6226, -70.2075],
+        'socopo': [8.2333, -70.8167],
+        'sabaneta': [8.7500, -70.0000],
+        'santa barbara': [7.8076, -71.1679],
+        'valera': [9.3178, -70.6036],
+        'trujillo': [9.3664, -70.4356],
+        'bocono': [9.2500, -70.2667],
+        'carache': [9.6167, -70.2333],
+        'sabana de mendoza': [9.4500, -70.7833],
+        'acarigua': [9.5545, -69.2006],
+        'araure': [9.5703, -69.2189],
+        'guanare': [9.0439, -69.7421],
+        'guanarito': [8.7000, -69.2000],
+        'ospino': [9.3000, -69.4500],
+        'san felipe': [10.3397, -68.7425],
+        'chivacoa': [10.1667, -68.9000],
+        'yaritagua': [10.0763, -69.1272],
+        'nirgua': [10.1554, -68.5713],
+        'san carlos': [9.6694, -68.5752],
+        'tinaquillo': [9.9167, -68.3000],
+        'tinaco': [9.7167, -68.4000],
+        'coro': [11.4045, -69.6734],
+        'punto fijo': [11.6956, -70.1996],
+        'cabudare': [10.0333, -69.2667],
+        'carora': [10.1755, -70.0827],
+        'quibor': [9.9333, -69.6167],
+        'el tocuyo': [9.7833, -69.8000],
+        'sanare': [9.7500, -69.6500],
+        'sarare': [9.7833, -69.1667],
+        'cabimas': [10.3925, -71.4547],
+        'ciudad ojeda': [10.1997, -71.3063],
+        'bachaquero': [9.9333, -71.1167],
+        'mene grande': [9.8167, -70.9333],
+        'santa rita': [10.5333, -71.5167],
+        'san francisco': [10.6057, -71.6548],
+        'san francisco zulia': [10.6057, -71.6548],
+        'caja seca': [8.8167, -71.6667],
+        'santa barbara del zulia': [9.1250, -71.1667],
+        'san carlos del zulia': [9.0089, -71.9278]
+      };
+
+      function normalizeGeoText(text) {
+        if (!text) return '';
+        return text
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .trim();
+      }
+
+      function getGuiaCoords(guia) {
+        if (!guia) return null;
+        if (guia.gps_latitud && guia.gps_longitud) {
+          var lat = parseFloat(guia.gps_latitud);
+          var lng = parseFloat(guia.gps_longitud);
+          if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+            return [lat, lng];
+          }
+        }
+        var normCity = normalizeGeoText(guia.ciudad_destino);
+        if (normCity && VENEZUELA_COORDS_MAP[normCity]) {
+          return VENEZUELA_COORDS_MAP[normCity];
+        }
+        for (var key in VENEZUELA_COORDS_MAP) {
+          if (normCity && (normCity.indexOf(key) !== -1 || key.indexOf(normCity) !== -1)) {
+            return VENEZUELA_COORDS_MAP[key];
+          }
+        }
+        var normRef = normalizeGeoText(guia.direccion_referencia);
+        if (normRef) {
+          for (var k in VENEZUELA_COORDS_MAP) {
+            if (normRef.indexOf(k) !== -1) {
+              return VENEZUELA_COORDS_MAP[k];
+            }
+          }
+        }
+        return [10.0808, -69.3756]; // Fallback Barquisimeto
+      }
+
       // Inicialización segura del mapa Leaflet
       function initMap() {
         try {
@@ -1711,42 +1837,114 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       function updateMapMarkers() {
         if (!map || !markersLayer || typeof L === 'undefined') return;
         markersLayer.clearLayers();
+        markersByGuiaId = {};
+
+        var sortedGuias = (guiasData || []).slice().sort(function(a, b) {
+          var ordA = a.orden_ruta && a.orden_ruta > 0 ? a.orden_ruta : 9999;
+          var ordB = b.orden_ruta && b.orden_ruta > 0 ? b.orden_ruta : 9999;
+          return ordA - ordB;
+        });
+
+        var startLabel = (sortedGuias[0] && sortedGuias[0].ruta_origen) ? sortedGuias[0].ruta_origen : 'Sede Principal Barquisimeto';
+        var endLabel = (sortedGuias[0] && sortedGuias[0].ruta_destino) ? sortedGuias[0].ruta_destino : 'Retorno a Sede Principal Barquisimeto';
+
+        // Actualizar textos del banner de itinerario
+        var routeStartText = document.getElementById('route-start-text');
+        var routeEndText = document.getElementById('route-end-text');
+        var routeStopsCountText = document.getElementById('route-stops-count-text');
+        if (routeStartText) routeStartText.textContent = startLabel;
+        if (routeEndText) routeEndText.textContent = endLabel;
+        if (routeStopsCountText) routeStopsCountText.textContent = sortedGuias.length + ' parada(s)';
 
         var latLngs = [];
-        guiasData.forEach(function(g, idx) {
-          if (g.gps_confirmado && g.gps_latitud && g.gps_longitud) {
-            var lat = parseFloat(g.gps_latitud);
-            var lng = parseFloat(g.gps_longitud);
-            if (!isNaN(lat) && !isNaN(lng)) {
-              var stopNum = g.orden_ruta && g.orden_ruta > 0 ? g.orden_ruta : (idx + 1);
-              var isDelivered = g.estado === 'Entregado';
-              var isIncident = g.estado === 'No entregado';
-              var bgColor = isDelivered ? '#059669' : isIncident ? '#e11d48' : '#0f172a';
 
-              var iconHtml = '<div style="background:' + bgColor + ';width:28px;height:28px;border-radius:50%;border:2px solid white;color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;box-shadow:0 2px 6px rgba(0,0,0,0.3);">' +
-                  stopNum +
-                '</div>';
-              var icon = L.divIcon({ html: iconHtml, className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
-              var marker = L.marker([lat, lng], { icon: icon }).addTo(markersLayer);
-              marker.bindPopup('<b>Parada #' + stopNum + '</b><br/>Guía #' + g.id_guia + '<br/>' + g.destinatario);
-              latLngs.push([lat, lng]);
-            }
+        // 1. Marcador de Salida / Almacén (Hub)
+        var startCoords = VENEZUELA_COORDS_MAP[normalizeGeoText(startLabel)] || [10.0808, -69.3756];
+        var hubIcon = L.divIcon({
+          html: '<div style="background:#4338ca;width:30px;height:30px;border-radius:10px;border:2.5px solid white;color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;box-shadow:0 3px 8px rgba(0,0,0,0.3);">' +
+                  '<svg style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>' +
+                '</div>',
+          className: '',
+          iconSize: [30, 30],
+          iconAnchor: [15, 15]
+        });
+        var startMarker = L.marker(startCoords, { icon: hubIcon }).addTo(markersLayer);
+        startMarker.bindPopup('<div style="font-family:inherit;font-size:12px;"><b style="color:#4338ca;">Punto de Salida</b><br/>' + startLabel + '</div>');
+        latLngs.push(startCoords);
+
+        // 2. Marcadores de las paradas en orden del circuito
+        sortedGuias.forEach(function(g, idx) {
+          var coords = getGuiaCoords(g);
+          if (coords) {
+            var stopNum = g.orden_ruta && g.orden_ruta > 0 ? g.orden_ruta : (idx + 1);
+            var isDelivered = g.estado === 'Entregado';
+            var isIncident = g.estado === 'No entregado';
+            var bgColor = isDelivered ? '#059669' : isIncident ? '#e11d48' : '#0f172a';
+
+            var iconHtml = '<div style="background:' + bgColor + ';width:28px;height:28px;border-radius:50%;border:2px solid white;color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;box-shadow:0 2px 6px rgba(0,0,0,0.3);">' +
+                stopNum +
+              '</div>';
+            var icon = L.divIcon({ html: iconHtml, className: '', iconSize: [28, 28], iconAnchor: [14, 14] });
+            var marker = L.marker(coords, { icon: icon }).addTo(markersLayer);
+
+            var popupContent = '<div style="font-family:inherit;font-size:12px;min-width:160px;">' +
+              '<div style="font-weight:800;color:#0f172a;margin-bottom:2px;">Parada #' + stopNum + ' &bull; Guía #' + g.id_guia + '</div>' +
+              '<div style="font-weight:700;color:#4338ca;">' + (g.destinatario || 'Destinatario') + '</div>' +
+              '<div style="font-size:11px;color:#64748b;margin-top:2px;">' + (g.ciudad_destino || '') + (g.direccion_referencia ? ' &bull; ' + g.direccion_referencia : '') + '</div>' +
+              '<div style="margin-top:6px;"><span style="background:' + (isDelivered ? '#ecfdf5;color:#065f46;' : isIncident ? '#fff1f2;color:#9f1239;' : '#f8fafc;color:#334155;') + 'padding:2px 6px;border-radius:6px;font-weight:700;font-size:10px;border:1px solid #cbd5e1;">' + (g.estado || 'Pendiente') + '</span></div>' +
+            '</div>';
+
+            marker.bindPopup(popupContent);
+            markersByGuiaId[g.id_guia] = { marker: marker, latLng: coords };
+            latLngs.push(coords);
           }
         });
 
+        // 3. Conexión de retorno si es circuito cerrado
+        var normEnd = normalizeGeoText(endLabel);
+        if (normEnd.indexOf('retorno') !== -1 || normEnd.indexOf('sede') !== -1 || normEnd.indexOf('barquisimeto') !== -1) {
+          latLngs.push(startCoords);
+        }
+
+        // 4. Polilínea del circuito
         if (routePolyline) {
           map.removeLayer(routePolyline);
           routePolyline = null;
         }
 
         if (latLngs.length > 1) {
-          routePolyline = L.polyline(latLngs, { color: '#4f46e5', weight: 3, opacity: 0.8, dashArray: '6, 6' }).addTo(map);
+          routePolyline = L.polyline(latLngs, { color: '#4f46e5', weight: 3.5, opacity: 0.85, dashArray: '6, 6' }).addTo(map);
         }
 
         if (latLngs.length > 0) {
-          map.fitBounds(L.latLngBounds(latLngs), { padding: [30, 30] });
+          map.fitBounds(L.latLngBounds(latLngs), { padding: [35, 35] });
         }
       }
+
+      // Función interactiva para centrar y abrir popup de parada desde tarjeta
+      window.focusStopOnMap = function(guiaId) {
+        var item = markersByGuiaId[guiaId];
+        var mapWrapper = document.getElementById('map-wrapper');
+        var toggleMapText = document.getElementById('toggle-map-text');
+
+        if (!isMapVisible && mapWrapper) {
+          isMapVisible = true;
+          mapWrapper.classList.remove('hidden');
+          if (toggleMapText) toggleMapText.textContent = 'Ocultar Mapa';
+          if (map) map.invalidateSize();
+        }
+
+        if (mapWrapper) {
+          mapWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        if (map && item) {
+          setTimeout(function() {
+            map.setView(item.latLng, 15, { animate: true });
+            item.marker.openPopup();
+          }, 300);
+        }
+      };
 
       // Toggle Mapa
       var toggleMapBtn = document.getElementById('toggle-map-btn');
@@ -1773,6 +1971,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           updateMapMarkers();
         });
       }
+
 
       // ====================================================
       // MÓDULO 4: LIGHTBOX
