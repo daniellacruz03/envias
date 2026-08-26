@@ -428,16 +428,16 @@ const catalogoCobertura = getCatalogoParaCliente();
 
     function validarZona(lat, lng) {
       if (lat < 0.6 || lat > 12.5 || lng < -73.5 || lng > -59.5)
-        return { zona: 'ROJO', mensaje: 'Ubicacion fuera de Venezuela. Envias C.A. solo opera a nivel nacional.' };
+        return { zona: 'ROJO', mensaje: 'Ubicacion fuera de Venezuela. Envias C.A. solo opera en territorio nacional.' };
       const hint = (guiaData.ciudad_destino || '').toLowerCase().trim();
       let ciudades = [...catalogoCobertura];
       if (hint) ciudades.sort((a,b) => (a.nombre.toLowerCase().includes(hint)?-1:0) - (b.nombre.toLowerCase().includes(hint)?-1:0));
       let mejor = null, dist = Infinity;
       for (const c of ciudades) { const d = haversineKm(lat,lng,c.lat,c.lng); if(d<dist){dist=d;mejor=c;} }
-      if (!mejor) return { zona: 'ROJO', mensaje: 'No se pudo determinar la zona.' };
+      if (!mejor) return { zona: 'AMARILLO', mensaje: 'Ubicacion registrada en Venezuela.' };
       if (dist <= mejor.radio) return { zona: 'VERDE', mensaje: `Cobertura confirmada en ${mejor.nombre} (${mejor.region}).` };
-      if (dist <= mejor.radio * FACTOR_AMARILLO) return { zona: 'AMARILLO', mensaje: `Zona especial cerca de ${mejor.nombre}, sujeta a validacion.` };
-      return { zona: 'ROJO', mensaje: `Fuera de cobertura. Ciudad mas cercana: ${mejor.nombre} (${Math.round(dist)} km).` };
+      if (dist <= mejor.radio * FACTOR_AMARILLO) return { zona: 'AMARILLO', mensaje: `Zona especial cerca de ${mejor.nombre} (${Math.round(dist)} km).` };
+      return { zona: 'AMARILLO', mensaje: `Ubicacion registrada en territorio nacional cerca de ${mejor.nombre} (${Math.round(dist)} km).` };
     }
 
     function updateCoberturaUI(res) {
@@ -469,11 +469,11 @@ const catalogoCobertura = getCatalogoParaCliente();
 
       } else {
         card.classList.add('bg-red-50','border-red-200','text-red-900');
-        badge.className='text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-200 text-red-800 transition-all duration-300'; badge.textContent='SIN COBERTURA';
+        badge.className='text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-200 text-red-800 transition-all duration-300'; badge.textContent='FUERA DE VENEZUELA';
         msg.className='text-[11px] leading-snug pl-6 font-medium text-red-700';
         if(icon) icon.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>`;
         if(row){row.classList.remove('text-emerald-800','text-amber-800');row.classList.add('text-red-800');}
-        disableSubmit('Ubicacion fuera de la zona de cobertura.');
+        disableSubmit('Ubicacion fuera del territorio nacional de Venezuela.');
       }
     }
 

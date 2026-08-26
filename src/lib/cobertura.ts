@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ============================================================
  * MODULO DE COBERTURA GIS � ENVIAS C.A.
  * src/lib/cobertura.ts
@@ -53,10 +53,18 @@ export const CIUDADES_COBERTURA: CiudadCobertura[] = [
   { nombre: 'La Miel', lat: 10.0950, lng: -69.4150, region: 'Lara', ruta: 'Occidente R1', radioUrbanKm: 3 },
   { nombre: 'Sarare', lat: 9.7833, lng: -69.1667, region: 'Lara', ruta: 'Occidente R1', radioUrbanKm: 4 },
   // OCCIDENTE R2 - Portuguesa
-  { nombre: 'Araure', lat: 9.5703, lng: -69.2189, region: 'Portuguesa', ruta: 'Occidente R2', radioUrbanKm: 6 },
-  { nombre: 'Acarigua', lat: 9.5596, lng: -69.1979, region: 'Portuguesa', ruta: 'Occidente R2', radioUrbanKm: 7 },
-  { nombre: 'Ospino', lat: 9.3000, lng: -69.4500, region: 'Portuguesa', ruta: 'Occidente R2', radioUrbanKm: 4 },
-  { nombre: 'Boconoito', lat: 9.2500, lng: -69.5833, region: 'Portuguesa', ruta: 'Occidente R2', radioUrbanKm: 4 },
+  { nombre: 'Guanare', lat: 9.0418, lng: -69.7421, region: 'Portuguesa', ruta: 'Occidente R2', radioUrbanKm: 12, esHub: true },
+  { nombre: 'Araure', lat: 9.5703, lng: -69.2189, region: 'Portuguesa', ruta: 'Occidente R2', radioUrbanKm: 8 },
+  { nombre: 'Acarigua', lat: 9.5596, lng: -69.1979, region: 'Portuguesa', ruta: 'Occidente R2', radioUrbanKm: 9 },
+  { nombre: 'Ospino', lat: 9.3000, lng: -69.4500, region: 'Portuguesa', ruta: 'Occidente R2', radioUrbanKm: 5 },
+  { nombre: 'Boconoito', lat: 9.2500, lng: -69.5833, region: 'Portuguesa', ruta: 'Occidente R2', radioUrbanKm: 5 },
+  { nombre: 'Guanarito', lat: 8.7042, lng: -69.2158, region: 'Portuguesa', ruta: 'Occidente R2', radioUrbanKm: 6 },
+  { nombre: 'Biscucuy', lat: 9.3556, lng: -69.9806, region: 'Portuguesa', ruta: 'Occidente R2', radioUrbanKm: 6 },
+  { nombre: 'Turen', lat: 9.3333, lng: -69.1167, region: 'Portuguesa', ruta: 'Occidente R2', radioUrbanKm: 6 },
+  { nombre: 'Agua Blanca', lat: 9.6667, lng: -69.1000, region: 'Portuguesa', ruta: 'Occidente R2', radioUrbanKm: 5 },
+  { nombre: 'Piritu', lat: 9.3667, lng: -69.2000, region: 'Portuguesa', ruta: 'Occidente R2', radioUrbanKm: 5 },
+  { nombre: 'San Rafael de Onoto', lat: 9.7167, lng: -68.9667, region: 'Portuguesa', ruta: 'Occidente R2', radioUrbanKm: 5 },
+  { nombre: 'Papelon', lat: 8.9167, lng: -69.5833, region: 'Portuguesa', ruta: 'Occidente R2', radioUrbanKm: 5 },
   // OCCIDENTE R2 - Barinas
   { nombre: 'Barinas', lat: 8.6223, lng: -70.2064, region: 'Barinas', ruta: 'Occidente R2', radioUrbanKm: 9 },
   { nombre: 'Curbati', lat: 8.5333, lng: -70.2333, region: 'Barinas', ruta: 'Occidente R2', radioUrbanKm: 3 },
@@ -261,17 +269,13 @@ export function validarZonaEntrega(lat: number, lng: number, ciudadHint?: string
     };
   }
 
-  const contexto = mejorDistancia <= 60
-    ? ` La ciudad cubierta mas cercana es ${mejorCiudad.nombre} (${Math.round(mejorDistancia)} km).`
-    : '';
-
   return {
-    zona: 'ROJO',
+    zona: 'AMARILLO',
     ciudadMasCercana: mejorCiudad.nombre,
     distanciaKm: Math.round(mejorDistancia * 10) / 10,
-    mensaje: `Ubicacion fuera de la zona de cobertura de Envias.${contexto}`,
-    color: '#ef4444',
-    colorBg: 'bg-red-50 border-red-200 text-red-800',
+    mensaje: `Ubicacion en territorio nacional cerca de ${mejorCiudad.nombre} (${Math.round(mejorDistancia)} km).`,
+    color: '#d97706',
+    colorBg: 'bg-amber-50 border-amber-200 text-amber-800',
   };
 }
 
