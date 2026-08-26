@@ -4181,9 +4181,9 @@ const userInitials = currentUser.nombre
           attributionControl: false
         }).setView([10.0808, -69.3756], 7);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
-          subdomains: 'abcd'
+          attribution: '© OpenStreetMap'
         }).addTo(clientLocationsMap);
 
         clientLocationsMarkerGroup = L.layerGroup().addTo(clientLocationsMap);
@@ -6609,9 +6609,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           attributionControl: false
         }).setView(selectedPickerCoords, 13);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19,
-          subdomains: 'abcd'
+          attribution: '© OpenStreetMap'
         }).addTo(pickerMap);
 
         const customPinHtml = `
@@ -8467,8 +8467,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
         plannerMapInstance = L.map(mapContainer, { zoomControl: true, attributionControl: false }).setView([centerLat, centerLon], 13);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          maxZoom: 19, attribution: ''
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '© OpenStreetMap'
         }).addTo(plannerMapInstance);
 
         const allPoints: [number, number][] = [];
