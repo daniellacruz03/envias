@@ -2304,6 +2304,8 @@ const userInitials = currentUser.nombre
       let filteredHistorialRoutes: any[] = [];
       let activeFinChoferId: number | null = null;
       let expandedHistorialRouteIds = new Set<number>();
+      let selectedHistorialRouteId: number | null = null;
+      let historialDetailSearchQuery: string = '';
 
       function formatPhoneForWhatsApp(phone: string): string {
         let clean = (phone || '').replace(/\D/g, '');
@@ -5853,6 +5855,80 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         renderHistorialView();
       };
 
+      function getRouteDateCategory(dateStr: string): string {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return 'Historial General';
+
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const rDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+        const diffMs = today.getTime() - rDay.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays <= 0) {
+          return 'Hoy';
+        } else if (diffDays === 1) {
+          return 'Ayer';
+        } else if (diffDays <= 7) {
+          return 'A comienzos de esta semana';
+        } else if (diffDays <= 30) {
+          return 'A comienzos de este mes';
+        } else {
+          const monthNames = [
+            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+          ];
+          return `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+        }
+      }
+
+      function formatDayMonth(dateStr: string): string {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '—';
+        const day = d.getDate().toString().padStart(2, '0');
+        const monthAbbrs = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+        const month = monthAbbrs[d.getMonth()];
+        return `${day}-${month}`;
+      }
+
+      function getRouteCityDisplay(r: any): string {
+        if (r.ruta_destino &&
+            !r.ruta_destino.toLowerCase().includes('retorno') &&
+            !r.ruta_destino.toLowerCase().includes('sede') &&
+            !r.ruta_destino.toLowerCase().includes('principal')) {
+          return r.ruta_destino;
+        }
+        const guias: any[] = Array.isArray(r.guias_snapshot) ? r.guias_snapshot : [];
+        const cities = Array.from(new Set(guias.map(g => g.ciudad_destino).filter(Boolean)));
+        if (cities.length === 1) return cities[0];
+        if (cities.length > 1) {
+          return cities.slice(0, 2).join(' / ') + (cities.length > 2 ? ` (+${cities.length - 2})` : '');
+        }
+        return r.ruta_destino || 'Barquisimeto';
+      }
+
+      (window as any).selectHistorialRoute = function(routeId: number) {
+        selectedHistorialRouteId = routeId;
+        renderHistorialView();
+      };
+
+      (window as any).filterHistorialDetailGuia = function(query: string) {
+        historialDetailSearchQuery = query;
+        renderHistorialView();
+      };
+
+      (window as any).printRouteListin = function(routeId: number) {
+        const route = filteredHistorialRoutes.find((r: any) => r.id === routeId);
+        if (!route) return;
+        const guias: any[] = Array.isArray(route.guias_snapshot) ? route.guias_snapshot : [];
+        if (guias.length === 0) {
+          showToast('Esta ruta no contiene guías registradas.', 'error');
+          return;
+        }
+        window.openRoutePlannerModal(null, null, guias);
+      };
+
       function renderHistorialView() {
         if (!historialRoutesList || !historialEmpty) return;
 
@@ -5864,119 +5940,226 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
         historialEmpty.classList.add('hidden');
 
-        historialRoutesList.innerHTML = filteredHistorialRoutes.map((r: any) => {
-          const isExpanded = expandedHistorialRouteIds.has(r.id);
-          const guias: any[] = Array.isArray(r.guias_snapshot) ? r.guias_snapshot : [];
-          const fechaObj = new Date(r.fecha_finalizacion);
-          const fechaFormatted = isNaN(fechaObj.getTime())
-            ? r.fecha_finalizacion
-            : fechaObj.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+        // Auto-seleccionar la primera ruta si no hay ninguna activa o si la actual fue filtrada
+        if (!selectedHistorialRouteId || !filteredHistorialRoutes.some((r: any) => r.id === selectedHistorialRouteId)) {
+          selectedHistorialRouteId = filteredHistorialRoutes[0].id;
+        }
 
-          const driverInitials = (r.chofer_nombre || 'CH').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
-          const efectividad = r.porcentaje_efectividad ?? (r.total_guias > 0 ? Math.round((r.total_entregadas / r.total_guias) * 100) : 0);
+        // Agrupar rutas en orden cronológico (Hoy -> Ayer -> A comienzos de esta semana -> A comienzos de este mes -> ...)
+        const groups: Record<string, any[]> = {};
+        const groupOrder: string[] = [];
 
+        filteredHistorialRoutes.forEach((r: any) => {
+          const category = getRouteDateCategory(r.fecha_finalizacion);
+          if (!groups[category]) {
+            groups[category] = [];
+            groupOrder.push(category);
+          }
+          groups[category].push(r);
+        });
+
+        // Buscar ruta seleccionada
+        const selectedRoute = filteredHistorialRoutes.find((r: any) => r.id === selectedHistorialRouteId) || filteredHistorialRoutes[0];
+        const selectedGuias: any[] = (selectedRoute && Array.isArray(selectedRoute.guias_snapshot)) ? selectedRoute.guias_snapshot : [];
+
+        // Filtrar guías dentro de la ruta seleccionada si hay búsqueda interna
+        const detailQ = (historialDetailSearchQuery || '').toLowerCase().trim();
+        const filteredDetailGuias = detailQ
+          ? selectedGuias.filter((g: any) => 
+              (g.id_guia || '').toLowerCase().includes(detailQ) ||
+              (g.destinatario || '').toLowerCase().includes(detailQ) ||
+              (g.ciudad_destino || '').toLowerCase().includes(detailQ) ||
+              (g.telefono_principal || '').toLowerCase().includes(detailQ)
+            )
+          : selectedGuias;
+
+        // Renderizar Lista Agrupada (Sidebar Izquierda)
+        const groupsHTML = groupOrder.map((groupTitle) => {
+          const routesInGroup = groups[groupTitle];
           return `
-            <div class="bg-white border border-slate-200/90 rounded-3xl shadow-sm overflow-hidden transition-all duration-200">
+            <div class="space-y-1">
+              <h5 class="text-xs font-bold text-indigo-900/60 uppercase tracking-wider px-3 pt-3 pb-1">${groupTitle}</h5>
+              <div class="space-y-1">
+                ${routesInGroup.map((r: any) => {
+                  const isSelected = r.id === selectedHistorialRouteId;
+                  const dayMonth = formatDayMonth(r.fecha_finalizacion);
+                  const cityDisplay = getRouteCityDisplay(r);
+
+                  return `
+                    <div
+                      onclick="window.selectHistorialRoute(${r.id})"
+                      class="flex items-center justify-between px-3.5 py-3 rounded-2xl cursor-pointer transition-all duration-150 group ${
+                        isSelected
+                          ? 'bg-blue-50/90 text-blue-900 border border-blue-200 shadow-xs ring-2 ring-blue-500/15'
+                          : 'hover:bg-slate-50 text-slate-800 border border-transparent hover:border-slate-200/70'
+                      }"
+                    >
+                      <!-- Columna 1 y 2: Día Mes y Ciudad (Día Mes y Ciudad) -->
+                      <div class="flex items-center gap-3 min-w-0 flex-1">
+                        <span class="text-xs font-bold font-mono w-16 shrink-0 ${isSelected ? 'text-blue-600 font-extrabold' : 'text-slate-400 group-hover:text-slate-600'}">
+                          ${dayMonth}
+                        </span>
+                        <span class="text-sm font-extrabold truncate ${isSelected ? 'text-blue-950 font-black' : 'text-slate-800'}">
+                          ${cityDisplay}
+                        </span>
+                      </div>
+
+                      <!-- Columna 3: Chofer y Menú ⋮ -->
+                      <div class="flex items-center gap-2 shrink-0">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg ${isSelected ? 'bg-blue-200/60 text-blue-900' : 'bg-slate-100 text-slate-600'}">
+                          ${r.chofer_nombre || 'Chofer'}
+                        </span>
+                        <button
+                          type="button"
+                          onclick="event.stopPropagation(); window.selectHistorialRoute(${r.id});"
+                          class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-white/80 transition-colors cursor-pointer"
+                          title="Opciones de ruta"
+                        >
+                          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        // Renderizar Detalle de la Ruta Seleccionada (Pane Derecha)
+        let selectedRouteHTML = '';
+        if (selectedRoute) {
+          const sFechaObj = new Date(selectedRoute.fecha_finalizacion);
+          const sFechaFormatted = isNaN(sFechaObj.getTime())
+            ? selectedRoute.fecha_finalizacion
+            : sFechaObj.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+
+          const sDriverInitials = (selectedRoute.chofer_nombre || 'CH').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+          const sEfectividad = selectedRoute.porcentaje_efectividad ?? (selectedRoute.total_guias > 0 ? Math.round((selectedRoute.total_entregadas / selectedRoute.total_guias) * 100) : 0);
+          const sCity = getRouteCityDisplay(selectedRoute);
+          const sTotalVol = selectedGuias.reduce((acc: number, g: any) => acc + (Number(g.pies_cubicos) || 0), 0);
+
+          selectedRouteHTML = `
+            <div class="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden space-y-4">
               
-              <!-- Cabecera de la Ruta Archivada -->
-              <div class="p-4 sm:p-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 via-white to-slate-50/50 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+              <!-- Cabecera de la Ruta Seleccionada -->
+              <div class="p-5 sm:p-6 border-b border-slate-100 bg-gradient-to-r from-blue-50/50 via-white to-slate-50 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 
-                <!-- Identidad del Chofer y Código -->
-                <div class="flex items-center gap-3.5">
-                  <div class="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-extrabold text-sm shadow-md shrink-0">
-                    ${driverInitials}
+                <div class="flex items-center gap-4">
+                  <div class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-extrabold text-base shadow-md shrink-0">
+                    ${sDriverInitials}
                   </div>
                   <div>
                     <div class="flex items-center gap-2 flex-wrap">
-                      <span class="font-mono font-extrabold text-xs px-2.5 py-0.5 rounded-lg bg-slate-900 text-white shadow-2xs">
-                        ${r.codigo_ruta}
+                      <span class="font-mono font-extrabold text-xs px-2.5 py-1 rounded-xl bg-slate-900 text-white shadow-2xs">
+                        ${selectedRoute.codigo_ruta}
                       </span>
-                      <h4 class="text-sm sm:text-base font-extrabold text-slate-900">${r.chofer_nombre}</h4>
-                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                        ${r.finalizada_por || 'Finalizada'}
+                      <h3 class="text-base sm:text-lg font-black text-slate-900">${sCity}</h3>
+                      <span class="text-xs font-bold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
+                        Chofer: ${selectedRoute.chofer_nombre}
                       </span>
                     </div>
 
-                    <div class="flex items-center gap-2 text-xs text-slate-500 font-medium mt-1 flex-wrap">
-                      <span class="flex items-center gap-1">
-                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div class="flex items-center gap-2 text-xs text-slate-500 font-medium mt-1.5 flex-wrap">
+                      <span class="flex items-center gap-1 font-semibold text-slate-700">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <span class="font-semibold text-slate-700">${fechaFormatted}</span>
+                        <span>${sFechaFormatted}</span>
                       </span>
                       <span class="text-slate-300">•</span>
-                      <span class="text-indigo-600 font-semibold truncate max-w-[280px]" title="${r.ruta_origen || 'Sede'} ➔ ${r.ruta_destino || 'Destino'}">
-                        ${r.ruta_origen || 'Sede Barquisimeto'} ➔ ${r.ruta_destino || 'Destino'}
+                      <span class="text-indigo-600 font-semibold truncate" title="${selectedRoute.ruta_origen || 'Sede'} ➔ ${selectedRoute.ruta_destino || 'Destino'}">
+                        ${selectedRoute.ruta_origen || 'Sede Barquisimeto'} ➔ ${selectedRoute.ruta_destino || sCity}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <!-- Métricas Rápidas y Acciones -->
-                <div class="flex flex-wrap items-center gap-2.5 sm:gap-3">
-                  <!-- Píldoras de Balance -->
-                  <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="px-2.5 py-1 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold border border-slate-200" title="Total guías">
-                      ${r.total_guias} guías (${r.total_piezas || r.total_guias} pz)
-                    </span>
-                    <span class="px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200 flex items-center gap-1" title="Entregadas exitosamente">
-                      <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                      <span>${r.total_entregadas} entregadas</span>
-                    </span>
-                    ${r.total_no_entregadas > 0 ? `
-                      <span class="px-2.5 py-1 rounded-xl bg-rose-50 text-rose-800 text-xs font-bold border border-rose-200 flex items-center gap-1" title="No entregadas / Incidencias">
-                        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
-                        <span>${r.total_no_entregadas} no entregadas</span>
-                      </span>
-                    ` : ''}
-                    <span class="px-2.5 py-1 rounded-xl ${efectividad >= 90 ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'} text-xs font-extrabold border border-emerald-200">
-                      ${efectividad}% efectividad
-                    </span>
-                  </div>
-
-                  <!-- Botón Ver Desglose Guías -->
+                <!-- Botones de Acción Rápidos -->
+                <div class="flex items-center gap-2 flex-wrap">
                   <button
                     type="button"
-                    onclick="window.toggleHistorialRouteAccordion(${r.id})"
-                    class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    onclick="window.printRouteListin(${selectedRoute.id})"
+                    class="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold border border-indigo-200 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    title="Imprimir listín de despacho"
                   >
-                    <span>${isExpanded ? 'Ocultar Guías' : `Ver Guías (${guias.length})`}</span>
-                    <svg class="w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    <span>Imprimir Listín</span>
                   </button>
                 </div>
 
               </div>
 
-              <!-- Sección Desplegable: Tabla Completa de Guías de la Ruta -->
-              <div id="historial-accordion-${r.id}" class="${isExpanded ? '' : 'hidden'} p-4 sm:p-5 bg-slate-50/70 border-t border-slate-100 space-y-3">
-                <div class="flex items-center justify-between">
-                  <h5 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                    <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    <span>Detalle de Guías de la Ruta #${r.codigo_ruta}</span>
-                  </h5>
-                  <span class="text-xs font-semibold text-slate-500">${guias.length} paradas registradas</span>
+              <!-- 4 Tarjetas de Métricas Clave -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 px-5 sm:px-6">
+                <div class="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl">
+                  <p class="text-[10px] font-extrabold text-slate-400 uppercase">Carga Total</p>
+                  <p class="text-base sm:text-lg font-black text-slate-900 mt-0.5">${selectedRoute.total_guias} <span class="text-xs font-semibold text-slate-500">guías</span></p>
+                  <p class="text-[11px] text-slate-500 font-medium">${selectedRoute.total_piezas || selectedRoute.total_guias} pzas${sTotalVol > 0 ? ' • ' + sTotalVol.toFixed(2) + ' ft³' : ''}</p>
                 </div>
 
+                <div class="p-3.5 bg-emerald-50/60 border border-emerald-200/80 rounded-2xl">
+                  <p class="text-[10px] font-extrabold text-emerald-600 uppercase flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>Entregadas</span>
+                  </p>
+                  <p class="text-base sm:text-lg font-black text-emerald-800 mt-0.5">${selectedRoute.total_entregadas} <span class="text-xs font-semibold text-emerald-600">exitosas</span></p>
+                  <p class="text-[11px] text-emerald-700 font-medium">Comprobante verificado</p>
+                </div>
+
+                <div class="p-3.5 ${selectedRoute.total_no_entregadas > 0 ? 'bg-rose-50/60 border-rose-200/80' : 'bg-slate-50 border-slate-200/80'} border rounded-2xl">
+                  <p class="text-[10px] font-extrabold ${selectedRoute.total_no_entregadas > 0 ? 'text-rose-600' : 'text-slate-400'} uppercase flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full ${selectedRoute.total_no_entregadas > 0 ? 'bg-rose-500' : 'bg-slate-400'}"></span>
+                    <span>No Entregadas</span>
+                  </p>
+                  <p class="text-base sm:text-lg font-black ${selectedRoute.total_no_entregadas > 0 ? 'text-rose-800' : 'text-slate-800'} mt-0.5">${selectedRoute.total_no_entregadas} <span class="text-xs font-semibold text-slate-500">incidencias</span></p>
+                  <p class="text-[11px] text-slate-500 font-medium">Reagendadas / Almacén</p>
+                </div>
+
+                <div class="p-3.5 ${sEfectividad >= 90 ? 'bg-emerald-100/70 border-emerald-300/80 text-emerald-950' : 'bg-amber-100/70 border-amber-300/80 text-amber-950'} border rounded-2xl">
+                  <p class="text-[10px] font-extrabold opacity-75 uppercase">Efectividad</p>
+                  <p class="text-base sm:text-lg font-black mt-0.5">${sEfectividad}%</p>
+                  <p class="text-[11px] opacity-80 font-medium">${selectedRoute.finalizada_por ? 'Por: ' + selectedRoute.finalizada_por : 'Cierre Operativo'}</p>
+                </div>
+              </div>
+
+              <!-- Buscador de Guías en la Ruta Seleccionada -->
+              <div class="px-5 sm:px-6 flex items-center justify-between gap-3 flex-wrap">
+                <div class="relative flex-1 max-w-sm">
+                  <input
+                    type="text"
+                    value="${historialDetailSearchQuery}"
+                    placeholder="Filtrar en esta ruta por guía, cliente o teléfono..."
+                    class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 shadow-2xs transition-all"
+                    oninput="window.filterHistorialDetailGuia(this.value)"
+                  />
+                  <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <span class="text-xs font-semibold text-slate-500">${filteredDetailGuias.length} de ${selectedGuias.length} paradas</span>
+              </div>
+
+              <!-- Tabla de Guías de la Ruta Seleccionada -->
+              <div class="px-5 sm:px-6 pb-6">
                 <div class="overflow-x-auto custom-scrollbar bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
                   <table class="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr class="bg-slate-50 border-b border-slate-200 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
-                        <th class="py-2.5 px-3">#</th>
-                        <th class="py-2.5 px-3">Guía & Empresa</th>
-                        <th class="py-2.5 px-3">Destinatario & Teléfono</th>
-                        <th class="py-2.5 px-3">Ciudad & Piezas</th>
-                        <th class="py-2.5 px-3">Estado Final</th>
-                        <th class="py-2.5 px-3">Recibido por / Detalle</th>
-                        <th class="py-2.5 px-3 text-center">Comprobante</th>
-                        <th class="py-2.5 px-3 text-right">Ubicación GPS</th>
+                        <th class="py-3 px-3.5">#</th>
+                        <th class="py-3 px-3.5">Guía & Courier</th>
+                        <th class="py-3 px-3.5">Destinatario & Teléfono</th>
+                        <th class="py-3 px-3.5">Ciudad & Volumen</th>
+                        <th class="py-3 px-3.5">Estado Final</th>
+                        <th class="py-3 px-3.5">Recibido por</th>
+                        <th class="py-3 px-3.5 text-center">Comprobante</th>
+                        <th class="py-3 px-3.5 text-right">Ubicación GPS</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
-                      ${guias.map((g: any, idx: number) => {
+                      ${filteredDetailGuias.map((g: any, idx: number) => {
                         const isNoEnt = g.estado === 'No entregado';
                         const isEnt = g.estado === 'Entregado';
                         const phoneFormatted = formatPhoneForWhatsApp(g.telefono_principal || '');
@@ -5986,10 +6169,10 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
                         return `
                           <tr class="hover:bg-slate-50/80 transition-colors">
-                            <td class="py-2.5 px-3 font-mono font-extrabold text-slate-400 text-[11px]">
+                            <td class="py-3 px-3.5 font-mono font-extrabold text-slate-400 text-[11px]">
                               ${g.orden_ruta || idx + 1}
                             </td>
-                            <td class="py-2.5 px-3">
+                            <td class="py-3 px-3.5">
                               <div class="flex items-center gap-1.5 flex-wrap">
                                 <a href="/confirmar?guia=${encodeURIComponent(g.id_guia)}" target="_blank" class="font-mono font-bold text-slate-900 hover:text-indigo-600">
                                   #${g.id_guia}
@@ -6001,7 +6184,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                                 ` : ''}
                               </div>
                             </td>
-                            <td class="py-2.5 px-3">
+                            <td class="py-3 px-3.5">
                               <p class="font-bold text-slate-900 truncate max-w-[180px]">${g.destinatario || '—'}</p>
                               ${g.telefono_principal ? `
                                 <a href="https://wa.me/${phoneFormatted}" target="_blank" class="text-[10px] text-slate-500 hover:text-emerald-700 flex items-center gap-1 font-mono">
@@ -6009,11 +6192,11 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                                 </a>
                               ` : ''}
                             </td>
-                            <td class="py-2.5 px-3">
+                            <td class="py-3 px-3.5">
                               <p class="font-semibold text-slate-800">${g.ciudad_destino || '—'}</p>
-                              <span class="text-[10px] text-slate-400 font-mono font-bold">${g.piezas || 1} pz</span>
+                              <span class="text-[10px] text-slate-400 font-mono font-bold">${g.piezas || 1} pz${g.pies_cubicos ? ' · ' + Number(g.pies_cubicos).toFixed(2) + ' ft³' : ''}</span>
                             </td>
-                            <td class="py-2.5 px-3">
+                            <td class="py-3 px-3.5">
                               <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${
                                 isEnt ? 'bg-emerald-100 text-emerald-800' :
                                 isNoEnt ? 'bg-rose-100 text-rose-800' :
@@ -6030,12 +6213,12 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                                 `}
                               </span>
                             </td>
-                            <td class="py-2.5 px-3">
+                            <td class="py-3 px-3.5">
                               <p class="text-[11px] text-slate-700 font-medium truncate max-w-[200px]" title="${g.recibido_por || '—'}">
                                 ${g.recibido_por || '<span class="text-slate-400 italic">Sin registro</span>'}
                               </p>
                             </td>
-                            <td class="py-2.5 px-3 text-center">
+                            <td class="py-3 px-3.5 text-center">
                               ${g.comprobante_url ? `
                                 <button
                                   type="button"
@@ -6052,7 +6235,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                                 <span class="text-[10px] text-slate-300 italic">—</span>
                               `}
                             </td>
-                            <td class="py-2.5 px-3 text-right">
+                            <td class="py-3 px-3.5 text-right">
                               ${gmapsUrl ? `
                                 <a
                                   href="${gmapsUrl}"
@@ -6077,7 +6260,65 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
             </div>
           `;
-        }).join('');
+        }
+
+        // Renderizado Final Combinado Master-Detail
+        historialRoutesList.innerHTML = `
+          <div class="flex flex-col lg:flex-row gap-5 items-start">
+            
+            <!-- PANEL IZQUIERDO: LISTA AGRUPADA POR DIA MES Y CIUDAD (EXACTO AL SCREENSHOT) -->
+            <div class="w-full lg:w-[380px] xl:w-[410px] bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col shrink-0">
+              
+              <!-- Perfil / Hub Superior -->
+              <div class="p-4 sm:p-5 border-b border-slate-100 bg-gradient-to-br from-indigo-50/40 via-white to-white flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-12 h-12 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+                    C
+                  </div>
+                  <div class="min-w-0">
+                    <h4 class="text-sm font-extrabold text-slate-900 truncate">Carmen Yoleida Jerez</h4>
+                    <p class="text-xs text-slate-500 truncate font-medium">envias.rutas@gmail.com</p>
+                    <p class="text-[11px] text-slate-400 font-medium truncate mt-0.5">Standard • Se renueva el mar 01 de sept</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1 shrink-0 text-slate-400">
+                  <button type="button" class="p-1.5 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer" title="Ayuda">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  </button>
+                  <button type="button" class="p-1.5 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer" title="Configuración">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Lista Agrupada -->
+              <div class="p-3 space-y-3 max-h-[640px] overflow-y-auto custom-scrollbar">
+                ${groupsHTML}
+              </div>
+
+              <!-- Botón '+ Crear ruta' Inferior -->
+              <div class="p-3.5 border-t border-slate-100 bg-white">
+                <button
+                  type="button"
+                  onclick="window.openRoutePlannerModal()"
+                  class="w-full py-3 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs transition-all shadow-md shadow-blue-500/25 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+                  </svg>
+                  <span>Crear ruta</span>
+                </button>
+              </div>
+
+            </div>
+
+            <!-- PANEL DERECHO: INSPECTOR DE LA RUTA SELECCIONADA -->
+            <div class="flex-1 w-full space-y-4 min-w-0">
+              ${selectedRouteHTML}
+            </div>
+
+          </div>
+        `;
       }
 
       (window as any).toggleHistorialRouteAccordion = function(routeId: number) {
