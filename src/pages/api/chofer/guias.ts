@@ -53,6 +53,7 @@ export const GET: APIRoute = async ({ request, cookies, url }) => {
       FROM guias g
       LEFT JOIN usuarios u ON g.chofer_asignado_id = u.id
       WHERE g.chofer_asignado_id = $1
+        AND (g.archivada = false OR g.archivada IS NULL)
       ORDER BY 
         CASE 
           WHEN g.estado = 'En ruta' THEN 1

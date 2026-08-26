@@ -453,6 +453,18 @@ const userInitials = currentUser.nombre
                 <span>Crear Listín</span>
                 <span id="listin-count-pill" class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">PDF</span>
               </button>
+
+              <button
+                type="button"
+                id="btn-view-historial"
+                class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Historial de Rutas</span>
+                <span id="historial-count-pill" class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">0</span>
+              </button>
             </div>
           </div>
 
@@ -1062,11 +1074,207 @@ const userInitials = currentUser.nombre
 
         </div>
 
+        <!-- ========================================== -->
+        <!-- MODO 7: HISTORIAL Y ARCHIVO DE RUTAS       -->
+        <!-- ========================================== -->
+        <div id="view-container-historial" class="hidden p-4 sm:p-6 bg-slate-50/50 space-y-6">
+          
+          <!-- Barra Superior de Control y Filtros del Historial -->
+          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <div class="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-xs">
+                  <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h4 class="text-base font-extrabold text-slate-900 tracking-tight">Historial y Archivo de Rutas Despachadas</h4>
+                <span id="historial-badge-count" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                  0 rutas archivadas
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">Consulta rutas finalizadas, fechas, comprobantes de entrega, choferes y desglose completo de guías.</p>
+            </div>
+
+            <!-- Filtros de Búsqueda y Selección -->
+            <div class="flex flex-wrap items-center gap-2.5">
+              <!-- Filtro Chofer -->
+              <select
+                id="historial-filter-driver"
+                class="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 cursor-pointer shadow-2xs min-w-[160px]"
+                onchange="window.loadHistorialData()"
+              >
+                <option value="ALL">Todos los Choferes</option>
+              </select>
+
+              <!-- Filtro Período / Fecha Rápida -->
+              <select
+                id="historial-filter-periodo"
+                class="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 cursor-pointer shadow-2xs"
+                onchange="window.handleHistorialPeriodChange()"
+              >
+                <option value="ALL">Todas las Fechas</option>
+                <option value="TODAY">Hoy</option>
+                <option value="7DAYS">Últimos 7 días</option>
+                <option value="30DAYS">Este Mes (30 días)</option>
+                <option value="CUSTOM">Fecha Específica...</option>
+              </select>
+
+              <!-- Selector de Fecha Específica (oculto por defecto) -->
+              <div id="historial-custom-date-container" class="hidden items-center gap-1.5">
+                <input
+                  type="date"
+                  id="historial-date-from"
+                  class="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-slate-800 focus:bg-white focus:outline-none focus:border-slate-900 cursor-pointer shadow-2xs"
+                  onchange="window.loadHistorialData()"
+                />
+              </div>
+
+              <!-- Buscador de texto en Historial -->
+              <div class="relative min-w-[200px]">
+                <input
+                  type="text"
+                  id="historial-search-input"
+                  placeholder="Buscar guía, cliente, ruta..."
+                  class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 shadow-2xs transition-all"
+                  oninput="window.filterHistorialData()"
+                />
+                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+
+              <!-- Botón Refrescar -->
+              <button
+                type="button"
+                onclick="window.loadHistorialData(true)"
+                class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all cursor-pointer shadow-2xs"
+                title="Refrescar historial"
+              >
+                <svg id="historial-refresh-icon" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Loading indicator del Historial -->
+          <div id="historial-loading" class="hidden flex items-center justify-center py-12 text-slate-400 text-sm gap-2">
+            <svg class="animate-spin w-5 h-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span>Cargando rutas archivadas...</span>
+          </div>
+
+          <!-- Listado Dinámico de Tarjetas de Rutas Archivadas -->
+          <div id="historial-routes-list" class="space-y-4">
+            <!-- JS Render de Rutas -->
+          </div>
+
+          <!-- Estado Vacío del Historial -->
+          <div id="historial-empty" class="hidden p-12 text-center bg-white rounded-3xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center gap-3">
+            <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400">
+              <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p class="text-sm font-bold text-slate-800">No hay rutas archivadas</p>
+            <p class="text-xs text-slate-400 max-w-sm">No se encontraron rutas finalizadas con los filtros actuales o aún no se han finalizado rutas de choferes.</p>
+          </div>
+
+        </div>
+
       </section>
 
     </main>
 
     <!-- ========================================================= -->
+    <!-- MODAL LOGÍSTICA: CONFIRMAR FINALIZACIÓN Y ARCHIVO DE RUTA -->
+    <!-- ========================================================= -->
+    <div id="modal-finalizar-ruta-logistica" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-5">
+      <div class="relative w-full max-w-md bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 animate-fadeIn">
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center">
+              <svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900">Finalizar y Archivar Ruta</h3>
+              <p class="text-[11px] text-slate-500 font-medium">Cierre operativo de jornada para el chofer</p>
+            </div>
+          </div>
+          <button type="button" onclick="window.closeFinalizarRutaModal()" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <!-- Detalles del Chofer y Balance -->
+        <div class="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 space-y-3">
+          <div class="flex items-center justify-between text-xs pb-2 border-b border-slate-200">
+            <span class="text-slate-600 font-medium">Chofer:</span>
+            <span id="modal-fin-chofer-nombre" class="font-extrabold text-slate-900 text-sm">--</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-600 font-medium">Total de Guías Asignadas:</span>
+            <span id="modal-fin-total-guias" class="font-extrabold text-slate-900">0</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-emerald-700 font-medium flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>Entregadas con Éxito:</span>
+            </span>
+            <span id="modal-fin-entregadas" class="font-extrabold text-emerald-700">0</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-rose-700 font-medium flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+              <span>No Entregadas / Incidencias:</span>
+            </span>
+            <span id="modal-fin-no-entregadas" class="font-extrabold text-rose-700">0</span>
+          </div>
+          <div id="modal-fin-pendientes-row" class="hidden flex items-center justify-between text-xs pt-1.5 border-t border-slate-200">
+            <span class="text-amber-700 font-bold flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+              <span>Aún en Almacén / Pendientes:</span>
+            </span>
+            <span id="modal-fin-pendientes" class="font-extrabold text-amber-700">0</span>
+          </div>
+        </div>
+
+        <div id="modal-fin-warning" class="hidden p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+          <p class="font-bold">Aviso:</p>
+          <p class="text-[11px] mt-0.5 text-amber-700">El chofer aún tiene guías sin entregar. Al finalizar, la ruta se archivará y estas guías saldrán de su hoja activa.</p>
+        </div>
+
+        <p class="text-xs text-slate-500 leading-relaxed">
+          La ruta se guardará en la pestaña <b>Historial de Rutas</b> con su fecha, hora, fotos de entrega y lista de guías. El chofer quedará libre para recibir un nuevo despacho.
+        </p>
+
+        <!-- Acciones -->
+        <div class="grid grid-cols-2 gap-2.5 pt-1">
+          <button
+            type="button"
+            onclick="window.closeFinalizarRutaModal()"
+            class="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer text-center"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            id="btn-confirm-finalizar-ruta-logistica"
+            onclick="window.confirmFinalizarRuta()"
+            class="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <span>Finalizar y Archivar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- ========================================================= -->
     <!-- MODAL COMPLETO: APROBAR / RECHAZAR ESCANEO CON ZOOM DIRECTO -->
     <!-- ========================================================= -->
@@ -2048,12 +2256,15 @@ const userInitials = currentUser.nombre
       let shipments: GuiaRow[] = [];
       let drivers: Driver[] = [];
       let isLoading = true;
-      let currentViewMode: 'table' | 'cities' | 'drivers' | 'mapa' | 'escaneos' | 'listin' = 'table';
+      let currentViewMode: 'table' | 'cities' | 'drivers' | 'mapa' | 'escaneos' | 'listin' | 'historial' = 'table';
       let expandedCities: Record<string, boolean> = {};
       let escaneosData: any[] = [];
       let drawerFotosFlat: any[] = []; // lista plana de fotos para navegar
       let drawerCurrentIndex = 0;
       let activeEscaneoId: number | null = null;
+      let historialRoutes: any[] = [];
+      let activeFinChoferId: number | null = null;
+      let expandedHistorialRouteIds = new Set<number>();
 
       // ==========================================
       // MOTOR GEOESPACIAL Y COORDENADAS DE VENEZUELA (HOISTED GLOBAL)
@@ -2309,12 +2520,14 @@ const userInitials = currentUser.nombre
       const viewContainerMapa = document.getElementById('view-container-mapa') as HTMLElement;
       const viewContainerEscaneos = document.getElementById('view-container-escaneos') as HTMLElement;
       const viewContainerListin = document.getElementById('view-container-listin') as HTMLElement;
+      const viewContainerHistorial = document.getElementById('view-container-historial') as HTMLElement;
       const btnViewTable = document.getElementById('btn-view-table') as HTMLButtonElement;
       const btnViewCities = document.getElementById('btn-view-cities') as HTMLButtonElement;
       const btnViewDrivers = document.getElementById('btn-view-drivers') as HTMLButtonElement;
       const btnViewMapa = document.getElementById('btn-view-mapa') as HTMLButtonElement;
       const btnViewEscaneos = document.getElementById('btn-view-escaneos') as HTMLButtonElement;
       const btnViewListin = document.getElementById('btn-view-listin') as HTMLButtonElement;
+      const btnViewHistorial = document.getElementById('btn-view-historial') as HTMLButtonElement;
       const citiesCountPill = document.getElementById('cities-count-pill') as HTMLElement;
       const driversCountPill = document.getElementById('drivers-count-pill') as HTMLElement;
       const mapaCountPill = document.getElementById('mapa-count-pill') as HTMLElement;
@@ -2326,6 +2539,27 @@ const userInitials = currentUser.nombre
       const mapaFilterType = document.getElementById('mapa-filter-type') as HTMLSelectElement;
       const escaneosCountPill = document.getElementById('escaneos-count-pill') as HTMLElement;
       const listinCountPill = document.getElementById('listin-count-pill') as HTMLElement;
+      const historialCountPill = document.getElementById('historial-count-pill') as HTMLElement;
+      const historialBadgeCount = document.getElementById('historial-badge-count') as HTMLElement;
+
+      const historialFilterDriver = document.getElementById('historial-filter-driver') as HTMLSelectElement;
+      const historialFilterPeriodo = document.getElementById('historial-filter-periodo') as HTMLSelectElement;
+      const historialCustomDateContainer = document.getElementById('historial-custom-date-container') as HTMLElement;
+      const historialDateFrom = document.getElementById('historial-date-from') as HTMLInputElement;
+      const historialSearchInput = document.getElementById('historial-search-input') as HTMLInputElement;
+      const historialRoutesList = document.getElementById('historial-routes-list') as HTMLElement;
+      const historialLoading = document.getElementById('historial-loading') as HTMLElement;
+      const historialEmpty = document.getElementById('historial-empty') as HTMLElement;
+
+      const modalFinalizarRutaLogistica = document.getElementById('modal-finalizar-ruta-logistica') as HTMLElement;
+      const modalFinChoferNombre = document.getElementById('modal-fin-chofer-nombre') as HTMLElement;
+      const modalFinTotalGuias = document.getElementById('modal-fin-total-guias') as HTMLElement;
+      const modalFinEntregadas = document.getElementById('modal-fin-entregadas') as HTMLElement;
+      const modalFinNoEntregadas = document.getElementById('modal-fin-no-entregadas') as HTMLElement;
+      const modalFinPendientesRow = document.getElementById('modal-fin-pendientes-row') as HTMLElement;
+      const modalFinPendientes = document.getElementById('modal-fin-pendientes') as HTMLElement;
+      const modalFinWarning = document.getElementById('modal-fin-warning') as HTMLElement;
+      const btnConfirmFinalizarRutaLogistica = document.getElementById('btn-confirm-finalizar-ruta-logistica') as HTMLButtonElement;
 
       const listinDriverSelect = document.getElementById('listin-driver-select') as HTMLSelectElement;
       const listinPlacaInput = document.getElementById('listin-placa-input') as HTMLInputElement;
@@ -2401,10 +2635,11 @@ const userInitials = currentUser.nombre
 
       async function loadData() {
         try {
-          const [guiasRes, choferesRes, escaneosRes] = await Promise.all([
+          const [guiasRes, choferesRes, escaneosRes, histRes] = await Promise.all([
             fetch('/api/guias'),
             fetch('/api/choferes'),
-            fetch('/api/escaneos')
+            fetch('/api/escaneos'),
+            fetch('/api/rutas/historial')
           ]);
 
           const guiasJson = await guiasRes.json();
@@ -2419,6 +2654,20 @@ const userInitials = currentUser.nombre
                 escaneosCountPill.className = 'text-[10px] bg-amber-400 text-white px-1.5 py-0.2 rounded-full font-bold';
               } else {
                 escaneosCountPill.classList.add('hidden');
+              }
+            }
+          } catch(e) {}
+
+          try {
+            const histJson = await histRes.json();
+            if (histJson.success && Array.isArray(histJson.data)) {
+              historialRoutes = histJson.data;
+              filteredHistorialRoutes = [...historialRoutes];
+              if (historialCountPill) {
+                historialCountPill.textContent = historialRoutes.length.toString();
+              }
+              if (historialBadgeCount) {
+                historialBadgeCount.textContent = `${historialRoutes.length} ruta${historialRoutes.length !== 1 ? 's' : ''} archivada${historialRoutes.length !== 1 ? 's' : ''}`;
               }
             }
           } catch(e) {}
@@ -2553,6 +2802,28 @@ const userInitials = currentUser.nombre
             }
           } catch(e) {}
 
+          // 3. Sincronizar historial de rutas
+          try {
+            const histRes = await fetch('/api/rutas/historial');
+            if (histRes.ok) {
+              const histData = await histRes.json();
+              if (histData.success && Array.isArray(histData.data)) {
+                if (histData.data.length !== historialRoutes.length) {
+                  historialRoutes = histData.data;
+                  if (historialCountPill) {
+                    historialCountPill.textContent = historialRoutes.length.toString();
+                  }
+                  if (historialBadgeCount) {
+                    historialBadgeCount.textContent = `${historialRoutes.length} ruta${historialRoutes.length !== 1 ? 's' : ''} archivada${historialRoutes.length !== 1 ? 's' : ''}`;
+                  }
+                  if (currentViewMode === 'historial') {
+                    (window as any).filterHistorialData();
+                  }
+                }
+              }
+            }
+          } catch(e) {}
+
         } catch (err) {
           // Error silencioso de red sin interrumpir al usuario
         }
@@ -2627,7 +2898,7 @@ const userInitials = currentUser.nombre
         filteredCountBadge.textContent = `${filtered.length} de ${shipments.length} guías`;
         updateKPIs();
 
-        if (filtered.length === 0) {
+        if (filtered.length === 0 && currentViewMode !== 'historial') {
           tableBody.innerHTML = '';
           viewContainerCities.innerHTML = '';
           if (viewContainerDrivers) viewContainerDrivers.innerHTML = '';
@@ -2647,6 +2918,8 @@ const userInitials = currentUser.nombre
           renderClientLocationsSection();
         } else if (currentViewMode === 'listin') {
           renderListinView();
+        } else if (currentViewMode === 'historial') {
+          renderHistorialView();
         }
       }
 
@@ -3397,6 +3670,20 @@ const userInitials = currentUser.nombre
                       </svg>
                       <span>Organizar Ruta</span>
                     </button>
+
+                    ${totalAssigned > 0 ? `
+                      <button
+                        type="button"
+                        onclick="window.openFinalizarRutaModal(${driver.id})"
+                        class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95 border border-slate-700"
+                        title="Finalizar y archivar ruta de ${driver.nombre}"
+                      >
+                        <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Finalizar Ruta</span>
+                      </button>
+                    ` : ''}
                   </div>
                 </div>
 
@@ -4093,6 +4380,7 @@ const userInitials = currentUser.nombre
           btnViewMapa?.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewEscaneos?.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewListin?.classList.remove('tab-btn-active', 'text-slate-600');
+          btnViewHistorial?.classList.remove('tab-btn-active', 'text-slate-600');
           
           viewContainerTable.classList.add('hidden');
           viewContainerCities.classList.add('hidden');
@@ -4100,6 +4388,7 @@ const userInitials = currentUser.nombre
           viewContainerMapa?.classList.add('hidden');
           viewContainerEscaneos?.classList.add('hidden');
           viewContainerListin?.classList.add('hidden');
+          viewContainerHistorial?.classList.add('hidden');
 
           if (currentViewMode === 'table') {
             btnViewTable.classList.add('tab-btn-active');
@@ -4108,6 +4397,7 @@ const userInitials = currentUser.nombre
             btnViewMapa?.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
             btnViewListin?.classList.add('text-slate-600');
+            btnViewHistorial?.classList.add('text-slate-600');
             viewContainerTable.classList.remove('hidden');
           } else if (currentViewMode === 'cities') {
             btnViewCities.classList.add('tab-btn-active');
@@ -4116,6 +4406,7 @@ const userInitials = currentUser.nombre
             btnViewMapa?.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
             btnViewListin?.classList.add('text-slate-600');
+            btnViewHistorial?.classList.add('text-slate-600');
             viewContainerCities.classList.remove('hidden');
           } else if (currentViewMode === 'drivers') {
             btnViewDrivers.classList.add('tab-btn-active');
@@ -4124,6 +4415,7 @@ const userInitials = currentUser.nombre
             btnViewMapa?.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
             btnViewListin?.classList.add('text-slate-600');
+            btnViewHistorial?.classList.add('text-slate-600');
             viewContainerDrivers.classList.remove('hidden');
           } else if (currentViewMode === 'mapa') {
             btnViewMapa?.classList.add('tab-btn-active');
@@ -4132,6 +4424,7 @@ const userInitials = currentUser.nombre
             btnViewDrivers.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
             btnViewListin?.classList.add('text-slate-600');
+            btnViewHistorial?.classList.add('text-slate-600');
             viewContainerMapa?.classList.remove('hidden');
           } else if (currentViewMode === 'escaneos') {
             btnViewEscaneos?.classList.add('tab-btn-active');
@@ -4140,6 +4433,7 @@ const userInitials = currentUser.nombre
             btnViewDrivers.classList.add('text-slate-600');
             btnViewMapa?.classList.add('text-slate-600');
             btnViewListin?.classList.add('text-slate-600');
+            btnViewHistorial?.classList.add('text-slate-600');
             viewContainerEscaneos?.classList.remove('hidden');
           } else if (currentViewMode === 'listin') {
             btnViewListin?.classList.add('tab-btn-active');
@@ -4148,7 +4442,17 @@ const userInitials = currentUser.nombre
             btnViewDrivers.classList.add('text-slate-600');
             btnViewMapa?.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
+            btnViewHistorial?.classList.add('text-slate-600');
             viewContainerListin?.classList.remove('hidden');
+          } else if (currentViewMode === 'historial') {
+            btnViewHistorial?.classList.add('tab-btn-active');
+            btnViewTable.classList.add('text-slate-600');
+            btnViewCities.classList.add('text-slate-600');
+            btnViewDrivers.classList.add('text-slate-600');
+            btnViewMapa?.classList.add('text-slate-600');
+            btnViewEscaneos?.classList.add('text-slate-600');
+            btnViewListin?.classList.add('text-slate-600');
+            viewContainerHistorial?.classList.remove('hidden');
           }
         }
 
@@ -4186,6 +4490,12 @@ const userInitials = currentUser.nombre
           currentViewMode = 'listin';
           updateTabStyles();
           renderListinView();
+        });
+
+        btnViewHistorial?.addEventListener('click', () => {
+          currentViewMode = 'historial';
+          updateTabStyles();
+          (window as any).loadHistorialData();
         });
 
         // ============================================
@@ -5330,6 +5640,429 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           }
         } catch (err) {
           showToast('Error de red al despachar la ruta', 'error');
+        }
+      };
+
+      // ============================================
+      // MÓDULO DE HISTORIAL Y ARCHIVO DE RUTAS
+      // ============================================
+
+      function populateHistorialDriverFilter() {
+        if (!historialFilterDriver) return;
+        const curr = historialFilterDriver.value;
+        historialFilterDriver.innerHTML = '<option value="ALL">Todos los Choferes</option>';
+        drivers.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.id.toString();
+          opt.textContent = d.nombre;
+          historialFilterDriver.appendChild(opt);
+        });
+        if (curr) historialFilterDriver.value = curr;
+      }
+
+      (window as any).handleHistorialPeriodChange = function() {
+        if (!historialFilterPeriodo) return;
+        const val = historialFilterPeriodo.value;
+        if (historialCustomDateContainer) {
+          if (val === 'CUSTOM') {
+            historialCustomDateContainer.classList.remove('hidden');
+            historialCustomDateContainer.classList.add('flex');
+          } else {
+            historialCustomDateContainer.classList.add('hidden');
+            historialCustomDateContainer.classList.remove('flex');
+          }
+        }
+        (window as any).loadHistorialData();
+      };
+
+      (window as any).loadHistorialData = async function(isManualRefresh?: boolean) {
+        populateHistorialDriverFilter();
+        const refreshIcon = document.getElementById('historial-refresh-icon');
+        if (isManualRefresh && refreshIcon) refreshIcon.classList.add('animate-spin');
+        if (historialLoading && historialRoutes.length === 0) historialLoading.classList.remove('hidden');
+
+        try {
+          const params = new URLSearchParams();
+          const driverVal = historialFilterDriver?.value;
+          if (driverVal && driverVal !== 'ALL') {
+            params.set('chofer_id', driverVal);
+          }
+
+          const periodVal = historialFilterPeriodo?.value || 'ALL';
+          const now = new Date();
+
+          if (periodVal === 'TODAY') {
+            const todayStr = now.toISOString().slice(0, 10);
+            params.set('fecha_desde', todayStr);
+            params.set('fecha_hasta', todayStr);
+          } else if (periodVal === '7DAYS') {
+            const d7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            params.set('fecha_desde', d7.toISOString().slice(0, 10));
+            params.set('fecha_hasta', now.toISOString().slice(0, 10));
+          } else if (periodVal === '30DAYS') {
+            const d30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            params.set('fecha_desde', d30.toISOString().slice(0, 10));
+            params.set('fecha_hasta', now.toISOString().slice(0, 10));
+          } else if (periodVal === 'CUSTOM' && historialDateFrom?.value) {
+            params.set('fecha_desde', historialDateFrom.value);
+            params.set('fecha_hasta', historialDateFrom.value);
+          }
+
+          const q = historialSearchInput?.value?.trim() || '';
+          if (q) params.set('q', q);
+
+          const res = await fetch(`/api/rutas/historial?${params.toString()}`);
+          if (res.ok) {
+            const json = await res.json();
+            if (json.success && Array.isArray(json.data)) {
+              historialRoutes = json.data;
+              if (historialCountPill) {
+                historialCountPill.textContent = historialRoutes.length.toString();
+              }
+              if (historialBadgeCount) {
+                historialBadgeCount.textContent = `${historialRoutes.length} ruta${historialRoutes.length !== 1 ? 's' : ''} archivada${historialRoutes.length !== 1 ? 's' : ''}`;
+              }
+              (window as any).filterHistorialData();
+              if (isManualRefresh) {
+                showToast('Historial de rutas actualizado', 'success');
+              }
+            }
+          }
+        } catch (err) {
+          console.error('Error cargando historial de rutas:', err);
+          if (isManualRefresh) showToast('Error al consultar historial de rutas', 'error');
+        } finally {
+          if (historialLoading) historialLoading.classList.add('hidden');
+          if (isManualRefresh && refreshIcon) refreshIcon.classList.remove('animate-spin');
+        }
+      };
+
+      (window as any).filterHistorialData = function() {
+        const query = (historialSearchInput?.value || '').toLowerCase().trim();
+        if (!query) {
+          filteredHistorialRoutes = [...historialRoutes];
+        } else {
+          filteredHistorialRoutes = historialRoutes.filter((r: any) => {
+            const matchCode = (r.codigo_ruta || '').toLowerCase().includes(query);
+            const matchDriver = (r.chofer_nombre || '').toLowerCase().includes(query);
+            const matchOrig = (r.ruta_origen || '').toLowerCase().includes(query);
+            const matchDest = (r.ruta_destino || '').toLowerCase().includes(query);
+            const matchSnapshot = JSON.stringify(r.guias_snapshot || []).toLowerCase().includes(query);
+            return matchCode || matchDriver || matchOrig || matchDest || matchSnapshot;
+          });
+        }
+        renderHistorialView();
+      };
+
+      function renderHistorialView() {
+        if (!historialRoutesList || !historialEmpty) return;
+
+        if (filteredHistorialRoutes.length === 0) {
+          historialRoutesList.innerHTML = '';
+          historialEmpty.classList.remove('hidden');
+          return;
+        }
+
+        historialEmpty.classList.add('hidden');
+
+        historialRoutesList.innerHTML = filteredHistorialRoutes.map((r: any) => {
+          const isExpanded = expandedHistorialRouteIds.has(r.id);
+          const guias: any[] = Array.isArray(r.guias_snapshot) ? r.guias_snapshot : [];
+          const fechaObj = new Date(r.fecha_finalizacion);
+          const fechaFormatted = isNaN(fechaObj.getTime())
+            ? r.fecha_finalizacion
+            : fechaObj.toLocaleDateString('es-VE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+
+          const driverInitials = (r.chofer_nombre || 'CH').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+          const efectividad = r.porcentaje_efectividad ?? (r.total_guias > 0 ? Math.round((r.total_entregadas / r.total_guias) * 100) : 0);
+
+          return `
+            <div class="bg-white border border-slate-200/90 rounded-3xl shadow-sm overflow-hidden transition-all duration-200">
+              
+              <!-- Cabecera de la Ruta Archivada -->
+              <div class="p-4 sm:p-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 via-white to-slate-50/50 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+                
+                <!-- Identidad del Chofer y Código -->
+                <div class="flex items-center gap-3.5">
+                  <div class="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-extrabold text-sm shadow-md shrink-0">
+                    ${driverInitials}
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="font-mono font-extrabold text-xs px-2.5 py-0.5 rounded-lg bg-slate-900 text-white shadow-2xs">
+                        ${r.codigo_ruta}
+                      </span>
+                      <h4 class="text-sm sm:text-base font-extrabold text-slate-900">${r.chofer_nombre}</h4>
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                        ${r.finalizada_por || 'Finalizada'}
+                      </span>
+                    </div>
+
+                    <div class="flex items-center gap-2 text-xs text-slate-500 font-medium mt-1 flex-wrap">
+                      <span class="flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span class="font-semibold text-slate-700">${fechaFormatted}</span>
+                      </span>
+                      <span class="text-slate-300">•</span>
+                      <span class="text-indigo-600 font-semibold truncate max-w-[280px]" title="${r.ruta_origen || 'Sede'} ➔ ${r.ruta_destino || 'Destino'}">
+                        ${r.ruta_origen || 'Sede Barquisimeto'} ➔ ${r.ruta_destino || 'Destino'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Métricas Rápidas y Acciones -->
+                <div class="flex flex-wrap items-center gap-2.5 sm:gap-3">
+                  <!-- Píldoras de Balance -->
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="px-2.5 py-1 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold border border-slate-200" title="Total guías">
+                      ${r.total_guias} guías (${r.total_piezas || r.total_guias} pz)
+                    </span>
+                    <span class="px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200 flex items-center gap-1" title="Entregadas exitosamente">
+                      <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                      <span>${r.total_entregadas} entregadas</span>
+                    </span>
+                    ${r.total_no_entregadas > 0 ? `
+                      <span class="px-2.5 py-1 rounded-xl bg-rose-50 text-rose-800 text-xs font-bold border border-rose-200 flex items-center gap-1" title="No entregadas / Incidencias">
+                        <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                        <span>${r.total_no_entregadas} no entregadas</span>
+                      </span>
+                    ` : ''}
+                    <span class="px-2.5 py-1 rounded-xl ${efectividad >= 90 ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'} text-xs font-extrabold border border-emerald-200">
+                      ${efectividad}% efectividad
+                    </span>
+                  </div>
+
+                  <!-- Botón Ver Desglose Guías -->
+                  <button
+                    type="button"
+                    onclick="window.toggleHistorialRouteAccordion(${r.id})"
+                    class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  >
+                    <span>${isExpanded ? 'Ocultar Guías' : `Ver Guías (${guias.length})`}</span>
+                    <svg class="w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
+
+              </div>
+
+              <!-- Sección Desplegable: Tabla Completa de Guías de la Ruta -->
+              <div id="historial-accordion-${r.id}" class="${isExpanded ? '' : 'hidden'} p-4 sm:p-5 bg-slate-50/70 border-t border-slate-100 space-y-3">
+                <div class="flex items-center justify-between">
+                  <h5 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                    <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <span>Detalle de Guías de la Ruta #${r.codigo_ruta}</span>
+                  </h5>
+                  <span class="text-xs font-semibold text-slate-500">${guias.length} paradas registradas</span>
+                </div>
+
+                <div class="overflow-x-auto custom-scrollbar bg-white rounded-2xl border border-slate-200/80 shadow-2xs">
+                  <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr class="bg-slate-50 border-b border-slate-200 text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
+                        <th class="py-2.5 px-3">#</th>
+                        <th class="py-2.5 px-3">Guía & Empresa</th>
+                        <th class="py-2.5 px-3">Destinatario & Teléfono</th>
+                        <th class="py-2.5 px-3">Ciudad & Piezas</th>
+                        <th class="py-2.5 px-3">Estado Final</th>
+                        <th class="py-2.5 px-3">Recibido por / Detalle</th>
+                        <th class="py-2.5 px-3 text-center">Comprobante</th>
+                        <th class="py-2.5 px-3 text-right">Ubicación GPS</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                      ${guias.map((g: any, idx: number) => {
+                        const isNoEnt = g.estado === 'No entregado';
+                        const isEnt = g.estado === 'Entregado';
+                        const phoneFormatted = formatPhoneForWhatsApp(g.telefono_principal || '');
+                        const gmapsUrl = (g.gps_latitud && g.gps_longitud) 
+                          ? `https://www.google.com/maps/search/?api=1&query=${g.gps_latitud},${g.gps_longitud}`
+                          : null;
+
+                        return `
+                          <tr class="hover:bg-slate-50/80 transition-colors">
+                            <td class="py-2.5 px-3 font-mono font-extrabold text-slate-400 text-[11px]">
+                              ${g.orden_ruta || idx + 1}
+                            </td>
+                            <td class="py-2.5 px-3">
+                              <div class="flex items-center gap-1.5 flex-wrap">
+                                <a href="/confirmar?guia=${encodeURIComponent(g.id_guia)}" target="_blank" class="font-mono font-bold text-slate-900 hover:text-indigo-600">
+                                  #${g.id_guia}
+                                </a>
+                                ${g.empresa ? `
+                                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                                    ${g.empresa}
+                                  </span>
+                                ` : ''}
+                              </div>
+                            </td>
+                            <td class="py-2.5 px-3">
+                              <p class="font-bold text-slate-900 truncate max-w-[180px]">${g.destinatario || '—'}</p>
+                              ${g.telefono_principal ? `
+                                <a href="https://wa.me/${phoneFormatted}" target="_blank" class="text-[10px] text-slate-500 hover:text-emerald-700 flex items-center gap-1 font-mono">
+                                  ${g.telefono_principal}
+                                </a>
+                              ` : ''}
+                            </td>
+                            <td class="py-2.5 px-3">
+                              <p class="font-semibold text-slate-800">${g.ciudad_destino || '—'}</p>
+                              <span class="text-[10px] text-slate-400 font-mono font-bold">${g.piezas || 1} pz</span>
+                            </td>
+                            <td class="py-2.5 px-3">
+                              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                                isEnt ? 'bg-emerald-100 text-emerald-800' :
+                                isNoEnt ? 'bg-rose-100 text-rose-800' :
+                                'bg-slate-100 text-slate-700'
+                              }">
+                                ${isEnt ? `
+                                  <svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                  <span>Entregado</span>
+                                ` : isNoEnt ? `
+                                  <svg class="w-3 h-3 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                  <span>No entregado</span>
+                                ` : `
+                                  <span>${g.estado}</span>
+                                `}
+                              </span>
+                            </td>
+                            <td class="py-2.5 px-3">
+                              <p class="text-[11px] text-slate-700 font-medium truncate max-w-[200px]" title="${g.recibido_por || '—'}">
+                                ${g.recibido_por || '<span class="text-slate-400 italic">Sin registro</span>'}
+                              </p>
+                            </td>
+                            <td class="py-2.5 px-3 text-center">
+                              ${g.comprobante_url ? `
+                                <button
+                                  type="button"
+                                  onclick="window.openLightbox('${g.comprobante_url}', 'Comprobante Guía #${g.id_guia}', '${g.recibido_por ? `Recibido por: ${g.recibido_por.replace(/'/g, "\\'")}` : 'Comprobante de entrega'}', '${g.id_guia}', 'guia')"
+                                  class="p-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-all cursor-pointer inline-flex items-center gap-1 text-[10px] font-bold"
+                                  title="Ver foto de comprobante"
+                                >
+                                  <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                  </svg>
+                                  <span>Foto</span>
+                                </button>
+                              ` : `
+                                <span class="text-[10px] text-slate-300 italic">—</span>
+                              `}
+                            </td>
+                            <td class="py-2.5 px-3 text-right">
+                              ${gmapsUrl ? `
+                                <a
+                                  href="${gmapsUrl}"
+                                  target="_blank"
+                                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 text-[10px] font-bold"
+                                  title="Ver ubicación en Google Maps"
+                                >
+                                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                  <span>GPS</span>
+                                </a>
+                              ` : `
+                                <span class="text-[10px] text-slate-300">—</span>
+                              `}
+                            </td>
+                          </tr>
+                        `;
+                      }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          `;
+        }).join('');
+      }
+
+      (window as any).toggleHistorialRouteAccordion = function(routeId: number) {
+        if (expandedHistorialRouteIds.has(routeId)) {
+          expandedHistorialRouteIds.delete(routeId);
+        } else {
+          expandedHistorialRouteIds.add(routeId);
+        }
+        renderHistorialView();
+      };
+
+      // Modal de Finalizar Ruta Logística
+      (window as any).openFinalizarRutaModal = function(driverId: number) {
+        activeFinChoferId = driverId;
+        const driver = drivers.find(d => d.id === driverId);
+        if (!driver) return;
+
+        const driverGuias = shipments.filter(g => g.chofer_asignado_id === driverId);
+        const total = driverGuias.length;
+        const entregadas = driverGuias.filter(g => g.estado === 'Entregado').length;
+        const noEntregadas = driverGuias.filter(g => g.estado === 'No entregado').length;
+        const pendientes = driverGuias.filter(g => g.estado !== 'Entregado' && g.estado !== 'No entregado').length;
+
+        if (modalFinChoferNombre) modalFinChoferNombre.textContent = driver.nombre;
+        if (modalFinTotalGuias) modalFinTotalGuias.textContent = total.toString();
+        if (modalFinEntregadas) modalFinEntregadas.textContent = entregadas.toString();
+        if (modalFinNoEntregadas) modalFinNoEntregadas.textContent = noEntregadas.toString();
+
+        if (pendientes > 0) {
+          if (modalFinPendientesRow) modalFinPendientesRow.classList.remove('hidden');
+          if (modalFinPendientes) modalFinPendientes.textContent = pendientes.toString();
+          if (modalFinWarning) modalFinWarning.classList.remove('hidden');
+        } else {
+          if (modalFinPendientesRow) modalFinPendientesRow.classList.add('hidden');
+          if (modalFinWarning) modalFinWarning.classList.add('hidden');
+        }
+
+        if (modalFinalizarRutaLogistica) {
+          modalFinalizarRutaLogistica.classList.remove('hidden');
+          modalFinalizarRutaLogistica.classList.add('flex');
+        }
+      };
+
+      (window as any).closeFinalizarRutaModal = function() {
+        activeFinChoferId = null;
+        if (modalFinalizarRutaLogistica) {
+          modalFinalizarRutaLogistica.classList.add('hidden');
+          modalFinalizarRutaLogistica.classList.remove('flex');
+        }
+      };
+
+      (window as any).confirmFinalizarRuta = async function() {
+        if (!activeFinChoferId) return;
+        const btn = btnConfirmFinalizarRutaLogistica;
+        const origHtml = btn?.innerHTML || '';
+        if (btn) {
+          btn.innerHTML = '<span class="opacity-70">Finalizando...</span>';
+          btn.disabled = true;
+        }
+
+        try {
+          const res = await fetch('/api/rutas/finalizar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chofer_id: activeFinChoferId })
+          });
+          const data = await res.json();
+
+          if (res.ok && data.success) {
+            (window as any).closeFinalizarRutaModal();
+            showToast(data.message || 'Ruta finalizada y archivada exitosamente', 'success');
+            await silentRefresh();
+            await (window as any).loadHistorialData();
+            renderViews();
+          } else {
+            showToast(data.message || 'Error al finalizar la ruta', 'error');
+          }
+        } catch (err) {
+          showToast('Error de conexión al finalizar la ruta', 'error');
+        } finally {
+          if (btn) {
+            btn.innerHTML = origHtml;
+            btn.disabled = false;
+          }
         }
       };
 

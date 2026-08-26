@@ -48,6 +48,7 @@ const guiasResult = await query(`
   FROM guias g
   LEFT JOIN usuarios u ON g.chofer_asignado_id = u.id
   WHERE g.chofer_asignado_id = $1
+    AND (g.archivada = false OR g.archivada IS NULL)
   ORDER BY 
     CASE WHEN g.orden_ruta IS NOT NULL AND g.orden_ruta > 0 THEN g.orden_ruta ELSE 999999 END ASC,
     g.created_at DESC

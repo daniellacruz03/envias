@@ -2,8 +2,11 @@ import type { APIRoute } from 'astro';
 import { query } from '../../lib/db';
 
 // GET: Consulta todas las guías con JOIN a usuarios (chofer)
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ url }) => {
   try {
+    const incluirArchivadas = url.searchParams.get('incluir_archivadas') === 'true';
+    const whereClause = incluirArchivadas ? '' : 'WHERE (g.archivada = false OR g.archivada IS NULL)';
+
     const result = await query(`
       SELECT 
         g.id_guia,
@@ -26,10 +29,13 @@ export const GET: APIRoute = async () => {
         g.empresa,
         g.chofer_asignado_id,
         g.created_at,
+        g.archivada,
+        g.ruta_archivada_id,
         u.nombre AS chofer_nombre,
         u.telefono AS chofer_telefono
       FROM guias g
       LEFT JOIN usuarios u ON g.chofer_asignado_id = u.id
+      ${whereClause}
       ORDER BY g.created_at DESC
     `);
 
