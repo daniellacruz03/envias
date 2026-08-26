@@ -2891,68 +2891,59 @@ const userInitials = currentUser.nombre
 
       async function loadData() {
         try {
-          const [guiasRes, choferesRes, escaneosRes, histRes] = await Promise.all([
-            fetch('/api/guias'),
-            fetch('/api/choferes'),
-            fetch('/api/escaneos'),
-            fetch('/api/rutas/historial')
-          ]);
+          // Consultas principales de guías y choferes
+          const guiasPromise = fetch('/api/guias').then(r => r.ok ? r.json() : null).catch(() => null);
+          const choferesPromise = fetch('/api/choferes').then(r => r.ok ? r.json() : null).catch(() => null);
+          
+          const [guiasJson, choferesJson] = await Promise.all([guiasPromise, choferesPromise]);
 
-          const guiasJson = await guiasRes.json();
-          const choferesJson = await choferesRes.json();
-          try {
-            const escaneosJson = await escaneosRes.json();
-            const totalPend = escaneosJson.totalPendientes || 0;
-            if (escaneosCountPill) {
-              if (totalPend > 0) {
-                escaneosCountPill.textContent = totalPend.toString();
+          if (guiasJson && guiasJson.success && Array.isArray(guiasJson.data)) {
+            shipments = guiasJson.data;
+          }
+
+          if (choferesJson && choferesJson.success && Array.isArray(choferesJson.data)) {
+            drivers = choferesJson.data;
+          }
+
+          // Consultas secundarias no bloqueantes para badges
+          fetch('/api/escaneos')
+            .then(r => r.ok ? r.json() : null)
+            .then(escData => {
+              if (escData && escData.totalPendientes && escaneosCountPill) {
+                escaneosCountPill.textContent = escData.totalPendientes.toString();
                 escaneosCountPill.classList.remove('hidden');
                 escaneosCountPill.className = 'text-[10px] bg-amber-400 text-white px-1.5 py-0.2 rounded-full font-bold';
-              } else {
-                escaneosCountPill.classList.add('hidden');
               }
-            }
-          } catch(e) {}
+            }).catch(() => {});
 
-          try {
-            const histJson = await histRes.json();
-            if (histJson.success && Array.isArray(histJson.data)) {
-              historialRoutes = histJson.data;
-              filteredHistorialRoutes = [...historialRoutes];
-              if (historialCountPill) {
-                historialCountPill.textContent = historialRoutes.length.toString();
+          fetch('/api/rutas/historial')
+            .then(r => r.ok ? r.json() : null)
+            .then(histData => {
+              if (histData && histData.success && Array.isArray(histData.data)) {
+                historialRoutes = histData.data;
+                filteredHistorialRoutes = [...historialRoutes];
+                if (historialCountPill) {
+                  historialCountPill.textContent = historialRoutes.length.toString();
+                }
+                if (historialBadgeCount) {
+                  historialBadgeCount.textContent = `${historialRoutes.length} ruta${historialRoutes.length !== 1 ? 's' : ''} archivada${historialRoutes.length !== 1 ? 's' : ''}`;
+                }
               }
-              if (historialBadgeCount) {
-                historialBadgeCount.textContent = `${historialRoutes.length} ruta${historialRoutes.length !== 1 ? 's' : ''} archivada${historialRoutes.length !== 1 ? 's' : ''}`;
-              }
-            }
-          } catch(e) {}
-
-          if (guiasJson.success) {
-            shipments = guiasJson.data || [];
-          } else {
-            showToast('Error al cargar guías desde la base de datos', 'error');
-          }
-
-          if (choferesJson.success) {
-            drivers = choferesJson.data || [];
-          }
+            }).catch(() => {});
 
           isLoading = false;
           populateCityFilter();
           loadFrequentClients();
           renderViews();
+
+          // Si por alguna razón no se cargaron guías pero el servidor respondió vacío por reinicio, reintentar en 1.5s
+          if (shipments.length === 0 && !guiasJson) {
+            setTimeout(loadData, 1500);
+          }
         } catch (err: any) {
           isLoading = false;
-          console.error('Error al conectar con la API:', err);
-          showToast('Error de red al consultar la base de datos', 'error');
-          tableBody.innerHTML = `
-            <tr>
-              <td colspan="7" class="py-8 text-center text-rose-500 text-xs">
-                No se pudo conectar con la base de datos. Verifica tu conexión a internet o la variable DATABASE_URL.
-              </td>
-            </tr>
-          `;
+          console.warn('Conexión en espera del servidor, reintentando...', err);
+          setTimeout(loadData, 2000);
         }
       }
 
