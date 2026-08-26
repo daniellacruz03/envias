@@ -110,6 +110,7 @@ export const POST: APIRoute = async ({ request }) => {
           g.telefono_secundario,
           g.ciudad_destino,
           g.piezas,
+          g.pies_cubicos,
           g.direccion_referencia,
           g.estado,
           g.gps_latitud,

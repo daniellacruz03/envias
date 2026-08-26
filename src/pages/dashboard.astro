@@ -288,6 +288,21 @@ const userInitials = currentUser.nombre
             />
           </div>
 
+          <!-- Pies Cúbicos (ft³) -->
+          <div class="lg:col-span-1 space-y-1">
+            <label for="input-pies-cubicos" class="block text-xs font-semibold text-slate-700">
+              Pies Cúbicos <span class="text-slate-400 font-normal">(ft³)</span>
+            </label>
+            <input
+              type="number"
+              id="input-pies-cubicos"
+              step="0.01"
+              min="0"
+              placeholder="Ej: 12.5"
+              class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+            />
+          </div>
+
           <!-- Empresa / Courier Aliado -->
           <div class="lg:col-span-1 space-y-1">
             <label for="input-empresa" class="block text-xs font-semibold text-slate-700">
@@ -1012,19 +1027,21 @@ const userInitials = currentUser.nombre
                     </h2>
                   </div>
 
-                  <!-- TABLA DUAL: 2 BLOQUES DE 3 COLUMNAS CADA UNO -->
+                  <!-- TABLA DUAL: 2 BLOQUES DE 4 COLUMNAS CADA UNO -->
                   <div class="w-full mb-3">
                     <table class="w-full border-collapse text-[10px] border-2 border-black" id="listin-dual-table">
                       <thead>
                         <tr class="bg-slate-200 text-black uppercase font-black text-center border-b-2 border-black">
                           <!-- Bloque Izquierdo -->
-                          <th class="py-1 px-1.5 border-r border-black w-[17%]">NRO DE GUIA</th>
-                          <th class="py-1 px-1 border-r border-black w-[8%]">PIEZAS</th>
-                          <th class="py-1 px-2 border-r-2 border-black w-[25%]">DESTINO</th>
+                          <th class="py-1 px-1 border-r border-black w-[15%]">NRO DE GUIA</th>
+                          <th class="py-1 px-0.5 border-r border-black w-[7%]">PIEZAS</th>
+                          <th class="py-1 px-0.5 border-r border-black w-[8%]">FT³</th>
+                          <th class="py-1 px-1.5 border-r-2 border-black w-[20%]">DESTINO</th>
                           <!-- Bloque Derecho -->
-                          <th class="py-1 px-1.5 border-r border-black w-[17%]">NRO DE GUIA</th>
-                          <th class="py-1 px-1 border-r border-black w-[8%]">PIEZAS</th>
-                          <th class="py-1 px-2 w-[25%]">DESTINO</th>
+                          <th class="py-1 px-1 border-r border-black w-[15%]">NRO DE GUIA</th>
+                          <th class="py-1 px-0.5 border-r border-black w-[7%]">PIEZAS</th>
+                          <th class="py-1 px-0.5 border-r border-black w-[8%]">FT³</th>
+                          <th class="py-1 px-1.5 w-[20%]">DESTINO</th>
                         </tr>
                       </thead>
                       <tbody id="preview-listin-tbody" class="font-mono font-semibold divide-y divide-black/40">
@@ -1036,9 +1053,10 @@ const userInitials = currentUser.nombre
                   <!-- RESUMEN DE TOTALES Y FIRMAS -->
                   <div class="mt-3 pt-2 border-t-2 border-black space-y-2.5">
                     <!-- Resumen de Totales -->
-                    <div class="flex items-center justify-between bg-slate-100 px-3 py-1.5 rounded border border-black font-bold text-[11px]">
+                    <div class="flex items-center justify-between bg-slate-100 px-3 py-1.5 rounded border border-black font-bold text-[11px] flex-wrap gap-2">
                       <div>TOTAL GUÍAS: <span id="preview-total-guias" class="font-black text-black">0</span></div>
                       <div>TOTAL PIEZAS: <span id="preview-total-piezas" class="font-black text-black">0</span></div>
+                      <div>TOTAL VOLUMEN: <span id="preview-total-volumen" class="font-black text-black">0.00 ft³</span></div>
                       <div>TOTAL ZONAS/DESTINOS: <span id="preview-total-ciudades" class="font-black text-black">0</span></div>
                     </div>
 
@@ -1369,17 +1387,21 @@ const userInitials = currentUser.nombre
             <!-- Formulario Scrollable -->
             <div class="flex-1 overflow-y-auto px-5 py-4 space-y-3.5 custom-scrollbar">
               
-              <div class="grid grid-cols-2 gap-3">
+              <div class="grid grid-cols-3 gap-2">
                 <div class="col-span-1 space-y-1">
                   <label class="text-xs font-bold text-slate-700 flex items-center gap-1">
                     <span>N° Guía</span>
                     <span class="text-rose-500">*</span>
                   </label>
-                  <input type="text" id="drawer-id-guia" placeholder="Ej: 982001" class="w-full text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
+                  <input type="text" id="drawer-id-guia" placeholder="Ej: 982001" class="w-full text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
                 </div>
                 <div class="col-span-1 space-y-1">
                   <label class="text-xs font-bold text-slate-700">Piezas</label>
-                  <input type="number" id="drawer-piezas" value="1" min="1" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
+                  <input type="number" id="drawer-piezas" value="1" min="1" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
+                </div>
+                <div class="col-span-1 space-y-1">
+                  <label class="text-xs font-bold text-slate-700">Pies Cúb. (ft³)</label>
+                  <input type="number" id="drawer-pies-cubicos" step="0.01" min="0" placeholder="Ej: 12.5" class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all" />
                 </div>
               </div>
 
@@ -2057,6 +2079,21 @@ const userInitials = currentUser.nombre
               />
             </div>
 
+            <!-- Pies Cúbicos -->
+            <div class="space-y-1">
+              <label for="edit-pies-cubicos" class="block text-xs font-bold text-slate-700">
+                Pies Cúbicos <span class="text-slate-400 font-normal">(ft³)</span>
+              </label>
+              <input
+                type="number"
+                id="edit-pies-cubicos"
+                step="0.01"
+                min="0"
+                placeholder="Ej: 12.5"
+                class="w-full text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+              />
+            </div>
+
             <!-- Empresa / Courier Aliado -->
             <div class="space-y-1">
               <label for="edit-empresa" class="block text-xs font-bold text-slate-700">
@@ -2234,6 +2271,7 @@ const userInitials = currentUser.nombre
         telefono_secundario?: string | null;
         ciudad_destino: string;
         piezas: number;
+        pies_cubicos?: number | string | null;
         direccion_referencia?: string | null;
         hora_disponible?: string | null;
         empresa?: string | null;
@@ -2602,6 +2640,7 @@ const userInitials = currentUser.nombre
       const previewListinTbody = document.getElementById('preview-listin-tbody') as HTMLElement;
       const previewTotalGuias = document.getElementById('preview-total-guias') as HTMLElement;
       const previewTotalPiezas = document.getElementById('preview-total-piezas') as HTMLElement;
+      const previewTotalVolumen = document.getElementById('preview-total-volumen') as HTMLElement;
       const previewTotalCiudades = document.getElementById('preview-total-ciudades') as HTMLElement;
 
       const searchInput = document.getElementById('search-input') as HTMLInputElement;
@@ -2938,6 +2977,24 @@ const userInitials = currentUser.nombre
       // ==========================================
       // RENDER VISTA 1: TABLA
       // ==========================================
+      function normalizeClientKey(name?: string, city?: string): string {
+        const normName = (name || '')
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        const normCity = (city || '')
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        return normName + '|' + normCity;
+      }
+
       function renderTable(filtered: GuiaRow[]) {
         tableBody.innerHTML = filtered.map(item => createRowHTML(item)).join('');
       }
@@ -2992,6 +3049,10 @@ const userInitials = currentUser.nombre
           `).join('')}
         `;
 
+        const clientKey = normalizeClientKey(item.destinatario, item.ciudad_destino);
+        const clientGuias = shipments.filter(s => normalizeClientKey(s.destinatario, s.ciudad_destino) === clientKey);
+        const isMultiGuia = clientGuias.length > 1;
+
         return `
           <tr class="hover:bg-slate-50/70 transition-colors group">
             <!-- Guía & Piezas & Empresa -->
@@ -3011,12 +3072,20 @@ const userInitials = currentUser.nombre
                   </span>
                 ` : ''}
               </div>
-              <span class="text-[11px] text-slate-400 font-medium">${item.piezas || 1} ${item.piezas === 1 ? 'pieza' : 'piezas'}</span>
+              <span class="text-[11px] text-slate-400 font-medium">${item.piezas || 1} ${item.piezas === 1 ? 'pieza' : 'piezas'}${item.pies_cubicos ? ` &bull; <strong class="text-slate-600 font-mono font-bold">${Number(item.pies_cubicos).toFixed(2)} ft³</strong>` : ''}</span>
             </td>
 
             <!-- Destinatario -->
             <td class="py-3.5 px-4">
-              <p class="font-bold text-slate-900 leading-snug">${item.destinatario}</p>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <p class="font-bold text-slate-900 leading-snug">${item.destinatario}</p>
+                ${isMultiGuia ? `
+                  <span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-extrabold" title="Este cliente tiene ${clientGuias.length} guías para la misma ubicación (${clientGuias.map(g => '#' + g.id_guia).join(', ')})">
+                    <svg class="w-2.5 h-2.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    ${clientGuias.length} guías
+                  </span>
+                ` : ''}
+              </div>
               <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
                 <span class="text-[11px] text-slate-500 font-mono">${item.telefono_principal}</span>
                 ${item.telefono_secundario ? `<span class="text-[10px] text-slate-400 font-mono bg-slate-100 px-1 py-0.2 rounded border border-slate-200/60" title="Teléfono Alternativo">Alt: ${item.telefono_secundario}</span>` : ''}
@@ -3292,7 +3361,9 @@ const userInitials = currentUser.nombre
           const cityGuias = cityMap[cityName];
           const theme = getCityColorTheme(cityName);
           const totalPieces = cityGuias.reduce((acc, curr) => acc + (curr.piezas || 1), 0);
+          const totalVol = cityGuias.reduce((acc, curr) => acc + (Number(curr.pies_cubicos) || 0), 0);
           const gpsCount = cityGuias.filter(g => g.gps_confirmado).length;
+          const uniqueClientsCount = new Set(cityGuias.map(g => (g.destinatario || '') + (g.ciudad_destino || ''))).size;
           
           const porContactarCount = cityGuias.filter(g => g.estado === 'Por contactar').length;
           const contactadoCount = cityGuias.filter(g => g.estado === 'Contactado').length;
@@ -3343,7 +3414,7 @@ const userInitials = currentUser.nombre
                     <div class="flex items-center gap-2 flex-wrap">
                       <h4 class="text-base font-extrabold text-slate-900 tracking-tight">${cityName}</h4>
                       <span class="text-xs font-bold px-2.5 py-0.5 rounded-full ${theme.badgeBg}">
-                        ${cityGuias.length} ${cityGuias.length === 1 ? 'guía' : 'guías'} • ${totalPieces} ${totalPieces === 1 ? 'pieza' : 'piezas'}
+                        ${cityGuias.length} ${cityGuias.length === 1 ? 'guía' : 'guías'}${uniqueClientsCount < cityGuias.length ? ` (${uniqueClientsCount} clientes/paradas)` : ''} • ${totalPieces} ${totalPieces === 1 ? 'pieza' : 'piezas'}${totalVol > 0 ? ' • ' + totalVol.toFixed(2) + ' ft³' : ''}
                       </span>
                       ${gpsCount > 0 ? `
                         <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -3429,7 +3500,11 @@ const userInitials = currentUser.nombre
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-100 bg-white">
-                    ${cityGuias.map(item => `
+                    ${cityGuias.map(item => {
+                      const clientKey = (item.destinatario || '') + (item.ciudad_destino || '');
+                      const clientGuias = cityGuias.filter(s => (s.destinatario || '') + (s.ciudad_destino || '') === clientKey);
+                      const isMulti = clientGuias.length > 1;
+                      return `
                       <tr class="hover:bg-slate-50/70 transition-colors">
                         <td class="py-2.5 px-4">
                           <div class="flex items-center gap-1.5 flex-wrap">
@@ -3442,10 +3517,17 @@ const userInitials = currentUser.nombre
                               </span>
                             ` : ''}
                           </div>
-                          <span class="text-[10px] text-slate-400 block">${item.piezas || 1} ${item.piezas === 1 ? 'pieza' : 'piezas'}</span>
+                          <span class="text-[10px] text-slate-400 block">${item.piezas || 1} ${item.piezas === 1 ? 'pieza' : 'piezas'}${item.pies_cubicos ? ` &bull; <strong class="text-slate-600 font-mono font-bold">${Number(item.pies_cubicos).toFixed(2)} ft³</strong>` : ''}</span>
                         </td>
                         <td class="py-2.5 px-4">
-                          <p class="font-bold text-slate-900">${item.destinatario}</p>
+                          <div class="flex items-center gap-1.5">
+                            <p class="font-bold text-slate-900">${item.destinatario}</p>
+                            ${isMulti ? `
+                              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 border border-indigo-200" title="${clientGuias.length} guías para este cliente">
+                                ${clientGuias.length} guías
+                              </span>
+                            ` : ''}
+                          </div>
                           <span class="text-[11px] text-slate-500 font-mono">${item.telefono_principal}</span>
                           ${item.hora_disponible ? `
                             <span class="text-[10px] text-indigo-600 font-semibold block">Hasta las ${item.hora_disponible}</span>
@@ -3527,7 +3609,8 @@ const userInitials = currentUser.nombre
                           </div>
                         </td>
                       </tr>
-                    `).join('')}
+                    `;
+                    }).join('')}
                   </tbody>
                 </table>
               </div>
@@ -3756,7 +3839,7 @@ const userInitials = currentUser.nombre
                           <p class="text-xs font-bold text-slate-800 truncate">${g.destinatario}</p>
                           <div class="flex items-center justify-between text-[11px] text-slate-500">
                             <span class="font-semibold text-slate-700">${g.ciudad_destino}</span>
-                            <span class="text-slate-400 font-mono">${g.piezas || 1} pz</span>
+                            <span class="text-slate-400 font-mono text-[10px] font-bold">${g.piezas || 1} pz${g.pies_cubicos ? ' · ' + Number(g.pies_cubicos).toFixed(2) + ' ft³' : ''}</span>
                           </div>
                         </div>
                       `).join('')}
@@ -3826,8 +3909,9 @@ const userInitials = currentUser.nombre
                           </div>
 
                           <p class="text-xs font-bold text-slate-800 truncate">${g.destinatario}</p>
-                          <div class="text-[11px] text-slate-500 truncate" title="${g.direccion_referencia || g.ciudad_destino}">
-                            ${g.direccion_referencia || g.ciudad_destino}
+                          <div class="flex items-center justify-between text-[11px] text-slate-500">
+                            <span class="truncate">${g.direccion_referencia || g.ciudad_destino}</span>
+                            <span class="text-slate-400 font-mono text-[10px] font-bold shrink-0 ml-1">${g.piezas || 1} pz${g.pies_cubicos ? ' · ' + Number(g.pies_cubicos).toFixed(2) + ' ft³' : ''}</span>
                           </div>
                         </div>
                       `).join('')}
@@ -3899,7 +3983,10 @@ const userInitials = currentUser.nombre
                           </div>
 
                           <div>
-                            <p class="text-xs font-bold text-slate-800 truncate">${g.destinatario}</p>
+                            <div class="flex items-center justify-between">
+                              <p class="text-xs font-bold text-slate-800 truncate">${g.destinatario}</p>
+                              <span class="text-slate-400 font-mono text-[10px] font-bold shrink-0 ml-1">${g.piezas || 1} pz${g.pies_cubicos ? ' · ' + Number(g.pies_cubicos).toFixed(2) + ' ft³' : ''}</span>
+                            </div>
                             <p class="text-[11px] text-slate-500 truncate mt-0.5">
                               <span class="font-semibold ${isNoEntregado ? 'text-rose-700' : 'text-slate-700'}">${isNoEntregado ? 'Motivo:' : 'Recibió:'}</span> ${g.recibido_por || (isNoEntregado ? 'Cliente ausente / No contesta' : 'Titular')}
                             </p>
@@ -4696,6 +4783,7 @@ const userInitials = currentUser.nombre
 
         const drawerIdGuia = document.getElementById('drawer-id-guia') as HTMLInputElement;
         const drawerPiezas = document.getElementById('drawer-piezas') as HTMLInputElement;
+        const drawerPiesCubicos = document.getElementById('drawer-pies-cubicos') as HTMLInputElement;
         const drawerDestinatario = document.getElementById('drawer-destinatario') as HTMLInputElement;
         const drawerTelefono = document.getElementById('drawer-telefono') as HTMLInputElement;
         const drawerCiudad = document.getElementById('drawer-ciudad') as HTMLInputElement;
@@ -4803,6 +4891,7 @@ const userInitials = currentUser.nombre
           resetModalZoom();
           drawerIdGuia.value = '';
           drawerPiezas.value = '1';
+          if (drawerPiesCubicos) drawerPiesCubicos.value = '';
           drawerDestinatario.value = '';
           drawerTelefono.value = '';
           drawerCiudad.value = '';
@@ -4926,6 +5015,7 @@ const userInitials = currentUser.nombre
           const telefono = drawerTelefono.value.trim();
           const ciudad = drawerCiudad.value.trim();
           const piezas = drawerPiezas.value;
+          const pies_cubicos = drawerPiesCubicos ? drawerPiesCubicos.value.trim() : '';
           const empresa = drawerEmpresa ? drawerEmpresa.value.trim() : '';
           const direccion = drawerDireccion.value.trim();
 
@@ -4952,6 +5042,7 @@ const userInitials = currentUser.nombre
                   telefono_principal: telefono,
                   ciudad_destino: ciudad,
                   piezas,
+                  pies_cubicos: pies_cubicos ? parseFloat(pies_cubicos) : undefined,
                   direccion_referencia: direccion,
                   empresa: empresa || undefined
                 }
@@ -4991,6 +5082,7 @@ const userInitials = currentUser.nombre
           const tel2Input = document.getElementById('input-telefono-2') as HTMLInputElement;
           const ciudadInput = document.getElementById('input-ciudad') as HTMLInputElement;
           const piezasInput = document.getElementById('input-piezas') as HTMLInputElement;
+          const piesCubicosInput = document.getElementById('input-pies-cubicos') as HTMLInputElement;
           const empresaInput = document.getElementById('input-empresa') as HTMLSelectElement;
           const dirInput = document.getElementById('input-direccion') as HTMLInputElement;
           const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
@@ -5017,6 +5109,7 @@ const userInitials = currentUser.nombre
             telefono_secundario: tel2Input.value.trim() || undefined,
             ciudad_destino: ciudadInput.value.trim(),
             piezas: parseInt(piezasInput.value, 10) || 1,
+            pies_cubicos: piesCubicosInput && piesCubicosInput.value.trim() ? parseFloat(piesCubicosInput.value.trim()) : undefined,
             empresa: empresaInput ? empresaInput.value.trim() || undefined : undefined,
             direccion_referencia: dirInput.value.trim() || undefined
           };
@@ -5036,6 +5129,7 @@ const userInitials = currentUser.nombre
 
               form.reset();
               piezasInput.value = '1';
+              if (piesCubicosInput) piesCubicosInput.value = '';
               if (empresaInput) empresaInput.value = '';
               guiaInput.focus();
 
@@ -5245,6 +5339,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       const editTelSecundario = document.getElementById('edit-telefono-secundario') as HTMLInputElement;
       const editCiudad = document.getElementById('edit-ciudad') as HTMLInputElement;
       const editPiezas = document.getElementById('edit-piezas') as HTMLInputElement;
+      const editPiesCubicos = document.getElementById('edit-pies-cubicos') as HTMLInputElement;
       const editEmpresa = document.getElementById('edit-empresa') as HTMLSelectElement;
       const editEstado = document.getElementById('edit-estado') as HTMLSelectElement;
       const editChofer = document.getElementById('edit-chofer') as HTMLSelectElement;
@@ -5291,6 +5386,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         if (editTelSecundario) editTelSecundario.value = item.telefono_secundario || '';
         if (editCiudad) editCiudad.value = item.ciudad_destino || '';
         if (editPiezas) editPiezas.value = (item.piezas || 1).toString();
+        if (editPiesCubicos) editPiesCubicos.value = item.pies_cubicos ? item.pies_cubicos.toString() : '';
         if (editEmpresa) editEmpresa.value = item.empresa || '';
         if (editEstado) editEstado.value = item.estado || 'Por contactar';
         if (editHora) editHora.value = item.hora_disponible || '';
@@ -5328,6 +5424,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           telefono_secundario: editTelSecundario.value.trim() || null,
           ciudad_destino: editCiudad.value.trim(),
           piezas: parseInt(editPiezas.value, 10) || 1,
+          pies_cubicos: editPiesCubicos && editPiesCubicos.value ? parseFloat(editPiesCubicos.value) : null,
           empresa: editEmpresa.value.trim() || null,
           estado: editEstado.value,
           chofer_asignado_id: choferVal,
@@ -6574,6 +6671,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             }
 
             const totalPiezas = cityGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+            const totalVol = cityGuias.reduce((acc, g) => acc + (Number(g.pies_cubicos) || 0), 0);
             const isExcluded = listinExcludedCities.has(cityName);
             const isCollapsed = listinCollapsedCities.has(cityName) && listinActiveZone === 'ALL';
             const isFocused = listinActiveZone === cityName;
@@ -6609,7 +6707,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                     </span>
                     <div class="min-w-0">
                       <p class="text-xs font-bold text-slate-900 truncate">${cityName}</p>
-                      <p class="text-[10px] text-slate-500 font-medium">${cityGuias.length} guía${cityGuias.length !== 1 ? 's' : ''} &bull; ${totalPiezas} pieza${totalPiezas !== 1 ? 's' : ''}</p>
+                      <p class="text-[10px] text-slate-500 font-medium">${cityGuias.length} guía${cityGuias.length !== 1 ? 's' : ''} &bull; ${totalPiezas} pieza${totalPiezas !== 1 ? 's' : ''}${totalVol > 0 ? ' &bull; ' + totalVol.toFixed(2) + ' ft³' : ''}</p>
                     </div>
                   </div>
 
@@ -6660,7 +6758,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
                 <!-- Lista interna de guías con controles de reordenación individual -->
                 ${!isCollapsed ? `
-                  <div class="space-y-1 pl-4 sm:pl-5 border-l-2 border-slate-200 text-xs">
+                  <div class="space-y-1.5 pl-6 border-l-2 border-slate-200 pt-1">
                     ${cityGuias.map((g, gIdx) => {
                       const isGuiaExcluded = listinExcludedGuiaIds.has(g.id_guia) || isExcluded;
                       return `
@@ -6670,7 +6768,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                           ondragend="window.onListinGuiaDragEnd(event)"
                           ondragover="window.onListinGuiaDragOver(event)"
                           ondrop="window.onListinGuiaDrop(event, '${g.id_guia}', '${cityName.replace(/'/g, "\\'")}')"
-                          class="flex items-center justify-between py-1.5 px-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs hover:border-slate-300 text-[11px] gap-2 transition-all"
+                          class="flex items-center justify-between py-1.5 px-2 rounded-lg bg-white border border-slate-200/80 shadow-2xs hover:border-slate-300 text-xs gap-2 transition-all"
                         >
                           <!-- Grip, Checkbox, Posición, Guía y Destinatario -->
                           <div class="flex items-center gap-1.5 min-w-0">
@@ -6693,7 +6791,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
                           <!-- Piezas y Botones ▲ ▼ de Guía -->
                           <div class="flex items-center gap-1 shrink-0">
-                            <span class="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono font-bold text-[9px]">${g.piezas || 1} pza${(g.piezas || 1) !== 1 ? 's' : ''}</span>
+                            <span class="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono font-bold text-[9px]">${g.piezas || 1} pza${(g.piezas || 1) !== 1 ? 's' : ''}${g.pies_cubicos ? ' · ' + Number(g.pies_cubicos).toFixed(2) + ' ft³' : ''}</span>
                             
                             <!-- Subir Guía -->
                             <button
@@ -6776,7 +6874,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                     </div>
 
                     <div class="flex items-center gap-1 shrink-0">
-                      <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono font-bold text-[10px]">${g.piezas || 1} pza${(g.piezas || 1) !== 1 ? 's' : ''}</span>
+                      <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono font-bold text-[10px]">${g.piezas || 1} pza${(g.piezas || 1) !== 1 ? 's' : ''}${g.pies_cubicos ? ' · ' + Number(g.pies_cubicos).toFixed(2) + ' ft³' : ''}</span>
                       
                       <!-- Subir Guía Plana -->
                       <button
@@ -6826,26 +6924,30 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
         const totalGuias = orderedActiveGuias.length;
         const totalPiezas = orderedActiveGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+        const totalVolumen = orderedActiveGuias.reduce((acc, g) => acc + (Number(g.pies_cubicos) || 0), 0);
         const uniqueActiveCities = new Set(orderedActiveGuias.map(g => (g.ciudad_destino || '').trim())).size;
 
         if (previewTotalGuias) previewTotalGuias.textContent = totalGuias.toString();
         if (previewTotalPiezas) previewTotalPiezas.textContent = totalPiezas.toString();
+        if (previewTotalVolumen) previewTotalVolumen.textContent = totalVolumen.toFixed(2) + ' ft³';
         if (previewTotalCiudades) previewTotalCiudades.textContent = uniqueActiveCities.toString();
+
+        const volTagBanner = totalVolumen > 0 ? `, ${totalVolumen.toFixed(2)} FT³` : '';
 
         // Actualizar Encabezado de Destino en la Hoja Física Oficial
         if (listinSelectedZones.size === 0) {
           if (previewListinDestino) previewListinDestino.textContent = 'TODAS (CONSOLIDADO)';
-          if (previewListinTitleZona) previewListinTitleZona.textContent = `DESTINO: TODAS LAS ZONAS (${totalGuias} GUÍAS, ${totalPiezas} PZAS)`;
+          if (previewListinTitleZona) previewListinTitleZona.textContent = `DESTINO: TODAS LAS ZONAS (${totalGuias} GUÍAS, ${totalPiezas} PZAS${volTagBanner})`;
           if (previewListinCurrentBadge) previewListinCurrentBadge.textContent = `ZONA: TODAS (${uniqueActiveCities} CIUDADES)`;
         } else if (listinSelectedZones.size === 1) {
           const zName = Array.from(listinSelectedZones)[0];
           if (previewListinDestino) previewListinDestino.textContent = zName;
-          if (previewListinTitleZona) previewListinTitleZona.textContent = `DESTINO: ${zName.toUpperCase()} (${totalGuias} GUÍAS, ${totalPiezas} PZAS)`;
+          if (previewListinTitleZona) previewListinTitleZona.textContent = `DESTINO: ${zName.toUpperCase()} (${totalGuias} GUÍAS, ${totalPiezas} PZAS${volTagBanner})`;
           if (previewListinCurrentBadge) previewListinCurrentBadge.textContent = `ZONA: ${zName}`;
         } else {
           const combinedNames = listinCitiesOrder.filter(c => listinSelectedZones.has(c)).join(' · ').toUpperCase();
           if (previewListinDestino) previewListinDestino.textContent = combinedNames;
-          if (previewListinTitleZona) previewListinTitleZona.textContent = `DESTINO: ${combinedNames} (${totalGuias} GUÍAS, ${totalPiezas} PZAS)`;
+          if (previewListinTitleZona) previewListinTitleZona.textContent = `DESTINO: ${combinedNames} (${totalGuias} GUÍAS, ${totalPiezas} PZAS${volTagBanner})`;
           if (previewListinCurrentBadge) previewListinCurrentBadge.textContent = `ZONAS COMBINADAS (${listinSelectedZones.size})`;
         }
 
@@ -6859,16 +6961,21 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           const left = leftGuias[i];
           const right = rightGuias[i];
 
+          const leftVol = left && left.pies_cubicos ? Number(left.pies_cubicos).toFixed(2) : (left ? '-' : '');
+          const rightVol = right && right.pies_cubicos ? Number(right.pies_cubicos).toFixed(2) : (right ? '-' : '');
+
           tableHtml += `
             <tr class="h-6 border-b border-black/30 text-black">
               <!-- Bloque Izquierdo -->
-              <td class="py-1 px-1.5 border-r border-black font-mono font-bold text-center">${left ? left.id_guia : ''}</td>
-              <td class="py-1 px-1 border-r border-black text-center font-bold">${left ? (left.piezas || 1) : ''}</td>
-              <td class="py-1 px-2 border-r-2 border-black font-bold uppercase truncate max-w-[140px]">${left ? left.ciudad_destino : ''}</td>
+              <td class="py-1 px-1 border-r border-black font-mono font-bold text-center">${left ? left.id_guia : ''}</td>
+              <td class="py-1 px-0.5 border-r border-black text-center font-bold">${left ? (left.piezas || 1) : ''}</td>
+              <td class="py-1 px-0.5 border-r border-black text-center font-mono font-bold text-slate-700">${leftVol}</td>
+              <td class="py-1 px-1.5 border-r-2 border-black font-bold uppercase truncate max-w-[120px]">${left ? left.ciudad_destino : ''}</td>
               <!-- Bloque Derecho -->
-              <td class="py-1 px-1.5 border-r border-black font-mono font-bold text-center">${right ? right.id_guia : ''}</td>
-              <td class="py-1 px-1 border-r border-black text-center font-bold">${right ? (right.piezas || 1) : ''}</td>
-              <td class="py-1 px-2 font-bold uppercase truncate max-w-[140px]">${right ? right.ciudad_destino : ''}</td>
+              <td class="py-1 px-1 border-r border-black font-mono font-bold text-center">${right ? right.id_guia : ''}</td>
+              <td class="py-1 px-0.5 border-r border-black text-center font-bold">${right ? (right.piezas || 1) : ''}</td>
+              <td class="py-1 px-0.5 border-r border-black text-center font-mono font-bold text-slate-700">${rightVol}</td>
+              <td class="py-1 px-1.5 font-bold uppercase truncate max-w-[120px]">${right ? right.ciudad_destino : ''}</td>
             </tr>
           `;
         }
@@ -7233,6 +7340,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       function buildZoneSheetHtml(cityName: string, zoneGuias: GuiaRow[], driverName: string, placa: string, fecha: string): string {
         const totalGuias = zoneGuias.length;
         const totalPiezas = zoneGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+        const totalVolumen = zoneGuias.reduce((acc, g) => acc + (Number(g.pies_cubicos) || 0), 0);
         const rowCount = Math.max(Math.ceil(zoneGuias.length / 2), 22);
         const leftGuias = zoneGuias.slice(0, rowCount);
         const rightGuias = zoneGuias.slice(rowCount, rowCount * 2);
@@ -7241,17 +7349,25 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         for (let i = 0; i < rowCount; i++) {
           const left = leftGuias[i];
           const right = rightGuias[i];
+
+          const leftVol = left && left.pies_cubicos ? Number(left.pies_cubicos).toFixed(2) : (left ? '-' : '');
+          const rightVol = right && right.pies_cubicos ? Number(right.pies_cubicos).toFixed(2) : (right ? '-' : '');
+
           tableRows += `
             <tr class="h-6 border-b border-black/30 text-black">
-              <td class="py-1 px-1.5 border-r border-black font-mono font-bold text-center">${left ? left.id_guia : ''}</td>
-              <td class="py-1 px-1 border-r border-black text-center font-bold">${left ? (left.piezas || 1) : ''}</td>
-              <td class="py-1 px-2 border-r-2 border-black font-bold uppercase truncate max-w-[140px]">${left ? left.ciudad_destino : ''}</td>
-              <td class="py-1 px-1.5 border-r border-black font-mono font-bold text-center">${right ? right.id_guia : ''}</td>
-              <td class="py-1 px-1 border-r border-black text-center font-bold">${right ? (right.piezas || 1) : ''}</td>
-              <td class="py-1 px-2 font-bold uppercase truncate max-w-[140px]">${right ? right.ciudad_destino : ''}</td>
+              <td class="py-1 px-1 border-r border-black font-mono font-bold text-center">${left ? left.id_guia : ''}</td>
+              <td class="py-1 px-0.5 border-r border-black text-center font-bold">${left ? (left.piezas || 1) : ''}</td>
+              <td class="py-1 px-0.5 border-r border-black text-center font-mono font-bold text-slate-700">${leftVol}</td>
+              <td class="py-1 px-1.5 border-r-2 border-black font-bold uppercase truncate max-w-[120px]">${left ? left.ciudad_destino : ''}</td>
+              <td class="py-1 px-1 border-r border-black font-mono font-bold text-center">${right ? right.id_guia : ''}</td>
+              <td class="py-1 px-0.5 border-r border-black text-center font-bold">${right ? (right.piezas || 1) : ''}</td>
+              <td class="py-1 px-0.5 border-r border-black text-center font-mono font-bold text-slate-700">${rightVol}</td>
+              <td class="py-1 px-1.5 font-bold uppercase truncate max-w-[120px]">${right ? right.ciudad_destino : ''}</td>
             </tr>
           `;
         }
+
+        const volTagZone = totalVolumen > 0 ? `, ${totalVolumen.toFixed(2)} FT³` : '';
 
         return `
           <div class="w-full max-w-[760px] min-h-[960px] bg-white p-6 sm:p-7 rounded-xl text-black font-sans text-xs border border-slate-300 my-4" style="page-break-after: always; break-after: page;">
@@ -7275,19 +7391,21 @@ _Envías C.A. • Transporte y Logística Nacional_`;
               <h2 class="text-xs font-black uppercase tracking-widest border-y border-black py-0.5 bg-slate-100 flex items-center justify-center gap-2">
                 <span>LISTÍN DE CARGA Y DESPACHO DE GUÍAS</span>
                 <span class="text-black">&bull;</span>
-                <span class="font-mono uppercase font-black">DESTINO: ${cityName} (${totalGuias} GUÍAS, ${totalPiezas} PZAS)</span>
+                <span class="font-mono uppercase font-black">DESTINO: ${cityName} (${totalGuias} GUÍAS, ${totalPiezas} PZAS${volTagZone})</span>
               </h2>
             </div>
             <div class="w-full mb-3">
               <table class="w-full border-collapse text-[10px] border-2 border-black">
                 <thead>
                   <tr class="bg-slate-200 text-black uppercase font-black text-center border-b-2 border-black">
-                    <th class="py-1 px-1.5 border-r border-black w-[17%]">NRO DE GUIA</th>
-                    <th class="py-1 px-1 border-r border-black w-[8%]">PIEZAS</th>
-                    <th class="py-1 px-2 border-r-2 border-black w-[25%]">DESTINO</th>
-                    <th class="py-1 px-1.5 border-r border-black w-[17%]">NRO DE GUIA</th>
-                    <th class="py-1 px-1 border-r border-black w-[8%]">PIEZAS</th>
-                    <th class="py-1 px-2 w-[25%]">DESTINO</th>
+                    <th class="py-1 px-1 border-r border-black w-[15%]">NRO DE GUIA</th>
+                    <th class="py-1 px-0.5 border-r border-black w-[7%]">PIEZAS</th>
+                    <th class="py-1 px-0.5 border-r border-black w-[8%]">FT³</th>
+                    <th class="py-1 px-1.5 border-r-2 border-black w-[20%]">DESTINO</th>
+                    <th class="py-1 px-1 border-r border-black w-[15%]">NRO DE GUIA</th>
+                    <th class="py-1 px-0.5 border-r border-black w-[7%]">PIEZAS</th>
+                    <th class="py-1 px-0.5 border-r border-black w-[8%]">FT³</th>
+                    <th class="py-1 px-1.5 w-[20%]">DESTINO</th>
                   </tr>
                 </thead>
                 <tbody class="font-mono font-semibold divide-y divide-black/40">

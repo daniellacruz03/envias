@@ -56,6 +56,7 @@ export const POST: APIRoute = async ({ cookies }) => {
     // Columnas de archivo en guias
     await query(`ALTER TABLE guias ADD COLUMN IF NOT EXISTS archivada BOOLEAN DEFAULT false`);
     await query(`ALTER TABLE guias ADD COLUMN IF NOT EXISTS ruta_archivada_id INTEGER REFERENCES rutas_archivadas(id)`);
+    await query(`ALTER TABLE guias ADD COLUMN IF NOT EXISTS pies_cubicos NUMERIC(10,2) DEFAULT NULL`);
     await query(`CREATE INDEX IF NOT EXISTS idx_guias_archivada ON guias(archivada)`);
 
     return new Response(JSON.stringify({

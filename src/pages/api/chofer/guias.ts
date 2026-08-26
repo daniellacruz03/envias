@@ -35,6 +35,7 @@ export const GET: APIRoute = async ({ request, cookies, url }) => {
         g.telefono_secundario,
         g.ciudad_destino,
         g.piezas,
+        g.pies_cubicos,
         g.direccion_referencia,
         g.hora_disponible,
         g.comprobante_url,

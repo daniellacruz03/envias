@@ -39,7 +39,7 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Actualizar en PostgreSQL marcando gps_confirmado = true
+    // 1. Actualizar la guía principal en PostgreSQL marcando gps_confirmado = true
     const updateResult = await query(`
       UPDATE guias
       SET 
@@ -59,20 +59,65 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
+    const guiaPrincipal = updateResult.rows[0];
+
+    // 2. Propagar automáticamente la misma ubicación GPS a todas las demás guías pendientes del mismo cliente
+    let guiasAsociadasActualizadas: string[] = [];
+    if (guiaPrincipal.destinatario && guiaPrincipal.ciudad_destino) {
+      try {
+        const propResult = await query(`
+          UPDATE guias
+          SET 
+            gps_latitud = COALESCE($1, gps_latitud),
+            gps_longitud = COALESCE($2, gps_longitud),
+            gps_confirmado = true,
+            direccion_referencia = COALESCE($3, direccion_referencia),
+            hora_disponible = COALESCE($4, hora_disponible)
+          WHERE (
+            (LOWER(TRIM(destinatario)) = LOWER(TRIM($5)) AND LOWER(TRIM(ciudad_destino)) = LOWER(TRIM($6)))
+            OR (telefono_principal = $7 AND LENGTH($7) >= 7)
+          )
+          AND id_guia != $8
+          AND estado != 'Entregado'
+          RETURNING id_guia
+        `, [
+          latitud,
+          longitud,
+          direccion_referencia,
+          hora_disponible,
+          guiaPrincipal.destinatario,
+          guiaPrincipal.ciudad_destino,
+          guiaPrincipal.telefono_principal || '',
+          id_guia
+        ]);
+
+        guiasAsociadasActualizadas = (propResult.rows || []).map((r: any) => r.id_guia);
+      } catch (propErr) {
+        console.warn('[Propagate GPS Warning]:', propErr);
+      }
+    }
+
     console.log('[LOGÍSTICA - Confirmación Recibida]:', {
       id_guia,
+      destinatario: guiaPrincipal.destinatario,
       latitud,
       longitud,
       referencias: direccion_referencia,
       hora_disponible,
+      guiasAsociadasActualizadas,
       recibidoEn: new Date().toISOString()
     });
+
+    const msg = guiasAsociadasActualizadas.length > 0
+      ? `Ubicación confirmada exitosamente para la guía #${id_guia} y ${guiasAsociadasActualizadas.length} guía(s) adicional(es) asociada(s): ${guiasAsociadasActualizadas.map(g => '#' + g).join(', ')}.`
+      : 'Ubicación y dirección confirmadas exitosamente en el sistema.';
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Ubicación y dirección confirmadas exitosamente en el sistema.',
-        data: updateResult.rows[0]
+        message: msg,
+        data: guiaPrincipal,
+        guias_asociadas: guiasAsociadasActualizadas
       }),
       {
         status: 200,

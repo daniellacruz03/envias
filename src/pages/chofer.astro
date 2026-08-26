@@ -30,6 +30,7 @@ const guiasResult = await query(`
     g.telefono_secundario,
     g.ciudad_destino,
     g.piezas,
+    g.pies_cubicos,
     g.direccion_referencia,
     g.hora_disponible,
     g.comprobante_url,
@@ -920,12 +921,16 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               <table class="w-full border-collapse text-[10px] border-2 border-black" id="chofer-listin-dual-table">
                 <thead>
                   <tr class="bg-slate-200 text-black uppercase font-black text-center border-b-2 border-black">
-                    <th class="py-1 px-1.5 border-r border-black w-[17%]">NRO DE GUIA</th>
-                    <th class="py-1 px-1 border-r border-black w-[8%]">PIEZAS</th>
-                    <th class="py-1 px-2 border-r-2 border-black w-[25%]">DESTINO</th>
-                    <th class="py-1 px-1.5 border-r border-black w-[17%]">NRO DE GUIA</th>
-                    <th class="py-1 px-1 border-r border-black w-[8%]">PIEZAS</th>
-                    <th class="py-1 px-2 w-[25%]">DESTINO</th>
+                    <!-- Bloque Izquierdo -->
+                    <th class="py-1 px-1 border-r border-black w-[15%]">NRO DE GUIA</th>
+                    <th class="py-1 px-0.5 border-r border-black w-[7%]">PIEZAS</th>
+                    <th class="py-1 px-0.5 border-r border-black w-[8%]">FT³</th>
+                    <th class="py-1 px-1.5 border-r-2 border-black w-[20%]">DESTINO</th>
+                    <!-- Bloque Derecho -->
+                    <th class="py-1 px-1 border-r border-black w-[15%]">NRO DE GUIA</th>
+                    <th class="py-1 px-0.5 border-r border-black w-[7%]">PIEZAS</th>
+                    <th class="py-1 px-0.5 border-r border-black w-[8%]">FT³</th>
+                    <th class="py-1 px-1.5 w-[20%]">DESTINO</th>
                   </tr>
                 </thead>
                 <tbody id="chofer-listin-tbody" class="font-mono font-semibold divide-y divide-black/40">
@@ -936,9 +941,10 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
 
             <!-- Totales y Firmas -->
             <div class="mt-3 pt-2 border-t-2 border-black space-y-2.5">
-              <div class="flex items-center justify-between bg-slate-100 px-3 py-1.5 rounded border border-black font-bold text-[11px]">
+              <div class="flex items-center justify-between bg-slate-100 px-3 py-1.5 rounded border border-black font-bold text-[11px] flex-wrap gap-2">
                 <div>TOTAL GUÍAS: <span id="chofer-listin-total-guias" class="font-black text-black">0</span></div>
                 <div>TOTAL PIEZAS: <span id="chofer-listin-total-piezas" class="font-black text-black">0</span></div>
+                <div>TOTAL VOLUMEN: <span id="chofer-listin-total-volumen" class="font-black text-black">0.00 ft³</span></div>
                 <div>TOTAL ZONAS: <span id="chofer-listin-total-destinos" class="font-black text-black">0</span></div>
               </div>
 
@@ -1339,9 +1345,12 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         if (modalConfirmBtn) modalConfirmBtn.disabled = true;
       }
 
-      window.openDeliveryModal = function(idGuia, destinatario, direccion, stopNumber) {
+      window.openDeliveryModal = function(idGuia, destinatario, direccion, stopNumber, guiasLabel, totalPiezas, totalVolumen) {
         activeModalGuiaId = idGuia;
-        if (modalGuiaCode) modalGuiaCode.textContent = 'Parada #' + stopNumber + ' • Guía #' + idGuia;
+        var label = guiasLabel || ('#' + idGuia);
+        var piezasStr = totalPiezas ? ' • ' + totalPiezas + ' pza(s)' : '';
+        var volStr = totalVolumen ? ' • ' + Number(totalVolumen).toFixed(2) + ' ft³' : '';
+        if (modalGuiaCode) modalGuiaCode.textContent = 'Parada #' + stopNumber + ' • ' + label + piezasStr + volStr;
         if (modalDestinatario) modalDestinatario.textContent = destinatario;
         if (modalDireccion) modalDireccion.textContent = direccion || 'Ubicación confirmada';
         if (modalRecibidoPor) modalRecibidoPor.value = '';
@@ -1422,16 +1431,20 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             var data = await res.json().catch(function() { return { success: false, message: 'Error de respuesta del servidor' }; });
 
             if (res.ok && data.success) {
-              var idx = guiasData.findIndex(function(g) { return g.id_guia === activeModalGuiaId; });
-              if (idx !== -1) {
-                guiasData[idx].estado = 'Entregado';
-                guiasData[idx].comprobante_url = data.data ? data.data.comprobante_url : null;
-                guiasData[idx].recibido_por = data.data ? data.data.recibido_por : null;
-              }
+              var deliveredIds = activeModalGuiaId.split(',').map(function(s) { return s.trim(); });
+              deliveredIds.forEach(function(gId) {
+                var idx = guiasData.findIndex(function(g) { return g.id_guia === gId; });
+                if (idx !== -1) {
+                  guiasData[idx].estado = 'Entregado';
+                  guiasData[idx].comprobante_url = data.data ? data.data.comprobante_url : null;
+                  guiasData[idx].recibido_por = data.data ? data.data.recibido_por : null;
+                }
+              });
+
               closeDeliveryModal();
               renderCards();
               updateMapMarkers();
-              showToast('¡Entrega confirmada y comprobante guardado!', 'success');
+              showToast(data.message || '¡Entrega confirmada y comprobante guardado!', 'success');
             } else {
               showToast(data.message || 'Error al registrar entrega', 'error');
               modalConfirmBtn.disabled = false;
@@ -1470,25 +1483,27 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             var data = await res.json().catch(function() { return { success: false, message: 'Error de respuesta' }; });
 
             if (res.ok && data.success) {
-              var idx = guiasData.findIndex(function(g) { return g.id_guia === activeModalGuiaId; });
-              if (idx !== -1) {
-                guiasData[idx].estado = 'No entregado';
-                guiasData[idx].recibido_por = note;
-              }
+              var deliveredIds = activeModalGuiaId.split(',').map(function(s) { return s.trim(); });
+              deliveredIds.forEach(function(gId) {
+                var idx = guiasData.findIndex(function(g) { return g.id_guia === gId; });
+                if (idx !== -1) {
+                  guiasData[idx].estado = 'No entregado';
+                }
+              });
+
               closeDeliveryModal();
               renderCards();
               updateMapMarkers();
-              showToast('Incidencia registrada correctamente', 'info');
+              showToast('Incidencia registrada', 'info');
             } else {
               showToast(data.message || 'Error al registrar incidencia', 'error');
             }
           } catch (err) {
-            showToast('Error de red al guardar incidencia', 'error');
+            showToast('Error de red', 'error');
           } finally {
             modalIncidentSubmitBtn.disabled = false;
           }
         });
-      }
 
       // Selección rápida de motivo de incidencia
       document.querySelectorAll('#incident-reasons-grid .incident-opt').forEach(function(btn) {
@@ -1522,17 +1537,110 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       var progressText = document.getElementById('progress-text');
       var progressBarFill = document.getElementById('progress-bar-fill');
 
-      var map = null;
-      var markersLayer = null;
-      var routePolyline = null;
-      var isMapVisible = true;
+      function normalizeClientName(name) {
+        if (!name) return '';
+        return name
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      function getClientStopKey(guia) {
+        var normName = normalizeClientName(guia.destinatario);
+        var normCity = normalizeClientName(guia.ciudad_destino);
+        return normName + '|' + normCity;
+      }
+
+      function buildClientStops(guiasList) {
+        var stopsMap = {};
+        var stopsOrder = [];
+
+        (guiasList || []).forEach(function(g) {
+          var key = getClientStopKey(g);
+          if (!stopsMap[key]) {
+            stopsMap[key] = {
+              key: key,
+              destinatario: g.destinatario || 'Destinatario',
+              ciudad_destino: g.ciudad_destino || '',
+              telefono_principal: g.telefono_principal || '',
+              telefono_secundario: g.telefono_secundario || null,
+              direccion_referencia: g.direccion_referencia || '',
+              hora_disponible: g.hora_disponible || '',
+              gps_latitud: g.gps_latitud || null,
+              gps_longitud: g.gps_longitud || null,
+              gps_confirmado: g.gps_confirmado === true,
+              orden_ruta: g.orden_ruta && g.orden_ruta > 0 ? g.orden_ruta : null,
+              guias: [],
+              totalPiezas: 0,
+              totalPiesCubicos: 0,
+              comprobante_url: null,
+              recibido_por: null,
+              estado: 'Por contactar'
+            };
+            stopsOrder.push(stopsMap[key]);
+          }
+
+          var stop = stopsMap[key];
+          stop.guias.push(g);
+          stop.totalPiezas += (parseInt(g.piezas, 10) || 1);
+          if (g.pies_cubicos) {
+            stop.totalPiesCubicos += parseFloat(g.pies_cubicos) || 0;
+          }
+
+          if (!stop.gps_latitud && g.gps_latitud) {
+            stop.gps_latitud = g.gps_latitud;
+            stop.gps_longitud = g.gps_longitud;
+            stop.gps_confirmado = g.gps_confirmado === true;
+          }
+          if (!stop.direccion_referencia && g.direccion_referencia) {
+            stop.direccion_referencia = g.direccion_referencia;
+          }
+          if (!stop.hora_disponible && g.hora_disponible) {
+            stop.hora_disponible = g.hora_disponible;
+          }
+          if (g.orden_ruta && g.orden_ruta > 0) {
+            if (!stop.orden_ruta || g.orden_ruta < stop.orden_ruta) {
+              stop.orden_ruta = g.orden_ruta;
+            }
+          }
+          if (g.comprobante_url) stop.comprobante_url = g.comprobante_url;
+          if (g.recibido_por) stop.recibido_por = g.recibido_por;
+        });
+
+        // Determinar estado consolidado y metadatos
+        stopsOrder.forEach(function(stop) {
+          var allDelivered = stop.guias.length > 0 && stop.guias.every(function(g) { return g.estado === 'Entregado'; });
+          var allIncidents = stop.guias.length > 0 && stop.guias.every(function(g) { return g.estado === 'No entregado'; });
+          var anyDelivered = stop.guias.some(function(g) { return g.estado === 'Entregado'; });
+
+          if (allDelivered) {
+            stop.estado = 'Entregado';
+          } else if (allIncidents) {
+            stop.estado = 'No entregado';
+          } else if (anyDelivered) {
+            stop.estado = 'Parcial';
+          } else {
+            stop.estado = 'En ruta';
+          }
+
+          stop.guiasIds = stop.guias.map(function(g) { return g.id_guia; }).join(',');
+          stop.guiasLabel = stop.guias.map(function(g) { return '#' + g.id_guia; }).join(', ');
+        });
+
+        return stopsOrder;
+      }
 
       function updateStats() {
-        var total = guiasData.length;
-        var entregados = guiasData.filter(function(g) { return g.estado === 'Entregado'; }).length;
-        var noEntregados = guiasData.filter(function(g) { return g.estado === 'No entregado'; }).length;
-        var pendientes = guiasData.filter(function(g) { return g.estado !== 'Entregado' && g.estado !== 'No entregado'; }).length;
+        var stops = buildClientStops(guiasData);
+        var total = stops.length;
+        var entregados = stops.filter(function(s) { return s.estado === 'Entregado'; }).length;
+        var noEntregados = stops.filter(function(s) { return s.estado === 'No entregado'; }).length;
+        var pendientes = stops.filter(function(s) { return s.estado !== 'Entregado' && s.estado !== 'No entregado'; }).length;
         var pct = total > 0 ? Math.round((entregados / total) * 100) : 0;
+        var totalGuiasCount = guiasData.length;
 
         if (statPendientes) statPendientes.textContent = pendientes;
         if (statEntregados) statEntregados.textContent = entregados;
@@ -1544,25 +1652,28 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         if (badgeTabNoEntregados) badgeTabNoEntregados.textContent = noEntregados;
         if (badgeTabTodos) badgeTabTodos.textContent = total;
 
-        if (progressText) progressText.textContent = entregados + ' de ' + total + ' paradas (' + pct + '%)';
+        if (progressText) progressText.textContent = entregados + ' de ' + total + ' paradas (' + totalGuiasCount + ' guías totales • ' + pct + '%)';
         if (progressBarFill) progressBarFill.style.width = pct + '%';
       }
 
-      function getFilteredGuias() {
+      function getFilteredClientStops() {
         var q = (searchQuery || '').toLowerCase().trim();
-        return guiasData.filter(function(g) {
+        var allStops = buildClientStops(guiasData);
+
+        return allStops.filter(function(stop) {
           var matchTab = 
             activeTab === 'todos' ? true :
-            activeTab === 'entregados' ? g.estado === 'Entregado' :
-            activeTab === 'no_entregados' ? g.estado === 'No entregado' :
-            (g.estado !== 'Entregado' && g.estado !== 'No entregado');
+            activeTab === 'entregados' ? stop.estado === 'Entregado' :
+            activeTab === 'no_entregados' ? stop.estado === 'No entregado' :
+            (stop.estado !== 'Entregado' && stop.estado !== 'No entregado');
 
-          var matchCity = !selectedCity || g.ciudad_destino === selectedCity;
+          var matchCity = !selectedCity || stop.ciudad_destino === selectedCity;
+          
           var matchQuery = !q || 
-            (g.id_guia && g.id_guia.toLowerCase().includes(q)) ||
-            (g.destinatario && g.destinatario.toLowerCase().includes(q)) ||
-            (g.direccion_referencia && g.direccion_referencia.toLowerCase().includes(q)) ||
-            (g.telefono_principal && g.telefono_principal.includes(q));
+            (stop.destinatario && stop.destinatario.toLowerCase().includes(q)) ||
+            (stop.direccion_referencia && stop.direccion_referencia.toLowerCase().includes(q)) ||
+            (stop.telefono_principal && stop.telefono_principal.includes(q)) ||
+            stop.guias.some(function(g) { return g.id_guia && g.id_guia.toLowerCase().includes(q); });
 
           return matchTab && matchCity && matchQuery;
         });
@@ -1572,23 +1683,26 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         updateStats();
         if (!cardsContainer) return;
 
-        var filtered = getFilteredGuias();
+        var allStops = buildClientStops(guiasData);
+        var filteredStops = getFilteredClientStops();
         var activeStopContainer = document.getElementById('active-stop-card-container');
 
-        // Buscar siguiente parada pendiente en todo el conjunto de guías
-        var nextPendingGuia = (guiasData || []).find(function(g) {
-          return g.estado !== 'Entregado' && g.estado !== 'No entregado';
+        // Buscar siguiente parada cliente pendiente
+        var nextPendingStop = (allStops || []).find(function(s) {
+          return s.estado !== 'Entregado' && s.estado !== 'No entregado';
         });
 
         if (activeStopContainer) {
-          if (nextPendingGuia) {
-            var nextStopNum = nextPendingGuia.orden_ruta && nextPendingGuia.orden_ruta > 0 ? nextPendingGuia.orden_ruta : 1;
-            var nextPhoneClean = formatPhoneForWhatsApp(nextPendingGuia.telefono_principal);
-            var nextMsgWhatsApp = encodeURIComponent('Hola ' + nextPendingGuia.destinatario + ', soy tu chofer de Envías C.A. Voy en camino a entregarte tu paquete (Guía #' + nextPendingGuia.id_guia + ').');
+          if (nextPendingStop) {
+            var nextStopNum = nextPendingStop.orden_ruta && nextPendingStop.orden_ruta > 0 ? nextPendingStop.orden_ruta : 1;
+            var nextPhoneClean = formatPhoneForWhatsApp(nextPendingStop.telefono_principal);
+            var nextPackageText = nextPendingStop.totalGuias > 1 ? (nextPendingStop.totalGuias + ' paquetes (Guías ' + nextPendingStop.guiasLabel + ')') : ('tu paquete (Guía ' + nextPendingStop.guiasLabel + ')');
+            var nextMsgWhatsApp = encodeURIComponent('Hola ' + nextPendingStop.destinatario + ', soy tu chofer de Envías C.A. Voy en camino a entregarte ' + nextPackageText + '.');
             var nextLinkWhatsApp = 'https://wa.me/' + nextPhoneClean + '?text=' + nextMsgWhatsApp;
-            var nextDestEscaped = (nextPendingGuia.destinatario || '').replace(/'/g, "\\'");
-            var nextDirEscaped = (nextPendingGuia.direccion_referencia || '').replace(/'/g, "\\'");
-            var nextHasCoords = !!getGuiaCoords(nextPendingGuia);
+            var nextDestEscaped = (nextPendingStop.destinatario || '').replace(/'/g, "\\'");
+            var nextDirEscaped = (nextPendingStop.direccion_referencia || '').replace(/'/g, "\\'");
+            var nextHasCoords = !!getGuiaCoords(nextPendingStop);
+            var nextVolTag = nextPendingStop.totalPiesCubicos > 0 ? (' &bull; ' + Number(nextPendingStop.totalPiesCubicos).toFixed(2) + ' ft³') : '';
 
             activeStopContainer.innerHTML =
               '<div class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-4 sm:p-5 shadow-lg border border-indigo-500/20 space-y-3 animate-fadeIn">' +
@@ -1597,35 +1711,41 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
                     '<span class="w-8 h-8 rounded-xl bg-indigo-600 text-white font-black text-xs flex items-center justify-center shadow-md active-stop-pulse shrink-0">#' + nextStopNum + '</span>' +
                     '<div class="min-w-0">' +
                       '<span class="text-[10px] font-black uppercase tracking-wider text-indigo-300 block leading-tight">Siguiente Parada Activa</span>' +
-                      '<span class="font-mono text-xs font-bold text-slate-200 truncate block">Guía #' + nextPendingGuia.id_guia + ' &bull; ' + (nextPendingGuia.piezas || 1) + ' pza(s)</span>' +
+                      '<span class="font-mono text-xs font-bold text-slate-200 truncate block">' +
+                        (nextPendingStop.totalGuias > 1 ? (nextPendingStop.totalGuias + ' Guías (' + nextPendingStop.guiasLabel + ')') : ('Guía ' + nextPendingStop.guiasLabel)) +
+                        ' &bull; ' + nextPendingStop.totalPiezas + ' pza(s)' + nextVolTag +
+                      '</span>' +
                     '</div>' +
                   '</div>' +
-                  '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-extrabold shrink-0">' +
-                    '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>' +
-                    'En Ruta' +
-                  '</span>' +
+                  '<div class="flex items-center gap-1.5 shrink-0">' +
+                    (nextPendingStop.totalGuias > 1 ? '<span class="px-2 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-400/50 text-indigo-200 text-[10px] font-extrabold">' + nextPendingStop.totalGuias + ' Guías</span>' : '') +
+                    '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-extrabold">' +
+                      '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>' +
+                      'En Ruta' +
+                    '</span>' +
+                  '</div>' +
                 '</div>' +
                 '<div class="space-y-1 bg-white/5 rounded-2xl p-3 border border-white/10 text-xs">' +
-                  '<p class="text-sm font-extrabold text-white leading-snug truncate">' + nextPendingGuia.destinatario + '</p>' +
+                  '<p class="text-sm font-extrabold text-white leading-snug truncate">' + nextPendingStop.destinatario + '</p>' +
                   '<div class="flex items-center gap-1.5 text-slate-300 text-xs font-medium">' +
                     '<svg class="w-3.5 h-3.5 text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
-                    '<span class="truncate">' + nextPendingGuia.ciudad_destino + (nextPendingGuia.direccion_referencia ? ' &bull; ' + nextPendingGuia.direccion_referencia : '') + '</span>' +
+                    '<span class="truncate">' + nextPendingStop.ciudad_destino + (nextPendingStop.direccion_referencia ? ' &bull; ' + nextPendingStop.direccion_referencia : '') + '</span>' +
                   '</div>' +
-                  (nextPendingGuia.hora_disponible ? '<p class="text-[10px] text-amber-300 font-bold mt-1">Horario de entrega: Hasta las ' + nextPendingGuia.hora_disponible + '</p>' : '') +
+                  (nextPendingStop.hora_disponible ? '<p class="text-[10px] text-amber-300 font-bold mt-1">Horario de entrega: Hasta las ' + nextPendingStop.hora_disponible + '</p>' : '') +
                 '</div>' +
                 '<div class="grid grid-cols-3 gap-2">' +
                   '<a href="' + nextLinkWhatsApp + '" target="_blank" class="tap-active py-2 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-sm">' +
                     '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.961.947 3.224.947 3.182 0 5.768-2.586 5.768-5.766 0-3.18-2.586-5.766-5.766-5.766zm9.969 5.828c0 5.518-4.482 10-10 10-1.748 0-3.385-.45-4.818-1.237l-5.182 1.409 1.433-5.068c-.89-1.488-1.433-3.232-1.433-5.104 0-5.518 4.482-10 10-10s10 4.482 10 10z"/></svg>' +
                     '<span>WhatsApp</span>' +
                   '</a>' +
-                  (nextHasCoords ? '<button type="button" onclick="window.focusStopOnMap(\'' + nextPendingGuia.id_guia + '\')" class="tap-active py-2 px-2.5 rounded-xl bg-indigo-600/80 hover:bg-indigo-600 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all border border-indigo-400/30 cursor-pointer">' +
+                  (nextHasCoords ? '<button type="button" onclick="window.focusStopOnMap(\'' + (nextPendingStop.guias[0] ? nextPendingStop.guias[0].id_guia : '') + '\')" class="tap-active py-2 px-2.5 rounded-xl bg-indigo-600/80 hover:bg-indigo-600 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all border border-indigo-400/30 cursor-pointer">' +
                     '<svg class="w-3.5 h-3.5 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
                     '<span>Ver en Mapa</span>' +
                   '</button>' : '<div class="py-2 px-2.5 rounded-xl bg-amber-500/20 text-amber-200 border border-amber-400/30 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 select-none">' +
                       '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>' +
                       '<span>Sin GPS</span>' +
                     '</div>') +
-                  '<button type="button" onclick="window.openDeliveryModal(\'' + nextPendingGuia.id_guia + '\', \'' + nextDestEscaped + '\', \'' + nextDirEscaped + '\', ' + nextStopNum + ')" class="tap-active py-2 px-2.5 rounded-xl bg-white text-slate-950 hover:bg-slate-100 font-extrabold text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer">' +
+                  '<button type="button" onclick="window.openDeliveryModal(\'' + nextPendingStop.guiasIds + '\', \'' + nextDestEscaped + '\', \'' + nextDirEscaped + '\', ' + nextStopNum + ', \'' + nextPendingStop.guiasLabel + '\', ' + nextPendingStop.totalPiezas + ', ' + nextPendingStop.totalPiesCubicos + ')" class="tap-active py-2 px-2.5 rounded-xl bg-white text-slate-950 hover:bg-slate-100 font-extrabold text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer">' +
                     '<svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>' +
                     '<span>Entregar</span>' +
                   '</button>' +
@@ -1637,7 +1757,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           }
         }
 
-        if (filtered.length === 0) {
+        if (filteredStops.length === 0) {
           cardsContainer.innerHTML = '';
           if (emptyState) emptyState.classList.remove('hidden');
           return;
@@ -1645,15 +1765,16 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
 
         if (emptyState) emptyState.classList.add('hidden');
 
-        cardsContainer.innerHTML = filtered.map(function(guia, index) {
-          var stopNum = guia.orden_ruta && guia.orden_ruta > 0 ? guia.orden_ruta : (index + 1);
-          var isDelivered = guia.estado === 'Entregado';
-          var isIncident = guia.estado === 'No entregado';
+        cardsContainer.innerHTML = filteredStops.map(function(stop, index) {
+          var stopNum = stop.orden_ruta && stop.orden_ruta > 0 ? stop.orden_ruta : (index + 1);
+          var isDelivered = stop.estado === 'Entregado';
+          var isIncident = stop.estado === 'No entregado';
           var isPending = !isDelivered && !isIncident;
-          var hasGps = !!getGuiaCoords(guia);
+          var hasGps = !!getGuiaCoords(stop);
 
-          var phoneClean = formatPhoneForWhatsApp(guia.telefono_principal);
-          var msgWhatsApp = encodeURIComponent('Hola ' + guia.destinatario + ', soy tu chofer de Envías C.A. Voy en camino a entregarte tu paquete (Guía #' + guia.id_guia + ').');
+          var phoneClean = formatPhoneForWhatsApp(stop.telefono_principal);
+          var packageText = stop.totalGuias > 1 ? (stop.totalGuias + ' paquetes (Guías ' + stop.guiasLabel + ')') : ('tu paquete (Guía ' + stop.guiasLabel + ')');
+          var msgWhatsApp = encodeURIComponent('Hola ' + stop.destinatario + ', soy tu chofer de Envías C.A. Voy en camino a entregarte ' + packageText + '.');
           var linkWhatsApp = 'https://wa.me/' + phoneClean + '?text=' + msgWhatsApp;
 
           var badgeStatusHtml = '';
@@ -1661,16 +1782,19 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             badgeStatusHtml = '<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200">Entregado</span>';
           } else if (isIncident) {
             badgeStatusHtml = '<span class="px-2 py-0.5 rounded-md bg-rose-50 text-rose-800 text-[10px] font-bold border border-rose-200">No entregó</span>';
+          } else if (stop.estado === 'Parcial') {
+            badgeStatusHtml = '<span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-800 text-[10px] font-bold border border-indigo-200">Entrega Parcial</span>';
           } else {
             badgeStatusHtml = '<span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200">Pendiente</span>';
           }
 
-          var destEscaped = (guia.destinatario || '').replace(/'/g, "\\'");
-          var dirEscaped = (guia.direccion_referencia || '').replace(/'/g, "\\'");
+          var destEscaped = (stop.destinatario || '').replace(/'/g, "\\'");
+          var dirEscaped = (stop.direccion_referencia || '').replace(/'/g, "\\'");
+          var firstGuiaId = stop.guias[0] ? stop.guias[0].id_guia : '';
 
           var mapActionHtml = '';
           if (hasGps) {
-            mapActionHtml = '<button type="button" onclick="window.focusStopOnMap(\'' + guia.id_guia + '\')" class="tap-active p-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer">' +
+            mapActionHtml = '<button type="button" onclick="window.focusStopOnMap(\'' + firstGuiaId + '\')" class="tap-active p-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer">' +
               '<svg class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
               '<span>Ver en Mapa</span>' +
             '</button>';
@@ -1681,6 +1805,8 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             '</div>';
           }
 
+          var totalVolTag = stop.totalPiesCubicos > 0 ? (' &bull; ' + Number(stop.totalPiesCubicos).toFixed(2) + ' ft³') : '';
+
           return '<div class="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm space-y-3 transition-all ' + (isDelivered ? 'opacity-75 bg-slate-50/50' : '') + '">' +
             '<div class="flex items-center justify-between border-b border-slate-100 pb-2.5">' +
               '<div class="flex items-center gap-2">' +
@@ -1688,23 +1814,37 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
                   '#' + stopNum +
                 '</div>' +
                 '<div>' +
-                  '<span class="font-mono font-bold text-xs text-slate-900">Guía #' + guia.id_guia + '</span>' +
-                  '<span class="text-[10px] text-slate-400 font-medium ml-1">&bull; ' + (guia.piezas || 1) + ' pza(s)</span>' +
+                  '<span class="font-bold text-xs text-slate-900 leading-tight block">' + stop.destinatario + '</span>' +
+                  '<span class="text-[10px] text-slate-500 font-medium">' + stop.totalPiezas + ' pieza(s) totales' + totalVolTag + '</span>' +
                 '</div>' +
               '</div>' +
               '<div class="flex items-center gap-1.5">' +
-                (!hasGps ? '<span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[9px] font-bold border border-slate-200">Sin Coordenadas</span>' : '') +
+                (stop.totalGuias > 1 ? '<span class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-extrabold flex items-center gap-1"><svg class="w-3 h-3 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>' + stop.totalGuias + ' Guías</span>' : '') +
+                (!hasGps ? '<span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[9px] font-bold border border-slate-200">Sin GPS</span>' : '') +
                 badgeStatusHtml +
               '</div>' +
             '</div>' +
-            '<div class="space-y-1 text-xs">' +
-              '<p class="font-bold text-slate-900 text-sm leading-snug">' + guia.destinatario + '</p>' +
-              '<div class="flex items-center gap-1.5 text-slate-500 font-medium">' +
-                '<svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
-                '<span class="truncate">' + guia.ciudad_destino + (guia.direccion_referencia ? ' &bull; ' + guia.direccion_referencia : '') + '</span>' +
+            
+            '<!-- Guías del Cliente -->' +
+            '<div class="space-y-1.5 text-xs">' +
+              '<div class="flex flex-wrap gap-1.5">' +
+                stop.guias.map(function(g) {
+                  var gVol = g.pies_cubicos ? ' &bull; ' + Number(g.pies_cubicos).toFixed(2) + ' ft³' : '';
+                  var isGDeliv = g.estado === 'Entregado';
+                  var badgeColor = isGDeliv ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-50 text-slate-800 border-slate-200';
+                  return '<span class="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded-md border ' + badgeColor + '">' +
+                    '#' + g.id_guia + ' (' + (g.piezas || 1) + ' pza' + gVol + ')' +
+                    (isGDeliv ? ' <span class="text-emerald-600 font-black">✓</span>' : '') +
+                  '</span>';
+                }).join('') +
               '</div>' +
-              (guia.hora_disponible ? '<p class="text-[10px] text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded-md inline-block">Horario: Hasta las ' + guia.hora_disponible + '</p>' : '') +
+              '<div class="flex items-center gap-1.5 text-slate-500 font-medium mt-1">' +
+                '<svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
+                '<span class="truncate">' + stop.ciudad_destino + (stop.direccion_referencia ? ' &bull; ' + stop.direccion_referencia : '') + '</span>' +
+              '</div>' +
+              (stop.hora_disponible ? '<p class="text-[10px] text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded-md inline-block">Horario: Hasta las ' + stop.hora_disponible + '</p>' : '') +
             '</div>' +
+
             '<div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100">' +
               '<a href="' + linkWhatsApp + '" target="_blank" class="tap-active p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors">' +
                 '<svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.961.947 3.224.947 3.182 0 5.768-2.586 5.768-5.766 0-3.18-2.586-5.766-5.766-5.766zm9.969 5.828c0 5.518-4.482 10-10 10-1.748 0-3.385-.45-4.818-1.237l-5.182 1.409 1.433-5.068c-.89-1.488-1.433-3.232-1.433-5.104 0-5.518 4.482-10 10-10s10 4.482 10 10z"/></svg>' +
@@ -1712,15 +1852,15 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               '</a>' +
               mapActionHtml +
               (isPending ?
-                '<button type="button" onclick="window.openDeliveryModal(\'' + guia.id_guia + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ')" class="tap-active p-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-center font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs">' +
+                '<button type="button" onclick="window.openDeliveryModal(\'' + stop.guiasIds + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ', \'' + stop.guiasLabel + '\', ' + stop.totalPiezas + ', ' + stop.totalPiesCubicos + ')" class="tap-active p-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-center font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs">' +
                   '<svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>' +
                   '<span>Entregar</span>' +
-                '</button>' : (isDelivered && guia.comprobante_url ?
-                '<button type="button" onclick="window.openLightbox(\'' + guia.comprobante_url + '\', \'Guía #' + guia.id_guia + '\', \'' + destEscaped + '\', \'' + guia.id_guia + '\')" class="tap-active p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer">' +
+                '</button>' : (isDelivered && stop.comprobante_url ?
+                '<button type="button" onclick="window.openLightbox(\'' + stop.comprobante_url + '\', \'Parada #' + stopNum + ' - ' + stop.destinatario + '\', \'Guías: ' + stop.guiasLabel + '\', \'' + firstGuiaId + '\')" class="tap-active p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer">' +
                   '<svg class="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>' +
                   '<span>Comprobante</span>' +
                 '</button>' :
-                '<button type="button" onclick="window.openDeliveryModal(\'' + guia.id_guia + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ')" class="tap-active p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer">' +
+                '<button type="button" onclick="window.openDeliveryModal(\'' + stop.guiasIds + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ', \'' + stop.guiasLabel + '\', ' + stop.totalPiezas + ', ' + stop.totalPiesCubicos + ')" class="tap-active p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer">' +
                   '<span>Actualizar</span>' +
                 '</button>'
               )) +
@@ -1782,11 +1922,11 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           .trim();
       }
 
-      function getGuiaCoords(guia) {
-        if (!guia) return null;
-        if (guia.gps_latitud && guia.gps_longitud) {
-          var lat = parseFloat(guia.gps_latitud);
-          var lng = parseFloat(guia.gps_longitud);
+      function getGuiaCoords(item) {
+        if (!item) return null;
+        if (item.gps_latitud && item.gps_longitud) {
+          var lat = parseFloat(item.gps_latitud);
+          var lng = parseFloat(item.gps_longitud);
           if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
             return [lat, lng];
           }
@@ -1805,24 +1945,24 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       }
 
-      // Algoritmo TSP 2-Opt que optimiza exclusivamente paradas con GPS real
+      // Algoritmo TSP 2-Opt que optimiza paradas por cliente único con GPS real
       function solveTSPWith2Opt(origin, stops) {
         if (!stops || stops.length <= 1) return stops;
         
         var withGps = [];
         var withoutGps = [];
         
-        stops.forEach(function(g) {
-          if (getGuiaCoords(g)) {
-            withGps.push(g);
+        stops.forEach(function(s) {
+          if (getGuiaCoords(s)) {
+            withGps.push(s);
           } else {
-            withoutGps.push(g);
+            withoutGps.push(s);
           }
         });
 
         if (withGps.length <= 1) return stops;
 
-        // 1. Agrupar puntos colindantes (< 180m)
+        // 1. Agrupar paradas colindantes (< 180m)
         var clusters = [];
         var visited = {};
         for (var i = 0; i < withGps.length; i++) {
@@ -1883,7 +2023,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           }
         }
 
-        // 4. Aplanar lista con GPS + añadir guías sin GPS al final
+        // 4. Aplanar lista con GPS + añadir paradas sin GPS al final
         var finalStops = [];
         tour.forEach(function(cl) {
           cl.items.forEach(function(item) { finalStops.push(item); });
@@ -1891,8 +2031,6 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         withoutGps.forEach(function(item) { finalStops.push(item); });
         return finalStops;
       }
-
-
 
       // Consulta de geometría vial real vía OSRM
       async function fetchOSRMRouteGeometry(waypoints) {
@@ -1950,14 +2088,20 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         var endLabel = (guiasData[0] && guiasData[0].ruta_destino) ? guiasData[0].ruta_destino : 'Retorno a Sede Principal Barquisimeto';
         var startCoords = [10.0808, -69.3756]; // Hub Central Barquisimeto
 
-        // Verificar si las guías necesitan ordenamiento 2-Opt
-        var needsSorting = guiasData.some(function(g) { return !g.orden_ruta || g.orden_ruta <= 0; });
-        var sortedGuias = guiasData.slice();
+        var clientStops = buildClientStops(guiasData);
+
+        // Verificar si las paradas necesitan ordenamiento 2-Opt
+        var needsSorting = clientStops.some(function(s) { return !s.orden_ruta || s.orden_ruta <= 0; });
+        var sortedStops = clientStops.slice();
         if (needsSorting) {
-          sortedGuias = solveTSPWith2Opt(startCoords, sortedGuias);
-          sortedGuias.forEach(function(g, i) { g.orden_ruta = i + 1; });
+          sortedStops = solveTSPWith2Opt(startCoords, sortedStops);
+          sortedStops.forEach(function(s, i) {
+            s.orden_ruta = i + 1;
+            // Sincronizar en guiasData
+            s.guias.forEach(function(g) { g.orden_ruta = i + 1; });
+          });
         } else {
-          sortedGuias.sort(function(a, b) { return (a.orden_ruta || 999) - (b.orden_ruta || 999); });
+          sortedStops.sort(function(a, b) { return (a.orden_ruta || 999) - (b.orden_ruta || 999); });
         }
 
         // Actualizar textos del banner de itinerario
@@ -1966,10 +2110,10 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         var routeStopsCountText = document.getElementById('route-stops-count-text');
         if (routeStartText) routeStartText.textContent = startLabel;
         if (routeEndText) routeEndText.textContent = endLabel;
-        if (routeStopsCountText) routeStopsCountText.textContent = sortedGuias.length + ' parada(s)';
+        if (routeStopsCountText) routeStopsCountText.textContent = sortedStops.length + ' parada(s) (' + guiasData.length + ' guías)';
 
-        // Buscar la siguiente parada pendiente
-        var nextPendingGuia = sortedGuias.find(function(g) { return g.estado !== 'Entregado' && g.estado !== 'No entregado'; });
+        // Buscar la siguiente parada cliente pendiente
+        var nextPendingStop = sortedStops.find(function(s) { return s.estado !== 'Entregado' && s.estado !== 'No entregado'; });
 
         var waypoints = [];
 
@@ -1986,18 +2130,18 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         startMarker.bindPopup('<div style="font-family:inherit;font-size:12px;"><b style="color:#4338ca;">Punto de Salida</b><br/>' + startLabel + '</div>');
         waypoints.push(startCoords);
 
-        // 2. Marcadores de las paradas en orden del circuito Spoke
-        sortedGuias.forEach(function(g, idx) {
-          var coords = getGuiaCoords(g);
+        // 2. Marcadores de las paradas agrupadas por cliente en orden del circuito Spoke
+        sortedStops.forEach(function(stop, idx) {
+          var coords = getGuiaCoords(stop);
           if (coords) {
-            var stopNum = g.orden_ruta && g.orden_ruta > 0 ? g.orden_ruta : (idx + 1);
-            var isDelivered = g.estado === 'Entregado';
-            var isIncident = g.estado === 'No entregado';
-            var isNextActive = nextPendingGuia && nextPendingGuia.id_guia === g.id_guia;
+            var stopNum = stop.orden_ruta && stop.orden_ruta > 0 ? stop.orden_ruta : (idx + 1);
+            var isDelivered = stop.estado === 'Entregado';
+            var isIncident = stop.estado === 'No entregado';
+            var isNextActive = nextPendingStop && nextPendingStop.key === stop.key;
 
             var bgColor = isDelivered ? '#059669' : isIncident ? '#e11d48' : isNextActive ? '#4f46e5' : '#0f172a';
             var pulseClass = isNextActive ? 'active-stop-pulse' : '';
-            var size = isNextActive ? 32 : 28;
+            var size = isNextActive ? 34 : 28;
 
             var iconHtml = '<div class="' + pulseClass + '" style="background:' + bgColor + ';width:' + size + 'px;height:' + size + 'px;border-radius:50%;border:2.5px solid white;color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;box-shadow:0 3px 8px rgba(0,0,0,0.35);">' +
                 stopNum +
@@ -2005,18 +2149,25 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             var icon = L.divIcon({ html: iconHtml, className: '', iconSize: [size, size], iconAnchor: [size/2, size/2] });
             var marker = L.marker(coords, { icon: icon }).addTo(markersLayer);
 
-            var popupContent = '<div style="font-family:inherit;font-size:12px;min-width:170px;">' +
+            var volInfo = stop.totalPiesCubicos > 0 ? (' &bull; ' + Number(stop.totalPiesCubicos).toFixed(2) + ' ft³') : '';
+            var guiasBadge = stop.totalGuias > 1 ? ('<span style="background:#eef2ff;color:#4338ca;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:800;border:1px solid #c7d2fe;">' + stop.totalGuias + ' Guías</span>') : '';
+
+            var popupContent = '<div style="font-family:inherit;font-size:12px;min-width:185px;">' +
               '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">' +
                 '<span style="font-weight:900;color:#0f172a;font-size:12px;">Parada #' + stopNum + '</span>' +
-                '<span style="font-family:monospace;font-weight:700;color:#64748b;font-size:10px;">#' + g.id_guia + '</span>' +
+                guiasBadge +
               '</div>' +
-              '<div style="font-weight:800;color:#4338ca;font-size:12px;">' + (g.destinatario || 'Destinatario') + '</div>' +
-              '<div style="font-size:11px;color:#64748b;margin-top:2px;">' + (g.ciudad_destino || '') + (g.direccion_referencia ? ' &bull; ' + g.direccion_referencia : '') + '</div>' +
+              '<div style="font-weight:800;color:#4338ca;font-size:12px;">' + stop.destinatario + '</div>' +
+              '<div style="font-family:monospace;font-size:10px;color:#64748b;margin-top:1px;font-weight:700;">Guía(s): ' + stop.guiasLabel + '</div>' +
+              '<div style="font-size:11px;color:#475569;margin-top:2px;">' + stop.totalPiezas + ' pieza(s)' + volInfo + '</div>' +
+              '<div style="font-size:11px;color:#64748b;margin-top:2px;">' + (stop.ciudad_destino || '') + (stop.direccion_referencia ? ' &bull; ' + stop.direccion_referencia : '') + '</div>' +
               '<div style="margin-top:6px;"><span style="background:' + (isDelivered ? '#ecfdf5;color:#065f46;' : isIncident ? '#fff1f2;color:#9f1239;' : isNextActive ? '#eef2ff;color:#4338ca;' : '#f8fafc;color:#334155;') + 'padding:2px 7px;border-radius:6px;font-weight:800;font-size:10px;border:1px solid #cbd5e1;">' + (isDelivered ? 'Entregado' : isIncident ? 'No entregado' : isNextActive ? 'Siguiente Parada' : 'Pendiente') + '</span></div>' +
             '</div>';
 
             marker.bindPopup(popupContent);
-            markersByGuiaId[g.id_guia] = { marker: marker, latLng: coords, stopNum: stopNum };
+            stop.guias.forEach(function(g) {
+              markersByGuiaId[g.id_guia] = { marker: marker, latLng: coords, stopNum: stopNum };
+            });
             waypoints.push(coords);
           }
         });
@@ -2258,6 +2409,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         var tbody = document.getElementById('chofer-listin-tbody');
         var totalGuiasEl = document.getElementById('chofer-listin-total-guias');
         var totalPiezasEl = document.getElementById('chofer-listin-total-piezas');
+        var totalVolumenEl = document.getElementById('chofer-listin-total-volumen');
         var totalDestinosEl = document.getElementById('chofer-listin-total-destinos');
 
         var activeGuias = (guiasData || []).slice().sort(function(a, b) {
@@ -2270,9 +2422,11 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         var uniqueCities = Array.from(new Set(activeGuias.map(function(g) { return (g.ciudad_destino || '').trim(); }).filter(Boolean)));
         var totalGuias = activeGuias.length;
         var totalPiezas = activeGuias.reduce(function(acc, g) { return acc + (g.piezas || 1); }, 0);
+        var totalVolumen = activeGuias.reduce(function(acc, g) { return acc + (Number(g.pies_cubicos) || 0); }, 0);
 
         if (totalGuiasEl) totalGuiasEl.textContent = totalGuias.toString();
         if (totalPiezasEl) totalPiezasEl.textContent = totalPiezas.toString();
+        if (totalVolumenEl) totalVolumenEl.textContent = totalVolumen.toFixed(2) + ' ft³';
         if (totalDestinosEl) totalDestinosEl.textContent = uniqueCities.length.toString();
 
         var rowCount = Math.max(Math.ceil(activeGuias.length / 2), 20);
@@ -2284,15 +2438,20 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           var left = leftGuias[i];
           var right = rightGuias[i];
 
+          var leftVol = left && left.pies_cubicos ? Number(left.pies_cubicos).toFixed(2) : (left ? '-' : '');
+          var rightVol = right && right.pies_cubicos ? Number(right.pies_cubicos).toFixed(2) : (right ? '-' : '');
+
           html += '<tr class="h-6 border-b border-black/30 text-black">' +
               '<!-- Bloque Izquierdo -->' +
-              '<td class="py-1 px-1.5 border-r border-black font-mono font-bold text-center">' + (left ? left.id_guia : '') + '</td>' +
-              '<td class="py-1 px-1 border-r border-black text-center font-bold">' + (left ? (left.piezas || 1) : '') + '</td>' +
-              '<td class="py-1 px-2 border-r-2 border-black font-bold uppercase truncate max-w-[140px]">' + (left ? left.ciudad_destino : '') + '</td>' +
+              '<td class="py-1 px-1 border-r border-black font-mono font-bold text-center">' + (left ? left.id_guia : '') + '</td>' +
+              '<td class="py-1 px-0.5 border-r border-black text-center font-bold">' + (left ? (left.piezas || 1) : '') + '</td>' +
+              '<td class="py-1 px-0.5 border-r border-black text-center font-mono font-bold text-slate-700">' + leftVol + '</td>' +
+              '<td class="py-1 px-1.5 border-r-2 border-black font-bold uppercase truncate max-w-[120px]">' + (left ? left.ciudad_destino : '') + '</td>' +
               '<!-- Bloque Derecho -->' +
-              '<td class="py-1 px-1.5 border-r border-black font-mono font-bold text-center">' + (right ? right.id_guia : '') + '</td>' +
-              '<td class="py-1 px-1 border-r border-black text-center font-bold">' + (right ? (right.piezas || 1) : '') + '</td>' +
-              '<td class="py-1 px-2 font-bold uppercase truncate max-w-[140px]">' + (right ? right.ciudad_destino : '') + '</td>' +
+              '<td class="py-1 px-1 border-r border-black font-mono font-bold text-center">' + (right ? right.id_guia : '') + '</td>' +
+              '<td class="py-1 px-0.5 border-r border-black text-center font-bold">' + (right ? (right.piezas || 1) : '') + '</td>' +
+              '<td class="py-1 px-0.5 border-r border-black text-center font-mono font-bold text-slate-700">' + rightVol + '</td>' +
+              '<td class="py-1 px-1.5 font-bold uppercase truncate max-w-[120px]">' + (right ? right.ciudad_destino : '') + '</td>' +
             '</tr>';
         }
 

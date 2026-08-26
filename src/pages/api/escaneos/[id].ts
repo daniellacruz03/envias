@@ -62,13 +62,17 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
         });
       }
 
+      const parsedPies = (datos_guia.pies_cubicos !== undefined && datos_guia.pies_cubicos !== null && datos_guia.pies_cubicos !== '')
+        ? parseFloat(datos_guia.pies_cubicos) || null
+        : null;
+
       // Crear la guia en la tabla guias
       const insertResult = await query(`
         INSERT INTO guias (
           id_guia, destinatario, telefono_principal, telefono_secundario,
-          ciudad_destino, piezas, direccion_referencia, empresa,
+          ciudad_destino, piezas, pies_cubicos, direccion_referencia, empresa,
           estado, gps_confirmado, chofer_asignado_id, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Por contactar', false, $9, NOW())
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Por contactar', false, $10, NOW())
         RETURNING *
       `, [
         cleanGuia,
@@ -77,6 +81,7 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
         datos_guia.telefono_secundario ? datos_guia.telefono_secundario.trim() : null,
         datos_guia.ciudad_destino.trim(),
         parseInt(datos_guia.piezas, 10) || 1,
+        parsedPies,
         datos_guia.direccion_referencia ? datos_guia.direccion_referencia.trim() : null,
         datos_guia.empresa ? datos_guia.empresa.trim() : null,
         escaneo.chofer_id

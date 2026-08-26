@@ -30,14 +30,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // 2. Procesar FormData
     const formData = await request.formData();
-    const id_guia = (formData.get('id_guia') || '').toString().trim().toUpperCase();
+    const rawIdGuia = (formData.get('id_guia') || '').toString().trim().toUpperCase();
     const tipo_resultado = (formData.get('tipo_resultado') || 'entregado').toString().trim(); // 'entregado' | 'no_entregado'
     const motivo_no_entrega = (formData.get('motivo_no_entrega') || '').toString().trim();
     const recibido_por = (formData.get('recibido_por') || '').toString().trim();
     const nota_adicional = (formData.get('nota_adicional') || '').toString().trim();
     const foto = formData.get('foto') as File | null;
 
-    if (!id_guia) {
+    if (!rawIdGuia) {
       return new Response(JSON.stringify({
         success: false,
         message: 'El número de guía es obligatorio.'
@@ -47,13 +47,21 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
+    // Permitir entregar múltiples guías del mismo cliente separadas por coma
+    const idGuiasArray = rawIdGuia
+      .split(',')
+      .map(id => id.trim())
+      .filter(Boolean);
+
+    const primaryIdGuia = idGuiasArray[0];
+
     let publicUrl: string | null = null;
     let comprobanteBase64: string | null = null;
 
     // Procesar foto si fue adjuntada
     if (foto && foto instanceof File && foto.size > 0) {
       const extension = foto.type.includes('png') ? 'png' : (foto.type.includes('webp') ? 'webp' : 'jpg');
-      const cleanId = id_guia.replace(/[^A-Z0-9_-]/gi, '');
+      const cleanId = primaryIdGuia.replace(/[^A-Z0-9_-]/gi, '');
       const fileName = `comprobante_${cleanId}_${Date.now()}.${extension}`;
       publicUrl = `/uploads/comprobantes/${fileName}`;
 
@@ -98,7 +106,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       campoRecibido = recibido_por || null;
     }
 
-    // 5. Actualizar en PostgreSQL
+    // 5. Actualizar en PostgreSQL (todas las guías agrupadas para este cliente)
     const updateResult = await query(`
       UPDATE guias
       SET 
@@ -106,34 +114,40 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         comprobante_url = COALESCE($2, comprobante_url),
         comprobante_base64 = COALESCE($3, comprobante_base64),
         recibido_por = $4
-      WHERE id_guia = $5
+      WHERE id_guia = ANY($5::text[])
       RETURNING *
-    `, [nuevoEstado, publicUrl, comprobanteBase64, campoRecibido, id_guia]);
+    `, [nuevoEstado, publicUrl, comprobanteBase64, campoRecibido, idGuiasArray]);
 
     if (updateResult.rowCount === 0) {
       return new Response(JSON.stringify({
         success: false,
-        message: `Guía #${id_guia} no encontrada en la base de datos.`
+        message: `Ninguna de las guías (${idGuiasArray.join(', ')}) fue encontrada en la base de datos.`
       }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    const guiaActualizada = updateResult.rows[0];
+    const guiasActualizadas = updateResult.rows;
 
     console.log('[PROCESO DE ENTREGA]:', {
-      id_guia,
+      id_guias: idGuiasArray,
+      total_actualizadas: guiasActualizadas.length,
       estado: nuevoEstado,
       chofer_id: user.id,
       comprobante_url: publicUrl,
       detalle: campoRecibido
     });
 
+    const msg = guiasActualizadas.length > 1
+      ? `¡Entrega confirmada con éxito para ${guiasActualizadas.length} guías del cliente (#${idGuiasArray.join(', #')})!`
+      : (nuevoEstado === 'Entregado' ? 'Entrega confirmada y comprobante guardado con éxito.' : 'Incidencia registrada: guía marcada como No entregado.');
+
     return new Response(JSON.stringify({
       success: true,
-      message: nuevoEstado === 'Entregado' ? 'Entrega confirmada y comprobante guardado con éxito.' : 'Incidencia registrada: guía marcada como No entregado.',
-      data: guiaActualizada
+      message: msg,
+      data: guiasActualizadas[0],
+      guias_actualizadas: guiasActualizadas
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }

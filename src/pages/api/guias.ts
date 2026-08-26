@@ -15,6 +15,7 @@ export const GET: APIRoute = async ({ url }) => {
         g.telefono_secundario,
         g.ciudad_destino,
         g.piezas,
+        g.pies_cubicos,
         g.direccion_referencia,
         g.hora_disponible,
         g.comprobante_url,
@@ -70,6 +71,7 @@ export const POST: APIRoute = async ({ request }) => {
       telefono_secundario,
       ciudad_destino,
       piezas,
+      pies_cubicos,
       direccion_referencia,
       empresa
     } = body;
@@ -98,6 +100,10 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
+    const parsedPiesCubicos = (pies_cubicos !== undefined && pies_cubicos !== null && pies_cubicos !== '')
+      ? parseFloat(pies_cubicos) || null
+      : null;
+
     const insertResult = await query(`
       INSERT INTO guias (
         id_guia,
@@ -106,13 +112,14 @@ export const POST: APIRoute = async ({ request }) => {
         telefono_secundario,
         ciudad_destino,
         piezas,
+        pies_cubicos,
         direccion_referencia,
         empresa,
         estado,
         gps_confirmado,
         created_at
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, 'Por contactar', false, NOW()
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, 'Por contactar', false, NOW()
       )
       RETURNING *
     `, [
@@ -122,6 +129,7 @@ export const POST: APIRoute = async ({ request }) => {
       telefono_secundario ? telefono_secundario.trim() : null,
       ciudad_destino.trim(),
       parseInt(piezas, 10) || 1,
+      parsedPiesCubicos,
       direccion_referencia ? direccion_referencia.trim() : null,
       empresa ? empresa.trim() : null
     ]);
