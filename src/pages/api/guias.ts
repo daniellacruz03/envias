@@ -104,6 +104,33 @@ export const POST: APIRoute = async ({ request }) => {
       ? parseFloat(pies_cubicos) || null
       : null;
 
+    // Buscar si el cliente ya tenía GPS confirmado previamente
+    let autoGpsConfirmado = false;
+    let autoGpsLat: number | null = null;
+    let autoGpsLon: number | null = null;
+    let autoHora: string | null = null;
+
+    try {
+      const previousClientGps = await query(`
+        SELECT gps_latitud, gps_longitud, hora_disponible 
+        FROM guias 
+        WHERE TRIM(LOWER(destinatario)) = TRIM(LOWER($1)) 
+          AND gps_confirmado = true 
+          AND gps_latitud IS NOT NULL 
+        ORDER BY created_at DESC 
+        LIMIT 1
+      `, [destinatario.trim()]);
+
+      if (previousClientGps.rows.length > 0) {
+        autoGpsConfirmado = true;
+        autoGpsLat = previousClientGps.rows[0].gps_latitud;
+        autoGpsLon = previousClientGps.rows[0].gps_longitud;
+        autoHora = previousClientGps.rows[0].hora_disponible;
+      }
+    } catch (e) {
+      console.warn('[Auto-GPS Warning]:', e);
+    }
+
     const insertResult = await query(`
       INSERT INTO guias (
         id_guia,
@@ -117,9 +144,12 @@ export const POST: APIRoute = async ({ request }) => {
         empresa,
         estado,
         gps_confirmado,
+        gps_latitud,
+        gps_longitud,
+        hora_disponible,
         created_at
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, 'Por contactar', false, NOW()
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, 'Por contactar', $10, $11, $12, $13, NOW()
       )
       RETURNING *
     `, [
@@ -131,7 +161,11 @@ export const POST: APIRoute = async ({ request }) => {
       parseInt(piezas, 10) || 1,
       parsedPiesCubicos,
       direccion_referencia ? direccion_referencia.trim() : null,
-      empresa ? empresa.trim() : null
+      empresa ? empresa.trim() : null,
+      autoGpsConfirmado,
+      autoGpsLat,
+      autoGpsLon,
+      autoHora
     ]);
 
     const newGuia = insertResult.rows[0];

@@ -189,17 +189,31 @@ const userInitials = currentUser.nombre
       <!-- 2. FORMULARIO DE CARGA RÁPIDA DE GUÍAS     -->
       <!-- ========================================== -->
       <section class="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-sm">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 mb-4 gap-2">
           <div>
             <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-              Carga Rápida de Envíos
+              <span>Carga Rápida de Envíos</span>
             </h2>
             <p class="text-xs text-slate-500">Ingresa los datos para generar la orden y habilitar el enlace de WhatsApp</p>
           </div>
-          <span class="text-[11px] font-medium text-slate-400 hidden sm:inline">Entrada ágil por teclado</span>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              onclick="window.openFrequentClientsModal()"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs border border-indigo-200 shadow-2xs transition-all cursor-pointer"
+              title="Abrir directorio de clientes frecuentes"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <span>Directorio Clientes</span>
+              <span id="quick-frequent-clients-count" class="text-[10px] bg-indigo-200/80 text-indigo-900 px-1.5 py-0.2 rounded-full font-bold">0</span>
+            </button>
+            <span class="text-[11px] font-medium text-slate-400 hidden sm:inline">Entrada ágil por teclado</span>
+          </div>
         </div>
 
         <form id="new-shipment-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5" autocomplete="off">
@@ -218,18 +232,34 @@ const userInitials = currentUser.nombre
             />
           </div>
 
-          <!-- Nombre y Apellido -->
-          <div class="lg:col-span-2 space-y-1">
-            <label for="input-destinatario" class="block text-xs font-semibold text-slate-700">
-              Destinatario <span class="text-rose-500">*</span>
-            </label>
+          <!-- Nombre y Apellido con Autocompletado Predictivo -->
+          <div class="lg:col-span-2 space-y-1 relative" id="destinatario-container">
+            <div class="flex items-center justify-between">
+              <label for="input-destinatario" class="block text-xs font-semibold text-slate-700">
+                Destinatario <span class="text-rose-500">*</span>
+              </label>
+              <span class="text-[10px] text-slate-400 font-medium">Autocompleta clientes frecuentes</span>
+            </div>
             <input
               type="text"
               id="input-destinatario"
               required
+              autocomplete="off"
               placeholder="Nombre y Apellido completo"
               class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
             />
+            <!-- Dropdown flotante de sugerencias de clientes frecuentes -->
+            <div
+              id="destinatario-autocomplete-dropdown"
+              class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white/95 backdrop-blur-md rounded-2xl border border-slate-200 shadow-2xl z-50 max-h-64 overflow-y-auto custom-scrollbar divide-y divide-slate-100"
+            >
+              <!-- Render dinámico por JS -->
+            </div>
+            <!-- Badge de cliente frecuente seleccionado -->
+            <div id="frequent-client-selected-badge" class="hidden text-[10px] font-semibold text-emerald-800 bg-emerald-50/90 border border-emerald-200 px-2.5 py-1 rounded-lg flex items-center justify-between gap-1.5 mt-1">
+              <span id="frequent-client-selected-text">Cliente frecuente seleccionado</span>
+              <button type="button" onclick="window.clearFrequentClientSelection()" class="text-slate-400 hover:text-slate-600 cursor-pointer font-bold">✕</button>
+            </div>
           </div>
 
           <!-- Teléfono / WhatsApp Principal -->
@@ -442,6 +472,18 @@ const userInitials = currentUser.nombre
                 </svg>
                 <span>Ubicaciones de Clientes</span>
                 <span id="mapa-count-pill" class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">0</span>
+              </button>
+
+              <button
+                type="button"
+                id="btn-view-directorio"
+                class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span>Directorio Clientes</span>
+                <span id="directorio-count-pill" class="text-[10px] bg-violet-100 text-violet-800 px-2 py-0.5 rounded-full font-bold">0</span>
               </button>
 
               <button
@@ -725,6 +767,75 @@ const userInitials = currentUser.nombre
             </div>
           </div>
 
+        </div>
+
+        <!-- ========================================== -->
+        <!-- MODO: DIRECTORIO DE CLIENTES FRECUENTES    -->
+        <!-- ========================================== -->
+        <div id="view-container-directorio" class="hidden p-4 sm:p-6 bg-slate-50/50 space-y-5">
+          
+          <!-- Cabecera de la Vista de Directorio -->
+          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-violet-600 text-white flex items-center justify-center shadow-md shadow-violet-200 shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="text-base font-extrabold text-slate-900 tracking-tight">Directorio de Clientes y Destinatarios</h4>
+                  <span id="directorio-total-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-violet-100 text-violet-800 border border-violet-200">
+                    0 clientes
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500 mt-0.5">Historial consolidado de datos de entrega suministrados por cada cliente.</p>
+              </div>
+            </div>
+
+            <!-- Controles de Búsqueda y Filtro de Ciudad -->
+            <div class="flex flex-wrap items-center gap-2.5">
+              <div class="relative min-w-[220px]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  id="directorio-search-input"
+                  placeholder="Buscar por cliente, teléfono, ciudad..."
+                  class="w-full text-xs pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:border-slate-900 shadow-2xs transition-all"
+                  oninput="window.renderDirectorioView()"
+                />
+              </div>
+              <select
+                id="directorio-city-select"
+                class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:bg-white cursor-pointer shadow-2xs"
+                onchange="window.renderDirectorioView()"
+              >
+                <option value="">Todas las Ciudades</option>
+              </select>
+              <select
+                id="directorio-gps-select"
+                class="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-700 focus:outline-none focus:bg-white cursor-pointer shadow-2xs"
+                onchange="window.renderDirectorioView()"
+              >
+                <option value="">Todos los Estados GPS</option>
+                <option value="con_gps">Con GPS Confirmado</option>
+                <option value="sin_gps">Pendiente por GPS</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Cuadrícula de Tarjetas de Clientes del Directorio -->
+          <div id="directorio-clients-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <!-- Dinámico por JS -->
+          </div>
+
+          <!-- Estado Vacío -->
+          <div id="directorio-empty" class="hidden p-12 text-center bg-white rounded-3xl border border-slate-200 flex flex-col items-center justify-center gap-2">
+            <p class="text-sm font-bold text-slate-700">No se encontraron clientes</p>
+            <p class="text-xs text-slate-400">Intenta con otros términos de búsqueda.</p>
+          </div>
         </div>
 
         <!-- ========================================== -->
@@ -2249,6 +2360,79 @@ const userInitials = currentUser.nombre
     </div>
 
     <!-- ========================================== -->
+    <!-- MODAL DIRECTORIO DE CLIENTES FRECUENTES    -->
+    <!-- ========================================== -->
+    <div id="modal-frequent-clients" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+      <div class="bg-white rounded-3xl shadow-2xl border border-slate-200/80 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        
+        <!-- Modal Header -->
+        <div class="p-5 sm:p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 via-white to-indigo-50/30 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-200 shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight">Directorio de Clientes Frecuentes</h3>
+                <span id="modal-clients-count-badge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                  0 clientes
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">Consulta el historial de datos suministrados por cada cliente y carga su información con 1 solo toque.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onclick="window.closeFrequentClientsModal()"
+            class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+            title="Cerrar modal"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Controls: Buscador y Filtros -->
+        <div class="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center gap-3">
+          <div class="relative flex-1 w-full">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              id="modal-clients-search"
+              placeholder="Buscar por nombre, teléfono, ciudad o dirección..."
+              class="w-full text-xs pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all shadow-2xs"
+            />
+          </div>
+          <select
+            id="modal-clients-filter-ciudad"
+            class="text-xs bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 focus:outline-none focus:border-indigo-600 cursor-pointer w-full sm:w-auto min-w-[160px] shadow-2xs"
+          >
+            <option value="">Todas las Ciudades</option>
+          </select>
+          <select
+            id="modal-clients-filter-gps"
+            class="text-xs bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-slate-700 focus:outline-none focus:border-indigo-600 cursor-pointer w-full sm:w-auto min-w-[140px] shadow-2xs"
+          >
+            <option value="">Todos los Estados GPS</option>
+            <option value="con_gps">Con GPS Confirmado</option>
+            <option value="sin_gps">Pendiente por GPS</option>
+          </select>
+        </div>
+
+        <!-- Lista de Clientes en el Modal -->
+        <div id="modal-clients-list" class="p-4 sm:p-6 overflow-y-auto max-h-[58vh] custom-scrollbar space-y-3">
+          <!-- Render dinámico por JS -->
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
     <!-- NOTIFICACIONES TOAST FLOTANTES             -->
     <!-- ========================================== -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
@@ -2303,7 +2487,7 @@ const userInitials = currentUser.nombre
       let shipments: GuiaRow[] = [];
       let drivers: Driver[] = [];
       let isLoading = true;
-      let currentViewMode: 'table' | 'cities' | 'drivers' | 'mapa' | 'escaneos' | 'listin' | 'historial' = 'table';
+      let currentViewMode: 'table' | 'cities' | 'drivers' | 'mapa' | 'directorio' | 'escaneos' | 'listin' | 'historial' = 'table';
       let expandedCities: Record<string, boolean> = {};
       let escaneosData: any[] = [];
       let drawerFotosFlat: any[] = []; // lista plana de fotos para navegar
@@ -2586,6 +2770,7 @@ const userInitials = currentUser.nombre
       const viewContainerCities = document.getElementById('view-container-cities') as HTMLElement;
       const viewContainerDrivers = document.getElementById('view-container-drivers') as HTMLElement;
       const viewContainerMapa = document.getElementById('view-container-mapa') as HTMLElement;
+      const viewContainerDirectorio = document.getElementById('view-container-directorio') as HTMLElement;
       const viewContainerEscaneos = document.getElementById('view-container-escaneos') as HTMLElement;
       const viewContainerListin = document.getElementById('view-container-listin') as HTMLElement;
       const viewContainerHistorial = document.getElementById('view-container-historial') as HTMLElement;
@@ -2593,12 +2778,14 @@ const userInitials = currentUser.nombre
       const btnViewCities = document.getElementById('btn-view-cities') as HTMLButtonElement;
       const btnViewDrivers = document.getElementById('btn-view-drivers') as HTMLButtonElement;
       const btnViewMapa = document.getElementById('btn-view-mapa') as HTMLButtonElement;
+      const btnViewDirectorio = document.getElementById('btn-view-directorio') as HTMLButtonElement;
       const btnViewEscaneos = document.getElementById('btn-view-escaneos') as HTMLButtonElement;
       const btnViewListin = document.getElementById('btn-view-listin') as HTMLButtonElement;
       const btnViewHistorial = document.getElementById('btn-view-historial') as HTMLButtonElement;
       const citiesCountPill = document.getElementById('cities-count-pill') as HTMLElement;
       const driversCountPill = document.getElementById('drivers-count-pill') as HTMLElement;
       const mapaCountPill = document.getElementById('mapa-count-pill') as HTMLElement;
+      const directorioCountPill = document.getElementById('directorio-count-pill') as HTMLElement;
       const mapaKpiGps = document.getElementById('mapa-kpi-gps') as HTMLElement;
       const mapaKpiRef = document.getElementById('mapa-kpi-ref') as HTMLElement;
       const mapaKpiPend = document.getElementById('mapa-kpi-pend') as HTMLElement;
@@ -2753,6 +2940,7 @@ const userInitials = currentUser.nombre
 
           isLoading = false;
           populateCityFilter();
+          loadFrequentClients();
           renderViews();
         } catch (err: any) {
           isLoading = false;
@@ -2811,6 +2999,7 @@ const userInitials = currentUser.nombre
             if (hasChanges) {
               shipments = newShipments;
               populateCityFilter();
+              loadFrequentClients();
               renderViews();
             }
           }
@@ -2985,6 +3174,8 @@ const userInitials = currentUser.nombre
           renderDriversView(filtered);
         } else if (currentViewMode === 'mapa') {
           renderClientLocationsSection();
+        } else if (currentViewMode === 'directorio') {
+          renderDirectorioView();
         } else if (currentViewMode === 'listin') {
           renderListinView();
         } else if (currentViewMode === 'historial') {
@@ -4610,12 +4801,14 @@ const userInitials = currentUser.nombre
             btnViewEscaneos?.classList.add('text-slate-600');
             btnViewListin?.classList.add('text-slate-600');
             btnViewHistorial?.classList.add('text-slate-600');
+            btnViewDirectorio?.classList.add('text-slate-600');
             viewContainerTable.classList.remove('hidden');
           } else if (currentViewMode === 'cities') {
             btnViewCities.classList.add('tab-btn-active');
             btnViewTable.classList.add('text-slate-600');
             btnViewDrivers.classList.add('text-slate-600');
             btnViewMapa?.classList.add('text-slate-600');
+            btnViewDirectorio?.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
             btnViewListin?.classList.add('text-slate-600');
             btnViewHistorial?.classList.add('text-slate-600');
@@ -4625,6 +4818,7 @@ const userInitials = currentUser.nombre
             btnViewTable.classList.add('text-slate-600');
             btnViewCities.classList.add('text-slate-600');
             btnViewMapa?.classList.add('text-slate-600');
+            btnViewDirectorio?.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
             btnViewListin?.classList.add('text-slate-600');
             btnViewHistorial?.classList.add('text-slate-600');
@@ -4634,16 +4828,28 @@ const userInitials = currentUser.nombre
             btnViewTable.classList.add('text-slate-600');
             btnViewCities.classList.add('text-slate-600');
             btnViewDrivers.classList.add('text-slate-600');
+            btnViewDirectorio?.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
             btnViewListin?.classList.add('text-slate-600');
             btnViewHistorial?.classList.add('text-slate-600');
             viewContainerMapa?.classList.remove('hidden');
+          } else if (currentViewMode === 'directorio') {
+            btnViewDirectorio?.classList.add('tab-btn-active');
+            btnViewTable.classList.add('text-slate-600');
+            btnViewCities.classList.add('text-slate-600');
+            btnViewDrivers.classList.add('text-slate-600');
+            btnViewMapa?.classList.add('text-slate-600');
+            btnViewEscaneos?.classList.add('text-slate-600');
+            btnViewListin?.classList.add('text-slate-600');
+            btnViewHistorial?.classList.add('text-slate-600');
+            viewContainerDirectorio?.classList.remove('hidden');
           } else if (currentViewMode === 'escaneos') {
             btnViewEscaneos?.classList.add('tab-btn-active');
             btnViewTable.classList.add('text-slate-600');
             btnViewCities.classList.add('text-slate-600');
             btnViewDrivers.classList.add('text-slate-600');
             btnViewMapa?.classList.add('text-slate-600');
+            btnViewDirectorio?.classList.add('text-slate-600');
             btnViewListin?.classList.add('text-slate-600');
             btnViewHistorial?.classList.add('text-slate-600');
             viewContainerEscaneos?.classList.remove('hidden');
@@ -4653,6 +4859,7 @@ const userInitials = currentUser.nombre
             btnViewCities.classList.add('text-slate-600');
             btnViewDrivers.classList.add('text-slate-600');
             btnViewMapa?.classList.add('text-slate-600');
+            btnViewDirectorio?.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
             btnViewHistorial?.classList.add('text-slate-600');
             viewContainerListin?.classList.remove('hidden');
@@ -4662,6 +4869,7 @@ const userInitials = currentUser.nombre
             btnViewCities.classList.add('text-slate-600');
             btnViewDrivers.classList.add('text-slate-600');
             btnViewMapa?.classList.add('text-slate-600');
+            btnViewDirectorio?.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
             btnViewListin?.classList.add('text-slate-600');
             viewContainerHistorial?.classList.remove('hidden');
@@ -4690,6 +4898,12 @@ const userInitials = currentUser.nombre
           currentViewMode = 'mapa';
           updateTabStyles();
           renderViews();
+        });
+
+        btnViewDirectorio?.addEventListener('click', () => {
+          currentViewMode = 'directorio';
+          updateTabStyles();
+          renderDirectorioView();
         });
 
         btnViewEscaneos?.addEventListener('click', () => {
@@ -5185,7 +5399,550 @@ const userInitials = currentUser.nombre
           }
         });
 
-        form.addEventListener('submit', async (e) => {
+        // ==========================================
+        // MÓDULO: DIRECTORIO DE CLIENTES FRECUENTES
+        // ==========================================
+        interface FrequentClient {
+          destinatario: string;
+          telefono_principal: string;
+          telefono_secundario: string | null;
+          ciudad_destino: string;
+          direccion_referencia: string | null;
+          hora_disponible: string | null;
+          gps_latitud: number | null;
+          gps_longitud: number | null;
+          gps_confirmado: boolean;
+          total_guias: number;
+          total_piezas: number;
+          total_pies_cubicos: number;
+          ultimo_envio: string;
+          guias_recientes: Array<{ id_guia: string; estado: string; piezas: number; empresa: string | null; created_at: string }>;
+          empresas: string[];
+        }
+
+        let frequentClients: FrequentClient[] = [];
+        let frequentClientsLoading = false;
+
+        async function loadFrequentClients() {
+          if (frequentClientsLoading) return;
+          frequentClientsLoading = true;
+          try {
+            const res = await fetch('/api/clientes');
+            if (res.ok) {
+              const data = await res.json();
+              if (data.success && Array.isArray(data.data)) {
+                frequentClients = data.data;
+                updateFrequentClientsPills();
+                if (currentViewMode === 'directorio') {
+                  renderDirectorioView();
+                }
+              }
+            }
+          } catch (e) {
+            console.warn('[Directorio Clientes Error]:', e);
+          } finally {
+            frequentClientsLoading = false;
+          }
+        }
+
+        function updateFrequentClientsPills() {
+          const quickCount = document.getElementById('quick-frequent-clients-count');
+          const modalCount = document.getElementById('modal-clients-count-badge');
+          const viewPill = document.getElementById('directorio-count-pill');
+          const totalBadge = document.getElementById('directorio-total-badge');
+
+          const totalStr = frequentClients.length.toString();
+          if (quickCount) quickCount.textContent = totalStr;
+          if (modalCount) modalCount.textContent = `${totalStr} clientes`;
+          if (viewPill) viewPill.textContent = totalStr;
+          if (totalBadge) totalBadge.textContent = `${totalStr} clientes`;
+        }
+
+        // Autocompletado predictivo en campo Destinatario
+        const inputDestinatarioEl = document.getElementById('input-destinatario') as HTMLInputElement;
+        const destinatarioDropdownEl = document.getElementById('destinatario-autocomplete-dropdown') as HTMLElement;
+
+        function handleDestinatarioAutocomplete(val: string) {
+          if (!destinatarioDropdownEl) return;
+          const q = normalizeText(val || '');
+          if (q.length < 2 || frequentClients.length === 0) {
+            destinatarioDropdownEl.classList.add('hidden');
+            destinatarioDropdownEl.innerHTML = '';
+            return;
+          }
+
+          const matches = frequentClients.filter(c => 
+            normalizeText(c.destinatario).includes(q) ||
+            (c.telefono_principal && c.telefono_principal.replace(/\D/g, '').includes(val.replace(/\D/g, ''))) ||
+            (c.telefono_secundario && c.telefono_secundario.replace(/\D/g, '').includes(val.replace(/\D/g, ''))) ||
+            normalizeText(c.ciudad_destino).includes(q)
+          ).slice(0, 5);
+
+          if (matches.length === 0) {
+            destinatarioDropdownEl.classList.add('hidden');
+            destinatarioDropdownEl.innerHTML = '';
+            return;
+          }
+
+          destinatarioDropdownEl.innerHTML = `
+            <div class="p-2.5 bg-slate-50/90 border-b border-slate-100 flex items-center justify-between text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+              <span class="flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                <span>Clientes Frecuentes Sugeridos</span>
+              </span>
+              <span class="text-indigo-600 font-mono font-bold">${matches.length} coincidencia${matches.length > 1 ? 's' : ''}</span>
+            </div>
+            <div class="divide-y divide-slate-100">
+              ${matches.map((c, i) => {
+                const initials = c.destinatario.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || 'CL';
+                const cleanData = encodeURIComponent(JSON.stringify(c));
+                return `
+                  <div 
+                    class="p-3 hover:bg-indigo-50/70 transition-all cursor-pointer flex items-center justify-between gap-3 group"
+                    onclick="window.selectFrequentClientFromData('${cleanData}')"
+                  >
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <div class="w-8 h-8 rounded-xl bg-slate-900 group-hover:bg-indigo-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0 transition-colors shadow-2xs">
+                        ${initials}
+                      </div>
+                      <div class="min-w-0">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                          <p class="text-xs font-bold text-slate-900 group-hover:text-indigo-950 truncate">${c.destinatario}</p>
+                          <span class="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-700 font-mono">
+                            ${c.total_guias} ${c.total_guias === 1 ? 'envío' : 'envíos'}
+                          </span>
+                          ${c.gps_confirmado ? `
+                            <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                              <span>GPS OK</span>
+                            </span>
+                          ` : ''}
+                        </div>
+                        <div class="flex items-center gap-2 text-[11px] text-slate-500 font-mono mt-0.5 truncate">
+                          <span>${c.telefono_principal}</span>
+                          <span>&bull;</span>
+                          <span class="font-sans font-semibold text-slate-700">${c.ciudad_destino}</span>
+                          ${c.direccion_referencia ? `<span>&bull;</span><span class="font-sans truncate max-w-[140px] text-slate-400" title="${c.direccion_referencia}">${c.direccion_referencia}</span>` : ''}
+                        </div>
+                      </div>
+                    </div>
+                    <span class="text-[10px] font-bold text-indigo-600 bg-white group-hover:bg-indigo-600 group-hover:text-white px-2.5 py-1 rounded-xl border border-indigo-200 transition-all shrink-0 shadow-2xs">
+                      Cargar &rarr;
+                    </span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `;
+
+          destinatarioDropdownEl.classList.remove('hidden');
+        }
+
+        inputDestinatarioEl?.addEventListener('input', (e: any) => {
+          handleDestinatarioAutocomplete(e.target.value);
+        });
+
+        inputDestinatarioEl?.addEventListener('focus', (e: any) => {
+          if (e.target.value && e.target.value.length >= 2) {
+            handleDestinatarioAutocomplete(e.target.value);
+          }
+        });
+
+        // Cerrar dropdown al hacer clic fuera
+        document.addEventListener('click', (e: any) => {
+          if (!e.target.closest('#destinatario-container')) {
+            destinatarioDropdownEl?.classList.add('hidden');
+          }
+        });
+
+        (window as any).selectFrequentClientFromData = (encodedData: string) => {
+          try {
+            const client = JSON.parse(decodeURIComponent(encodedData));
+            (window as any).selectFrequentClient(client);
+          } catch (e) {
+            console.error(e);
+          }
+        };
+
+        (window as any).selectFrequentClient = (client: FrequentClient) => {
+          if (!client) return;
+
+          const inputDest = document.getElementById('input-destinatario') as HTMLInputElement;
+          const inputTel = document.getElementById('input-telefono') as HTMLInputElement;
+          const inputTel2 = document.getElementById('input-telefono-2') as HTMLInputElement;
+          const inputCiu = document.getElementById('input-ciudad') as HTMLInputElement;
+          const inputDir = document.getElementById('input-direccion') as HTMLInputElement;
+          const inputGuia = document.getElementById('input-guia') as HTMLInputElement;
+
+          if (inputDest) inputDest.value = client.destinatario;
+          if (inputTel) inputTel.value = client.telefono_principal;
+          if (inputTel2) inputTel2.value = client.telefono_secundario || '';
+          if (inputCiu) inputCiu.value = client.ciudad_destino;
+          if (inputDir) inputDir.value = client.direccion_referencia || '';
+
+          destinatarioDropdownEl?.classList.add('hidden');
+
+          const badge = document.getElementById('frequent-client-selected-badge');
+          const badgeText = document.getElementById('frequent-client-selected-text');
+          if (badge && badgeText) {
+            badgeText.innerHTML = `Cliente frecuente: <strong class="text-slate-900">${client.destinatario}</strong> &bull; ${client.total_guias} envíos previos ${client.gps_confirmado ? '&bull; <span class="text-emerald-700 font-bold">GPS Listo</span>' : ''}`;
+            badge.classList.remove('hidden');
+          }
+
+          (window as any).closeFrequentClientsModal();
+          (window as any).showToast(`Datos de ${client.destinatario} cargados con éxito`, 'info');
+
+          // Scroll suave al formulario si estaba en otra parte
+          const formSection = document.getElementById('new-shipment-form');
+          formSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+          if (inputGuia && !inputGuia.value) {
+            inputGuia.focus();
+          }
+        };
+
+        (window as any).clearFrequentClientSelection = () => {
+          const badge = document.getElementById('frequent-client-selected-badge');
+          if (badge) badge.classList.add('hidden');
+        };
+
+        // Modal Directorio de Clientes Frecuentes
+        const modalFrequentClients = document.getElementById('modal-frequent-clients') as HTMLElement;
+        const modalClientsSearch = document.getElementById('modal-clients-search') as HTMLInputElement;
+        const modalClientsFilterCiudad = document.getElementById('modal-clients-filter-ciudad') as HTMLSelectElement;
+        const modalClientsFilterGps = document.getElementById('modal-clients-filter-gps') as HTMLSelectElement;
+        const modalClientsList = document.getElementById('modal-clients-list') as HTMLElement;
+
+        (window as any).openFrequentClientsModal = () => {
+          if (!modalFrequentClients) return;
+          modalFrequentClients.classList.remove('hidden');
+          modalFrequentClients.classList.add('flex');
+          document.body.style.overflow = 'hidden';
+
+          // Población de ciudades en el filtro del modal
+          if (modalClientsFilterCiudad) {
+            const uniqueCities = Array.from(new Set(frequentClients.map(c => c.ciudad_destino).filter(Boolean))).sort();
+            const currentCity = modalClientsFilterCiudad.value;
+            modalClientsFilterCiudad.innerHTML = `
+              <option value="">Todas las Ciudades (${uniqueCities.length})</option>
+              ${uniqueCities.map(city => `<option value="${city}" ${currentCity === city ? 'selected' : ''}>${city}</option>`).join('')}
+            `;
+          }
+
+          renderModalClientsList();
+          if (modalClientsSearch) {
+            modalClientsSearch.focus();
+          }
+        };
+
+        (window as any).closeFrequentClientsModal = () => {
+          if (!modalFrequentClients) return;
+          modalFrequentClients.classList.add('hidden');
+          modalFrequentClients.classList.remove('flex');
+          document.body.style.overflow = 'auto';
+        };
+
+        function renderModalClientsList() {
+          if (!modalClientsList) return;
+
+          const q = normalizeText(modalClientsSearch?.value || '');
+          const cityFilter = (modalClientsFilterCiudad?.value || '').trim().toLowerCase();
+          const gpsFilter = modalClientsFilterGps?.value || '';
+
+          let list = frequentClients;
+
+          if (q) {
+            list = list.filter(c => 
+              normalizeText(c.destinatario).includes(q) ||
+              c.telefono_principal.includes(modalClientsSearch.value) ||
+              (c.telefono_secundario && c.telefono_secundario.includes(modalClientsSearch.value)) ||
+              normalizeText(c.ciudad_destino).includes(q) ||
+              (c.direccion_referencia && normalizeText(c.direccion_referencia).includes(q))
+            );
+          }
+
+          if (cityFilter) {
+            list = list.filter(c => c.ciudad_destino.trim().toLowerCase() === cityFilter);
+          }
+
+          if (gpsFilter === 'con_gps') {
+            list = list.filter(c => c.gps_confirmado);
+          } else if (gpsFilter === 'sin_gps') {
+            list = list.filter(c => !c.gps_confirmado);
+          }
+
+          if (list.length === 0) {
+            modalClientsList.innerHTML = `
+              <div class="p-12 text-center bg-slate-50 rounded-2xl border border-slate-200">
+                <p class="text-sm font-bold text-slate-700">No se encontraron clientes</p>
+                <p class="text-xs text-slate-400 mt-1">Prueba con otros términos de búsqueda o filtros.</p>
+              </div>
+            `;
+            return;
+          }
+
+          modalClientsList.innerHTML = list.map(client => {
+            const initials = client.destinatario.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || 'CL';
+            const cleanData = encodeURIComponent(JSON.stringify(client));
+            const waPhone = formatPhoneForWhatsApp(client.telefono_principal);
+
+            return `
+              <div class="p-4 bg-white hover:bg-slate-50/80 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+                
+                <!-- Info del Cliente -->
+                <div class="flex items-start gap-3.5 min-w-0">
+                  <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white font-extrabold text-sm flex items-center justify-center shrink-0 shadow-md shadow-indigo-100 mt-0.5">
+                    ${initials}
+                  </div>
+                  <div class="space-y-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <h4 class="text-sm font-extrabold text-slate-900">${client.destinatario}</h4>
+                      <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">
+                        ${client.total_guias} ${client.total_guias === 1 ? 'guía' : 'guías'} (${client.total_piezas} pzs${client.total_pies_cubicos > 0 ? ` • ${client.total_pies_cubicos.toFixed(2)} ft³` : ''})
+                      </span>
+                      ${client.gps_confirmado ? `
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          <span>GPS Confirmado</span>
+                        </span>
+                      ` : `
+                        <span class="text-[10px] text-slate-400 font-medium">GPS Pendiente</span>
+                      `}
+                    </div>
+
+                    <!-- Teléfonos y Ciudad -->
+                    <div class="flex items-center gap-3 text-xs text-slate-600 font-mono flex-wrap">
+                      <span class="flex items-center gap-1 font-bold text-slate-800">
+                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                        ${client.telefono_principal}
+                      </span>
+                      ${client.telefono_secundario ? `<span class="text-slate-400">Alt: ${client.telefono_secundario}</span>` : ''}
+                      <span class="font-sans font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-100">${client.ciudad_destino}</span>
+                    </div>
+
+                    <!-- Dirección y Referencia -->
+                    ${client.direccion_referencia ? `
+                      <p class="text-xs text-slate-500 leading-relaxed">
+                        <strong class="text-slate-700 font-semibold">Dirección:</strong> ${client.direccion_referencia}
+                      </p>
+                    ` : '<p class="text-xs text-slate-400 italic">Sin dirección previa registrada</p>'}
+
+                    <!-- Horario preferido si existe -->
+                    ${client.hora_disponible ? `
+                      <p class="text-[11px] text-indigo-600 font-semibold">Horario preferido: Hasta las ${client.hora_disponible}</p>
+                    ` : ''}
+
+                    <!-- Historial de Guías -->
+                    <div class="flex items-center gap-1.5 flex-wrap pt-1">
+                      <span class="text-[10px] font-bold text-slate-400 uppercase">Últimos envíos:</span>
+                      ${(client.guias_recientes || []).map(g => `
+                        <span class="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                          #${g.id_guia}
+                        </span>
+                      `).join('')}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="flex md:flex-col items-center md:items-end gap-2 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
+                  <button
+                    type="button"
+                    onclick="window.selectFrequentClientFromData('${cleanData}')"
+                    class="w-full sm:w-auto px-4 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
+                  >
+                    <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                    <span>Cargar en Formulario</span>
+                  </button>
+
+                  <div class="flex items-center gap-1.5">
+                    ${client.gps_confirmado && client.gps_latitud ? `
+                      <a
+                        href="https://www.google.com/maps?q=${client.gps_latitud},${client.gps_longitud}"
+                        target="_blank"
+                        class="p-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold transition-colors cursor-pointer"
+                        title="Ver ubicación en Google Maps"
+                      >
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                      </a>
+                    ` : ''}
+                    ${waPhone ? `
+                      <a
+                        href="https://wa.me/${waPhone}"
+                        target="_blank"
+                        class="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer"
+                        title="Chat de WhatsApp"
+                      >
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                      </a>
+                    ` : ''}
+                  </div>
+                </div>
+
+              </div>
+            `;
+          }).join('');
+        }
+
+        modalClientsSearch?.addEventListener('input', renderModalClientsList);
+        modalClientsFilterCiudad?.addEventListener('change', renderModalClientsList);
+        modalClientsFilterGps?.addEventListener('change', renderModalClientsList);
+
+        // Render de la Vista Completa de Directorio (Pestaña)
+        function renderDirectorioView() {
+          const grid = document.getElementById('directorio-clients-grid');
+          const empty = document.getElementById('directorio-empty');
+          const searchIn = document.getElementById('directorio-search-input') as HTMLInputElement;
+          const citySel = document.getElementById('directorio-city-select') as HTMLSelectElement;
+          const gpsSel = document.getElementById('directorio-gps-select') as HTMLSelectElement;
+          if (!grid) return;
+
+          // Población de ciudades en el filtro
+          if (citySel) {
+            const uniqueCities = Array.from(new Set(frequentClients.map(c => c.ciudad_destino).filter(Boolean))).sort();
+            const currentVal = citySel.value;
+            citySel.innerHTML = `
+              <option value="">Todas las Ciudades (${uniqueCities.length})</option>
+              ${uniqueCities.map(c => `<option value="${c}" ${currentVal === c ? 'selected' : ''}>${c}</option>`).join('')}
+            `;
+          }
+
+          const q = normalizeText(searchIn?.value || '');
+          const cityVal = (citySel?.value || '').trim().toLowerCase();
+          const gpsVal = gpsSel?.value || '';
+
+          let list = frequentClients;
+
+          if (q) {
+            list = list.filter(c => 
+              normalizeText(c.destinatario).includes(q) ||
+              c.telefono_principal.includes(searchIn.value) ||
+              (c.telefono_secundario && c.telefono_secundario.includes(searchIn.value)) ||
+              normalizeText(c.ciudad_destino).includes(q) ||
+              (c.direccion_referencia && normalizeText(c.direccion_referencia).includes(q))
+            );
+          }
+
+          if (cityVal) {
+            list = list.filter(c => c.ciudad_destino.trim().toLowerCase() === cityVal);
+          }
+
+          if (gpsVal === 'con_gps') {
+            list = list.filter(c => c.gps_confirmado);
+          } else if (gpsVal === 'sin_gps') {
+            list = list.filter(c => !c.gps_confirmado);
+          }
+
+          updateFrequentClientsPills();
+
+          if (list.length === 0) {
+            grid.innerHTML = '';
+            empty?.classList.remove('hidden');
+            return;
+          }
+
+          empty?.classList.add('hidden');
+
+          grid.innerHTML = list.map(client => {
+            const initials = client.destinatario.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() || 'CL';
+            const cleanData = encodeURIComponent(JSON.stringify(client));
+            const waPhone = formatPhoneForWhatsApp(client.telefono_principal);
+
+            return `
+              <div class="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-md p-4 sm:p-5 flex flex-col justify-between gap-3.5 transition-all">
+                <div class="space-y-2.5">
+                  <!-- Cabecera de la Tarjeta -->
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <div class="w-10 h-10 rounded-2xl bg-slate-900 text-white font-extrabold text-xs flex items-center justify-center shrink-0 shadow-sm">
+                        ${initials}
+                      </div>
+                      <div class="min-w-0">
+                        <h4 class="text-sm font-extrabold text-slate-900 truncate">${client.destinatario}</h4>
+                        <p class="text-xs font-mono text-slate-500 mt-0.5">${client.telefono_principal}</p>
+                      </div>
+                    </div>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200 shrink-0 font-mono">
+                      ${client.total_guias} ${client.total_guias === 1 ? 'guía' : 'guías'}
+                    </span>
+                  </div>
+
+                  <!-- Detalles de Destino -->
+                  <div class="space-y-1 text-xs">
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-lg">${client.ciudad_destino}</span>
+                      ${client.gps_confirmado ? `
+                        <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                          <span>GPS Confirmado</span>
+                        </span>
+                      ` : `
+                        <span class="text-[10px] text-slate-400">GPS Pendiente</span>
+                      `}
+                    </div>
+
+                    ${client.direccion_referencia ? `
+                      <p class="text-slate-600 text-xs line-clamp-2 pt-1">
+                        <strong class="text-slate-800">Ref:</strong> ${client.direccion_referencia}
+                      </p>
+                    ` : ''}
+
+                    ${client.hora_disponible ? `
+                      <p class="text-[11px] text-indigo-600 font-semibold pt-0.5">Hasta las ${client.hora_disponible}</p>
+                    ` : ''}
+                  </div>
+
+                  <!-- Historial de Guías -->
+                  <div class="pt-2 border-t border-slate-100 flex items-center gap-1.5 flex-wrap">
+                    <span class="text-[9px] font-bold text-slate-400 uppercase">Guías:</span>
+                    ${(client.guias_recientes || []).map(g => `
+                      <span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200/80">
+                        #${g.id_guia}
+                      </span>
+                    `).join('')}
+                  </div>
+                </div>
+
+                <!-- Footer de la Tarjeta con Acciones -->
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-1">
+                    ${client.gps_confirmado && client.gps_latitud ? `
+                      <a
+                        href="https://www.google.com/maps?q=${client.gps_latitud},${client.gps_longitud}"
+                        target="_blank"
+                        class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+                        title="Ver en Google Maps"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                      </a>
+                    ` : ''}
+                    ${waPhone ? `
+                      <a
+                        href="https://wa.me/${waPhone}"
+                        target="_blank"
+                        class="p-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer"
+                        title="WhatsApp"
+                      >
+                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                    </a>
+                  ` : ''}
+                </div>
+
+                <button
+                  type="button"
+                  onclick="window.selectFrequentClientFromData('${cleanData}')"
+                  class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs flex items-center gap-1 shadow-2xs transition-all active:scale-95 cursor-pointer whitespace-nowrap"
+                >
+                  <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                  <span>Registrar Guía</span>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      form.addEventListener('submit', async (e) => {
           e.preventDefault();
           if (isSubmitting) return;
 
@@ -5248,6 +6005,8 @@ const userInitials = currentUser.nombre
 
               populateCityFilter();
               renderViews();
+              loadFrequentClients();
+              (window as any).clearFrequentClientSelection();
               showToast(`Guía #${id_guia} guardada en PostgreSQL`, 'success');
             } else {
               showToast(json.message || 'Error al guardar la guía', 'error');
