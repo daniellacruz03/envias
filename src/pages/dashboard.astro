@@ -8868,8 +8868,22 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       // MOTOR DEL PLANIFICADOR DE CIRCUITO — DETALLES DE LA RUTA
       // ============================================================
 
+      interface CircuitStopGroup {
+        id: string;
+        destinatario: string;
+        ciudad_destino: string;
+        telefono_destinatario?: string;
+        direccion_destino?: string;
+        lat: number;
+        lon: number;
+        guias: GuiaRow[];
+        totalPiezas: number;
+        totalVolumen: number;
+        hora_disponible?: string;
+      }
+
       // Estado del planificador
-      let circuitStops: GuiaRow[] = [];
+      let circuitStops: CircuitStopGroup[] = [];
       let selectedZones = new Set<string>();   // Zonas seleccionadas (multi)
       let circuitOptimized = false;
       let plannerMapInstance: any = null;
@@ -9009,6 +9023,58 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         actualizarCircuitoDesdeZonas();
       };
 
+      // Función: agrupar guías con mismo cliente y misma ubicación satelital en 1 sola parada
+      function groupGuiasIntoCircuitStops(guias: GuiaRow[]): CircuitStopGroup[] {
+        const groups: CircuitStopGroup[] = [];
+
+        guias.forEach(guia => {
+          const lat = Number(guia.gps_latitud);
+          const lon = Number(guia.gps_longitud);
+          const normClient = normalizeText(guia.destinatario || '');
+          const cleanPhone = (guia.telefono_destinatario || '').replace(/\D/g, '');
+
+          // Unir si es el mismo cliente (por nombre normalizado o teléfono idéntico) Y misma ubicación (< 60m)
+          const existing = groups.find(grp => {
+            const sameClientName = normClient && normalizeText(grp.destinatario) === normClient;
+            const samePhone = cleanPhone.length >= 7 && (grp.telefono_destinatario || '').replace(/\D/g, '') === cleanPhone;
+            const clientMatches = Boolean(sameClientName || samePhone);
+
+            const distKm = calculateDistance(grp.lat, grp.lon, lat, lon);
+            const sameLocation = distKm < 0.06; // Menos de 60 metros
+
+            return clientMatches && sameLocation;
+          });
+
+          const piezasNum = Number(guia.piezas) || 1;
+          const volNum = Number((guia as any).volumen_pies_cubicos || guia.volumen_total || 0);
+
+          if (existing) {
+            existing.guias.push(guia);
+            existing.totalPiezas += piezasNum;
+            existing.totalVolumen += volNum;
+            if (!existing.hora_disponible && guia.hora_disponible) {
+              existing.hora_disponible = guia.hora_disponible;
+            }
+          } else {
+            groups.push({
+              id: `stop-${guia.id_guia}`,
+              destinatario: guia.destinatario || 'Cliente',
+              ciudad_destino: guia.ciudad_destino || '',
+              telefono_destinatario: guia.telefono_destinatario,
+              direccion_destino: guia.direccion_destino,
+              lat,
+              lon,
+              guias: [guia],
+              totalPiezas: piezasNum,
+              totalVolumen: volNum,
+              hora_disponible: guia.hora_disponible
+            });
+          }
+        });
+
+        return groups;
+      }
+
       // Función: actualizar circuito a partir de las zonas seleccionadas
       function actualizarCircuitoDesdeZonas() {
         const zoneClearBtn = document.getElementById('planner-zone-clear-btn');
@@ -9060,8 +9126,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           plannerNoGpsWarning.classList.add('hidden');
         }
 
-        // Cargar paradas combinadas y auto-ordenar por TSP
-        circuitStops = [...guiasConGps];
+        // Agrupar guías con mismo cliente y ubicación en paradas únicas
+        circuitStops = groupGuiasIntoCircuitStops(guiasConGps);
         circuitOptimized = false;
         
         // Auto-optimizar TSP si hay paradas
@@ -9156,7 +9222,13 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         if (!plannerStopsList) return;
 
         const count = circuitStops.length;
-        if (plannerStopsCountBadge) plannerStopsCountBadge.textContent = `${count} parada${count !== 1 ? 's' : ''}`;
+        const totalGuiasCount = circuitStops.reduce((acc, s) => acc + s.guias.length, 0);
+
+        if (plannerStopsCountBadge) {
+          plannerStopsCountBadge.textContent = count === totalGuiasCount 
+            ? `${count} parada${count !== 1 ? 's' : ''}` 
+            : `${count} parada${count !== 1 ? 's' : ''} (${totalGuiasCount} guías)`;
+        }
 
         if (count === 0) {
           plannerStopsList.innerHTML = `
@@ -9165,7 +9237,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
               </svg>
               <p class="text-xs font-semibold text-slate-500">Selecciona las zonas arriba para cargar las paradas del circuito</p>
-              <p class="text-[10px] text-slate-400 mt-0.5">El sistema ordenará automáticamente la ruta entre el inicio y el fin</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">El sistema agrupará guías del mismo cliente y ordenará la ruta</p>
             </div>`;
           if (plannerTotalKm) plannerTotalKm.textContent = '~0.0 km';
           if (plannerTotalTime) plannerTotalTime.textContent = '~0 min';
@@ -9192,8 +9264,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         const AVG_SPEED_KMH = 30;
 
         const stopData = circuitStops.map((stop, idx) => {
-          const lat = Number(stop.gps_latitud);
-          const lon = Number(stop.gps_longitud);
+          const lat = stop.lat;
+          const lon = stop.lon;
           const distKm = calculateDistance(prevLat, prevLon, lat, lon);
           const travelMin = Math.round((distKm / AVG_SPEED_KMH) * 60);
           currentMinutes += travelMin;
@@ -9232,7 +9304,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         // Distancia hacia el punto de fin de ruta
         if (circuitStops.length > 0) {
           const last = circuitStops[circuitStops.length - 1];
-          const retDist = calculateDistance(Number(last.gps_latitud), Number(last.gps_longitud), endCoords.lat, endCoords.lon);
+          const retDist = calculateDistance(last.lat, last.lon, endCoords.lat, endCoords.lon);
           totalKm += retDist;
           const retMin = Math.round((retDist / AVG_SPEED_KMH) * 60);
           currentMinutes += retMin;
@@ -9250,12 +9322,13 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
         // Renderizar tarjetas
         plannerStopsList.innerHTML = stopData.map(({ stop, idx, distKm, travelMin, etaStr, horaAlert }) => {
-          const lat = Number(stop.gps_latitud);
-          const lon = Number(stop.gps_longitud);
+          const lat = stop.lat;
+          const lon = stop.lon;
           const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+          const isGrouped = stop.guias.length > 1;
 
           return `
-            <div class="group flex items-start gap-2.5 bg-white border border-slate-200 rounded-2xl p-3 hover:border-slate-300 hover:shadow-2xs transition-all">
+            <div class="group flex items-start gap-2.5 bg-white border ${isGrouped ? 'border-indigo-200 shadow-xs' : 'border-slate-200'} rounded-2xl p-3.5 hover:border-slate-300 transition-all">
               <!-- Número de parada -->
               <div class="flex flex-col items-center gap-0.5 shrink-0 pt-0.5">
                 <span class="w-7 h-7 rounded-xl ${circuitOptimized ? 'bg-indigo-600' : 'bg-slate-800'} text-white text-[11px] font-black flex items-center justify-center shadow-xs">${idx + 1}</span>
@@ -9266,9 +9339,34 @@ _Envías C.A. • Transporte y Logística Nacional_`;
               <div class="flex-1 min-w-0">
                 <div class="flex items-start justify-between gap-2">
                   <div class="min-w-0">
-                    <p class="text-xs font-extrabold text-slate-900 truncate">${stop.destinatario || '—'}</p>
-                    <p class="text-[10px] text-slate-500 font-medium truncate">${stop.ciudad_destino || ''} · Guía #${stop.id_guia}</p>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <p class="text-xs font-extrabold text-slate-900 truncate">${stop.destinatario || '—'}</p>
+                      ${isGrouped ? `
+                        <span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-black shrink-0">
+                          <svg class="w-3 h-3 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                          </svg>
+                          ${stop.guias.length} guías agrupadas
+                        </span>
+                      ` : ''}
+                    </div>
+                    
+                    ${isGrouped ? `
+                      <!-- Desglose de guías del mismo cliente -->
+                      <div class="flex items-center gap-1.5 flex-wrap mt-1.5">
+                        ${stop.guias.map(g => `
+                          <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 border border-slate-200 rounded-md text-[10px] font-bold text-slate-700">
+                            <span class="text-indigo-600 font-extrabold">#${g.id_guia}</span>
+                            <span class="text-slate-400">&bull;</span>
+                            <span>${g.piezas || 1} pz${(g.piezas || 1) > 1 ? 's' : ''}</span>
+                          </span>
+                        `).join('')}
+                      </div>
+                    ` : `
+                      <p class="text-[10px] text-slate-500 font-medium truncate">${stop.ciudad_destino || ''} &bull; Guía #${stop.guias[0]?.id_guia || ''}</p>
+                    `}
                   </div>
+
                   <!-- ETA badge -->
                   <div class="shrink-0 text-right">
                     <span class="text-[11px] font-black text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-lg block">${etaStr}</span>
@@ -9277,10 +9375,11 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                 </div>
 
                 <!-- Coordenadas GPS y alertas -->
-                <div class="flex items-center justify-between mt-1.5 gap-2">
+                <div class="flex items-center justify-between mt-2 gap-2 flex-wrap">
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded font-mono font-bold">${lat.toFixed(4)}, ${lon.toFixed(4)}</span>
-                    ${stop.piezas ? `<span class="text-[10px] text-slate-500 font-bold">${stop.piezas} pz${stop.piezas > 1 ? 's' : ''}</span>` : ''}
+                    <span class="text-[10px] text-slate-700 font-bold bg-slate-100 px-1.5 py-0.2 rounded">${stop.totalPiezas} pza${stop.totalPiezas > 1 ? 's' : ''} total</span>
+                    ${stop.totalVolumen > 0 ? `<span class="text-[10px] text-slate-500 font-medium">${stop.totalVolumen.toFixed(2)} ft³</span>` : ''}
                     ${horaAlert}
                   </div>
                   <!-- Botones de acción -->
@@ -9309,9 +9408,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
           for (let i = 0; i < circuitStops.length; i += batchSize) {
             const batch = circuitStops.slice(i, Math.min(i + batchSize, circuitStops.length));
-            const batchStart = i === 0 ? `${startCoords2.lat},${startCoords2.lon}` : `${Number(circuitStops[i-1].gps_latitud)},${Number(circuitStops[i-1].gps_longitud)}`;
-            const batchEnd = `${Number(batch[batch.length-1].gps_latitud)},${Number(batch[batch.length-1].gps_longitud)}`;
-            const waypoints = batch.slice(0, -1).map(s => `${Number(s.gps_latitud)},${Number(s.gps_longitud)}`).join('|');
+            const batchStart = i === 0 ? `${startCoords2.lat},${startCoords2.lon}` : `${circuitStops[i-1].lat},${circuitStops[i-1].lon}`;
+            const batchEnd = `${batch[batch.length-1].lat},${batch[batch.length-1].lon}`;
+            const waypoints = batch.slice(0, -1).map(s => `${s.lat},${s.lon}`).join('|');
             const url = `https://www.google.com/maps/dir/?api=1&origin=${batchStart}&destination=${batchEnd}${waypoints ? `&waypoints=${encodeURIComponent(waypoints)}` : ''}&travelmode=driving`;
 
             batches.push(`<a href="${url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white border border-indigo-200 text-indigo-800 text-[11px] font-bold hover:bg-indigo-50 hover:border-indigo-400 transition-all shadow-2xs">
@@ -9336,25 +9435,25 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         renderCircuitStops();
       };
 
-      // Algoritmo TSP 2-Opt con soporte para Origen y Destino independientes
-      function solveDashboard2Opt(originLat: number, originLon: number, endLat: number, endLon: number, stops: GuiaRow[]): GuiaRow[] {
+      // Algoritmo TSP 2-Opt con soporte para Origen y Destino independientes en CircuitStopGroup[]
+      function solveDashboard2Opt(originLat: number, originLon: number, endLat: number, endLon: number, stops: CircuitStopGroup[]): CircuitStopGroup[] {
         if (stops.length <= 1) return stops;
         
         // 1. Agrupar paradas colindantes (< 180m)
-        const clusters: { lat: number; lon: number; items: GuiaRow[] }[] = [];
+        const clusters: { lat: number; lon: number; items: CircuitStopGroup[] }[] = [];
         const visited = new Set<number>();
 
         for (let i = 0; i < stops.length; i++) {
           if (visited.has(i)) continue;
-          const group: GuiaRow[] = [stops[i]];
+          const group: CircuitStopGroup[] = [stops[i]];
           visited.add(i);
-          const latI = Number(stops[i].gps_latitud);
-          const lonI = Number(stops[i].gps_longitud);
+          const latI = stops[i].lat;
+          const lonI = stops[i].lon;
 
           for (let j = i + 1; j < stops.length; j++) {
             if (visited.has(j)) continue;
-            const latJ = Number(stops[j].gps_latitud);
-            const lonJ = Number(stops[j].gps_longitud);
+            const latJ = stops[j].lat;
+            const lonJ = stops[j].lon;
             const dist = calculateDistance(latI, lonI, latJ, lonJ);
             if (dist < 0.18) {
               group.push(stops[j]);
@@ -9366,7 +9465,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
         // 2. Nearest Neighbor desde Origen
         let remaining = [...clusters];
-        let tour: { lat: number; lon: number; items: GuiaRow[] }[] = [];
+        let tour: { lat: number; lon: number; items: CircuitStopGroup[] }[] = [];
         let currLat = originLat;
         let currLon = originLon;
 
@@ -9412,7 +9511,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           }
         }
 
-        const flatResult: GuiaRow[] = [];
+        const flatResult: CircuitStopGroup[] = [];
         tour.forEach(c => flatResult.push(...c.items));
         return flatResult;
       }
@@ -9420,7 +9519,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       // Función: optimizar el circuito con TSP 2-Opt Spoke Engine
       window.optimizeCircuit = function() {
         if (circuitStops.length < 2) {
-          showToast('Selecciona una zona con al menos 2 guías con GPS para optimizar el circuito.', 'error');
+          showToast('Selecciona una zona con al menos 2 paradas con GPS para optimizar el circuito.', 'error');
           return;
         }
 
@@ -9440,7 +9539,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             circuitOptimized = true;
             renderCircuitStops();
 
-            showToast(`Circuito organizado: ${optimized.length} paradas desde ${startCoords2.label} hasta ${endCoords2.label}.`, 'success');
+            const totalGuias = circuitStops.reduce((a, s) => a + s.guias.length, 0);
+            showToast(`Circuito organizado: ${optimized.length} paradas (${totalGuias} guías) desde ${startCoords2.label} hasta ${endCoords2.label}.`, 'success');
           } catch (err) {
             console.error('Error optimizando circuito:', err);
             showToast('Error al optimizar el circuito.', 'error');
@@ -9483,8 +9583,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
         const startCoords2 = getStartCoordinates();
         const endCoords2 = getEndCoordinates();
-        const centerLat = circuitStops.length > 0 ? Number(circuitStops[0].gps_latitud) : startCoords2.lat;
-        const centerLon = circuitStops.length > 0 ? Number(circuitStops[0].gps_longitud) : startCoords2.lon;
+        const centerLat = circuitStops.length > 0 ? circuitStops[0].lat : startCoords2.lat;
+        const centerLon = circuitStops.length > 0 ? circuitStops[0].lon : startCoords2.lon;
 
         plannerMapInstance = L.map(mapContainer, { zoomControl: true, attributionControl: false }).setView([centerLat, centerLon], 13);
 
@@ -9509,8 +9609,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
         // Marcadores de paradas
         circuitStops.forEach((stop, idx) => {
-          const lat = Number(stop.gps_latitud);
-          const lon = Number(stop.gps_longitud);
+          const lat = stop.lat;
+          const lon = stop.lon;
           allPoints.push([lat, lon]);
 
           const stopIcon = L.divIcon({
@@ -9518,9 +9618,13 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             className: '', iconSize: [26, 26], iconAnchor: [13, 13]
           });
 
+          const guiasDescr = stop.guias.length > 1
+            ? `<span style="color:#4f46e5;font-weight:bold">${stop.guias.length} Guías:</span> ${stop.guias.map(g => '#' + g.id_guia).join(', ')}`
+            : `Guía #${stop.guias[0]?.id_guia || ''}`;
+
           L.marker([lat, lon], { icon: stopIcon })
             .addTo(plannerMapInstance)
-            .bindPopup(`<b>Parada ${idx + 1}</b><br>${stop.destinatario || ''}<br>Guía #${stop.id_guia}`);
+            .bindPopup(`<b>Parada ${idx + 1}: ${stop.destinatario || ''}</b><br>${guiasDescr}<br>Total: ${stop.totalPiezas} piezas`);
         });
 
         // Marcador de Fin de ruta
@@ -9731,6 +9835,14 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
 
         try {
+          // Desglosar guías agrupadas asignando el mismo orden secuencial a cada grupo
+          const paradasPayload = circuitStops.flatMap((grp, idx) => 
+            grp.guias.map(g => ({
+              id_guia: g.id_guia,
+              orden: idx + 1
+            }))
+          );
+
           const res = await fetch('/api/guias/ruta', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -9739,10 +9851,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
               ruta_origen: getStartCoordinates().label,
               ruta_destino: zona,
               despachar_en_ruta: dispatchToRoute,
-              paradas: circuitStops.map((stop, idx) => ({
-                id_guia: stop.id_guia,
-                orden: idx + 1
-              }))
+              paradas: paradasPayload
             })
           });
 
@@ -9750,7 +9859,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
           if (data.success) {
             const action = dispatchToRoute ? 'despachado a ruta' : 'guardado en almacén';
-            showToast(`Circuito de ${circuitStops.length} paradas ${action} exitosamente.`, 'success');
+            const totalGuias = paradasPayload.length;
+            showToast(`Circuito de ${circuitStops.length} paradas (${totalGuias} guías) ${action} exitosamente.`, 'success');
             closeRoutePlannerModal();
             await fetchData();
           } else {
