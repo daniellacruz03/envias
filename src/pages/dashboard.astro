@@ -1617,65 +1617,256 @@ const userInitials = currentUser.nombre
     </div>
 
     <!-- ========================================== -->
-    <!-- MODAL PLANIFICADOR DE RUTA SECUENCIAL (SPOKE) -->
     <!-- ========================================== -->
-    <div id="route-planner-modal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-5 transition-all">
-      <div class="relative max-w-3xl w-full bg-white rounded-3xl shadow-2xl animate-fadeIn max-h-[94vh] flex flex-col overflow-hidden">
+    <!-- MODAL PLANIFICADOR DE CIRCUITO (DETALLES DE LA RUTA) -->
+    <!-- ========================================== -->
+    <div id="route-planner-modal" class="fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-xs hidden items-center justify-center p-3 sm:p-5 transition-all">
+      <div class="relative max-w-2xl w-full bg-slate-50 rounded-3xl shadow-2xl animate-fadeIn max-h-[94vh] flex flex-col overflow-hidden border border-slate-200">
 
         <!-- Cabecera del Modal -->
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 shrink-0 bg-slate-50/60">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 shrink-0 bg-white">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-sm shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-              </svg>
-            </div>
+            <button id="route-planner-close-btn" type="button" class="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer" title="Cerrar">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
             <div>
-              <h3 class="text-base font-extrabold text-slate-900 tracking-tight">Planificador de Circuito — Spoke Dispatch</h3>
-              <p class="text-xs text-slate-500 font-medium">Selecciona zona, configura el circuito y optimiza la ruta de entrega</p>
+              <h3 class="text-base font-extrabold text-slate-900 tracking-tight">Detalles de la ruta</h3>
+              <p class="text-xs text-slate-500 font-medium">Pega las coordenadas de inicio y fin para organizar el circuito</p>
             </div>
           </div>
-          <button id="route-planner-close-btn" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
+          <div class="flex items-center gap-1.5">
+            <span class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-full">Auto-TSP Satelital</span>
+          </div>
         </div>
 
         <!-- Contenido desplazable -->
-        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5 custom-scrollbar">
+        <div class="flex-1 overflow-y-auto px-5 sm:px-6 py-4 sm:py-5 space-y-4 custom-scrollbar">
 
-          <!-- PASO 1: Chofer + Zonas del Circuito -->
-          <div class="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-4 space-y-3">
+          <!-- ========================================== -->
+          <!-- 1. INICIO DE LA RUTA                       -->
+          <!-- ========================================== -->
+          <div class="space-y-2">
+            <span class="text-xs font-extrabold text-slate-700 uppercase tracking-wider block">Inicio de la ruta</span>
+
+            <!-- Cuadro 1: Origen / Coordenadas -->
+            <div class="relative">
+              <div class="flex items-center gap-3 p-3 sm:p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 focus-within:border-slate-900 focus-within:ring-2 focus-within:ring-slate-900/10 transition-all shadow-2xs group">
+                <!-- Icono Almacén / Origen -->
+                <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+
+                <!-- Input Texto / Coordenadas -->
+                <div class="flex-1 min-w-0">
+                  <input
+                    type="text"
+                    id="planner-start-input"
+                    value="Sede Principal Barquisimeto"
+                    placeholder="Pega coordenadas (ej: 10.0808, -69.3756) o busca..."
+                    class="w-full text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal bg-transparent focus:outline-none truncate"
+                    autocomplete="off"
+                  />
+                  <div id="planner-start-sublabel" class="text-[10px] text-slate-500 font-medium truncate flex items-center gap-1.5 mt-0.5">
+                    <span class="font-mono font-bold text-indigo-700">10.0808, -69.3756</span>
+                    <span>&bull;</span>
+                    <span>Calle 6, Zona Industrial II</span>
+                  </div>
+                </div>
+
+                <!-- Botón Limpiar X -->
+                <button
+                  type="button"
+                  id="btn-clear-start-input"
+                  onclick="window.clearCircuitStartInput()"
+                  class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                  title="Limpiar"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+
+              <!-- Dropdown Autocomplete Inicio -->
+              <div id="start-autocomplete-dropdown" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 max-h-64 overflow-y-auto custom-scrollbar divide-y divide-slate-100 p-1"></div>
+            </div>
+
+            <!-- Cuadro 2: Hora de Inicio -->
+            <div class="flex items-center gap-3 p-3 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 transition-all shadow-2xs">
+              <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0 flex items-center justify-between gap-2">
+                <div>
+                  <label for="planner-start-time" class="block text-xs font-bold text-slate-800">Inicia ahora mismo</label>
+                  <span class="text-[10px] text-slate-500 font-medium">Hora de partida del chofer</span>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <input
+                    type="time"
+                    id="planner-start-time"
+                    value="08:00"
+                    class="text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 cursor-pointer"
+                  />
+                  <button
+                    type="button"
+                    onclick="window.setPlannerStartTimeToNow()"
+                    class="px-2 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold transition-all cursor-pointer"
+                    title="Fijar a hora actual"
+                  >
+                    Ahora
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ========================================== -->
+          <!-- 2. FIN DE LA RUTA                          -->
+          <!-- ========================================== -->
+          <div class="space-y-2">
+            <span class="text-xs font-extrabold text-slate-700 uppercase tracking-wider block">Fin de la ruta</span>
+
+            <!-- Cuadro 1: Destino / Coordenadas -->
+            <div class="relative">
+              <div class="flex items-center gap-3 p-3 sm:p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 focus-within:border-slate-900 focus-within:ring-2 focus-within:ring-slate-900/10 transition-all shadow-2xs group">
+                <!-- Icono Bandera / Destino -->
+                <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                  </svg>
+                </div>
+
+                <!-- Input Texto / Coordenadas -->
+                <div class="flex-1 min-w-0">
+                  <input
+                    type="text"
+                    id="planner-end-input"
+                    value="Retorno a Sede Principal Barquisimeto"
+                    placeholder="Pega coordenadas de fin (ej: 8.6226, -70.2075) o busca..."
+                    class="w-full text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal bg-transparent focus:outline-none truncate"
+                    autocomplete="off"
+                  />
+                  <div id="planner-end-sublabel" class="text-[10px] text-slate-500 font-medium truncate flex items-center gap-1.5 mt-0.5">
+                    <span class="font-mono font-bold text-emerald-700">10.0808, -69.3756</span>
+                    <span>&bull;</span>
+                    <span>Retorno a Almacén Central</span>
+                  </div>
+                </div>
+
+                <!-- Botón Limpiar X -->
+                <button
+                  type="button"
+                  id="btn-clear-end-input"
+                  onclick="window.clearCircuitEndInput()"
+                  class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                  title="Limpiar"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+
+              <!-- Dropdown Autocomplete Fin -->
+              <div id="end-autocomplete-dropdown" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white rounded-2xl border border-slate-200 shadow-2xl z-50 max-h-64 overflow-y-auto custom-scrollbar divide-y divide-slate-100 p-1"></div>
+            </div>
+
+            <!-- Cuadro 2: Hora de Finalización -->
+            <div class="flex items-center gap-3 p-3 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 transition-all shadow-2xs">
+              <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0 flex items-center justify-between gap-2">
+                <div>
+                  <span class="block text-xs font-bold text-slate-800">Establecer hora de finalización</span>
+                  <span class="text-[10px] text-slate-500 font-medium">Llegada estimada según recorrido</span>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <span id="planner-eta-end" class="text-xs font-mono font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 rounded-xl">--:--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ========================================== -->
+          <!-- 3. DESCANSO (OPCIONAL)                     -->
+          <!-- ========================================== -->
+          <div class="space-y-2">
+            <span class="text-xs font-extrabold text-slate-700 uppercase tracking-wider block">Descanso</span>
+            <div class="flex items-center gap-3 p-3 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 transition-all shadow-2xs">
+              <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" />
+                </svg>
+              </div>
+              <div class="flex-1 min-w-0 flex items-center justify-between gap-2">
+                <div>
+                  <label for="planner-rest-select" class="block text-xs font-bold text-slate-800">Añadir un descanso</label>
+                  <span class="text-[10px] text-slate-500 font-medium">Pausa para almuerzo o descanso en ruta</span>
+                </div>
+                <select
+                  id="planner-rest-select"
+                  class="text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 cursor-pointer"
+                >
+                  <option value="0">Sin descanso</option>
+                  <option value="15">15 minutos (Pausa)</option>
+                  <option value="30" selected>30 minutos (Almuerzo)</option>
+                  <option value="45">45 minutos</option>
+                  <option value="60">60 minutos (1 hora)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- ========================================== -->
+          <!-- 4. CHOFER Y PARADAS DEL CIRCUITO           -->
+          <!-- ========================================== -->
+          <div class="space-y-3 bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <span class="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-black shrink-0">1</span>
-                <span class="text-xs font-extrabold text-indigo-950 uppercase tracking-wider">Chofer y Zonas del Circuito</span>
+                <span class="w-6 h-6 rounded-lg bg-slate-900 text-white flex items-center justify-center text-xs font-black shrink-0">4</span>
+                <span class="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Chofer y Paradas del Circuito</span>
               </div>
-              <span class="text-[10px] font-bold text-indigo-600 bg-white border border-indigo-200 px-2 py-0.5 rounded-full">Selección múltiple</span>
+              <span class="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-full">TSP 2-Opt</span>
             </div>
 
-            <!-- Selector de Chofer -->
-            <div class="space-y-1">
-              <label class="block text-xs font-bold text-slate-700">Chofer Asignado <span class="text-rose-500">*</span></label>
-              <select id="planner-driver-select" class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer">
-                <!-- Dinámico por JS -->
-              </select>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- Chofer Selector -->
+              <div class="space-y-1">
+                <label class="block text-xs font-bold text-slate-700">Chofer Asignado <span class="text-rose-500">*</span></label>
+                <select id="planner-driver-select" class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 transition-all cursor-pointer">
+                  <!-- Dinámico por JS -->
+                </select>
+              </div>
+
+              <!-- Tiempo por Entrega -->
+              <div class="space-y-1">
+                <label class="block text-xs font-bold text-slate-700">Tiempo por Entrega</label>
+                <select id="planner-service-time" class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 transition-all cursor-pointer">
+                  <option value="5">5 min por parada (rápida)</option>
+                  <option value="8" selected>8 min (estándar)</option>
+                  <option value="12">12 min (múltiples piezas)</option>
+                  <option value="20">20 min (compleja)</option>
+                </select>
+              </div>
             </div>
 
-            <!-- Selector de Zonas (chips multi-selección) -->
-            <div class="space-y-2">
+            <!-- Selección de Zonas -->
+            <div class="space-y-1.5 pt-1">
               <div class="flex items-center justify-between">
-                <label class="block text-xs font-bold text-slate-700">Zonas / Ciudades del Circuito <span class="text-rose-500">*</span></label>
+                <label class="block text-xs font-bold text-slate-700">Zonas / Ciudades a Despachar</label>
                 <button type="button" id="planner-zone-clear-btn" class="hidden text-[10px] font-bold text-slate-500 hover:text-rose-600 transition-colors cursor-pointer">
                   Limpiar selección
                 </button>
               </div>
-              <!-- Chips de zonas disponibles -->
-              <div id="planner-zone-chips" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto custom-scrollbar rounded-xl bg-white border border-slate-200 p-2.5">
-                <span class="text-[11px] text-slate-400 font-medium italic">Abre el planificador para ver las zonas disponibles...</span>
+              <div id="planner-zone-chips" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar rounded-xl bg-slate-50 border border-slate-200 p-2.5">
+                <!-- Chips dinámicos -->
               </div>
-              <!-- Zonas seleccionadas (resumen) -->
-              <div id="planner-selected-zones-display" class="hidden flex flex-wrap items-center gap-1.5">
-                <span class="text-[10px] font-bold text-indigo-700 uppercase tracking-wide">Circuito:</span>
+              <div id="planner-selected-zones-display" class="hidden flex flex-wrap items-center gap-1.5 pt-0.5">
+                <span class="text-[10px] font-bold text-indigo-700 uppercase tracking-wide">Zonas:</span>
                 <span id="planner-selected-zones-labels" class="text-[11px] font-bold text-slate-800"></span>
               </div>
             </div>
@@ -1693,132 +1884,63 @@ const userInitials = currentUser.nombre
                 <span id="planner-zone-total-count">0</span> guías total
               </span>
               <span id="planner-zone-count-badge" class="bg-indigo-100 border border-indigo-200 text-indigo-800 px-2.5 py-1 rounded-lg font-bold">
-                <span id="planner-zone-zones-count">0</span> zonas agrupadas
+                <span id="planner-zone-zones-count">0</span> zonas
               </span>
             </div>
 
             <!-- Advertencia GPS -->
             <div id="planner-no-gps-warning" class="hidden bg-amber-50 border border-amber-200 rounded-xl px-3.5 py-2.5 text-xs text-amber-900 font-semibold flex items-start gap-2">
               <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-              <span id="planner-no-gps-warning-text">Algunas guías no tienen coordenadas GPS. Solo las guías con GPS se incluyen en el circuito optimizado.</span>
+              <span id="planner-no-gps-warning-text">Solo las guías con GPS se incluyen en el circuito optimizado.</span>
             </div>
-          </div>
 
-          <!-- PASO 2: Configuración del Circuito -->
-          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
-            <div class="flex items-center gap-2">
-              <span class="w-6 h-6 rounded-lg bg-slate-700 text-white flex items-center justify-center text-xs font-black shrink-0">2</span>
-              <span class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Configuración del Circuito</span>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <!-- Punto de Salida -->
-              <div class="space-y-1.5">
-                <label class="block text-xs font-bold text-slate-700">Punto de Salida / Almacén</label>
-                <div class="flex flex-col gap-1">
-                  <button type="button" onclick="window.selectStartLocation('Sede Principal Barquisimeto')" class="text-left px-3 py-2 rounded-xl border-2 border-indigo-500 bg-indigo-50 text-indigo-800 text-xs font-bold cursor-pointer">
-                    Hub Central Barquisimeto (Zona Ind. II)
-                  </button>
-                  <div class="relative">
-                    <input type="text" id="planner-start-input" value="Sede Principal Barquisimeto" autocomplete="off" placeholder="O escribe otra sede..." class="w-full text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" />
-                    <button type="button" id="btn-clear-start-input" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5">
-                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                    <div id="start-autocomplete-dropdown" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto custom-scrollbar p-1 space-y-0.5"></div>
-                  </div>
-                </div>
+            <!-- Resumen de Métricas en Vivo -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-center">
+              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="text-[10px] text-slate-400 font-bold block uppercase">Paradas</span>
+                <span id="planner-stops-count-badge" class="text-sm font-extrabold text-slate-900">0 paradas</span>
               </div>
-              <!-- Tipo de Circuito -->
-              <div class="space-y-1.5">
-                <label class="block text-xs font-bold text-slate-700">Tipo de Circuito</label>
-                <div class="space-y-1.5">
-                  <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 bg-white cursor-pointer has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-50">
-                    <input type="radio" id="circuit-type-roundtrip" name="circuit-type" value="roundtrip" class="accent-indigo-600 cursor-pointer" checked />
-                    <div>
-                      <p class="text-xs font-bold text-slate-900">Retorno al Almacén (Bucle)</p>
-                      <p class="text-[10px] text-slate-500">El circuito regresa a la sede al finalizar</p>
-                    </div>
-                  </label>
-                  <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 bg-white cursor-pointer has-[:checked]:border-slate-700 has-[:checked]:bg-slate-50">
-                    <input type="radio" id="circuit-type-oneway" name="circuit-type" value="oneway" class="accent-slate-700 cursor-pointer" />
-                    <div>
-                      <p class="text-xs font-bold text-slate-900">Fin en Última Parada</p>
-                      <p class="text-[10px] text-slate-500">Sin retorno, termina en el último cliente</p>
-                    </div>
-                  </label>
-                </div>
+              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="text-[10px] text-slate-400 font-bold block uppercase">Distancia</span>
+                <span id="planner-total-km" class="text-sm font-extrabold text-indigo-700">~0.0 km</span>
               </div>
-              <!-- Hora de Inicio -->
-              <div class="space-y-1">
-                <label class="block text-xs font-bold text-slate-700">Hora de Inicio de Ruta</label>
-                <input type="time" id="planner-start-time" value="08:00" class="w-full text-xs font-mono font-bold bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer" />
+              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="text-[10px] text-slate-400 font-bold block uppercase">Tiempo Total</span>
+                <span id="planner-total-time" class="text-sm font-extrabold text-slate-800">~0 min</span>
               </div>
-              <!-- Tiempo de Servicio por Parada -->
-              <div class="space-y-1">
-                <label class="block text-xs font-bold text-slate-700">Tiempo de Servicio por Parada</label>
-                <select id="planner-service-time" class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer">
-                  <option value="5">5 minutos (entrega rápida)</option>
-                  <option value="8" selected>8 minutos (estándar)</option>
-                  <option value="12">12 minutos (bultos múltiples)</option>
-                  <option value="20">20 minutos (entrega compleja)</option>
-                </select>
+              <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="text-[10px] text-slate-400 font-bold block uppercase">Hora Llegada</span>
+                <span id="planner-eta-end-metric" class="text-sm font-extrabold text-emerald-700">--:--</span>
               </div>
             </div>
-          </div>
 
-          <!-- PASO 3: Itinerario Optimizado -->
-          <div class="space-y-3">
-            <div class="bg-slate-900 text-white p-3.5 rounded-2xl shadow-sm">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span class="w-6 h-6 rounded-lg bg-white/15 text-white flex items-center justify-center text-xs font-black shrink-0">3</span>
-                    <h4 class="text-xs font-extrabold uppercase tracking-wider">Itinerario y Secuencia de Paradas</h4>
-                    <span id="planner-stops-count-badge" class="text-[10px] bg-white/20 text-white px-2 py-0.5 rounded-full font-bold">0 paradas</span>
-                  </div>
-                  <div class="flex items-center gap-2.5 text-[11px] text-slate-300 font-medium mt-1.5 pl-8">
-                    <span class="text-emerald-400 font-bold" id="planner-total-km">~0.0 km totales</span>
-                    <span>&bull;</span>
-                    <span class="text-slate-200" id="planner-total-time">~0 min estimado</span>
-                    <span>&bull;</span>
-                    <span class="text-indigo-300 font-bold" id="planner-eta-end">Llegada: --:--</span>
-                  </div>
-                </div>
-                <div class="flex items-center gap-1.5 flex-wrap pl-8 sm:pl-0">
-                  <button type="button" id="btn-optimize-circuit" onclick="window.optimizeCircuit()" class="px-3 py-1.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95" title="Optimizar secuencia TSP por cercanía GPS">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                    <span>Optimizar Circuito</span>
-                  </button>
-                  <button type="button" id="btn-toggle-route-map" onclick="window.togglePlannerRouteMap()" class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95">
-                    <svg class="w-3.5 h-3.5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-                    <span id="btn-toggle-map-text">Ver Mapa</span>
-                  </button>
-                </div>
+            <!-- Botones de Acción de Circuito -->
+            <div class="flex items-center justify-between gap-2 pt-1 flex-wrap">
+              <div class="flex items-center gap-1.5">
+                <button type="button" id="btn-optimize-circuit" onclick="window.optimizeCircuit()" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95" title="Reordenar por cercanía satelital">
+                  <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                  <span>Optimizar Circuito</span>
+                </button>
+                <button type="button" id="btn-toggle-route-map" onclick="window.togglePlannerRouteMap()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-slate-200 active:scale-95">
+                  <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                  <span id="btn-toggle-map-text">Ver Mapa</span>
+                </button>
               </div>
             </div>
 
             <!-- Mapa Interactivo (Desplegable) -->
             <div id="planner-route-map-wrapper" class="hidden rounded-2xl overflow-hidden border border-slate-200 shadow-inner bg-slate-100 relative animate-fadeIn">
-              <div id="planner-full-route-map" class="h-72 w-full z-10"></div>
-              <div class="absolute bottom-2 left-2 right-2 bg-white/95 backdrop-blur-xs p-2 rounded-xl border border-slate-200/80 text-[11px] flex items-center justify-between shadow-md z-20">
-                <div class="flex items-center gap-2 text-slate-600 font-semibold">
-                  <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-indigo-600"></span> Salida</span>
-                  <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                  <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Paradas GPS</span>
-                  <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                  <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Cierre</span>
-                </div>
-                <span id="route-map-status-pill" class="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md text-[10px]">Circuito trazado</span>
-              </div>
+              <div id="planner-full-route-map" class="h-64 w-full z-10"></div>
             </div>
 
-            <!-- Desglose de enlaces Google Maps por Tramos -->
+            <!-- Desglose Google Maps por Tramos -->
             <div id="planner-gmaps-batches-wrapper" class="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-3 space-y-1.5">
               <div class="flex items-center justify-between">
                 <span class="text-[11px] font-bold text-indigo-950 flex items-center gap-1.5">
                   <svg class="w-3.5 h-3.5 text-indigo-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-                  <span>Navegar en Google Maps (Desglose por Tramos)</span>
+                  <span>Google Maps por Tramos</span>
                 </span>
-                <span class="text-[9px] font-bold text-indigo-700 bg-white border border-indigo-200 px-2 py-0.5 rounded-full">Sin límite de paradas</span>
+                <span class="text-[9px] font-bold text-indigo-700 bg-white border border-indigo-200 px-2 py-0.5 rounded-full">Sin límite</span>
               </div>
               <div id="planner-gmaps-batch-buttons" class="flex items-center gap-1.5 flex-wrap pt-0.5">
                 <!-- Generado dinámicamente -->
@@ -1826,26 +1948,32 @@ const userInitials = currentUser.nombre
             </div>
 
             <!-- Tarjetas de Paradas con ETA -->
-            <div id="planner-stops-list" class="space-y-2">
+            <div id="planner-stops-list" class="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
               <!-- Render dinámico por JS -->
             </div>
           </div>
 
         </div>
 
-        <!-- Botones de Acción Fijos al Pie -->
-        <div class="flex items-center justify-between px-6 py-4 border-t border-slate-100 shrink-0 gap-2 flex-wrap sm:flex-nowrap bg-slate-50/60">
-          <button type="button" id="planner-cancel-btn" class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-all cursor-pointer">
-            Cancelar
-          </button>
-          <div class="flex items-center gap-2">
-            <button type="button" id="planner-save-almacen-btn" onclick="window.savePlannedRoute(false)" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-slate-200 active:scale-98">
-              <svg class="w-3.5 h-3.5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
-              <span>Guardar en Almacén</span>
+        <!-- Barra Inferior Fija -->
+        <div class="px-6 py-4 border-t border-slate-200 shrink-0 bg-white flex flex-col sm:flex-row items-center justify-between gap-3">
+          <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer select-none">
+            <input type="checkbox" id="circuit-save-default-checkbox" class="w-4 h-4 rounded text-slate-900 focus:ring-slate-900 cursor-pointer" />
+            <span>Guardar como predeterminado</span>
+          </label>
+
+          <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button type="button" id="planner-cancel-btn" class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-all cursor-pointer">
+              Cancelar
             </button>
-            <button type="button" id="planner-save-btn" onclick="window.savePlannedRoute(true)" class="px-4.5 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-slate-900/15 transition-all active:scale-98 cursor-pointer">
-              <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-              <span>Despachar a Ruta</span>
+            <button type="button" id="planner-save-almacen-btn" onclick="window.savePlannedRoute(false)" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all cursor-pointer border border-slate-200">
+              Guardar en Almacén
+            </button>
+            <button type="button" id="planner-save-btn" onclick="window.savePlannedRoute(true)" class="flex-1 sm:flex-initial px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-xs font-bold shadow-md shadow-blue-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer">
+              <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span>Listo — Despachar Ruta</span>
             </button>
           </div>
         </div>
@@ -8737,7 +8865,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
 
       // ============================================================
-      // MOTOR DEL PLANIFICADOR DE CIRCUITO — SPOKE DISPATCH ENGINE
+      // MOTOR DEL PLANIFICADOR DE CIRCUITO — DETALLES DE LA RUTA
       // ============================================================
 
       // Estado del planificador
@@ -8757,19 +8885,75 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       const plannerZoneZonesCount = document.getElementById('planner-zone-zones-count');
       const plannerNoGpsWarning = document.getElementById('planner-no-gps-warning');
       const plannerNoGpsWarningText = document.getElementById('planner-no-gps-warning-text');
+      
       const plannerStartInput = document.getElementById('planner-start-input') as HTMLInputElement;
+      const plannerStartSublabel = document.getElementById('planner-start-sublabel') as HTMLElement;
       const plannerStartTimeInput = document.getElementById('planner-start-time') as HTMLInputElement;
+      
+      const plannerEndInput = document.getElementById('planner-end-input') as HTMLInputElement;
+      const plannerEndSublabel = document.getElementById('planner-end-sublabel') as HTMLElement;
+      const plannerRestSelect = document.getElementById('planner-rest-select') as HTMLSelectElement;
+      
       const plannerServiceTimeSelect = document.getElementById('planner-service-time') as HTMLSelectElement;
       const plannerStopsList = document.getElementById('planner-stops-list');
       const plannerStopsCountBadge = document.getElementById('planner-stops-count-badge');
       const plannerTotalKm = document.getElementById('planner-total-km');
       const plannerTotalTime = document.getElementById('planner-total-time');
       const plannerEtaEnd = document.getElementById('planner-eta-end');
+      const plannerEtaEndMetric = document.getElementById('planner-eta-end-metric');
       const plannerGmapsBatchButtons = document.getElementById('planner-gmaps-batch-buttons');
       const plannerRouteMapWrapper = document.getElementById('planner-route-map-wrapper');
       const btnToggleMapText = document.getElementById('btn-toggle-map-text');
       const plannerCancelBtn = document.getElementById('planner-cancel-btn');
       const plannerCloseBtn = document.getElementById('route-planner-close-btn');
+      const circuitSaveDefaultCheckbox = document.getElementById('circuit-save-default-checkbox') as HTMLInputElement;
+
+      // Ubicaciones de ejemplo y sedes de Venezuela
+      const POPULAR_LOCATIONS = [
+        { label: 'Sede Principal Barquisimeto', lat: 10.0808, lon: -69.3756, desc: 'Calle 6, Zona Industrial II, Lara' },
+        { label: 'Acarigua, Páez, Portuguesa', lat: 9.5545, lon: -69.2006, desc: 'Portuguesa, Venezuela' },
+        { label: 'Barinas, 5201', lat: 8.6226, lon: -70.2075, desc: 'Estado Barinas, Venezuela' },
+        { label: 'Guanare, Portuguesa', lat: 9.0439, lon: -69.7421, desc: 'Av. Unda / Centro, Portuguesa' },
+        { label: 'Caracas (Sede Capital)', lat: 10.4934, lon: -66.9299, desc: 'Distrito Capital, Venezuela' },
+        { label: 'Valencia, Carabobo', lat: 10.1620, lon: -68.0077, desc: 'Carabobo, Venezuela' },
+        { label: 'Mérida, Estado Mérida', lat: 8.5738, lon: -71.1851, desc: 'Av. Las Américas / Centro' },
+        { label: 'San Cristóbal, Táchira', lat: 7.7669, lon: -72.2250, desc: 'Táchira, Venezuela' },
+        { label: 'Valera, Trujillo', lat: 9.3178, lon: -70.6036, desc: 'Trujillo, Venezuela' },
+        { label: 'Maracaibo, Zulia', lat: 10.6544, lon: -71.6385, desc: 'Zulia, Venezuela' },
+        { label: 'Carora, Lara', lat: 10.1755, lon: -70.0827, desc: 'Lara, Venezuela' },
+        { label: 'Cabudare, Palavecino', lat: 10.0333, lon: -69.2667, desc: 'Lara, Venezuela' }
+      ];
+
+      // Función: fijar hora actual en inicio
+      (window as any).setPlannerStartTimeToNow = function() {
+        if (!plannerStartTimeInput) return;
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        plannerStartTimeInput.value = `${hh}:${mm}`;
+        if (circuitStops.length > 0) renderCircuitStops();
+      };
+
+      // Limpiar inputs
+      (window as any).clearCircuitStartInput = function() {
+        if (plannerStartInput) {
+          plannerStartInput.value = '';
+          plannerStartInput.focus();
+        }
+        if (plannerStartSublabel) plannerStartSublabel.innerHTML = '<span class="text-amber-600 font-bold">Pega coordenadas GPS o escribe ciudad...</span>';
+        const dropdown = document.getElementById('start-autocomplete-dropdown');
+        if (dropdown) dropdown.classList.add('hidden');
+      };
+
+      (window as any).clearCircuitEndInput = function() {
+        if (plannerEndInput) {
+          plannerEndInput.value = '';
+          plannerEndInput.focus();
+        }
+        if (plannerEndSublabel) plannerEndSublabel.innerHTML = '<span class="text-amber-600 font-bold">Pega coordenadas de cierre o escribe ciudad...</span>';
+        const dropdown = document.getElementById('end-autocomplete-dropdown');
+        if (dropdown) dropdown.classList.add('hidden');
+      };
 
       // Función: renderizar los chips de zonas disponibles
       function renderZoneChips() {
@@ -8802,9 +8986,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             type="button"
             data-zone="${ciudad}"
             onclick="window.toggleZoneChip('${ciudad.replace(/'/g, "\\'")}')"
-            class="zone-chip inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+            class="zone-chip inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
               isSelected
-                ? 'bg-indigo-600 border-indigo-700 text-white shadow-sm shadow-indigo-200'
+                ? 'bg-indigo-600 border-indigo-700 text-white shadow-xs'
                 : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-400 hover:text-indigo-700 hover:bg-indigo-50'
             }"
           >
@@ -8876,9 +9060,18 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           plannerNoGpsWarning.classList.add('hidden');
         }
 
-        // Cargar paradas combinadas
+        // Cargar paradas combinadas y auto-ordenar por TSP
         circuitStops = [...guiasConGps];
         circuitOptimized = false;
+        
+        // Auto-optimizar TSP si hay paradas
+        if (circuitStops.length > 1) {
+          const startCoords = getStartCoordinates();
+          const endCoords = getEndCoordinates();
+          circuitStops = solveDashboard2Opt(startCoords.lat, startCoords.lon, endCoords.lat, endCoords.lon, circuitStops);
+          circuitOptimized = true;
+        }
+
         renderCircuitStops();
       }
 
@@ -8896,6 +9089,23 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             plannerDriverSelect.appendChild(opt);
           });
         }
+
+        // Cargar defaults de localStorage si existen
+        try {
+          const savedDefaults = localStorage.getItem('envias_route_defaults');
+          if (savedDefaults) {
+            const parsed = JSON.parse(savedDefaults);
+            if (plannerStartInput && parsed.start) plannerStartInput.value = parsed.start;
+            if (plannerEndInput && parsed.end) plannerEndInput.value = parsed.end;
+            if (plannerRestSelect && parsed.rest) plannerRestSelect.value = parsed.rest;
+            if (plannerServiceTimeSelect && parsed.serviceTime) plannerServiceTimeSelect.value = parsed.serviceTime;
+            if (circuitSaveDefaultCheckbox) circuitSaveDefaultCheckbox.checked = true;
+          }
+        } catch (_) {}
+
+        // Sincronizar sublabels de coordenadas
+        updateStartSublabel();
+        updateEndSublabel();
 
         // Resetear estado
         selectedZones.clear();
@@ -8919,6 +9129,18 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         routePlannerModal.classList.add('flex');
       };
 
+      function updateStartSublabel() {
+        if (!plannerStartSublabel) return;
+        const coords = getStartCoordinates();
+        plannerStartSublabel.innerHTML = `<span class="font-mono font-bold text-indigo-700">${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}</span> &bull; <span>${coords.label}</span>`;
+      }
+
+      function updateEndSublabel() {
+        if (!plannerEndSublabel) return;
+        const coords = getEndCoordinates();
+        plannerEndSublabel.innerHTML = `<span class="font-mono font-bold text-emerald-700">${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}</span> &bull; <span>${coords.label}</span>`;
+      }
+
       // Botón limpiar selección de zonas
       const zoneClearBtnEl = document.getElementById('planner-zone-clear-btn');
       if (zoneClearBtnEl) {
@@ -8929,7 +9151,6 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         });
       }
 
-
       // Función: renderizar las tarjetas de paradas con ETA
       function renderCircuitStops() {
         if (!plannerStopsList) return;
@@ -8939,34 +9160,36 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
         if (count === 0) {
           plannerStopsList.innerHTML = `
-            <div class="text-center py-10 text-slate-400">
-              <svg class="w-10 h-10 mx-auto mb-2 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="text-center py-8 text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+              <svg class="w-8 h-8 mx-auto mb-1.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
               </svg>
-              <p class="text-xs font-semibold text-slate-400">Selecciona una zona para cargar las paradas del circuito</p>
-              <p class="text-[10px] text-slate-300 mt-1">Solo se incluyen guías con coordenadas GPS confirmadas</p>
+              <p class="text-xs font-semibold text-slate-500">Selecciona las zonas arriba para cargar las paradas del circuito</p>
+              <p class="text-[10px] text-slate-400 mt-0.5">El sistema ordenará automáticamente la ruta entre el inicio y el fin</p>
             </div>`;
-          if (plannerTotalKm) plannerTotalKm.textContent = '~0.0 km totales';
-          if (plannerTotalTime) plannerTotalTime.textContent = '~0 min estimado';
-          if (plannerEtaEnd) plannerEtaEnd.textContent = 'Llegada: --:--';
-          if (plannerGmapsBatchButtons) plannerGmapsBatchButtons.innerHTML = '';
+          if (plannerTotalKm) plannerTotalKm.textContent = '~0.0 km';
+          if (plannerTotalTime) plannerTotalTime.textContent = '~0 min';
+          if (plannerEtaEnd) plannerEtaEnd.textContent = '--:--';
+          if (plannerEtaEndMetric) plannerEtaEndMetric.textContent = '--:--';
+          if (plannerGmapsBatchButtons) plannerGmapsBatchButtons.innerHTML = '<span class="text-[11px] text-slate-400">Selecciona una zona para generar tramos de navegación</span>';
           return;
         }
 
         // Calcular métricas y ETAs
         const startCoords = getStartCoordinates();
+        const endCoords = getEndCoordinates();
         const serviceMinutes = parseInt(plannerServiceTimeSelect?.value || '8', 10);
+        const restMinutes = parseInt(plannerRestSelect?.value || '30', 10);
         const startTimeStr = plannerStartTimeInput?.value || '08:00';
         const [startHour, startMin] = startTimeStr.split(':').map(Number);
-        const isRoundTrip = (document.querySelector('input[name="circuit-type"]:checked') as HTMLInputElement)?.value === 'roundtrip';
 
         let totalKm = 0;
         let currentMinutes = startHour * 60 + startMin;
         let prevLat = startCoords.lat;
         let prevLon = startCoords.lon;
 
-        // Velocidad promedio Venezuela urbana: 25 km/h
-        const AVG_SPEED_KMH = 25;
+        // Velocidad promedio Venezuela urbana/interurbana: 30 km/h
+        const AVG_SPEED_KMH = 30;
 
         const stopData = circuitStops.map((stop, idx) => {
           const lat = Number(stop.gps_latitud);
@@ -8982,6 +9205,11 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           prevLat = lat;
           prevLon = lon;
 
+          // Añadir descanso en la mitad del recorrido
+          if (restMinutes > 0 && idx === Math.floor(circuitStops.length / 2)) {
+            currentMinutes += restMinutes;
+          }
+
           // Verificar ventana de tiempo del cliente
           let horaAlert = '';
           if (stop.hora_disponible) {
@@ -8989,10 +9217,10 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             const minDisponible = hDisp * 60 + mDisp;
             if (currentMinutes < minDisponible) {
               const espera = minDisponible - currentMinutes;
-              horaAlert = `<span class="text-amber-600 font-bold text-[10px]">Llega ${espera}min antes (disponible a las ${stop.hora_disponible})</span>`;
-              currentMinutes = minDisponible; // Esperar hasta la ventana
+              horaAlert = `<span class="text-amber-600 font-bold text-[10px]">Llega ${espera}min antes (disp. ${stop.hora_disponible})</span>`;
+              currentMinutes = minDisponible;
             } else if (currentMinutes > minDisponible + 120) {
-              horaAlert = `<span class="text-rose-600 font-bold text-[10px]">Posible retraso (disponible ${stop.hora_disponible})</span>`;
+              horaAlert = `<span class="text-rose-600 font-bold text-[10px]">Retraso posible (disp. ${stop.hora_disponible})</span>`;
             }
           }
 
@@ -9001,10 +9229,10 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           return result;
         });
 
-        // Distancia de retorno (si es round-trip)
-        if (isRoundTrip && circuitStops.length > 0) {
+        // Distancia hacia el punto de fin de ruta
+        if (circuitStops.length > 0) {
           const last = circuitStops[circuitStops.length - 1];
-          const retDist = calculateDistance(Number(last.gps_latitud), Number(last.gps_longitud), startCoords.lat, startCoords.lon);
+          const retDist = calculateDistance(Number(last.gps_latitud), Number(last.gps_longitud), endCoords.lat, endCoords.lon);
           totalKm += retDist;
           const retMin = Math.round((retDist / AVG_SPEED_KMH) * 60);
           currentMinutes += retMin;
@@ -9013,9 +9241,12 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         const totalMin = currentMinutes - (startHour * 60 + startMin);
         const horaFin = Math.floor(currentMinutes / 60) % 24;
         const minFin = currentMinutes % 60;
-        if (plannerTotalKm) plannerTotalKm.textContent = `~${totalKm.toFixed(1)} km totales`;
-        if (plannerTotalTime) plannerTotalTime.textContent = `~${totalMin} min estimado`;
-        if (plannerEtaEnd) plannerEtaEnd.textContent = `Llegada: ${String(horaFin).padStart(2, '0')}:${String(minFin).padStart(2, '0')}`;
+        const etaFinalStr = `${String(horaFin).padStart(2, '0')}:${String(minFin).padStart(2, '0')}`;
+
+        if (plannerTotalKm) plannerTotalKm.textContent = `~${totalKm.toFixed(1)} km`;
+        if (plannerTotalTime) plannerTotalTime.textContent = `~${totalMin} min`;
+        if (plannerEtaEnd) plannerEtaEnd.textContent = etaFinalStr;
+        if (plannerEtaEndMetric) plannerEtaEndMetric.textContent = etaFinalStr;
 
         // Renderizar tarjetas
         plannerStopsList.innerHTML = stopData.map(({ stop, idx, distKm, travelMin, etaStr, horaAlert }) => {
@@ -9024,10 +9255,10 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
 
           return `
-            <div class="group flex items-start gap-2.5 bg-white border border-slate-200 rounded-2xl p-3.5 hover:border-slate-300 hover:shadow-sm transition-all">
+            <div class="group flex items-start gap-2.5 bg-white border border-slate-200 rounded-2xl p-3 hover:border-slate-300 hover:shadow-2xs transition-all">
               <!-- Número de parada -->
               <div class="flex flex-col items-center gap-0.5 shrink-0 pt-0.5">
-                <span class="w-7 h-7 rounded-xl ${circuitOptimized ? 'bg-indigo-600' : 'bg-slate-800'} text-white text-[11px] font-black flex items-center justify-center shadow-sm">${idx + 1}</span>
+                <span class="w-7 h-7 rounded-xl ${circuitOptimized ? 'bg-indigo-600' : 'bg-slate-800'} text-white text-[11px] font-black flex items-center justify-center shadow-xs">${idx + 1}</span>
                 ${idx < circuitStops.length - 1 ? '<div class="w-px h-3 bg-slate-200 rounded-full"></div>' : ''}
               </div>
 
@@ -9047,20 +9278,20 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
                 <!-- Coordenadas GPS y alertas -->
                 <div class="flex items-center justify-between mt-1.5 gap-2">
-                  <div class="flex items-center gap-2">
-                    <span class="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-mono font-bold">${lat.toFixed(4)}, ${lon.toFixed(4)}</span>
-                    ${stop.piezas ? `<span class="text-[10px] text-slate-500 font-bold">${stop.piezas} pza${stop.piezas > 1 ? 's' : ''}</span>` : ''}
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded font-mono font-bold">${lat.toFixed(4)}, ${lon.toFixed(4)}</span>
+                    ${stop.piezas ? `<span class="text-[10px] text-slate-500 font-bold">${stop.piezas} pz${stop.piezas > 1 ? 's' : ''}</span>` : ''}
                     ${horaAlert}
                   </div>
                   <!-- Botones de acción -->
                   <div class="flex items-center gap-1">
-                    <a href="${gmapsUrl}" target="_blank" rel="noopener" class="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors" title="Ver en Google Maps">
+                    <a href="${gmapsUrl}" target="_blank" rel="noopener" class="p-1 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors" title="Ver en Google Maps">
                       <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                     </a>
-                    <button type="button" onclick="window.moveCircuitStop(${idx}, -1)" class="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors ${idx === 0 ? 'opacity-30 cursor-default' : 'cursor-pointer'}" title="Subir parada" ${idx === 0 ? 'disabled' : ''}>
+                    <button type="button" onclick="window.moveCircuitStop(${idx}, -1)" class="p-1 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors ${idx === 0 ? 'opacity-30 cursor-default' : 'cursor-pointer'}" title="Subir parada" ${idx === 0 ? 'disabled' : ''}>
                       <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
                     </button>
-                    <button type="button" onclick="window.moveCircuitStop(${idx}, 1)" class="p-1.5 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors ${idx === circuitStops.length - 1 ? 'opacity-30 cursor-default' : 'cursor-pointer'}" title="Bajar parada" ${idx === circuitStops.length - 1 ? 'disabled' : ''}>
+                    <button type="button" onclick="window.moveCircuitStop(${idx}, 1)" class="p-1 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors ${idx === circuitStops.length - 1 ? 'opacity-30 cursor-default' : 'cursor-pointer'}" title="Bajar parada" ${idx === circuitStops.length - 1 ? 'disabled' : ''}>
                       <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </button>
                   </div>
@@ -9083,20 +9314,20 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             const waypoints = batch.slice(0, -1).map(s => `${Number(s.gps_latitud)},${Number(s.gps_longitud)}`).join('|');
             const url = `https://www.google.com/maps/dir/?api=1&origin=${batchStart}&destination=${batchEnd}${waypoints ? `&waypoints=${encodeURIComponent(waypoints)}` : ''}&travelmode=driving`;
 
-            batches.push(`<a href="${url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-indigo-200 text-indigo-800 text-[11px] font-bold hover:bg-indigo-50 hover:border-indigo-400 transition-all shadow-xs">
+            batches.push(`<a href="${url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white border border-indigo-200 text-indigo-800 text-[11px] font-bold hover:bg-indigo-50 hover:border-indigo-400 transition-all shadow-2xs">
               <svg class="w-3 h-3 text-indigo-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-              Tramo ${batches.length + 1} (Paradas ${i+1}–${Math.min(i+batchSize, circuitStops.length)})
+              Tramo ${batches.length + 1} (${i+1}–${Math.min(i+batchSize, circuitStops.length)})
             </a>`);
           }
 
-          plannerGmapsBatchButtons.innerHTML = batches.length > 0 ? batches.join('') : '<span class="text-[11px] text-slate-400">Optimiza el circuito para generar los enlaces de navegación</span>';
+          plannerGmapsBatchButtons.innerHTML = batches.length > 0 ? batches.join('') : '<span class="text-[11px] text-slate-400">Sin paradas activas</span>';
         }
 
         // Actualizar mapa si está visible
         if (plannerMapVisible) renderCircuitMap();
       }
 
-      // Función: mover una parada del circuito
+      // Función: mover una parada del circuito manualmente
       window.moveCircuitStop = function(idx: number, direction: number) {
         const newIdx = idx + direction;
         if (newIdx < 0 || newIdx >= circuitStops.length) return;
@@ -9105,8 +9336,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         renderCircuitStops();
       };
 
-      // Algoritmo TSP con Agrupamiento Atómico y 2-Opt para eliminar cruces de ruta
-      function solveDashboard2Opt(originLat: number, originLon: number, stops: GuiaRow[]): GuiaRow[] {
+      // Algoritmo TSP 2-Opt con soporte para Origen y Destino independientes
+      function solveDashboard2Opt(originLat: number, originLon: number, endLat: number, endLon: number, stops: GuiaRow[]): GuiaRow[] {
         if (stops.length <= 1) return stops;
         
         // 1. Agrupar paradas colindantes (< 180m)
@@ -9133,7 +9364,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           clusters.push({ lat: latI, lon: lonI, items: group });
         }
 
-        // 2. Nearest Neighbor en clusters
+        // 2. Nearest Neighbor desde Origen
         let remaining = [...clusters];
         let tour: { lat: number; lon: number; items: GuiaRow[] }[] = [];
         let currLat = originLat;
@@ -9152,7 +9383,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           currLon = next.lon;
         }
 
-        // 3. Refinamiento 2-Opt
+        // 3. Refinamiento 2-Opt con conexión al punto Final
         let improved = true;
         let iterations = 0;
         while (improved && iterations < 60) {
@@ -9166,8 +9397,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
               const pBLon = tour[i].lon;
               const pCLat = tour[k].lat;
               const pCLon = tour[k].lon;
-              const pDLat = k + 1 < tour.length ? tour[k + 1].lat : originLat;
-              const pDLon = k + 1 < tour.length ? tour[k + 1].lon : originLon;
+              const pDLat = k + 1 < tour.length ? tour[k + 1].lat : endLat;
+              const pDLon = k + 1 < tour.length ? tour[k + 1].lon : endLon;
 
               const dCurrent = calculateDistance(pALat, pALon, pBLat, pBLon) + calculateDistance(pCLat, pCLon, pDLat, pDLon);
               const dNew = calculateDistance(pALat, pALon, pCLat, pCLon) + calculateDistance(pBLat, pBLon, pDLat, pDLon);
@@ -9180,7 +9411,10 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             }
           }
         }
-        return tour;
+
+        const flatResult: GuiaRow[] = [];
+        tour.forEach(c => flatResult.push(...c.items));
+        return flatResult;
       }
 
       // Función: optimizar el circuito con TSP 2-Opt Spoke Engine
@@ -9199,13 +9433,14 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         setTimeout(() => {
           try {
             const startCoords2 = getStartCoordinates();
-            const optimized = solveDashboard2Opt(startCoords2.lat, startCoords2.lon, circuitStops);
+            const endCoords2 = getEndCoordinates();
+            const optimized = solveDashboard2Opt(startCoords2.lat, startCoords2.lon, endCoords2.lat, endCoords2.lon, circuitStops);
 
             circuitStops = optimized;
             circuitOptimized = true;
             renderCircuitStops();
 
-            showToast(`Circuito Spoke optimizado: ${optimized.length} paradas secuenciadas sin cruces desde la salida.`, 'success');
+            showToast(`Circuito organizado: ${optimized.length} paradas desde ${startCoords2.label} hasta ${endCoords2.label}.`, 'success');
           } catch (err) {
             console.error('Error optimizando circuito:', err);
             showToast('Error al optimizar el circuito.', 'error');
@@ -9247,6 +9482,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         mapContainer.innerHTML = '';
 
         const startCoords2 = getStartCoordinates();
+        const endCoords2 = getEndCoordinates();
         const centerLat = circuitStops.length > 0 ? Number(circuitStops[0].gps_latitud) : startCoords2.lat;
         const centerLon = circuitStops.length > 0 ? Number(circuitStops[0].gps_longitud) : startCoords2.lon;
 
@@ -9268,7 +9504,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         });
         L.marker([startCoords2.lat, startCoords2.lon], { icon: startIcon })
           .addTo(plannerMapInstance)
-          .bindPopup(`<b>Salida / Almacén</b><br>${startCoords2.label}`);
+          .bindPopup(`<b>Inicio de Ruta</b><br>${startCoords2.label}`);
         allPoints.push([startCoords2.lat, startCoords2.lon]);
 
         // Marcadores de paradas
@@ -9287,10 +9523,18 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             .bindPopup(`<b>Parada ${idx + 1}</b><br>${stop.destinatario || ''}<br>Guía #${stop.id_guia}`);
         });
 
-        // Retorno si es bucle
-        const isRoundTrip2 = (document.querySelector('input[name="circuit-type"]:checked') as HTMLInputElement)?.value === 'roundtrip';
-        if (isRoundTrip2 && circuitStops.length > 0) {
-          allPoints.push([startCoords2.lat, startCoords2.lon]);
+        // Marcador de Fin de ruta
+        if (circuitStops.length > 0) {
+          const endIcon = L.divIcon({
+            html: `<div style="width:28px;height:28px;border-radius:10px;background:#059669;border:2.5px solid white;box-shadow:0 3px 8px rgba(5,150,105,0.4);display:flex;align-items:center;justify-content:center;color:white">
+                     <svg style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
+                   </div>`,
+            className: '', iconSize: [28, 28], iconAnchor: [14, 14]
+          });
+          L.marker([endCoords2.lat, endCoords2.lon], { icon: endIcon })
+            .addTo(plannerMapInstance)
+            .bindPopup(`<b>Fin de Ruta</b><br>${endCoords2.label}`);
+          allPoints.push([endCoords2.lat, endCoords2.lon]);
         }
 
         if (allPoints.length > 1) {
@@ -9318,14 +9562,135 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
       }
 
+      // Autocomplete dinámico para Inicio y Fin
+      function setupLocationAutocomplete(
+        inputEl: HTMLInputElement | null,
+        dropdownId: string,
+        onSelect: (item: { label: string, lat: number, lon: number, desc?: string }) => void
+      ) {
+        if (!inputEl) return;
+        const dropdown = document.getElementById(dropdownId);
+        if (!dropdown) return;
 
-      // Función: seleccionar punto de inicio
-      window.selectStartLocation = function(name: string) {
-        if (plannerStartInput) {
-          plannerStartInput.value = name;
-        }
-        if (plannerMapVisible) renderCircuitMap();
-      };
+        inputEl.addEventListener('input', () => {
+          const val = inputEl.value.trim();
+          if (val.length < 1) {
+            dropdown.classList.add('hidden');
+            return;
+          }
+
+          const parsed = parseUniversalLocation(val);
+          const norm = normalizeText(val);
+
+          const matches: { label: string, lat: number, lon: number, desc?: string }[] = [];
+
+          // 1. Si es coordenada directa o Plus Code decodificado
+          if (parsed) {
+            matches.push({
+              label: parsed.label,
+              lat: parsed.lat,
+              lon: parsed.lon,
+              desc: `Coordenadas: ${parsed.lat.toFixed(4)}, ${parsed.lon.toFixed(4)}`
+            });
+          }
+
+          // 2. Coincidencias en catálogo de ciudades
+          POPULAR_LOCATIONS.forEach(loc => {
+            if (normalizeText(loc.label).includes(norm) || (loc.desc && normalizeText(loc.desc).includes(norm))) {
+              if (!matches.some(m => m.label === loc.label)) {
+                matches.push(loc);
+              }
+            }
+          });
+
+          // 3. Fallback de ciudades del diccionario
+          Object.entries(VENEZUELA_COORDS_MAP).forEach(([cityName, coords]) => {
+            if (cityName.includes(norm) && !matches.some(m => m.label.toLowerCase() === cityName)) {
+              matches.push({
+                label: cityName.charAt(0).toUpperCase() + cityName.slice(1),
+                lat: coords[0],
+                lon: coords[1],
+                desc: 'Venezuela'
+              });
+            }
+          });
+
+          if (matches.length === 0) {
+            dropdown.classList.add('hidden');
+            return;
+          }
+
+          dropdown.innerHTML = matches.slice(0, 6).map(m => `
+            <button
+              type="button"
+              class="w-full text-left p-2.5 hover:bg-indigo-50/80 rounded-xl transition-colors flex items-center gap-3 cursor-pointer group"
+              data-label="${m.label}"
+              data-lat="${m.lat}"
+              data-lon="${m.lon}"
+              data-desc="${m.desc || ''}"
+            >
+              <div class="w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-indigo-100 text-slate-600 group-hover:text-indigo-700 flex items-center justify-center shrink-0">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-xs font-bold text-slate-900 group-hover:text-indigo-900 truncate">${m.label}</p>
+                <p class="text-[10px] text-slate-500 truncate font-mono">${m.desc || `${m.lat.toFixed(4)}, ${m.lon.toFixed(4)}`}</p>
+              </div>
+            </button>
+          `).join('');
+
+          dropdown.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+              const label = btn.getAttribute('data-label') || '';
+              const lat = parseFloat(btn.getAttribute('data-lat') || '0');
+              const lon = parseFloat(btn.getAttribute('data-lon') || '0');
+              const desc = btn.getAttribute('data-desc') || '';
+              onSelect({ label, lat, lon, desc });
+              dropdown.classList.add('hidden');
+            });
+          });
+
+          dropdown.classList.remove('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+          if (!inputEl.contains(e.target as Node) && !dropdown.contains(e.target as Node)) {
+            dropdown.classList.add('hidden');
+          }
+        });
+      }
+
+      setupLocationAutocomplete(plannerStartInput, 'start-autocomplete-dropdown', (item) => {
+        if (plannerStartInput) plannerStartInput.value = item.label;
+        updateStartSublabel();
+        actualizarCircuitoDesdeZonas();
+      });
+
+      setupLocationAutocomplete(plannerEndInput, 'end-autocomplete-dropdown', (item) => {
+        if (plannerEndInput) plannerEndInput.value = item.label;
+        updateEndSublabel();
+        actualizarCircuitoDesdeZonas();
+      });
+
+      if (plannerStartInput) {
+        plannerStartInput.addEventListener('change', () => {
+          updateStartSublabel();
+          actualizarCircuitoDesdeZonas();
+        });
+      }
+
+      if (plannerEndInput) {
+        plannerEndInput.addEventListener('change', () => {
+          updateEndSublabel();
+          actualizarCircuitoDesdeZonas();
+        });
+      }
+
+      if (plannerRestSelect) {
+        plannerRestSelect.addEventListener('change', () => {
+          if (circuitStops.length > 0) renderCircuitStops();
+        });
+      }
 
       // Función: guardar el circuito planificado en la BD
       window.savePlannedRoute = async function(dispatchToRoute: boolean) {
@@ -9346,6 +9711,18 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           return;
         }
 
+        // Guardar como predeterminado si está marcado
+        if (circuitSaveDefaultCheckbox && circuitSaveDefaultCheckbox.checked) {
+          try {
+            localStorage.setItem('envias_route_defaults', JSON.stringify({
+              start: plannerStartInput?.value || '',
+              end: plannerEndInput?.value || '',
+              rest: plannerRestSelect?.value || '30',
+              serviceTime: plannerServiceTimeSelect?.value || '8'
+            }));
+          } catch (_) {}
+        }
+
         const btn = document.getElementById(dispatchToRoute ? 'planner-save-btn' : 'planner-save-almacen-btn');
         const origHtml = btn?.innerHTML || '';
         if (btn) {
@@ -9354,7 +9731,6 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
 
         try {
-          // Una sola request con el formato correcto de /api/guias/ruta
           const res = await fetch('/api/guias/ruta', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -9373,7 +9749,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           const data = await res.json();
 
           if (data.success) {
-            const action = dispatchToRoute ? 'despachado a ruta' : 'guardado en almacen';
+            const action = dispatchToRoute ? 'despachado a ruta' : 'guardado en almacén';
             showToast(`Circuito de ${circuitStops.length} paradas ${action} exitosamente.`, 'success');
             closeRoutePlannerModal();
             await fetchData();
@@ -9417,47 +9793,6 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       // Recalcular ETAs cuando cambian hora de inicio o tiempo de servicio
       if (plannerStartTimeInput) plannerStartTimeInput.addEventListener('change', () => { if (circuitStops.length > 0) renderCircuitStops(); });
       if (plannerServiceTimeSelect) plannerServiceTimeSelect.addEventListener('change', () => { if (circuitStops.length > 0) renderCircuitStops(); });
-      document.querySelectorAll('input[name="circuit-type"]').forEach(radio => {
-        radio.addEventListener('change', () => { if (circuitStops.length > 0) renderCircuitStops(); });
-      });
-
-      // Autocomplete del punto de salida
-      if (plannerStartInput) {
-        plannerStartInput.addEventListener('input', () => {
-          const val = plannerStartInput.value;
-          const clearBtn = document.getElementById('btn-clear-start-input');
-          if (clearBtn) clearBtn.classList.toggle('hidden', !val);
-
-          const dropdown = document.getElementById('start-autocomplete-dropdown');
-          if (!dropdown) return;
-          if (val.length < 2) { dropdown.classList.add('hidden'); return; }
-
-          const norm = normalizeText(val);
-          const matches = Object.keys(VENEZUELA_COORDS_MAP).filter(k => k.includes(norm) || norm.includes(k));
-
-          if (matches.length === 0) { dropdown.classList.add('hidden'); return; }
-
-          dropdown.innerHTML = matches.slice(0, 8).map(k =>
-            `<button type="button" class="w-full text-left px-3 py-2 text-xs text-slate-800 font-semibold hover:bg-indigo-50 hover:text-indigo-800 rounded-lg transition-colors" onclick="window.selectStartLocation('${k}')">${k.charAt(0).toUpperCase() + k.slice(1)}</button>`
-          ).join('');
-          dropdown.classList.remove('hidden');
-        });
-
-        document.addEventListener('click', (e) => {
-          const dropdown = document.getElementById('start-autocomplete-dropdown');
-          if (dropdown && !plannerStartInput.contains(e.target as Node) && !dropdown.contains(e.target as Node)) {
-            dropdown.classList.add('hidden');
-          }
-        });
-      }
-
-      const btnClearStartInput = document.getElementById('btn-clear-start-input');
-      if (btnClearStartInput) {
-        btnClearStartInput.addEventListener('click', () => {
-          if (plannerStartInput) plannerStartInput.value = '';
-          btnClearStartInput.classList.add('hidden');
-        });
-      }
 
       // ============================================================
       // FIN MOTOR PLANIFICADOR DE CIRCUITO
