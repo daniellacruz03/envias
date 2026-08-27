@@ -1714,6 +1714,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         var coords = getGuiaCoords(stop);
         var hasGps = !!coords;
 
+        var phoneDirect = (stop.telefono_principal || '').replace(/[^0-9+]/g, '');
         var phoneClean = formatPhoneForWhatsApp(stop.telefono_principal);
         var packageText = stop.totalGuias > 1 ? (stop.totalGuias + ' paquetes (Guías ' + stop.guiasLabel + ')') : ('tu paquete (Guía ' + stop.guiasLabel + ')');
         var msgWhatsApp = encodeURIComponent('Hola ' + stop.destinatario + ', soy tu chofer de Envías C.A. Voy en camino a entregarte ' + packageText + '.');
@@ -1788,46 +1789,61 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             (stop.hora_disponible ? '<div class="pt-0.5"><span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-bold">Horario: Hasta las ' + stop.hora_disponible + '</span></div>' : '') +
           '</div>' +
 
-          '<!-- Botones de Acción (4 columnas en escritorio, 2x2 en móvil) -->' +
-          '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-slate-100">' +
-            '<!-- 1. WhatsApp -->' +
-            '<a href="' + linkWhatsApp + '" target="_blank" class="tap-active py-2.5 px-2 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors text-center">' +
-              '<svg class="w-4 h-4 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.961.947 3.224.947 3.182 0 5.768-2.586 5.768-5.766 0-3.18-2.586-5.766-5.766-5.766zm9.969 5.828c0 5.518-4.482 10-10 10-1.748 0-3.385-.45-4.818-1.237l-5.182 1.409 1.433-5.068c-.89-1.488-1.433-3.232-1.433-5.104 0-5.518 4.482-10 10-10s10 4.482 10 10z"/></svg>' +
-              '<span>WhatsApp</span>' +
-            '</a>' +
+          '<!-- Botones de Acción (Acciones Rápidas + Botón de Confirmación Principal) -->' +
+          '<div class="space-y-2 pt-1 border-t border-slate-100">' +
+            '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2">' +
+              '<!-- 1. WhatsApp -->' +
+              '<a href="' + linkWhatsApp + '" target="_blank" class="tap-active py-2.5 px-2 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors text-center">' +
+                '<svg class="w-4 h-4 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.961.947 3.224.947 3.182 0 5.768-2.586 5.768-5.766 0-3.18-2.586-5.766-5.766-5.766zm9.969 5.828c0 5.518-4.482 10-10 10-1.748 0-3.385-.45-4.818-1.237l-5.182 1.409 1.433-5.068c-.89-1.488-1.433-3.232-1.433-5.104 0-5.518 4.482-10 10-10s10 4.482 10 10z"/></svg>' +
+                '<span>WhatsApp</span>' +
+              '</a>' +
 
-            '<!-- 2. Google Maps -->' +
-            '<a href="' + gmapsUrl + '" target="_blank" class="tap-active py-2.5 px-2 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200/80 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors text-center" title="Navegar en Google Maps">' +
-              '<svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
-                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>' +
-                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>' +
-              '</svg>' +
-              '<span>Maps</span>' +
-            '</a>' +
+              '<!-- 2. Llamar -->' +
+              (phoneDirect ?
+                '<a href="tel:' + phoneDirect + '" class="tap-active py-2.5 px-2 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors text-center" title="Llamar al cliente">' +
+                  '<svg class="w-4 h-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
+                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>' +
+                  '</svg>' +
+                  '<span>Llamar</span>' +
+                '</a>' :
+                '<div class="py-2.5 px-2 rounded-2xl bg-slate-100 text-slate-400 border border-slate-200 text-center font-bold text-xs flex items-center justify-center gap-1 select-none">' +
+                  '<span>Sin Teléfono</span>' +
+                '</div>'
+              ) +
 
-            '<!-- 3. Ver en Mapa Leaflet -->' +
-            (hasGps ?
-              '<button type="button" onclick="window.focusStopOnMap(\'' + firstGuiaId + '\')" class="tap-active py-2.5 px-2 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200/80 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-center">' +
-                '<svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>' +
-                '<span>Ver en Mapa</span>' +
-              '</button>' :
-              '<div class="py-2.5 px-2 rounded-2xl bg-slate-100 text-slate-400 border border-slate-200 text-center font-bold text-xs flex items-center justify-center gap-1 select-none">' +
-                '<span>Sin GPS</span>' +
-              '</div>'
-            ) +
+              '<!-- 3. Google Maps -->' +
+              '<a href="' + gmapsUrl + '" target="_blank" class="tap-active py-2.5 px-2 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200/80 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors text-center" title="Navegar en Google Maps">' +
+                '<svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
+                  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>' +
+                  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>' +
+                '</svg>' +
+                '<span>Maps</span>' +
+              '</a>' +
 
-            '<!-- 4. Entregar / Comprobante -->' +
+              '<!-- 4. Ver en Mapa Leaflet -->' +
+              (hasGps ?
+                '<button type="button" onclick="window.focusStopOnMap(\'' + firstGuiaId + '\')" class="tap-active py-2.5 px-2 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200/80 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-center">' +
+                  '<svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>' +
+                  '<span>Ver en Mapa</span>' +
+                '</button>' :
+                '<div class="py-2.5 px-2 rounded-2xl bg-slate-100 text-slate-400 border border-slate-200 text-center font-bold text-xs flex items-center justify-center gap-1 select-none">' +
+                  '<span>Sin GPS</span>' +
+                '</div>'
+              ) +
+            '</div>' +
+
+            '<!-- Botón Principal: Confirmar Entrega / Comprobante -->' +
             (isPending ?
-              '<button type="button" onclick="window.openDeliveryModal(\'' + stop.guiasIds + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ', \'' + stop.guiasLabel + '\', ' + stop.totalPiezas + ', ' + stop.totalPiesCubicos + ')" class="tap-active py-2.5 px-2 rounded-2xl bg-slate-950 hover:bg-black text-white font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer text-center">' +
+              '<button type="button" onclick="window.openDeliveryModal(\'' + stop.guiasIds + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ', \'' + stop.guiasLabel + '\', ' + stop.totalPiezas + ', ' + stop.totalPiesCubicos + ')" class="w-full tap-active py-3 px-4 rounded-2xl bg-slate-950 hover:bg-black text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer text-center">' +
                 '<svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>' +
-                '<span>Entregar</span>' +
+                '<span>Confirmar Entrega</span>' +
               '</button>' : (isDelivered && stop.comprobante_url ?
-              '<button type="button" onclick="window.openLightbox(\'' + stop.comprobante_url + '\', \'Parada #' + stopNum + ' - ' + stop.destinatario + '\', \'Guías: ' + stop.guiasLabel + '\', \'' + firstGuiaId + '\')" class="tap-active py-2.5 px-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-center">' +
+              '<button type="button" onclick="window.openLightbox(\'' + stop.comprobante_url + '\', \'Parada #' + stopNum + ' - ' + stop.destinatario + '\', \'Guías: ' + stop.guiasLabel + '\', \'' + firstGuiaId + '\')" class="w-full tap-active py-3 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer text-center">' +
                 '<svg class="w-4 h-4 text-slate-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>' +
-                '<span>Comprobante</span>' +
+                '<span>Ver Comprobante de Entrega</span>' +
               '</button>' :
-              '<button type="button" onclick="window.openDeliveryModal(\'' + stop.guiasIds + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ', \'' + stop.guiasLabel + '\', ' + stop.totalPiezas + ', ' + stop.totalPiesCubicos + ')" class="tap-active py-2.5 px-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer text-center">' +
-                '<span>Actualizar</span>' +
+              '<button type="button" onclick="window.openDeliveryModal(\'' + stop.guiasIds + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ', \'' + stop.guiasLabel + '\', ' + stop.totalPiezas + ', ' + stop.totalPiesCubicos + ')" class="w-full tap-active py-3 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer text-center">' +
+                '<span>Actualizar Estado de Entrega</span>' +
               '</button>'
             )) +
           '</div>' +
