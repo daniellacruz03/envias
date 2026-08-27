@@ -9846,6 +9846,18 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
         // Auto-detección del chofer asignado a las guías de las zonas seleccionadas
         if (plannerDriverSelect) {
+          if (plannerDriverSelect.options.length <= 1 && drivers.length > 0) {
+            const curVal = plannerDriverSelect.value;
+            plannerDriverSelect.innerHTML = '<option value="">-- Selecciona un chofer --</option>';
+            drivers.forEach(d => {
+              const opt = document.createElement('option');
+              opt.value = String(d.id);
+              opt.textContent = d.nombre;
+              plannerDriverSelect.appendChild(opt);
+            });
+            if (curVal) plannerDriverSelect.value = curVal;
+          }
+
           const guiasConChofer = guiasZonas.filter(g => g.chofer_asignado_id != null);
           const driverBadge = document.getElementById('planner-driver-auto-badge');
           if (guiasConChofer.length > 0) {
@@ -9909,10 +9921,10 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       window.openRoutePlannerModal = function(driverId?: number | string | null, zoneName?: string | null, customGuias?: GuiaRow[] | null) {
         if (!routePlannerModal) return;
 
-        // Poblar selector de choferes
+        // Poblar selector de choferes con toda la flota
         if (plannerDriverSelect) {
           plannerDriverSelect.innerHTML = '<option value="">-- Selecciona un chofer --</option>';
-          drivers.filter(d => d.rol === 'chofer').forEach(d => {
+          drivers.forEach(d => {
             const opt = document.createElement('option');
             opt.value = String(d.id);
             opt.textContent = d.nombre;
