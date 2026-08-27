@@ -8421,6 +8421,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       // MÓDULO 6: CREAR LISTÍN DE CARGA / DESPACHO & EXPORTACIÓN PDF
       // =========================================================
       let listinSelectedZones: Set<string> = new Set();
+      let listinActiveZone: string = 'ALL';
       let listinCitiesOrder: string[] = [];
       let listinCityGuiasOrder: Record<string, string[]> = {};
       let listinFlatGuiasOrder: string[] = [];
@@ -9049,27 +9050,34 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       (window as any).toggleListinZone = (zoneName: string) => {
         if (zoneName === 'ALL') {
           listinSelectedZones.clear();
+          listinActiveZone = 'ALL';
         } else {
           if (listinSelectedZones.has(zoneName)) {
             listinSelectedZones.delete(zoneName);
           } else {
             listinSelectedZones.add(zoneName);
           }
+          if (listinSelectedZones.size === 0) listinActiveZone = 'ALL';
+          else if (listinSelectedZones.size === 1) listinActiveZone = Array.from(listinSelectedZones)[0];
+          else listinActiveZone = 'COMBINED';
         }
         renderListinView();
       };
 
       (window as any).clearListinZones = () => {
         listinSelectedZones.clear();
+        listinActiveZone = 'ALL';
         renderListinView();
       };
 
       (window as any).selectListinZone = (zoneName: string) => {
         if (zoneName === 'ALL') {
           listinSelectedZones.clear();
+          listinActiveZone = 'ALL';
         } else if (zoneName !== 'COMBINED') {
           listinSelectedZones.clear();
           listinSelectedZones.add(zoneName);
+          listinActiveZone = zoneName;
         }
         renderListinView();
       };
