@@ -706,34 +706,62 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               <span id="photo-size-badge" class="hidden text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">Optimizado</span>
             </div>
 
-            <!-- Zona de Carga de Foto de Comprobante con Input Superpuesto -->
-            <div id="dropzone-delivery-photo" class="relative border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-2xl p-3 text-center cursor-pointer transition-all bg-slate-50 hover:bg-slate-100/70 block overflow-hidden">
-              <input
-                type="file"
-                id="modal-delivery-photo-input"
-                accept="image/*"
-                capture="environment"
-                class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-              />
-              <div id="photo-placeholder" class="py-2 space-y-1 pointer-events-none">
-                <div class="w-9 h-9 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-1 shadow-2xs">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
+            <!-- Zona de Carga de Foto de Comprobante: Cámara y Galería -->
+            <div id="dropzone-delivery-photo" class="space-y-2">
+              <!-- Botones de selección Cámara / Galería cuando no hay foto -->
+              <div id="photo-placeholder" class="grid grid-cols-2 gap-2.5">
+                <!-- 1. Botón Tomar Foto con Cámara -->
+                <div class="relative bg-slate-900 hover:bg-black text-white rounded-2xl p-3.5 flex flex-col items-center justify-center gap-1.5 shadow-sm transition-all text-center select-none overflow-hidden cursor-pointer">
+                  <input
+                    type="file"
+                    id="modal-delivery-photo-camera"
+                    accept="image/*"
+                    capture="environment"
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                  />
+                  <div class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400 pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                  </div>
+                  <div class="pointer-events-none">
+                    <p class="text-xs font-bold">Tomar Foto</p>
+                    <p class="text-[9px] text-slate-300">Abrir cámara</p>
+                  </div>
                 </div>
-                <p class="text-xs font-bold text-slate-800">Tomar foto o subir comprobante</p>
-                <p class="text-[10px] text-slate-400">Toca aquí para abrir la cámara</p>
+
+                <!-- 2. Botón Seleccionar de Galería -->
+                <div class="relative bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-1.5 transition-all text-center select-none overflow-hidden cursor-pointer">
+                  <input
+                    type="file"
+                    id="modal-delivery-photo-gallery"
+                    accept="image/*"
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                  />
+                  <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                  </div>
+                  <div class="pointer-events-none">
+                    <p class="text-xs font-bold">Galería</p>
+                    <p class="text-[9px] text-slate-500">Elegir de fotos</p>
+                  </div>
+                </div>
               </div>
 
-              <div id="photo-preview-container" class="hidden space-y-2 pointer-events-none">
-                <img id="photo-preview-img" class="w-full max-h-36 object-contain rounded-xl border border-slate-200 bg-white" alt="Comprobante" />
+              <!-- Vista previa de foto cargada -->
+              <div id="photo-preview-container" class="hidden space-y-2 border border-slate-200 rounded-2xl p-3 bg-slate-50">
+                <img id="photo-preview-img" class="w-full max-h-40 object-contain rounded-xl border border-slate-200 bg-white" alt="Comprobante" />
                 <div class="flex items-center justify-between px-1 text-[11px]">
                   <span class="text-emerald-700 font-bold flex items-center gap-1">
                     <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
                     <span id="photo-status-text">Comprobante optimizado</span>
                   </span>
-                  <span class="text-rose-600 font-bold underline text-xs">Cambiar foto</span>
+                  <button type="button" onclick="window.resetDeliveryPhotoState()" class="text-rose-600 hover:text-rose-700 font-bold underline text-xs cursor-pointer">
+                    Cambiar foto
+                  </button>
                 </div>
               </div>
             </div>
@@ -1324,7 +1352,8 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       var modalDireccion = document.getElementById('modal-direccion');
       var modalRecibidoPor = document.getElementById('modal-recibido-por');
       var modalIncidentNote = document.getElementById('modal-incident-note');
-      var modalDeliveryPhotoInput = document.getElementById('modal-delivery-photo-input');
+      var modalDeliveryPhotoCamera = document.getElementById('modal-delivery-photo-camera');
+      var modalDeliveryPhotoGallery = document.getElementById('modal-delivery-photo-gallery');
       var photoPlaceholder = document.getElementById('photo-placeholder');
       var photoPreviewContainer = document.getElementById('photo-preview-container');
       var photoPreviewImg = document.getElementById('photo-preview-img');
@@ -1357,13 +1386,15 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
 
       function resetDeliveryPhotoState() {
         currentCompressedBlob = null;
-        if (modalDeliveryPhotoInput) modalDeliveryPhotoInput.value = '';
+        if (modalDeliveryPhotoCamera) modalDeliveryPhotoCamera.value = '';
+        if (modalDeliveryPhotoGallery) modalDeliveryPhotoGallery.value = '';
         if (photoPreviewImg) photoPreviewImg.src = '';
         if (photoPlaceholder) photoPlaceholder.classList.remove('hidden');
         if (photoPreviewContainer) photoPreviewContainer.classList.add('hidden');
         if (photoSizeBadge) photoSizeBadge.classList.add('hidden');
         if (modalConfirmBtn) modalConfirmBtn.disabled = true;
       }
+      window.resetDeliveryPhotoState = resetDeliveryPhotoState;
 
       window.openDeliveryModal = function(idGuia, destinatario, direccion, stopNumber, guiasLabel, totalPiezas, totalVolumen) {
         activeModalGuiaId = idGuia;
@@ -1395,32 +1426,42 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeDeliveryModal);
       if (modalCancelBtn) modalCancelBtn.addEventListener('click', closeDeliveryModal);
 
-      // Manejo de la foto de entrega
-      if (modalDeliveryPhotoInput) {
-        modalDeliveryPhotoInput.addEventListener('change', async function(e) {
-          var file = e.target.files ? e.target.files[0] : null;
-          if (!file) return;
+      async function handleDeliveryPhotoSelected(file) {
+        if (!file) return;
 
-          if (photoPlaceholder) photoPlaceholder.classList.add('hidden');
-          if (photoPreviewContainer) photoPreviewContainer.classList.remove('hidden');
-          if (photoStatusText) photoStatusText.textContent = 'Optimizando foto...';
-          if (modalConfirmBtn) modalConfirmBtn.disabled = true;
+        if (photoPlaceholder) photoPlaceholder.classList.add('hidden');
+        if (photoPreviewContainer) photoPreviewContainer.classList.remove('hidden');
+        if (photoStatusText) photoStatusText.textContent = 'Optimizando foto...';
+        if (modalConfirmBtn) modalConfirmBtn.disabled = true;
 
-          try {
-            var result = await compressImage(file, 1200, 1600, 0.75);
-            currentCompressedBlob = result.blob || file;
-            if (photoPreviewImg) photoPreviewImg.src = URL.createObjectURL(file);
-            if (photoStatusText) photoStatusText.textContent = 'Foto lista (' + result.sizeKb + ' KB optimizada)';
-            if (photoSizeBadge) {
-              photoSizeBadge.textContent = result.sizeKb + ' KB';
-              photoSizeBadge.classList.remove('hidden');
-            }
-            if (modalConfirmBtn) modalConfirmBtn.disabled = false;
-          } catch (err) {
-            console.error('Error optimizando foto de entrega:', err);
-            showToast('Error al procesar la foto', 'error');
-            resetDeliveryPhotoState();
+        try {
+          var result = await compressImage(file, 1200, 1600, 0.75);
+          currentCompressedBlob = result.blob || file;
+          if (photoPreviewImg) photoPreviewImg.src = URL.createObjectURL(file);
+          if (photoStatusText) photoStatusText.textContent = 'Foto lista (' + result.sizeKb + ' KB optimizada)';
+          if (photoSizeBadge) {
+            photoSizeBadge.textContent = result.sizeKb + ' KB';
+            photoSizeBadge.classList.remove('hidden');
           }
+          if (modalConfirmBtn) modalConfirmBtn.disabled = false;
+        } catch (err) {
+          console.error('Error optimizando foto de entrega:', err);
+          showToast('Error al procesar la foto', 'error');
+          resetDeliveryPhotoState();
+        }
+      }
+
+      // Manejo de la foto de entrega (Cámara y Galería)
+      if (modalDeliveryPhotoCamera) {
+        modalDeliveryPhotoCamera.addEventListener('change', function(e) {
+          var file = e.target.files ? e.target.files[0] : null;
+          handleDeliveryPhotoSelected(file);
+        });
+      }
+      if (modalDeliveryPhotoGallery) {
+        modalDeliveryPhotoGallery.addEventListener('change', function(e) {
+          var file = e.target.files ? e.target.files[0] : null;
+          handleDeliveryPhotoSelected(file);
         });
       }
 
