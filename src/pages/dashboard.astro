@@ -1851,7 +1851,12 @@ const userInitials = currentUser.nombre
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <!-- Chofer Selector -->
               <div class="space-y-1">
-                <label class="block text-xs font-bold text-slate-700">Chofer Asignado <span class="text-rose-500">*</span></label>
+                <div class="flex items-center justify-between">
+                  <label class="block text-xs font-bold text-slate-700">Chofer Asignado <span class="text-rose-500">*</span></label>
+                  <span id="planner-driver-auto-badge" class="hidden text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                    Pre-asignado
+                  </span>
+                </div>
                 <select id="planner-driver-select" class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 transition-all cursor-pointer">
                   <!-- Dinámico por JS -->
                 </select>
@@ -7234,7 +7239,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           showToast('Esta ruta no contiene guías registradas.', 'error');
           return;
         }
-        window.openRoutePlannerModal(null, null, guias);
+        window.openRoutePlannerModal(route.chofer_id || null, null, guias);
       };
 
       (window as any).updateHistorialGuiaStatus = async function(routeId: number, guiaId: string, newStatus: string) {
@@ -9713,6 +9718,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           return;
         }
 
+        const currentDriverId = plannerDriverSelect?.value ? parseInt(plannerDriverSelect.value, 10) : null;
+
         chipsContainer.innerHTML = ciudadesUnicas.map(ciudad => {
           const isSelected = selectedZones.has(ciudad);
           const guiasZona = activeShipments.filter(g =>
@@ -9723,6 +9730,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             !isNaN(Number(g.gps_latitud)) && !isNaN(Number(g.gps_longitud))
           ).length;
 
+          const hasDriverAssigned = currentDriverId && guiasZona.some(g => g.chofer_asignado_id === currentDriverId);
+
           return `<button
             type="button"
             data-zone="${ciudad}"
@@ -9730,7 +9739,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             class="zone-chip inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
               isSelected
                 ? 'bg-indigo-600 border-indigo-700 text-white shadow-xs'
-                : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-400 hover:text-indigo-700 hover:bg-indigo-50'
+                : hasDriverAssigned
+                  ? 'bg-indigo-50 border-indigo-300 text-indigo-900 hover:bg-indigo-100'
+                  : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-400 hover:text-indigo-700 hover:bg-indigo-50'
             }"
           >
             ${ciudad}
@@ -9803,12 +9814,12 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       }
 
       // Función: actualizar circuito a partir de las zonas seleccionadas
-      function actualizarCircuitoDesdeZonas() {
+      function actualizarCircuitoDesdeZonas(customGuiasParam?: GuiaRow[] | null) {
         const zoneClearBtn = document.getElementById('planner-zone-clear-btn');
         const selectedDisplay = document.getElementById('planner-selected-zones-display');
         const selectedLabels = document.getElementById('planner-selected-zones-labels');
 
-        if (selectedZones.size === 0) {
+        if (selectedZones.size === 0 && (!customGuiasParam || customGuiasParam.length === 0)) {
           if (plannerZoneSummary) plannerZoneSummary.classList.add('hidden');
           if (plannerNoGpsWarning) plannerNoGpsWarning.classList.add('hidden');
           if (zoneClearBtn) zoneClearBtn.classList.add('hidden');
@@ -9825,11 +9836,37 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           selectedLabels.textContent = [...selectedZones].join(' + ');
         }
 
-        // Filtrar guías de TODAS las zonas seleccionadas (activas)
-        const guiasZonas = shipments.filter(g =>
-          selectedZones.has((g.ciudad_destino || '').trim()) &&
-          g.estado !== 'Entregado' && g.estado !== 'No entregado'
-        );
+        // Filtrar guías de TODAS las zonas seleccionadas (activas) o usar customGuiasParam
+        const guiasZonas: GuiaRow[] = customGuiasParam && customGuiasParam.length > 0
+          ? customGuiasParam
+          : shipments.filter(g =>
+              selectedZones.has((g.ciudad_destino || '').trim()) &&
+              g.estado !== 'Entregado' && g.estado !== 'No entregado'
+            );
+
+        // Auto-detección del chofer asignado a las guías de las zonas seleccionadas
+        if (plannerDriverSelect) {
+          const guiasConChofer = guiasZonas.filter(g => g.chofer_asignado_id != null);
+          const driverBadge = document.getElementById('planner-driver-auto-badge');
+          if (guiasConChofer.length > 0) {
+            const driverCounts: Record<number, number> = {};
+            guiasConChofer.forEach(g => {
+              const cid = Number(g.chofer_asignado_id);
+              driverCounts[cid] = (driverCounts[cid] || 0) + 1;
+            });
+            const topDriverId = Object.keys(driverCounts).sort((a, b) => driverCounts[Number(b)] - driverCounts[Number(a)])[0];
+            
+            // Si el selector está vacío o si todas las guías pertenecen al mismo chofer, auto-seleccionar
+            if (!plannerDriverSelect.value || driverCounts[Number(topDriverId)] === guiasZonas.length) {
+              plannerDriverSelect.value = String(topDriverId);
+              if (driverBadge) {
+                const drv = drivers.find(d => String(d.id) === String(topDriverId));
+                driverBadge.textContent = drv ? `Asignado (${drv.nombre})` : 'Pre-asignado';
+                driverBadge.classList.remove('hidden');
+              }
+            }
+          }
+        }
 
         const guiasConGps = guiasZonas.filter(g =>
           g.gps_confirmado && g.gps_latitud != null && g.gps_longitud != null &&
@@ -9841,12 +9878,12 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         if (plannerZoneGpsCount) plannerZoneGpsCount.textContent = String(guiasConGps.length);
         if (plannerZonePendingCount) plannerZonePendingCount.textContent = String(guiasSinGps);
         if (plannerZoneTotalCount) plannerZoneTotalCount.textContent = String(guiasZonas.length);
-        if (plannerZoneZonesCount) plannerZoneZonesCount.textContent = String(selectedZones.size);
+        if (plannerZoneZonesCount) plannerZoneZonesCount.textContent = String(selectedZones.size || 1);
         if (plannerZoneSummary) plannerZoneSummary.classList.remove('hidden');
 
         // Advertencia GPS
         if (guiasSinGps > 0 && plannerNoGpsWarning && plannerNoGpsWarningText) {
-          const zonasList = [...selectedZones].join(', ');
+          const zonasList = [...selectedZones].join(', ') || 'Zona seleccionada';
           plannerNoGpsWarningText.textContent = `${guiasSinGps} guía${guiasSinGps > 1 ? 's' : ''} en (${zonasList}) no tienen GPS confirmado. Solo las ${guiasConGps.length} guías con GPS se incluirán.`;
           plannerNoGpsWarning.classList.remove('hidden');
         } else if (plannerNoGpsWarning) {
@@ -9868,8 +9905,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         renderCircuitStops();
       }
 
-      // Función: abrir el modal del planificador
-      window.openRoutePlannerModal = function() {
+      // Función: abrir el modal del planificador con soporte para chofer, ciudad o guías pre-asignadas
+      window.openRoutePlannerModal = function(driverId?: number | string | null, zoneName?: string | null, customGuias?: GuiaRow[] | null) {
         if (!routePlannerModal) return;
 
         // Poblar selector de choferes
@@ -9913,10 +9950,64 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         if (zoneClearBtn) zoneClearBtn.classList.add('hidden');
         const selectedDisplay = document.getElementById('planner-selected-zones-display');
         if (selectedDisplay) selectedDisplay.classList.add('hidden');
+        const driverBadge = document.getElementById('planner-driver-auto-badge');
+        if (driverBadge) driverBadge.classList.add('hidden');
+
+        // Procesar argumentos si fueron provistos
+        let targetDriverId = driverId ? String(driverId) : '';
+
+        // Si se pasaron guías personalizadas
+        if (customGuias && customGuias.length > 0) {
+          const customZones = [...new Set(customGuias.map(g => (g.ciudad_destino || '').trim()).filter(Boolean))];
+          customZones.forEach(z => selectedZones.add(z));
+          if (!targetDriverId) {
+            const firstWithDriver = customGuias.find(g => g.chofer_asignado_id != null || (g as any).chofer_id != null);
+            if (firstWithDriver) {
+              targetDriverId = String(firstWithDriver.chofer_asignado_id || (firstWithDriver as any).chofer_id);
+            }
+          }
+        }
+
+        // Si se pasó una zona específica (por ejemplo al hacer click en "Planificar Ruta" en una ciudad)
+        if (zoneName && zoneName.trim()) {
+          const cleanZone = zoneName.trim();
+          selectedZones.add(cleanZone);
+          if (!targetDriverId) {
+            const zoneGuias = shipments.filter(g =>
+              (g.ciudad_destino || '').trim().toLowerCase() === cleanZone.toLowerCase() &&
+              g.estado !== 'Entregado' && g.estado !== 'No entregado' &&
+              g.chofer_asignado_id != null
+            );
+            if (zoneGuias.length > 0) {
+              targetDriverId = String(zoneGuias[0].chofer_asignado_id);
+            }
+          }
+        }
+
+        // Si se pasó chofer_id y NO se especificó zona ni customGuias, auto-seleccionar todas las zonas activas de ese chofer
+        if (targetDriverId && selectedZones.size === 0 && (!customGuias || customGuias.length === 0)) {
+          const parsedId = parseInt(targetDriverId, 10);
+          const driverShipments = shipments.filter(g =>
+            g.chofer_asignado_id === parsedId &&
+            g.estado !== 'Entregado' && g.estado !== 'No entregado'
+          );
+          const driverZones = [...new Set(driverShipments.map(g => (g.ciudad_destino || '').trim()).filter(Boolean))];
+          driverZones.forEach(z => selectedZones.add(z));
+        }
+
+        // Fijar chofer en el selector si fue identificado
+        if (targetDriverId && plannerDriverSelect) {
+          plannerDriverSelect.value = targetDriverId;
+          if (driverBadge) {
+            const drv = drivers.find(d => String(d.id) === targetDriverId);
+            driverBadge.textContent = drv ? `Asignado (${drv.nombre})` : 'Pre-asignado';
+            driverBadge.classList.remove('hidden');
+          }
+        }
 
         // Renderizar chips y paradas
         renderZoneChips();
-        renderCircuitStops();
+        actualizarCircuitoDesdeZonas(customGuias);
 
         routePlannerModal.classList.remove('hidden');
         routePlannerModal.classList.add('flex');
@@ -10530,7 +10621,15 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           return;
         }
 
-        const driverId = plannerDriverSelect?.value;
+        let driverId = plannerDriverSelect?.value;
+        if (!driverId && circuitStops.length > 0) {
+          const allGuias = circuitStops.flatMap(s => s.guias);
+          const firstWithDriver = allGuias.find(g => g.chofer_asignado_id != null);
+          if (firstWithDriver && firstWithDriver.chofer_asignado_id) {
+            driverId = String(firstWithDriver.chofer_asignado_id);
+            if (plannerDriverSelect) plannerDriverSelect.value = driverId;
+          }
+        }
         if (!driverId) {
           showToast('Selecciona un chofer para el circuito.', 'error');
           return;
@@ -10630,6 +10729,39 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       // Recalcular ETAs cuando cambian hora de inicio o tiempo de servicio
       if (plannerStartTimeInput) plannerStartTimeInput.addEventListener('change', () => { if (circuitStops.length > 0) renderCircuitStops(); });
       if (plannerServiceTimeSelect) plannerServiceTimeSelect.addEventListener('change', () => { if (circuitStops.length > 0) renderCircuitStops(); });
+
+      // Escuchar cambios en selector de chofer para sincronizar zonas y badge
+      if (plannerDriverSelect) {
+        plannerDriverSelect.addEventListener('change', () => {
+          const selectedDriverId = plannerDriverSelect.value ? parseInt(plannerDriverSelect.value, 10) : null;
+          const driverBadge = document.getElementById('planner-driver-auto-badge');
+          if (driverBadge) {
+            if (selectedDriverId) {
+              const drv = drivers.find(d => d.id === selectedDriverId);
+              driverBadge.textContent = drv ? `Seleccionado (${drv.nombre})` : 'Seleccionado';
+              driverBadge.classList.remove('hidden');
+            } else {
+              driverBadge.classList.add('hidden');
+            }
+          }
+
+          // Si no había zonas seleccionadas y se eligió un chofer, auto-seleccionar sus zonas activas
+          if (selectedDriverId && selectedZones.size === 0) {
+            const driverShipments = shipments.filter(g =>
+              g.chofer_asignado_id === selectedDriverId &&
+              g.estado !== 'Entregado' && g.estado !== 'No entregado'
+            );
+            const driverZones = [...new Set(driverShipments.map(g => (g.ciudad_destino || '').trim()).filter(Boolean))];
+            if (driverZones.length > 0) {
+              driverZones.forEach(z => selectedZones.add(z));
+              renderZoneChips();
+              actualizarCircuitoDesdeZonas();
+            }
+          } else {
+            renderZoneChips();
+          }
+        });
+      }
 
       // ============================================================
       // FIN MOTOR PLANIFICADOR DE CIRCUITO
