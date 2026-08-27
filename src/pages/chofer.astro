@@ -320,6 +320,26 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       <!-- ========================================== -->
       <div id="active-routes-container" class={`space-y-3.5 ${totalInitial > 0 ? '' : 'hidden'}`}>
 
+        <!-- Banner Ciudad Hero (Estilo Corporativo Spoke) -->
+        <section id="active-city-hero-banner" class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 text-center shadow-lg border border-indigo-500/20">
+          <div class="flex items-center justify-center gap-2.5">
+            <h2 id="active-city-title" class="text-2xl sm:text-3xl font-black tracking-wider uppercase">
+              {uniqueCiudades[0] || 'Venezuela'}
+            </h2>
+            <svg class="w-6 h-6 text-indigo-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+          </div>
+          <button
+            type="button"
+            id="active-city-subtitle-btn"
+            onclick="window.scrollToCards()"
+            class="text-xs font-semibold text-indigo-200/90 mt-1 cursor-pointer hover:text-white underline underline-offset-4 transition-colors"
+          >
+            <span id="active-city-subtitle">Ver Clientes ({uniqueCiudades[0] || 'Ruta'})</span>
+          </button>
+        </section>
+
         <!-- Tarjeta de Progreso de Ruta -->
         <section class="bg-white rounded-2xl border border-slate-200/80 p-3.5 shadow-sm">
           <div class="flex items-center justify-between mb-2">
@@ -1681,6 +1701,139 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         });
       }
 
+      window.scrollToCards = function() {
+        var el = document.getElementById('search-input') || document.getElementById('cards-container');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+
+      function renderStopCard(stop, index, isActiveStop) {
+        var stopNum = stop.orden_ruta && stop.orden_ruta > 0 ? stop.orden_ruta : (index + 1);
+        var isDelivered = stop.estado === 'Entregado';
+        var isIncident = stop.estado === 'No entregado';
+        var isPending = !isDelivered && !isIncident;
+        var coords = getGuiaCoords(stop);
+        var hasGps = !!coords;
+
+        var phoneClean = formatPhoneForWhatsApp(stop.telefono_principal);
+        var packageText = stop.totalGuias > 1 ? (stop.totalGuias + ' paquetes (Guías ' + stop.guiasLabel + ')') : ('tu paquete (Guía ' + stop.guiasLabel + ')');
+        var msgWhatsApp = encodeURIComponent('Hola ' + stop.destinatario + ', soy tu chofer de Envías C.A. Voy en camino a entregarte ' + packageText + '.');
+        var linkWhatsApp = 'https://wa.me/' + phoneClean + '?text=' + msgWhatsApp;
+
+        var gmapsUrl = '';
+        if (hasGps) {
+          gmapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + coords[0] + ',' + coords[1];
+        } else {
+          var addrQuery = (stop.direccion_referencia ? stop.direccion_referencia + ', ' : '') + (stop.ciudad_destino || 'Venezuela');
+          gmapsUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(addrQuery);
+        }
+
+        var badgeStatusHtml = '';
+        if (isDelivered) {
+          badgeStatusHtml = '<span class="px-3 py-1 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200">Entregado</span>';
+        } else if (isIncident) {
+          badgeStatusHtml = '<span class="px-3 py-1 rounded-xl bg-rose-50 text-rose-800 text-xs font-bold border border-rose-200">No entregó</span>';
+        } else if (stop.estado === 'Parcial') {
+          badgeStatusHtml = '<span class="px-3 py-1 rounded-xl bg-indigo-50 text-indigo-800 text-xs font-bold border border-indigo-200">Entrega Parcial</span>';
+        } else {
+          badgeStatusHtml = '<span class="px-3 py-1 rounded-xl bg-[#fef9c3] text-[#854d0e] text-xs font-bold border border-[#fef08a]">Pendiente</span>';
+        }
+
+        var destEscaped = (stop.destinatario || '').replace(/'/g, "\\'");
+        var dirEscaped = (stop.direccion_referencia || '').replace(/'/g, "\\'");
+        var firstGuiaId = stop.guias[0] ? stop.guias[0].id_guia : '';
+        var totalVolTag = stop.totalPiesCubicos > 0 ? (' &bull; ' + Number(stop.totalPiesCubicos).toFixed(2) + ' ft³') : '';
+
+        return '<div class="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-5 shadow-sm space-y-3.5 transition-all hover:border-slate-300 ' + (isDelivered ? 'opacity-75 bg-slate-50/50' : '') + '">' +
+          '<!-- Encabezado de la parada -->' +
+          '<div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">' +
+            '<div class="flex items-center gap-2.5 min-w-0">' +
+              '<div class="w-8 h-8 rounded-full ' + (isDelivered ? 'bg-emerald-600' : isIncident ? 'bg-rose-600' : 'bg-slate-950') + ' text-white flex items-center justify-center font-extrabold text-xs shrink-0 shadow-xs">' +
+                '#' + stopNum +
+              '</div>' +
+              '<div class="min-w-0">' +
+                '<h4 class="font-extrabold text-xs sm:text-sm text-slate-950 uppercase tracking-tight leading-tight truncate">' +
+                  stop.destinatario +
+                '</h4>' +
+                '<p class="text-[11px] text-slate-500 font-semibold mt-0.5">' +
+                  stop.totalPiezas + ' pieza(s) totales' + totalVolTag +
+                '</p>' +
+              '</div>' +
+            '</div>' +
+            '<div class="shrink-0">' +
+              badgeStatusHtml +
+            '</div>' +
+          '</div>' +
+
+          '<!-- Detalle: Guías + Dirección + Horario -->' +
+          '<div class="space-y-2 text-xs">' +
+            '<!-- Guías consolidadas del cliente -->' +
+            '<div class="flex flex-wrap gap-1.5">' +
+              stop.guias.map(function(g) {
+                var gVol = g.pies_cubicos ? ' &bull; ' + Number(g.pies_cubicos).toFixed(2) + ' ft³' : '';
+                var isGDeliv = g.estado === 'Entregado';
+                return '<span class="inline-flex items-center gap-1 font-mono text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-50 text-slate-700 border border-slate-200/80">' +
+                  '#' + g.id_guia + ' (' + (g.piezas || 1) + ' pza' + gVol + ')' +
+                  (isGDeliv ? ' <span class="text-emerald-600 font-black">✓</span>' : '') +
+                '</span>';
+              }).join('') +
+            '</div>' +
+
+            '<!-- Dirección de Entrega -->' +
+            '<div class="flex items-start gap-1.5 text-slate-700 font-medium text-xs leading-relaxed">' +
+              '<span class="font-bold text-slate-400 shrink-0">@</span>' +
+              '<span>' + (stop.direccion_referencia || stop.ciudad_destino || 'Ubicación confirmada') + '</span>' +
+            '</div>' +
+
+            '<!-- Horario -->' +
+            (stop.hora_disponible ? '<div class="pt-0.5"><span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-bold">Horario: Hasta las ' + stop.hora_disponible + '</span></div>' : '') +
+          '</div>' +
+
+          '<!-- Botones de Acción (4 columnas en escritorio, 2x2 en móvil) -->' +
+          '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-slate-100">' +
+            '<!-- 1. WhatsApp -->' +
+            '<a href="' + linkWhatsApp + '" target="_blank" class="tap-active py-2.5 px-2 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/80 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors text-center">' +
+              '<svg class="w-4 h-4 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.961.947 3.224.947 3.182 0 5.768-2.586 5.768-5.766 0-3.18-2.586-5.766-5.766-5.766zm9.969 5.828c0 5.518-4.482 10-10 10-1.748 0-3.385-.45-4.818-1.237l-5.182 1.409 1.433-5.068c-.89-1.488-1.433-3.232-1.433-5.104 0-5.518 4.482-10 10-10s10 4.482 10 10z"/></svg>' +
+              '<span>WhatsApp</span>' +
+            '</a>' +
+
+            '<!-- 2. Google Maps -->' +
+            '<a href="' + gmapsUrl + '" target="_blank" class="tap-active py-2.5 px-2 rounded-2xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200/80 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors text-center" title="Navegar en Google Maps">' +
+              '<svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">' +
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>' +
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>' +
+              '</svg>' +
+              '<span>Maps</span>' +
+            '</a>' +
+
+            '<!-- 3. Ver en Mapa Leaflet -->' +
+            (hasGps ?
+              '<button type="button" onclick="window.focusStopOnMap(\'' + firstGuiaId + '\')" class="tap-active py-2.5 px-2 rounded-2xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200/80 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-center">' +
+                '<svg class="w-4 h-4 text-indigo-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>' +
+                '<span>Ver en Mapa</span>' +
+              '</button>' :
+              '<div class="py-2.5 px-2 rounded-2xl bg-slate-100 text-slate-400 border border-slate-200 text-center font-bold text-xs flex items-center justify-center gap-1 select-none">' +
+                '<span>Sin GPS</span>' +
+              '</div>'
+            ) +
+
+            '<!-- 4. Entregar / Comprobante -->' +
+            (isPending ?
+              '<button type="button" onclick="window.openDeliveryModal(\'' + stop.guiasIds + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ', \'' + stop.guiasLabel + '\', ' + stop.totalPiezas + ', ' + stop.totalPiesCubicos + ')" class="tap-active py-2.5 px-2 rounded-2xl bg-slate-950 hover:bg-black text-white font-extrabold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer text-center">' +
+                '<svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>' +
+                '<span>Entregar</span>' +
+              '</button>' : (isDelivered && stop.comprobante_url ?
+              '<button type="button" onclick="window.openLightbox(\'' + stop.comprobante_url + '\', \'Parada #' + stopNum + ' - ' + stop.destinatario + '\', \'Guías: ' + stop.guiasLabel + '\', \'' + firstGuiaId + '\')" class="tap-active py-2.5 px-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer text-center">' +
+                '<svg class="w-4 h-4 text-slate-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>' +
+                '<span>Comprobante</span>' +
+              '</button>' :
+              '<button type="button" onclick="window.openDeliveryModal(\'' + stop.guiasIds + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ', \'' + stop.guiasLabel + '\', ' + stop.totalPiezas + ', ' + stop.totalPiesCubicos + ')" class="tap-active py-2.5 px-2 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer text-center">' +
+                '<span>Actualizar</span>' +
+              '</button>'
+            )) +
+          '</div>' +
+        '</div>';
+      }
+
       function renderCards() {
         updateStats();
         if (!cardsContainer) return;
@@ -1688,6 +1841,13 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         var allStops = buildClientStops(guiasData);
         var filteredStops = getFilteredClientStops();
         var activeStopContainer = document.getElementById('active-stop-card-container');
+
+        // Actualizar Banner de Ciudad Hero
+        var activeCityTitle = document.getElementById('active-city-title');
+        var activeCitySubtitle = document.getElementById('active-city-subtitle');
+        var mainCity = (allStops[0] && allStops[0].ciudad_destino) ? allStops[0].ciudad_destino : 'Venezuela';
+        if (activeCityTitle) activeCityTitle.textContent = mainCity.toUpperCase();
+        if (activeCitySubtitle) activeCitySubtitle.textContent = 'Ver Clientes (' + mainCity + ')';
 
         // Buscar siguiente parada cliente pendiente
         var nextPendingStop = (allStops || []).find(function(s) {
@@ -1697,63 +1857,16 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         if (activeStopContainer) {
           if (nextPendingStop) {
             var nextStopNum = nextPendingStop.orden_ruta && nextPendingStop.orden_ruta > 0 ? nextPendingStop.orden_ruta : 1;
-            var nextPhoneClean = formatPhoneForWhatsApp(nextPendingStop.telefono_principal);
-            var nextPackageText = nextPendingStop.totalGuias > 1 ? (nextPendingStop.totalGuias + ' paquetes (Guías ' + nextPendingStop.guiasLabel + ')') : ('tu paquete (Guía ' + nextPendingStop.guiasLabel + ')');
-            var nextMsgWhatsApp = encodeURIComponent('Hola ' + nextPendingStop.destinatario + ', soy tu chofer de Envías C.A. Voy en camino a entregarte ' + nextPackageText + '.');
-            var nextLinkWhatsApp = 'https://wa.me/' + nextPhoneClean + '?text=' + nextMsgWhatsApp;
-            var nextDestEscaped = (nextPendingStop.destinatario || '').replace(/'/g, "\\'");
-            var nextDirEscaped = (nextPendingStop.direccion_referencia || '').replace(/'/g, "\\'");
-            var nextHasCoords = !!getGuiaCoords(nextPendingStop);
-            var nextVolTag = nextPendingStop.totalPiesCubicos > 0 ? (' &bull; ' + Number(nextPendingStop.totalPiesCubicos).toFixed(2) + ' ft³') : '';
+            var nextStopCity = (nextPendingStop.ciudad_destino || mainCity).toUpperCase();
 
             activeStopContainer.innerHTML =
-              '<div class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-4 sm:p-5 shadow-lg border border-indigo-500/20 space-y-3 animate-fadeIn">' +
-                '<div class="flex items-center justify-between">' +
-                  '<div class="flex items-center gap-2.5">' +
-                    '<span class="w-8 h-8 rounded-xl bg-indigo-600 text-white font-black text-xs flex items-center justify-center shadow-md active-stop-pulse shrink-0">#' + nextStopNum + '</span>' +
-                    '<div class="min-w-0">' +
-                      '<span class="text-[10px] font-black uppercase tracking-wider text-indigo-300 block leading-tight">Siguiente Parada Activa</span>' +
-                      '<span class="font-mono text-xs font-bold text-slate-200 truncate block">' +
-                        (nextPendingStop.totalGuias > 1 ? (nextPendingStop.totalGuias + ' Guías (' + nextPendingStop.guiasLabel + ')') : ('Guía ' + nextPendingStop.guiasLabel)) +
-                        ' &bull; ' + nextPendingStop.totalPiezas + ' pza(s)' + nextVolTag +
-                      '</span>' +
-                    '</div>' +
-                  '</div>' +
-                  '<div class="flex items-center gap-1.5 shrink-0">' +
-                    (nextPendingStop.totalGuias > 1 ? '<span class="px-2 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-400/50 text-indigo-200 text-[10px] font-extrabold">' + nextPendingStop.totalGuias + ' Guías</span>' : '') +
-                    '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-extrabold">' +
-                      '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>' +
-                      'En Ruta' +
-                    '</span>' +
-                  '</div>' +
+              '<div class="space-y-2 animate-fadeIn">' +
+                '<div class="flex items-center gap-2.5 pt-1 px-1">' +
+                  '<span class="w-8 h-8 rounded-xl bg-slate-950 text-white font-black text-xs flex items-center justify-center shadow-xs">#' + nextStopNum + '</span>' +
+                  '<h3 class="text-base sm:text-lg font-black text-slate-900 uppercase tracking-tight">' + nextStopCity + ' – Ruta Local</h3>' +
                 '</div>' +
-                '<div class="space-y-1 bg-white/5 rounded-2xl p-3 border border-white/10 text-xs">' +
-                  '<p class="text-sm font-extrabold text-white leading-snug truncate">' + nextPendingStop.destinatario + '</p>' +
-                  '<div class="flex items-center gap-1.5 text-slate-300 text-xs font-medium">' +
-                    '<svg class="w-3.5 h-3.5 text-indigo-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
-                    '<span class="truncate">' + nextPendingStop.ciudad_destino + (nextPendingStop.direccion_referencia ? ' &bull; ' + nextPendingStop.direccion_referencia : '') + '</span>' +
-                  '</div>' +
-                  (nextPendingStop.hora_disponible ? '<p class="text-[10px] text-amber-300 font-bold mt-1">Horario de entrega: Hasta las ' + nextPendingStop.hora_disponible + '</p>' : '') +
-                '</div>' +
-                '<div class="grid grid-cols-3 gap-2">' +
-                  '<a href="' + nextLinkWhatsApp + '" target="_blank" class="tap-active py-2 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-sm">' +
-                    '<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.961.947 3.224.947 3.182 0 5.768-2.586 5.768-5.766 0-3.18-2.586-5.766-5.766-5.766zm9.969 5.828c0 5.518-4.482 10-10 10-1.748 0-3.385-.45-4.818-1.237l-5.182 1.409 1.433-5.068c-.89-1.488-1.433-3.232-1.433-5.104 0-5.518 4.482-10 10-10s10 4.482 10 10z"/></svg>' +
-                    '<span>WhatsApp</span>' +
-                  '</a>' +
-                  (nextHasCoords ? '<button type="button" onclick="window.focusStopOnMap(\'' + (nextPendingStop.guias[0] ? nextPendingStop.guias[0].id_guia : '') + '\')" class="tap-active py-2 px-2.5 rounded-xl bg-indigo-600/80 hover:bg-indigo-600 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all border border-indigo-400/30 cursor-pointer">' +
-                    '<svg class="w-3.5 h-3.5 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
-                    '<span>Ver en Mapa</span>' +
-                  '</button>' : '<div class="py-2 px-2.5 rounded-xl bg-amber-500/20 text-amber-200 border border-amber-400/30 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 select-none">' +
-                      '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0"></span>' +
-                      '<span>Sin GPS</span>' +
-                    '</div>') +
-                  '<button type="button" onclick="window.openDeliveryModal(\'' + nextPendingStop.guiasIds + '\', \'' + nextDestEscaped + '\', \'' + nextDirEscaped + '\', ' + nextStopNum + ', \'' + nextPendingStop.guiasLabel + '\', ' + nextPendingStop.totalPiezas + ', ' + nextPendingStop.totalPiesCubicos + ')" class="tap-active py-2 px-2.5 rounded-xl bg-white text-slate-950 hover:bg-slate-100 font-extrabold text-[11px] flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer">' +
-                    '<svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>' +
-                    '<span>Entregar</span>' +
-                  '</button>' +
-                '</div>' +
+                renderStopCard(nextPendingStop, nextStopNum - 1, true) +
               '</div>';
-
           } else {
             activeStopContainer.innerHTML = '';
           }
@@ -1768,106 +1881,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         if (emptyState) emptyState.classList.add('hidden');
 
         cardsContainer.innerHTML = filteredStops.map(function(stop, index) {
-          var stopNum = stop.orden_ruta && stop.orden_ruta > 0 ? stop.orden_ruta : (index + 1);
-          var isDelivered = stop.estado === 'Entregado';
-          var isIncident = stop.estado === 'No entregado';
-          var isPending = !isDelivered && !isIncident;
-          var hasGps = !!getGuiaCoords(stop);
-
-          var phoneClean = formatPhoneForWhatsApp(stop.telefono_principal);
-          var packageText = stop.totalGuias > 1 ? (stop.totalGuias + ' paquetes (Guías ' + stop.guiasLabel + ')') : ('tu paquete (Guía ' + stop.guiasLabel + ')');
-          var msgWhatsApp = encodeURIComponent('Hola ' + stop.destinatario + ', soy tu chofer de Envías C.A. Voy en camino a entregarte ' + packageText + '.');
-          var linkWhatsApp = 'https://wa.me/' + phoneClean + '?text=' + msgWhatsApp;
-
-          var badgeStatusHtml = '';
-          if (isDelivered) {
-            badgeStatusHtml = '<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200">Entregado</span>';
-          } else if (isIncident) {
-            badgeStatusHtml = '<span class="px-2 py-0.5 rounded-md bg-rose-50 text-rose-800 text-[10px] font-bold border border-rose-200">No entregó</span>';
-          } else if (stop.estado === 'Parcial') {
-            badgeStatusHtml = '<span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-800 text-[10px] font-bold border border-indigo-200">Entrega Parcial</span>';
-          } else {
-            badgeStatusHtml = '<span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 text-[10px] font-bold border border-amber-200">Pendiente</span>';
-          }
-
-          var destEscaped = (stop.destinatario || '').replace(/'/g, "\\'");
-          var dirEscaped = (stop.direccion_referencia || '').replace(/'/g, "\\'");
-          var firstGuiaId = stop.guias[0] ? stop.guias[0].id_guia : '';
-
-          var mapActionHtml = '';
-          if (hasGps) {
-            mapActionHtml = '<button type="button" onclick="window.focusStopOnMap(\'' + firstGuiaId + '\')" class="tap-active p-2.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer">' +
-              '<svg class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
-              '<span>Ver en Mapa</span>' +
-            '</button>';
-          } else {
-            mapActionHtml = '<div class="p-2.5 rounded-xl bg-amber-50/70 text-amber-800 border border-amber-200/60 text-center font-bold text-[10px] flex items-center justify-center gap-1.5 select-none">' +
-              '<span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>' +
-              '<span>Sin GPS</span>' +
-            '</div>';
-          }
-
-          var totalVolTag = stop.totalPiesCubicos > 0 ? (' &bull; ' + Number(stop.totalPiesCubicos).toFixed(2) + ' ft³') : '';
-
-          return '<div class="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm space-y-3 transition-all ' + (isDelivered ? 'opacity-75 bg-slate-50/50' : '') + '">' +
-            '<div class="flex items-center justify-between border-b border-slate-100 pb-2.5">' +
-              '<div class="flex items-center gap-2">' +
-                '<div class="w-7 h-7 rounded-xl ' + (isDelivered ? 'bg-emerald-600' : isIncident ? 'bg-rose-600' : hasGps ? 'bg-slate-900' : 'bg-slate-700') + ' text-white flex items-center justify-center font-extrabold text-xs shrink-0 shadow-xs">' +
-                  '#' + stopNum +
-                '</div>' +
-                '<div>' +
-                  '<span class="font-bold text-xs text-slate-900 leading-tight block">' + stop.destinatario + '</span>' +
-                  '<span class="text-[10px] text-slate-500 font-medium">' + stop.totalPiezas + ' pieza(s) totales' + totalVolTag + '</span>' +
-                '</div>' +
-              '</div>' +
-              '<div class="flex items-center gap-1.5">' +
-                (stop.totalGuias > 1 ? '<span class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-extrabold flex items-center gap-1"><svg class="w-3 h-3 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>' + stop.totalGuias + ' Guías</span>' : '') +
-                (!hasGps ? '<span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[9px] font-bold border border-slate-200">Sin GPS</span>' : '') +
-                badgeStatusHtml +
-              '</div>' +
-            '</div>' +
-            
-            '<!-- Guías del Cliente -->' +
-            '<div class="space-y-1.5 text-xs">' +
-              '<div class="flex flex-wrap gap-1.5">' +
-                stop.guias.map(function(g) {
-                  var gVol = g.pies_cubicos ? ' &bull; ' + Number(g.pies_cubicos).toFixed(2) + ' ft³' : '';
-                  var isGDeliv = g.estado === 'Entregado';
-                  var badgeColor = isGDeliv ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-slate-50 text-slate-800 border-slate-200';
-                  return '<span class="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded-md border ' + badgeColor + '">' +
-                    '#' + g.id_guia + ' (' + (g.piezas || 1) + ' pza' + gVol + ')' +
-                    (isGDeliv ? ' <span class="text-emerald-600 font-black">✓</span>' : '') +
-                  '</span>';
-                }).join('') +
-              '</div>' +
-              '<div class="flex items-center gap-1.5 text-slate-500 font-medium mt-1">' +
-                '<svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
-                '<span class="truncate">' + stop.ciudad_destino + (stop.direccion_referencia ? ' &bull; ' + stop.direccion_referencia : '') + '</span>' +
-              '</div>' +
-              (stop.hora_disponible ? '<p class="text-[10px] text-indigo-700 font-bold bg-indigo-50 px-2 py-0.5 rounded-md inline-block">Horario: Hasta las ' + stop.hora_disponible + '</p>' : '') +
-            '</div>' +
-
-            '<div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100">' +
-              '<a href="' + linkWhatsApp + '" target="_blank" class="tap-active p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors">' +
-                '<svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.961.947 3.224.947 3.182 0 5.768-2.586 5.768-5.766 0-3.18-2.586-5.766-5.766-5.766zm9.969 5.828c0 5.518-4.482 10-10 10-1.748 0-3.385-.45-4.818-1.237l-5.182 1.409 1.433-5.068c-.89-1.488-1.433-3.232-1.433-5.104 0-5.518 4.482-10 10-10s10 4.482 10 10z"/></svg>' +
-                '<span>WhatsApp</span>' +
-              '</a>' +
-              mapActionHtml +
-              (isPending ?
-                '<button type="button" onclick="window.openDeliveryModal(\'' + stop.guiasIds + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ', \'' + stop.guiasLabel + '\', ' + stop.totalPiezas + ', ' + stop.totalPiesCubicos + ')" class="tap-active p-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-center font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs">' +
-                  '<svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>' +
-                  '<span>Entregar</span>' +
-                '</button>' : (isDelivered && stop.comprobante_url ?
-                '<button type="button" onclick="window.openLightbox(\'' + stop.comprobante_url + '\', \'Parada #' + stopNum + ' - ' + stop.destinatario + '\', \'Guías: ' + stop.guiasLabel + '\', \'' + firstGuiaId + '\')" class="tap-active p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer">' +
-                  '<svg class="w-3.5 h-3.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>' +
-                  '<span>Comprobante</span>' +
-                '</button>' :
-                '<button type="button" onclick="window.openDeliveryModal(\'' + stop.guiasIds + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ', \'' + stop.guiasLabel + '\', ' + stop.totalPiezas + ', ' + stop.totalPiesCubicos + ')" class="tap-active p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-center font-bold text-[11px] flex items-center justify-center gap-1.5 cursor-pointer">' +
-                  '<span>Actualizar</span>' +
-                '</button>'
-              )) +
-            '</div>' +
-          '</div>';
+          return renderStopCard(stop, index, false);
         }).join('');
       }
 
