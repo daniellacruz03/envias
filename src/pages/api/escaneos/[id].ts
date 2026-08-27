@@ -14,8 +14,8 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
         status: 401, headers: { 'Content-Type': 'application/json' }
       });
     }
-    if (user.rol !== 'Logistica' && user.rol !== 'Admin') {
-      return new Response(JSON.stringify({ success: false, message: 'Solo Logística y Administradores pueden aprobar o rechazar escaneos.' }), {
+    if (user.rol === 'Chofer') {
+      return new Response(JSON.stringify({ success: false, message: 'Solo personal administrativo y logística pueden aprobar o rechazar escaneos.' }), {
         status: 403, headers: { 'Content-Type': 'application/json' }
       });
     }

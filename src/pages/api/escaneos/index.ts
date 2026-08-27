@@ -13,7 +13,7 @@ export const GET: APIRoute = async ({ cookies }) => {
         status: 401, headers: { 'Content-Type': 'application/json' }
       });
     }
-    if (user.rol !== 'Logistica' && user.rol !== 'Admin') {
+    if (user.rol === 'Chofer') {
       return new Response(JSON.stringify({ success: false, message: 'Acceso denegado.' }), {
         status: 403, headers: { 'Content-Type': 'application/json' }
       });
@@ -165,7 +165,7 @@ export const DELETE: APIRoute = async ({ request, cookies }) => {
         status: 401, headers: { 'Content-Type': 'application/json' }
       });
     }
-    if (user.rol !== 'Logistica' && user.rol !== 'Admin') {
+    if (user.rol === 'Chofer') {
       return new Response(JSON.stringify({ success: false, message: 'Acceso denegado.' }), {
         status: 403, headers: { 'Content-Type': 'application/json' }
       });

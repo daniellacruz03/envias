@@ -3901,8 +3901,11 @@ const userInitials = currentUser.nombre
                   } else {
                     emptyEl?.classList.add('hidden');
                     if (listEl) {
-                      listEl.innerHTML = escaneosData.map((lote: any) => renderEscaneoLote(lote)).join('');
-                      listEl.classList.remove('hidden');
+                      const renderer = typeof renderEscaneoLote === 'function' ? renderEscaneoLote : (window as any).renderEscaneoLote;
+                      if (renderer) {
+                        listEl.innerHTML = escaneosData.map((lote: any) => renderer(lote)).join('');
+                        listEl.classList.remove('hidden');
+                      }
                     }
                     drawerFotosFlat = escaneosData.flatMap((lote: any) =>
                       (lote.fotos || []).filter((f: any) => f.estado === 'pendiente').map((f: any) => ({
@@ -4026,7 +4029,7 @@ const userInitials = currentUser.nombre
         filteredCountBadge.textContent = `${filtered.length} de ${shipments.length} guías`;
         updateKPIs();
 
-        if (filtered.length === 0 && currentViewMode !== 'historial') {
+        if (filtered.length === 0 && currentViewMode !== 'historial' && currentViewMode !== 'escaneos' && currentViewMode !== 'listin' && currentViewMode !== 'directorio') {
           tableBody.innerHTML = '';
           viewContainerCities.innerHTML = '';
           if (viewContainerDrivers) viewContainerDrivers.innerHTML = '';
@@ -4046,6 +4049,8 @@ const userInitials = currentUser.nombre
           renderClientLocationsSection();
         } else if (currentViewMode === 'directorio') {
           renderDirectorioView();
+        } else if (currentViewMode === 'escaneos') {
+          loadAndRenderEscaneos();
         } else if (currentViewMode === 'listin') {
           renderListinView();
         } else if (currentViewMode === 'historial') {
@@ -5733,12 +5738,13 @@ const userInitials = currentUser.nombre
         if (eventsAttached) return;
         eventsAttached = true;
 
-        // Switcher de Modos de Vista (6 Tabs Unificadas)
+        // Switcher de Modos de Vista (8 Tabs Unificadas)
         function updateTabStyles() {
           btnViewTable.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewCities.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewDrivers.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewMapa?.classList.remove('tab-btn-active', 'text-slate-600');
+          btnViewDirectorio?.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewEscaneos?.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewListin?.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewHistorial?.classList.remove('tab-btn-active', 'text-slate-600');
@@ -5747,6 +5753,7 @@ const userInitials = currentUser.nombre
           viewContainerCities.classList.add('hidden');
           viewContainerDrivers.classList.add('hidden');
           viewContainerMapa?.classList.add('hidden');
+          viewContainerDirectorio?.classList.add('hidden');
           viewContainerEscaneos?.classList.add('hidden');
           viewContainerListin?.classList.add('hidden');
           viewContainerHistorial?.classList.add('hidden');
@@ -5896,7 +5903,12 @@ const userInitials = currentUser.nombre
 
           try {
             const res = await fetch('/api/escaneos');
-            if (!res.ok) { loadingEl?.classList.add('hidden'); return; }
+            loadingEl?.classList.add('hidden');
+
+            if (!res.ok) {
+              emptyEl?.classList.remove('hidden');
+              return;
+            }
             const data = await res.json();
             escaneosData = data.data || [];
 
@@ -5912,15 +5924,17 @@ const userInitials = currentUser.nombre
               }
             }
 
-            loadingEl?.classList.add('hidden');
-
             if (escaneosData.length === 0) {
+              listEl?.classList.add('hidden');
               emptyEl?.classList.remove('hidden');
               return;
             }
 
-            listEl!.innerHTML = escaneosData.map((lote: any) => renderEscaneoLote(lote)).join('');
-            listEl?.classList.remove('hidden');
+            emptyEl?.classList.add('hidden');
+            if (listEl) {
+              listEl.innerHTML = escaneosData.map((lote: any) => renderEscaneoLote(lote)).join('');
+              listEl.classList.remove('hidden');
+            }
 
             // Construir lista plana de fotos pendientes para navegación del drawer
             drawerFotosFlat = escaneosData.flatMap((lote: any) =>
@@ -5936,6 +5950,8 @@ const userInitials = currentUser.nombre
             emptyEl?.classList.remove('hidden');
           }
         }
+
+        (window as any).loadAndRenderEscaneos = loadAndRenderEscaneos;
 
         (window as any).deleteEscaneoLote = async (loteId: string) => {
           if (!confirm(`¿Estás seguro de eliminar este lote y todas sus fotos asociadas?`)) return;
@@ -6053,6 +6069,8 @@ const userInitials = currentUser.nombre
             </div>
           `;
         }
+
+        (window as any).renderEscaneoLote = renderEscaneoLote;
 
         // Modal de revisión de escaneos
         const escaneoDrawer = document.getElementById('escaneo-drawer') as HTMLElement;
