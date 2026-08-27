@@ -1660,6 +1660,12 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           if (!stop.direccion_referencia && g.direccion_referencia) {
             stop.direccion_referencia = g.direccion_referencia;
           }
+          if (!stop.telefono_secundario && g.telefono_secundario) {
+            stop.telefono_secundario = g.telefono_secundario;
+          }
+          if (!stop.ciudad_destino && g.ciudad_destino) {
+            stop.ciudad_destino = g.ciudad_destino;
+          }
           if (!stop.hora_disponible && g.hora_disponible) {
             stop.hora_disponible = g.hora_disponible;
           }
@@ -1783,20 +1789,27 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         var destEscaped = (stop.destinatario || '').replace(/'/g, "\\'");
         var dirEscaped = (stop.direccion_referencia || '').replace(/'/g, "\\'");
         var firstGuiaId = stop.guias[0] ? stop.guias[0].id_guia : '';
-        var totalVolTag = stop.totalPiesCubicos > 0 ? (' &bull; ' + Number(stop.totalPiesCubicos).toFixed(2) + ' ft³') : '';
+        var totalVolTag = stop.totalPiesCubicos > 0 ? (' • ' + Number(stop.totalPiesCubicos).toFixed(2) + ' ft³') : '';
+        var zonaNombre = stop.ciudad_destino || 'Destino';
 
         return '<div class="bg-white rounded-3xl border border-slate-200/90 p-4 sm:p-5 shadow-sm space-y-3.5 transition-all hover:border-slate-300 ' + (isDelivered ? 'opacity-75 bg-slate-50/50' : '') + '">' +
           '<!-- Encabezado de la parada -->' +
           '<div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">' +
-            '<div class="flex items-center gap-2.5 min-w-0">' +
-              '<div class="w-8 h-8 rounded-full ' + (isDelivered ? 'bg-emerald-600' : isIncident ? 'bg-rose-600' : 'bg-slate-950') + ' text-white flex items-center justify-center font-extrabold text-xs shrink-0 shadow-xs">' +
+            '<div class="flex items-start gap-2.5 min-w-0">' +
+              '<div class="w-8 h-8 rounded-full ' + (isDelivered ? 'bg-emerald-600' : isIncident ? 'bg-rose-600' : 'bg-slate-950') + ' text-white flex items-center justify-center font-extrabold text-xs shrink-0 shadow-xs mt-0.5">' +
                 '#' + stopNum +
               '</div>' +
-              '<div class="min-w-0">' +
-                '<h4 class="font-extrabold text-xs sm:text-sm text-slate-950 uppercase tracking-tight leading-tight truncate">' +
-                  stop.destinatario +
-                '</h4>' +
-                '<p class="text-[11px] text-slate-500 font-semibold mt-0.5">' +
+              '<div class="min-w-0 space-y-1">' +
+                '<div class="flex items-center gap-1.5 flex-wrap">' +
+                  '<h4 class="font-extrabold text-xs sm:text-sm text-slate-950 uppercase tracking-tight leading-tight">' +
+                    stop.destinatario +
+                  '</h4>' +
+                  '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-900 text-white font-extrabold text-[10px] tracking-wide uppercase shadow-xs">' +
+                    '<svg class="w-3 h-3 text-indigo-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' +
+                    '<span>Zona: ' + zonaNombre + '</span>' +
+                  '</span>' +
+                '</div>' +
+                '<p class="text-[11px] text-slate-500 font-semibold">' +
                   stop.totalPiezas + ' pieza(s) totales' + totalVolTag +
                 '</p>' +
               '</div>' +
@@ -1806,12 +1819,12 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             '</div>' +
           '</div>' +
 
-          '<!-- Detalle: Guías + Dirección + Horario -->' +
-          '<div class="space-y-2 text-xs">' +
+          '<!-- Detalle de Datos: Guías + Teléfonos + Dirección + Horario / GPS -->' +
+          '<div class="space-y-2.5 text-xs">' +
             '<!-- Guías consolidadas del cliente -->' +
             '<div class="flex flex-wrap gap-1.5">' +
               stop.guias.map(function(g) {
-                var gVol = g.pies_cubicos ? ' &bull; ' + Number(g.pies_cubicos).toFixed(2) + ' ft³' : '';
+                var gVol = g.pies_cubicos ? ' • ' + Number(g.pies_cubicos).toFixed(2) + ' ft³' : '';
                 var isGDeliv = g.estado === 'Entregado';
                 return '<span class="inline-flex items-center gap-1 font-mono text-[11px] font-bold px-2.5 py-1 rounded-xl bg-slate-50 text-slate-700 border border-slate-200/80">' +
                   '#' + g.id_guia + ' (' + (g.piezas || 1) + ' pza' + gVol + ')' +
@@ -1820,14 +1833,25 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               }).join('') +
             '</div>' +
 
-            '<!-- Dirección de Entrega -->' +
-            '<div class="flex items-start gap-1.5 text-slate-700 font-medium text-xs leading-relaxed">' +
-              '<span class="font-bold text-slate-400 shrink-0">@</span>' +
-              '<span>' + (stop.direccion_referencia || stop.ciudad_destino || 'Ubicación confirmada') + '</span>' +
+            '<!-- Teléfono(s) de Contacto -->' +
+            '<div class="flex items-center gap-1.5 text-slate-800 text-xs">' +
+              '<svg class="w-3.5 h-3.5 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>' +
+              '<span class="font-bold font-mono text-slate-900">' + (stop.telefono_principal || 'Sin teléfono') + '</span>' +
+              (stop.telefono_secundario ? ('<span class="text-slate-400 font-mono">/ ' + stop.telefono_secundario + '</span>') : '') +
             '</div>' +
 
-            '<!-- Horario -->' +
-            (stop.hora_disponible ? '<div class="pt-0.5"><span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-bold">Horario: Hasta las ' + stop.hora_disponible + '</span></div>' : '') +
+            '<!-- Dirección de Entrega -->' +
+            '<div class="flex items-start gap-1.5 text-slate-800 font-medium text-xs leading-relaxed">' +
+              '<span class="font-bold text-slate-400 shrink-0">@</span>' +
+              '<span>' + (stop.direccion_referencia || 'Ubicación confirmada') + '</span>' +
+            '</div>' +
+
+            '<!-- Badges de Especificaciones (Horario, Recibido por, GPS) -->' +
+            '<div class="flex flex-wrap items-center gap-1.5 pt-0.5">' +
+              (stop.hora_disponible ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-bold"><svg class="w-3 h-3 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Horario: Hasta las ' + stop.hora_disponible + '</span>' : '') +
+              (stop.recibido_por ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold"><svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Recibido: ' + stop.recibido_por + '</span>' : '') +
+              (hasGps ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>GPS Confirmado</span>' : '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-xl bg-slate-100 text-slate-500 border border-slate-200 text-[10px] font-semibold">Sin GPS</span>') +
+            '</div>' +
           '</div>' +
 
           '<!-- Botones de Acción (Acciones Rápidas + Botón de Confirmación Principal) -->' +
