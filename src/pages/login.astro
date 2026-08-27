@@ -183,6 +183,43 @@ Astro.response.headers.set('Expires', '0');
           </div>
         </div>
 
+        <!-- Comprobante / Foto de Entrega tomada por el Chofer -->
+        <div id="result-comprobante-container" class="hidden bg-white rounded-2xl p-3.5 border border-slate-200/90 space-y-2.5 shadow-2xs animate-fadeIn">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>Foto Comprobante de Entrega</span>
+            </span>
+            <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold">
+              Foto Chofer
+            </span>
+          </div>
+
+          <div class="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-100/50 group cursor-pointer" id="result-comprobante-preview-btn">
+            <img 
+              id="result-comprobante-img" 
+              src="" 
+              alt="Foto Comprobante de Entrega" 
+              class="w-full max-h-56 object-contain rounded-xl bg-white transition-transform duration-200 group-hover:scale-[1.02]" 
+              loading="lazy"
+            />
+            <div class="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur-xs text-white text-[10px] font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm pointer-events-none">
+              <svg class="w-3.5 h-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span>Toca para ampliar</span>
+            </div>
+          </div>
+
+          <div id="result-recibido-container" class="hidden text-xs text-slate-700 font-semibold pt-1 border-t border-slate-100 flex items-center justify-between">
+            <span class="text-slate-500">Recibido por:</span>
+            <span class="font-bold text-slate-900" id="result-recibido-text">---</span>
+          </div>
+        </div>
+
       </div>
 
     </section>
@@ -276,6 +313,24 @@ Astro.response.headers.set('Expires', '0');
       </form>
     </section>
 
+    <!-- Modal Lightbox para Ampliar Comprobante -->
+    <div id="tracking-lightbox-modal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md hidden items-center justify-center p-3 sm:p-6 animate-fadeIn">
+      <div class="relative max-w-2xl w-full max-h-[90vh] flex flex-col items-center justify-center space-y-3">
+        <div class="flex items-center justify-between w-full text-white px-1">
+          <div class="min-w-0">
+            <h4 class="text-sm font-bold truncate" id="tracking-lightbox-title">Comprobante de Entrega</h4>
+            <p class="text-[11px] text-slate-400 truncate" id="tracking-lightbox-subtitle">Envías C.A.</p>
+          </div>
+          <button type="button" id="tracking-lightbox-close-btn" class="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors cursor-pointer">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="w-full flex items-center justify-center overflow-hidden rounded-2xl bg-black/40 border border-white/10 p-1">
+          <img id="tracking-lightbox-img" src="" alt="Comprobante ampliado" class="max-h-[75vh] w-auto max-w-full object-contain rounded-xl" />
+        </div>
+      </div>
+    </div>
+
     <!-- Pie de página -->
     <footer class="mt-6 text-center border-t border-slate-100 pt-4">
       <p class="text-[11px] text-slate-400">
@@ -309,10 +364,43 @@ Astro.response.headers.set('Expires', '0');
   const resultGpsStatus = document.getElementById('result-gps-status') as HTMLElement;
   const resultAddress = document.getElementById('result-address') as HTMLElement;
 
+  const resultComprobanteContainer = document.getElementById('result-comprobante-container') as HTMLElement;
+  const resultComprobanteImg = document.getElementById('result-comprobante-img') as HTMLImageElement;
+  const resultComprobantePreviewBtn = document.getElementById('result-comprobante-preview-btn') as HTMLElement;
+  const resultRecibidoContainer = document.getElementById('result-recibido-container') as HTMLElement;
+  const resultRecibidoText = document.getElementById('result-recibido-text') as HTMLElement;
+
+  const trackingLightboxModal = document.getElementById('tracking-lightbox-modal') as HTMLElement;
+  const trackingLightboxImg = document.getElementById('tracking-lightbox-img') as HTMLImageElement;
+  const trackingLightboxTitle = document.getElementById('tracking-lightbox-title') as HTMLElement;
+  const trackingLightboxSubtitle = document.getElementById('tracking-lightbox-subtitle') as HTMLElement;
+  const trackingLightboxCloseBtn = document.getElementById('tracking-lightbox-close-btn') as HTMLButtonElement;
+
   const step1 = document.getElementById('step-1') as HTMLElement;
   const step2 = document.getElementById('step-2') as HTMLElement;
   const step3 = document.getElementById('step-3') as HTMLElement;
   const step4 = document.getElementById('step-4') as HTMLElement;
+
+  // Manejo de Ampliación de Foto de Comprobante (Lightbox)
+  resultComprobantePreviewBtn?.addEventListener('click', () => {
+    if (!resultComprobanteImg?.src) return;
+    if (trackingLightboxImg) trackingLightboxImg.src = resultComprobanteImg.src;
+    if (trackingLightboxTitle) trackingLightboxTitle.textContent = `Comprobante de Entrega ${resultGuideId?.textContent || ''}`;
+    if (trackingLightboxSubtitle) trackingLightboxSubtitle.textContent = `${resultRecipient?.textContent || ''} • ${resultCity?.textContent || ''}`;
+    trackingLightboxModal?.classList.remove('hidden');
+    trackingLightboxModal?.classList.add('flex');
+  });
+
+  function closeTrackingLightbox() {
+    trackingLightboxModal?.classList.add('hidden');
+    trackingLightboxModal?.classList.remove('flex');
+    if (trackingLightboxImg) trackingLightboxImg.src = '';
+  }
+
+  trackingLightboxCloseBtn?.addEventListener('click', closeTrackingLightbox);
+  trackingLightboxModal?.addEventListener('click', (e) => {
+    if (e.target === trackingLightboxModal) closeTrackingLightbox();
+  });
 
   // Elementos de Login
   const loginForm = document.getElementById('login-form') as HTMLFormElement;
@@ -453,6 +541,21 @@ Astro.response.headers.set('Expires', '0');
       highlightStep(step2);
       highlightStep(step3);
       highlightStep(step4);
+    }
+
+    // Foto / Comprobante de Entrega del Chofer
+    if (guia.comprobante_url) {
+      resultComprobanteImg.src = guia.comprobante_url;
+      resultComprobanteContainer.classList.remove('hidden');
+      if (guia.recibido_por) {
+        resultRecibidoText.textContent = guia.recibido_por;
+        resultRecibidoContainer.classList.remove('hidden');
+      } else {
+        resultRecibidoContainer.classList.add('hidden');
+      }
+    } else {
+      resultComprobanteContainer.classList.add('hidden');
+      resultComprobanteImg.src = '';
     }
 
     trackingResultCard.classList.remove('hidden');
