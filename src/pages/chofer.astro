@@ -1504,6 +1504,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             modalIncidentSubmitBtn.disabled = false;
           }
         });
+      }
 
       // Selección rápida de motivo de incidencia
       document.querySelectorAll('#incident-reasons-grid .incident-opt').forEach(function(btn) {
@@ -1612,6 +1613,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
 
         // Determinar estado consolidado y metadatos
         stopsOrder.forEach(function(stop) {
+          stop.totalGuias = stop.guias.length;
           var allDelivered = stop.guias.length > 0 && stop.guias.every(function(g) { return g.estado === 'Entregado'; });
           var allIncidents = stop.guias.length > 0 && stop.guias.every(function(g) { return g.estado === 'No entregado'; });
           var anyDelivered = stop.guias.some(function(g) { return g.estado === 'Entregado'; });
