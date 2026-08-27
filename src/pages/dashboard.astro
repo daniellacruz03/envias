@@ -580,7 +580,7 @@ const userInitials = currentUser.nombre
             <select
               id="filter-estado"
               aria-label="Filtrar por estado de entrega"
-              class="text-xs bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer shadow-2xs min-w-[160px]"
+              class="text-xs bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer shadow-2xs min-w-[150px]"
             >
               <option value="ALL">Todos los Estados</option>
               <option value="Por contactar">Por contactar</option>
@@ -588,6 +588,17 @@ const userInitials = currentUser.nombre
               <option value="En ruta">En ruta</option>
               <option value="Entregado">Entregado</option>
               <option value="No entregado">No entregado / Incidencia</option>
+            </select>
+
+            <!-- Filtro por Listín -->
+            <select
+              id="filter-listin"
+              aria-label="Filtrar por listín"
+              class="text-xs bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer font-medium shadow-2xs min-w-[150px]"
+            >
+              <option value="ALL">Listín: Todos</option>
+              <option value="EN_LISTIN">En Listín (Despachadas)</option>
+              <option value="SIN_LISTIN">Sin Listín (Pendientes)</option>
             </select>
           </div>
         </div>
@@ -2852,6 +2863,7 @@ const userInitials = currentUser.nombre
       const filterCiudad = document.getElementById('filter-ciudad') as HTMLSelectElement;
       const filterEmpresa = document.getElementById('filter-empresa') as HTMLSelectElement;
       const filterEstado = document.getElementById('filter-estado') as HTMLSelectElement;
+      const filterListin = document.getElementById('filter-listin') as HTMLSelectElement;
       const filteredCountBadge = document.getElementById('filtered-count-badge') as HTMLElement;
       const emptyState = document.getElementById('empty-state') as HTMLElement;
 
@@ -3637,6 +3649,7 @@ const userInitials = currentUser.nombre
         const cityFilter = filterCiudad.value;
         const statusFilter = filterEstado.value;
         const empresaFilter = filterEmpresa ? filterEmpresa.value : 'ALL';
+        const listinFilter = filterListin ? filterListin.value : 'ALL';
 
         return shipments.filter(item => {
           const matchQuery = (item.id_guia && item.id_guia.toLowerCase().includes(query)) || 
@@ -3648,8 +3661,10 @@ const userInitials = currentUser.nombre
           const matchCity = cityFilter === 'ALL' || item.ciudad_destino === cityFilter;
           const matchStatus = statusFilter === 'ALL' || item.estado === statusFilter;
           const matchEmpresa = empresaFilter === 'ALL' || (item.empresa && item.empresa.trim().toLowerCase() === empresaFilter.trim().toLowerCase());
+          const isInListin = Boolean((item.orden_ruta && item.orden_ruta > 0) || item.estado === 'En ruta' || item.estado === 'Entregado');
+          const matchListin = listinFilter === 'ALL' || (listinFilter === 'EN_LISTIN' ? isInListin : !isInListin);
 
-          return matchQuery && matchCity && matchStatus && matchEmpresa;
+          return matchQuery && matchCity && matchStatus && matchEmpresa && matchListin;
         });
       }
 
@@ -3771,15 +3786,25 @@ const userInitials = currentUser.nombre
           <tr class="hover:bg-slate-50/70 transition-colors group">
             <!-- Guía & Piezas & Empresa -->
             <td class="py-3.5 px-4">
-              <div class="flex items-center gap-2 flex-wrap">
+              <div class="flex items-center gap-1.5 flex-wrap">
                 <a href="/confirmar?guia=${encodeURIComponent(item.id_guia)}" target="_blank" title="Abrir portal del cliente" class="font-mono font-bold text-slate-900 hover:text-indigo-600 underline-offset-2 hover:underline">
                   #${item.id_guia}
                 </a>
-                ${item.orden_ruta && item.orden_ruta > 0 ? `
-                  <span class="text-[10px] font-mono font-bold bg-indigo-100 text-indigo-800 px-1.5 py-0.2 rounded border border-indigo-200" title="Parada #${item.orden_ruta} en la ruta">
-                    #${item.orden_ruta}
+                ${(item.orden_ruta && item.orden_ruta > 0) || item.estado === 'En ruta' || item.estado === 'Entregado' ? `
+                  <span class="inline-flex items-center gap-1 text-[10px] font-mono font-extrabold px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs" title="Guía en listín / despachada (${item.orden_ruta ? `Parada #${item.orden_ruta}` : 'En ruta'})">
+                    <svg class="w-3 h-3 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>En listín${item.orden_ruta ? ` #${item.orden_ruta}` : ''}</span>
                   </span>
-                ` : ''}
+                ` : `
+                  <span class="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200" title="Guía pendiente por incluir en listín de despacho">
+                    <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Sin listín</span>
+                  </span>
+                `}
                 ${item.empresa ? `
                   <span class="text-[10px] font-bold px-1.5 py-0.2 rounded-md bg-purple-50 text-purple-700 border border-purple-200" title="Empresa / Courier">
                     ${item.empresa}
@@ -4246,10 +4271,21 @@ const userInitials = currentUser.nombre
                             <td class="py-3 px-4">
                               <div class="flex items-center gap-1.5 flex-wrap">
                                 ${clientGuias.map(g => `
-                                  <div class="inline-flex items-center gap-1 bg-slate-100/90 hover:bg-slate-200/90 px-2 py-0.5 rounded-lg border border-slate-200 transition-colors">
+                                  <div class="inline-flex items-center gap-1.5 bg-slate-100/90 hover:bg-slate-200/90 px-2 py-0.5 rounded-lg border border-slate-200 transition-colors">
                                     <a href="/confirmar?guia=${encodeURIComponent(g.id_guia)}" target="_blank" class="font-mono font-bold text-slate-900 hover:text-indigo-600 text-xs underline-offset-2 hover:underline">
                                       #${g.id_guia}
                                     </a>
+                                    ${(g.orden_ruta && g.orden_ruta > 0) || g.estado === 'En ruta' || g.estado === 'Entregado' ? `
+                                      <span class="inline-flex items-center text-[9px] font-mono font-extrabold px-1.5 py-0.2 rounded bg-emerald-100/80 text-emerald-800 border border-emerald-200" title="En listín (${g.orden_ruta ? `Parada #${g.orden_ruta}` : 'En ruta'})">
+                                        <svg class="w-2.5 h-2.5 text-emerald-600 mr-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                        <span>Listín${g.orden_ruta ? ` #${g.orden_ruta}` : ''}</span>
+                                      </span>
+                                    ` : `
+                                      <span class="inline-flex items-center text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-200/70 text-slate-500 border border-slate-200" title="Sin listín">
+                                        <svg class="w-2.5 h-2.5 text-slate-400 mr-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                        <span>Sin listín</span>
+                                      </span>
+                                    `}
                                     ${g.empresa ? `
                                       <span class="text-[9px] font-bold px-1 py-0.2 rounded bg-purple-50 text-purple-700 border border-purple-200">
                                         ${g.empresa}
@@ -6014,6 +6050,7 @@ const userInitials = currentUser.nombre
         filterCiudad.addEventListener('change', renderViews);
         filterEmpresa?.addEventListener('change', renderViews);
         filterEstado.addEventListener('change', renderViews);
+        filterListin?.addEventListener('change', renderViews);
       }
 
       // Métodos globales para interactividad en tabla (window)
