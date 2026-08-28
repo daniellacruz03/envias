@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { ENVIAS_LOGO_BASE64 } from './logoBase64';
 
 export interface ListinGuiaItem {
   id_guia: string;
@@ -46,29 +47,37 @@ export function renderListinSheetToDoc(
   const contentWidth = pageWidth - margin * 2;
 
   // ----------------------------------------------------
-  // 1. HEADER (LOGO + IDENTIFICACIÓN)
+  // 1. HEADER (LOGO OFICIAL + IDENTIFICACIÓN)
   // ----------------------------------------------------
-  // Logo Box 'EN'
-  doc.setFillColor(15, 23, 42); // #0f172a
-  doc.roundedRect(margin, margin, 12, 12, 1.5, 1.5, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.text('EN', margin + 6, margin + 8.5, { align: 'center' });
+  // Logo Oficial de Envías C.A.
+  try {
+    const logoW = 32;
+    const logoH = 13.16; // aspect ratio 360/148 = 2.43
+    doc.addImage(ENVIAS_LOGO_BASE64, 'PNG', margin, margin - 0.5, logoW, logoH, undefined, 'FAST');
+  } catch (e) {
+    // Fallback
+    doc.setFillColor(15, 23, 42);
+    doc.roundedRect(margin, margin, 12, 12, 1.5, 1.5, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.text('EN', margin + 6, margin + 8.5, { align: 'center' });
+  }
 
-  // Título de Empresa
+  // Título de Empresa y Subtítulos
+  const textX = margin + 34;
   doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(16);
-  doc.text('ENVÍAS C.A.', margin + 15, margin + 4.5);
+  doc.setFontSize(15);
+  doc.text('ENVÍAS C.A.', textX, margin + 4.5);
 
   doc.setFontSize(7.5);
   doc.setTextColor(30, 41, 59);
-  doc.text('TRANSPORTE Y ENCOMIENDAS', margin + 15, margin + 8);
+  doc.text('TRANSPORTE Y ENCOMIENDAS', textX, margin + 8);
 
   doc.setFontSize(6.5);
   doc.setTextColor(71, 85, 105);
-  doc.text('Hub Central Barquisimeto • Entregas Nacionales', margin + 15, margin + 11.5);
+  doc.text('Hub Central Barquisimeto • Entregas Nacionales', textX, margin + 11.5);
 
   // ----------------------------------------------------
   // 2. CUADRO DE METADATOS (DERECHA SUPERIOR)
