@@ -4537,7 +4537,6 @@ const userInitials = currentUser.nombre
       }
 
       // Helper para calcular semana ISO e información de lote
-      // Helper para calcular semana ISO e información de lote
       function getGuiaWeekInfo(g: GuiaRow): { week: number; year: number; isCurrentWeek: boolean; isPastPending: boolean; loteCode: string; label: string } {
         const date = g.created_at ? new Date(g.created_at) : new Date();
         const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -4557,25 +4556,8 @@ const userInitials = currentUser.nombre
 
         const isCurrentWeek = (year === nowYear && weekNo === nowWeek);
         
-        // Comprobar si fue registrada en una fecha anterior a hoy
-        const todayStr = now.toISOString().split('T')[0];
-        const guiaDateStr = g.created_at ? new Date(g.created_at).toISOString().split('T')[0] : todayStr;
-        const isPastDate = guiaDateStr < todayStr;
-
-        // Comprobar si pertenece a un lote distinto al lote activo actual
-        const isDifferentLot = Boolean(activeCargaLote && g.lote_despacho && g.lote_despacho.trim().toUpperCase() !== activeCargaLote.trim().toUpperCase());
-
-        // Es rezagada si aún no está entregada y:
-        // 1. Fue marcada como "No entregado" (incidencia de despacho anterior), O
-        // 2. Es de una semana anterior, O
-        // 3. Es de una fecha anterior a hoy, O
-        // 4. Pertenece a un lote anterior distinto al activo
-        const isPastPending = (g.estado !== 'Entregado') && (
-          g.estado === 'No entregado' ||
-          !isCurrentWeek ||
-          isPastDate ||
-          isDifferentLot
-        );
+        // Rezagadas: Encomiendas marcadas estrictamente como "No entregado"
+        const isPastPending = (g.estado === 'No entregado');
 
         const weekFormatted = weekNo < 10 ? '0' + weekNo : weekNo.toString();
         const originSlug = (g.ruta_origen || 'BRM').replace(/[^A-Z0-9]/gi, '').slice(0, 3).toUpperCase() || 'BRM';
@@ -4632,7 +4614,7 @@ const userInitials = currentUser.nombre
             activeLoteBadge.textContent = 'Carga Semana Actual';
             activeLoteBadge.className = 'text-[10px] font-mono font-bold bg-blue-500 text-white border border-blue-400 px-2.5 py-0.5 rounded-full shadow-2xs';
           } else if (currentLoteFilter === 'PENDING_PAST') {
-            activeLoteBadge.textContent = 'Pendientes Rezagadas';
+            activeLoteBadge.textContent = 'No Entregadas (Rezagadas)';
             activeLoteBadge.className = 'text-[10px] font-mono font-black bg-amber-500 text-slate-950 border border-amber-300 px-2.5 py-0.5 rounded-full shadow-2xs animate-pulse';
           } else {
             activeLoteBadge.textContent = currentLoteFilter;
@@ -4650,7 +4632,7 @@ const userInitials = currentUser.nombre
         shipments.forEach(g => {
           const info = getGuiaWeekInfo(g);
           if (info.isCurrentWeek) currentWeekCount++;
-          if (info.isPastPending) pastPendingCount++;
+          if (g.estado === 'No entregado') pastPendingCount++;
           if (g.estado === 'Entregado') deliveredReadyCount++;
 
           const code = g.lote_despacho || info.loteCode;
@@ -4666,7 +4648,7 @@ const userInitials = currentUser.nombre
           let opts = `
             <option value="ALL">Todos los Lotes (${shipments.length} guías)</option>
             <option value="CURRENT_WEEK">Carga Semana Actual (${currentWeekCount} guías)</option>
-            <option value="PENDING_PAST">Pendientes Rezagadas (${pastPendingCount} colas)</option>
+            <option value="PENDING_PAST">No Entregadas / Rezagadas (${pastPendingCount} guías)</option>
           `;
           const sortedLotes = Object.keys(loteMap).sort().reverse();
           if (sortedLotes.length > 0) {
@@ -4697,7 +4679,7 @@ const userInitials = currentUser.nombre
           let listinOpts = `
             <option value="ALL">Todos los Lotes (Consolidado - ${shipments.length} guías)</option>
             <option value="CURRENT_WEEK">Carga Semana Actual (${currentWeekCount} guías)</option>
-            <option value="PENDING_PAST">Pendientes Rezagadas (${pastPendingCount} colas)</option>
+            <option value="PENDING_PAST">No Entregadas / Rezagadas (${pastPendingCount} guías)</option>
           `;
           const sortedLotes = Object.keys(loteMap).sort().reverse();
           if (sortedLotes.length > 0) {
