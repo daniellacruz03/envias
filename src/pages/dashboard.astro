@@ -1073,13 +1073,30 @@ const userInitials = currentUser.nombre
           <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-wrap items-center justify-between gap-4">
             <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
               <!-- Selector de Chofer -->
-              <div class="space-y-1 min-w-[170px] flex-1 sm:flex-none">
+              <div class="space-y-1 min-w-[160px] flex-1 sm:flex-none">
                 <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Chofer Asignado</label>
                 <select
                   id="listin-driver-select"
                   class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer"
                 >
                   <option value="ALL">Todos los Choferes / Flota Central</option>
+                </select>
+              </div>
+
+              <!-- Selector de Lote / Relación de Despacho -->
+              <div class="space-y-1 min-w-[200px] flex-1 sm:flex-none">
+                <div class="flex items-center justify-between">
+                  <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Lote / Relación</label>
+                  <span id="listin-lote-count-badge" class="text-[10px] font-mono text-indigo-600 font-extrabold">Todos</span>
+                </div>
+                <select
+                  id="listin-lote-select"
+                  aria-label="Filtrar listín por lote"
+                  class="w-full text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer"
+                >
+                  <option value="ALL">Todos los Lotes (Consolidado)</option>
+                  <option value="CURRENT_WEEK">Carga Semana Actual</option>
+                  <option value="PENDING_PAST">Pendientes Rezagadas</option>
                 </select>
               </div>
 
@@ -4644,6 +4661,43 @@ const userInitials = currentUser.nombre
         const lotesDatalist = document.getElementById('lotes-datalist');
         if (lotesDatalist) {
           lotesDatalist.innerHTML = Object.keys(loteMap).sort().reverse().map(l => `<option value="${l}">`).join('');
+        }
+
+        // Sincronizar selector de lote en el módulo de Listín de Despacho
+        const listinLoteSelect = document.getElementById('listin-lote-select') as HTMLSelectElement;
+        const listinLoteCountBadge = document.getElementById('listin-lote-count-badge');
+        if (listinLoteSelect) {
+          const prevListinVal = listinLoteSelect.value;
+          let listinOpts = `
+            <option value="ALL">Todos los Lotes (Consolidado - ${shipments.length} guías)</option>
+            <option value="CURRENT_WEEK">Carga Semana Actual (${currentWeekCount} guías)</option>
+            <option value="PENDING_PAST">Pendientes Rezagadas (${pastPendingCount} colas)</option>
+          `;
+          const sortedLotes = Object.keys(loteMap).sort().reverse();
+          if (sortedLotes.length > 0) {
+            listinOpts += `<optgroup label="Lotes / Manifiestos Detectados">`;
+            sortedLotes.forEach(lote => {
+              listinOpts += `<option value="${lote}">${lote} (${loteMap[lote]} guías)</option>`;
+            });
+            listinOpts += `</optgroup>`;
+          }
+          listinLoteSelect.innerHTML = listinOpts;
+
+          if (prevListinVal && (prevListinVal === 'ALL' || prevListinVal === 'CURRENT_WEEK' || prevListinVal === 'PENDING_PAST' || loteMap[prevListinVal])) {
+            listinLoteSelect.value = prevListinVal;
+          } else if (activeCargaLote && loteMap[activeCargaLote]) {
+            listinLoteSelect.value = activeCargaLote;
+          } else {
+            listinLoteSelect.value = 'ALL';
+          }
+
+          if (listinLoteCountBadge) {
+            const currentSelected = listinLoteSelect.value;
+            if (currentSelected === 'ALL') listinLoteCountBadge.textContent = `${shipments.length} guías`;
+            else if (currentSelected === 'CURRENT_WEEK') listinLoteCountBadge.textContent = `${currentWeekCount} guías`;
+            else if (currentSelected === 'PENDING_PAST') listinLoteCountBadge.textContent = `${pastPendingCount} guías`;
+            else listinLoteCountBadge.textContent = `${loteMap[currentSelected] || 0} guías`;
+          }
         }
 
         if (modalGestionLotes && !modalGestionLotes.classList.contains('hidden')) {
@@ -10014,10 +10068,28 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
       function getListinSourceShipments(): GuiaRow[] {
         const driverFilter = listinDriverSelect ? listinDriverSelect.value : 'ALL';
+        const listinLoteSelect = document.getElementById('listin-lote-select') as HTMLSelectElement;
+        const loteFilter = listinLoteSelect ? listinLoteSelect.value : 'ALL';
+
         return shipments.filter(g => {
+          // Filtro por Chofer
           if (driverFilter !== 'ALL') {
             if (String(g.chofer_asignado_id) !== driverFilter) return false;
           }
+
+          // Filtro por Lote de Despacho / Relación
+          if (loteFilter === 'CURRENT_WEEK') {
+            const info = getGuiaWeekInfo(g);
+            if (!info.isCurrentWeek) return false;
+          } else if (loteFilter === 'PENDING_PAST') {
+            const info = getGuiaWeekInfo(g);
+            if (!info.isPastPending) return false;
+          } else if (loteFilter !== 'ALL') {
+            const info = getGuiaWeekInfo(g);
+            const gCode = g.lote_despacho || info.loteCode;
+            if (gCode !== loteFilter && g.lote_despacho !== loteFilter) return false;
+          }
+
           return true;
         });
       }
@@ -10802,6 +10874,16 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       };
 
       // Listeners de Cambios de Filtros y Configuración
+      const listinLoteSelect = document.getElementById('listin-lote-select') as HTMLSelectElement;
+      listinLoteSelect?.addEventListener('change', () => {
+        const listinLoteCountBadge = document.getElementById('listin-lote-count-badge');
+        if (listinLoteCountBadge) {
+          const srcShipments = getListinSourceShipments();
+          listinLoteCountBadge.textContent = `${srcShipments.length} guías`;
+        }
+        renderListinView();
+      });
+
       listinDriverSelect?.addEventListener('change', () => {
         renderListinView();
       });
