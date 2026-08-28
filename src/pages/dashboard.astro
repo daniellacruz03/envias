@@ -10421,10 +10421,11 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           if (previewListinCurrentBadge) previewListinCurrentBadge.textContent = `ZONAS COMBINADAS (${listinSelectedZones.size})`;
         }
 
-        // Calcular filas del formato dual: mínimo 22 filas para llenar la página vertical como el listín físico
-        const rowCount = Math.max(Math.ceil(orderedActiveGuias.length / 2), 22);
-        const leftGuias = orderedActiveGuias.slice(0, rowCount);
-        const rightGuias = orderedActiveGuias.slice(rowCount, rowCount * 2);
+        // Calcular filas del formato dual: distribuir equitativamente entre columna izquierda y derecha
+        const half = Math.ceil(orderedActiveGuias.length / 2);
+        const leftGuias = orderedActiveGuias.slice(0, half);
+        const rightGuias = orderedActiveGuias.slice(half);
+        const rowCount = Math.max(half, 20);
 
         let tableHtml = '';
         for (let i = 0; i < rowCount; i++) {
@@ -10827,135 +10828,158 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         isMultiPage?: boolean;
       }): string {
         const { cityName, zoneGuias, driverName, placa, fecha, totalGuias, totalPiezas, totalVolumen, totalZonas, isMultiPage } = params;
+
+        // Capacidad por página: 20 filas por columna = 40 guías por hoja
+        const MAX_PER_PAGE = 40;
+        const totalSheets = Math.max(1, Math.ceil(zoneGuias.length / MAX_PER_PAGE));
         
-        // 22 filas llenan verticalmente la hoja carta de forma equilibrada
-        const rowCount = Math.max(Math.ceil(zoneGuias.length / 2), 22);
-        const leftGuias = zoneGuias.slice(0, rowCount);
-        const rightGuias = zoneGuias.slice(rowCount, rowCount * 2);
+        let allSheetsHtml = '';
 
-        let tableRows = '';
-        for (let i = 0; i < rowCount; i++) {
-          const left = leftGuias[i];
-          const right = rightGuias[i];
+        for (let sheetIdx = 0; sheetIdx < totalSheets; sheetIdx++) {
+          const sheetGuias = zoneGuias.slice(sheetIdx * MAX_PER_PAGE, (sheetIdx + 1) * MAX_PER_PAGE);
+          const half = Math.ceil(sheetGuias.length / 2);
+          const leftGuias = sheetGuias.slice(0, half);
+          const rightGuias = sheetGuias.slice(half);
 
-          const leftVol = left && left.pies_cubicos ? Number(left.pies_cubicos).toFixed(2) : (left ? '-' : '');
-          const rightVol = right && right.pies_cubicos ? Number(right.pies_cubicos).toFixed(2) : (right ? '-' : '');
+          // 20 filas por hoja para que el alto total sea de ~980px y quepa 100% en hoja Carta sin desbordar
+          const ROWS_PER_PAGE = 20;
+          let tableRows = '';
 
-          tableRows += `
-            <tr style="height: 25px;" class="border-b border-black text-black">
-              <td style="width: 15%; padding: 2px 4px; border-right: 1px solid #000; font-family: monospace; font-weight: 900; text-align: center; font-size: 11px;">${left ? left.id_guia : '&nbsp;'}</td>
-              <td style="width: 7%; padding: 2px 2px; border-right: 1px solid #000; font-weight: bold; text-align: center; font-size: 11px;">${left ? (left.piezas || 1) : '&nbsp;'}</td>
-              <td style="width: 8%; padding: 2px 2px; border-right: 1px solid #000; font-family: monospace; font-weight: bold; text-align: center; font-size: 10px; color: #1e293b;">${left ? leftVol : '&nbsp;'}</td>
-              <td style="width: 20%; padding: 2px 6px; border-right: 2px solid #000; font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px;">${left ? left.ciudad_destino : '&nbsp;'}</td>
-              <td style="width: 15%; padding: 2px 4px; border-right: 1px solid #000; font-family: monospace; font-weight: 900; text-align: center; font-size: 11px;">${right ? right.id_guia : '&nbsp;'}</td>
-              <td style="width: 7%; padding: 2px 2px; border-right: 1px solid #000; font-weight: bold; text-align: center; font-size: 11px;">${right ? (right.piezas || 1) : '&nbsp;'}</td>
-              <td style="width: 8%; padding: 2px 2px; border-right: 1px solid #000; font-family: monospace; font-weight: bold; text-align: center; font-size: 10px; color: #1e293b;">${right ? rightVol : '&nbsp;'}</td>
-              <td style="width: 20%; padding: 2px 6px; font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px;">${right ? right.ciudad_destino : '&nbsp;'}</td>
-            </tr>
+          for (let i = 0; i < ROWS_PER_PAGE; i++) {
+            const left = leftGuias[i];
+            const right = rightGuias[i];
+
+            const leftVol = left && left.pies_cubicos ? Number(left.pies_cubicos).toFixed(2) : (left ? '-' : '');
+            const rightVol = right && right.pies_cubicos ? Number(right.pies_cubicos).toFixed(2) : (right ? '-' : '');
+
+            tableRows += `
+              <tr style="height: 22px; border-bottom: 1px solid #000; color: #000;">
+                <td style="width: 15%; padding: 2px 4px; border-right: 1px solid #000; font-family: monospace; font-weight: 900; text-align: center; font-size: 11px;">${left ? left.id_guia : '&nbsp;'}</td>
+                <td style="width: 7%; padding: 2px 2px; border-right: 1px solid #000; font-weight: bold; text-align: center; font-size: 11px;">${left ? (left.piezas || 1) : '&nbsp;'}</td>
+                <td style="width: 8%; padding: 2px 2px; border-right: 1px solid #000; font-family: monospace; font-weight: bold; text-align: center; font-size: 10px; color: #1e293b;">${left ? leftVol : '&nbsp;'}</td>
+                <td style="width: 20%; padding: 2px 6px; border-right: 2px solid #000; font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px;">${left ? left.ciudad_destino : '&nbsp;'}</td>
+                <td style="width: 15%; padding: 2px 4px; border-right: 1px solid #000; font-family: monospace; font-weight: 900; text-align: center; font-size: 11px;">${right ? right.id_guia : '&nbsp;'}</td>
+                <td style="width: 7%; padding: 2px 2px; border-right: 1px solid #000; font-weight: bold; text-align: center; font-size: 11px;">${right ? (right.piezas || 1) : '&nbsp;'}</td>
+                <td style="width: 8%; padding: 2px 2px; border-right: 1px solid #000; font-family: monospace; font-weight: bold; text-align: center; font-size: 10px; color: #1e293b;">${right ? rightVol : '&nbsp;'}</td>
+                <td style="width: 20%; padding: 2px 6px; font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px;">${right ? right.ciudad_destino : '&nbsp;'}</td>
+              </tr>
+            `;
+          }
+
+          const volTag = totalVolumen > 0 ? `, ${totalVolumen.toFixed(2)} FT³` : '';
+          const isLastSheet = sheetIdx === totalSheets - 1;
+          const pageBreakStyle = (!isLastSheet || isMultiPage) ? 'page-break-after: always; break-after: page;' : 'page-break-inside: avoid;';
+          const pageNumberTag = totalSheets > 1 ? ` &bull; Pág. ${sheetIdx + 1} de ${totalSheets}` : '';
+
+          allSheetsHtml += `
+            <div class="listin-sheet-page" style="width: 770px; min-width: 770px; max-width: 770px; height: 1000px; max-height: 1000px; box-sizing: border-box; padding: 14px 18px; margin: 0 auto; background-color: #ffffff; color: #000000; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; display: flex; flex-direction: column; justify-content: space-between; ${pageBreakStyle}">
+              
+              <!-- TOP SECTION: HEADER + TÍTULO -->
+              <div>
+                <!-- 1. Header Oficial -->
+                <div style="display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 6px;">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 40px; height: 40px; background-color: #0f172a; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: 900; font-size: 16px; letter-spacing: -1px; border: 2px solid #000;">
+                      EN
+                    </div>
+                    <div>
+                      <h1 style="font-size: 19px; font-weight: 900; letter-spacing: -0.05em; line-height: 1; margin: 0; color: #000;">ENVÍAS C.A.</h1>
+                      <p style="font-size: 8.5px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #1e293b; margin: 2px 0 0 0;">Transporte y Encomiendas</p>
+                      <p style="font-size: 7.5px; font-weight: bold; color: #475569; margin: 2px 0 0 0;">Hub Central Barquisimeto &bull; Entregas Nacionales</p>
+                    </div>
+                  </div>
+
+                  <!-- Cuadro Metadatos -->
+                  <div style="border: 2px solid #000; border-radius: 4px; padding: 6px 10px; width: 240px; font-size: 10px; background-color: #f8fafc;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #cbd5e1; padding-bottom: 2px; margin-bottom: 2px;">
+                      <span style="font-weight: bold;">FECHA:</span>
+                      <span style="font-family: monospace; font-weight: bold;">${fecha}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #cbd5e1; padding-bottom: 2px; margin-bottom: 2px;">
+                      <span style="font-weight: bold;">PLACA:</span>
+                      <span style="font-family: monospace; font-weight: bold;">${placa}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #cbd5e1; padding-bottom: 2px; margin-bottom: 2px;">
+                      <span style="font-weight: bold;">CHOFER:</span>
+                      <span style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;">${driverName}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-top: 1px;">
+                      <span style="font-weight: 900; color: #000;">DESTINO/ZONA:</span>
+                      <span style="font-weight: 900; font-family: monospace; text-transform: uppercase; color: #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px;">${cityName}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 2. Título del Documento -->
+                <div style="text-align: center; margin-bottom: 6px;">
+                  <div style="font-size: 10.5px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; border: 2px solid #000; padding: 3px 8px; background-color: #f1f5f9; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span>LISTÍN DE CARGA Y DESPACHO DE GUÍAS</span>
+                    <span>&bull;</span>
+                    <span style="font-family: monospace; text-transform: uppercase; font-weight: 900;">DESTINO: ${cityName.toUpperCase()} (${totalGuias} GUÍAS, ${totalPiezas} PZAS${volTag})${pageNumberTag}</span>
+                  </div>
+                </div>
+
+                <!-- 3. Tabla Dual (8 Columnas) -->
+                <div style="width: 100%;">
+                  <table style="width: 100%; border-collapse: collapse; border: 2px solid #000; font-size: 10.5px;">
+                    <thead>
+                      <tr style="background-color: #e2e8f0; color: #000; text-transform: uppercase; font-weight: 900; text-align: center; border-bottom: 2px solid #000; font-size: 9.5px;">
+                        <th style="width: 15%; padding: 3px 2px; border-right: 1px solid #000;">NRO DE GUIA</th>
+                        <th style="width: 7%; padding: 3px 2px; border-right: 1px solid #000;">PIEZAS</th>
+                        <th style="width: 8%; padding: 3px 2px; border-right: 1px solid #000;">FT³</th>
+                        <th style="width: 20%; padding: 3px 4px; border-right: 2px solid #000;">DESTINO</th>
+                        <th style="width: 15%; padding: 3px 2px; border-right: 1px solid #000;">NRO DE GUIA</th>
+                        <th style="width: 7%; padding: 3px 2px; border-right: 1px solid #000;">PIEZAS</th>
+                        <th style="width: 8%; padding: 3px 2px; border-right: 1px solid #000;">FT³</th>
+                        <th style="width: 20%; padding: 3px 4px;">DESTINO</th>
+                      </tr>
+                    </thead>
+                    <tbody style="font-family: monospace; font-weight: 600;">
+                      ${tableRows}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- BOTTOM SECTION: TOTALES + FIRMAS + FOOTER -->
+              <div>
+                <!-- 4. Resumen de Totales -->
+                <div style="border: 2px solid #000; background-color: #f1f5f9; padding: 4px 10px; border-radius: 4px; font-weight: 900; font-size: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
+                  <div>TOTAL GUÍAS: <span style="color: #000; font-family: monospace; font-weight: 900;">${totalGuias}</span></div>
+                  <div>TOTAL PIEZAS: <span style="color: #000; font-family: monospace; font-weight: 900;">${totalPiezas}</span></div>
+                  <div>TOTAL VOLUMEN: <span style="color: #000; font-family: monospace; font-weight: 900;">${totalVolumen.toFixed(2)} ft³</span></div>
+                  <div>TOTAL ZONAS: <span style="color: #000; font-family: monospace; font-weight: 900;">${totalZonas}</span></div>
+                </div>
+
+                <!-- 5. Firmas -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding-top: 8px; padding-bottom: 2px; text-align: center; font-size: 10px; font-weight: bold;">
+                  <div>
+                    <div style="border-top: 2px solid #000; width: 160px; margin: 0 auto 3px auto;"></div>
+                    <p style="margin: 0; color: #000; font-weight: bold;">Firma Despacho / Almacén</p>
+                    <p style="margin: 1px 0 0 0; font-size: 8px; color: #64748b; font-weight: normal;">Envías C.A. - Logística Central</p>
+                  </div>
+                  <div>
+                    <div style="border-top: 2px solid #000; width: 160px; margin: 0 auto 3px auto;"></div>
+                    <p style="margin: 0; color: #000; font-weight: bold;">Firma Chofer Receptor</p>
+                    <p style="margin: 1px 0 0 0; font-size: 8px; color: #64748b; font-weight: normal;">Conforme con bultos y guías físicas</p>
+                  </div>
+                </div>
+
+                <!-- 6. Pie de Página -->
+                <div style="display: flex; align-items: center; justify-content: space-between; font-size: 8.5px; color: #64748b; padding-top: 4px; border-top: 1px solid #cbd5e1; margin-top: 4px;">
+                  <span>Envías C.A. &bull; Sistema Oficial de Despacho y Logística${pageNumberTag}</span>
+                  <div style="display: flex; align-items: center; gap: 4px; font-family: monospace; font-weight: 900; color: #000; font-size: 9px;">
+                    <span>||| | | |||| | ||||| || |</span>
+                    <span>7 599187 000185</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
           `;
         }
 
-        const volTag = totalVolumen > 0 ? `, ${totalVolumen.toFixed(2)} FT³` : '';
-        const pageBreakStyle = isMultiPage ? 'page-break-after: always; break-after: page;' : '';
-
-        return `
-          <div class="listin-sheet-page" style="width: 794px; min-width: 794px; max-width: 794px; min-height: 1040px; box-sizing: border-box; padding: 18px 22px; margin: 0 auto; background-color: #ffffff; color: #000000; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; ${pageBreakStyle}">
-            
-            <!-- 1. Header Oficial -->
-            <div style="display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 8px;">
-              <div style="display: flex; align-items: center; gap: 12px;">
-                <img src="/logo.png" alt="Envías C.A." style="height: 48px; width: auto; object-fit: contain; mix-blend-mode: multiply;" />
-                <div>
-                  <h1 style="font-size: 22px; font-weight: 900; letter-spacing: -0.05em; line-height: 1; margin: 0; color: #000;">ENVÍAS C.A.</h1>
-                  <p style="font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #1e293b; margin: 3px 0 0 0;">Transporte y Encomiendas</p>
-                  <p style="font-size: 8px; font-weight: bold; color: #475569; margin: 2px 0 0 0;">Hub Central Barquisimeto &bull; Entregas Nacionales</p>
-                </div>
-              </div>
-
-              <!-- Cuadro Metadatos -->
-              <div style="border: 2px solid #000; border-radius: 6px; padding: 8px 12px; width: 250px; font-size: 11px; background-color: #f8fafc;">
-                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 3px;">
-                  <span style="font-weight: bold;">FECHA:</span>
-                  <span style="font-family: monospace; font-weight: bold;">${fecha}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 3px;">
-                  <span style="font-weight: bold;">PLACA:</span>
-                  <span style="font-family: monospace; font-weight: bold;">${placa}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 3px;">
-                  <span style="font-weight: bold;">CHOFER:</span>
-                  <span style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;">${driverName}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding-top: 1px;">
-                  <span style="font-weight: 900; color: #000;">DESTINO/ZONA:</span>
-                  <span style="font-weight: 900; font-family: monospace; text-transform: uppercase; color: #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px;">${cityName}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 2. Título del Documento -->
-            <div style="text-align: center; margin-bottom: 8px;">
-              <div style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; border: 2px solid #000; padding: 4px 8px; background-color: #f1f5f9; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <span>LISTÍN DE CARGA Y DESPACHO DE GUÍAS</span>
-                <span>&bull;</span>
-                <span style="font-family: monospace; text-transform: uppercase; font-weight: 900;">DESTINO: ${cityName.toUpperCase()} (${totalGuias} GUÍAS, ${totalPiezas} PZAS${volTag})</span>
-              </div>
-            </div>
-
-            <!-- 3. Tabla Dual (8 Columnas) -->
-            <div style="width: 100%; margin-bottom: 8px;">
-              <table style="width: 100%; border-collapse: collapse; border: 2px solid #000; font-size: 11px;">
-                <thead>
-                  <tr style="background-color: #e2e8f0; color: #000; text-transform: uppercase; font-weight: 900; text-align: center; border-bottom: 2px solid #000; font-size: 10px;">
-                    <th style="width: 15%; padding: 4px 2px; border-right: 1px solid #000;">NRO DE GUIA</th>
-                    <th style="width: 7%; padding: 4px 2px; border-right: 1px solid #000;">PIEZAS</th>
-                    <th style="width: 8%; padding: 4px 2px; border-right: 1px solid #000;">FT³</th>
-                    <th style="width: 20%; padding: 4px 4px; border-right: 2px solid #000;">DESTINO</th>
-                    <th style="width: 15%; padding: 4px 2px; border-right: 1px solid #000;">NRO DE GUIA</th>
-                    <th style="width: 7%; padding: 4px 2px; border-right: 1px solid #000;">PIEZAS</th>
-                    <th style="width: 8%; padding: 4px 2px; border-right: 1px solid #000;">FT³</th>
-                    <th style="width: 20%; padding: 4px 4px;">DESTINO</th>
-                  </tr>
-                </thead>
-                <tbody style="font-family: monospace; font-weight: 600;">
-                  ${tableRows}
-                </tbody>
-              </table>
-            </div>
-
-            <!-- 4. Resumen de Totales -->
-            <div style="border: 2px solid #000; background-color: #f1f5f9; padding: 6px 14px; border-radius: 4px; font-weight: 900; font-size: 11px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
-              <div>TOTAL GUÍAS: <span style="color: #000; font-family: monospace; font-weight: 900;">${totalGuias}</span></div>
-              <div>TOTAL PIEZAS: <span style="color: #000; font-family: monospace; font-weight: 900;">${totalPiezas}</span></div>
-              <div>TOTAL VOLUMEN: <span style="color: #000; font-family: monospace; font-weight: 900;">${totalVolumen.toFixed(2)} ft³</span></div>
-              <div>TOTAL ZONAS: <span style="color: #000; font-family: monospace; font-weight: 900;">${totalZonas}</span></div>
-            </div>
-
-            <!-- 5. Firmas -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; padding-top: 18px; padding-bottom: 4px; text-align: center; font-size: 11px; font-weight: bold;">
-              <div>
-                <div style="border-top: 2px solid #000; width: 190px; margin: 0 auto 4px auto;"></div>
-                <p style="margin: 0; color: #000; font-weight: bold;">Firma Despacho / Almacén</p>
-                <p style="margin: 2px 0 0 0; font-size: 9px; color: #64748b; font-weight: normal;">Envías C.A. - Logística Central</p>
-              </div>
-              <div>
-                <div style="border-top: 2px solid #000; width: 190px; margin: 0 auto 4px auto;"></div>
-                <p style="margin: 0; color: #000; font-weight: bold;">Firma Chofer Receptor</p>
-                <p style="margin: 2px 0 0 0; font-size: 9px; color: #64748b; font-weight: normal;">Conforme con bultos y guías físicas</p>
-              </div>
-            </div>
-
-            <!-- 6. Pie de Página con Código de Barras -->
-            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 9px; color: #64748b; padding-top: 8px; border-top: 1px solid #cbd5e1; margin-top: 8px;">
-              <span>Envías C.A. &bull; Sistema Oficial de Despacho y Logística</span>
-              <div style="display: flex; align-items: center; gap: 4px; font-family: monospace; font-weight: 900; color: #000; font-size: 10px;">
-                <span>||| | | |||| | ||||| || |</span>
-                <span>7 599187 000185</span>
-              </div>
-            </div>
-
-          </div>
-        `;
+        return allSheetsHtml;
       }
 
       // Helper: esperar a que html2pdf esté cargado (máx 8 segundos)
@@ -11036,10 +11060,11 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
           const tempContainer = document.createElement('div');
           tempContainer.id = 'temp-listin-single-pdf';
-          tempContainer.style.position = 'fixed';
-          tempContainer.style.left = '-9999px';
+          tempContainer.style.position = 'absolute';
+          tempContainer.style.left = '0';
           tempContainer.style.top = '0';
-          tempContainer.style.width = '794px';
+          tempContainer.style.zIndex = '-99999';
+          tempContainer.style.width = '770px';
           tempContainer.style.backgroundColor = '#ffffff';
           tempContainer.innerHTML = pageHtml;
           document.body.appendChild(tempContainer);
@@ -11053,8 +11078,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
               useCORS: true,
               letterRendering: true,
               logging: false,
-              width: 794,
-              windowWidth: 794
+              scrollY: 0,
+              scrollX: 0
             },
             jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
           };
@@ -11067,7 +11092,22 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             // Fallback: abrir ventana de impresión aislada con solo el listín
             const pw = window.open('', '_blank', 'width=900,height=700');
             if (pw) {
-              pw.document.write(`<!DOCTYPE html><html><head><meta charset='UTF-8'><title>${filename}</title><style>body{margin:0;padding:0;background:#fff;font-family:'Plus Jakarta Sans',system-ui,sans-serif;}@media print{body{margin:0;}}</style></head><body>${pageHtml}</body></html>`);
+              pw.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='UTF-8'>
+  <title>${filename}</title>
+  <style>
+    @page { size: letter portrait; margin: 4mm; }
+    body { margin: 0; padding: 0; background: #fff; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .listin-sheet-page { page-break-after: always; break-after: page; page-break-inside: avoid; }
+    @media print { body { margin: 0; } }
+  </style>
+</head>
+<body>
+  ${pageHtml}
+</body>
+</html>`);
               pw.document.close();
               pw.focus();
               setTimeout(() => { pw.print(); }, 400);
@@ -11080,7 +11120,11 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           showToast('Abriendo cuadro de impresión del navegador...', 'info');
           if (pageHtml) {
             const pw2 = window.open('', '_blank', 'width=900,height=700');
-            if (pw2) { pw2.document.write(`<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Listín Envías</title><style>body{margin:0;font-family:system-ui,sans-serif;}</style></head><body>${pageHtml}</body></html>`); pw2.document.close(); setTimeout(() => { pw2.print(); }, 400); }
+            if (pw2) { 
+              pw2.document.write(`<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Listín Envías</title><style>@page{size:letter portrait;margin:4mm;}body{margin:0;font-family:system-ui,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}</style></head><body>${pageHtml}</body></html>`); 
+              pw2.document.close(); 
+              setTimeout(() => { pw2.print(); }, 400); 
+            }
           }
         } finally {
           btnListinDownloadPdf.disabled = false;
@@ -11106,7 +11150,6 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           <span>Generando ${listinCitiesOrder.length} listines...</span>
         `;
 
-
         let combinedHtml = '';
         try {
           const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
@@ -11119,12 +11162,12 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           // Construir contenedor temporal con 1 hoja por cada zona
           const tempContainer = document.createElement('div');
           tempContainer.id = 'temp-multi-listin-pdf';
-          tempContainer.style.position = 'fixed';
-          tempContainer.style.left = '-9999px';
+          tempContainer.style.position = 'absolute';
+          tempContainer.style.left = '0';
           tempContainer.style.top = '0';
-          tempContainer.style.width = '794px';
+          tempContainer.style.zIndex = '-99999';
+          tempContainer.style.width = '770px';
           tempContainer.style.backgroundColor = '#ffffff';
-
 
           const activeCities = listinCitiesOrder.filter(c => !listinExcludedCities.has(c));
 
@@ -11161,8 +11204,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
               useCORS: true,
               letterRendering: true,
               logging: false,
-              width: 794,
-              windowWidth: 794
+              scrollY: 0,
+              scrollX: 0
             },
             jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
             pagebreak: { mode: ['css', 'legacy'] }
@@ -11173,11 +11216,25 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             await (window as any).html2pdf().set(opt).from(tempContainer).save();
             showToast(`Documento PDF (${activeCities.length} hojas) descargado exitosamente`, 'success');
           } else {
-
             // Fallback: ventana de impresión aislada con todas las zonas
             const pw = window.open('', '_blank', 'width=900,height=700');
             if (pw) {
-              pw.document.write(`<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Listines Envías</title><style>body{margin:0;padding:0;background:#fff;font-family:'Plus Jakarta Sans',system-ui,sans-serif;}.listin-sheet-page{page-break-after:always;break-after:page;}@media print{body{margin:0;}}</style></head><body>${combinedHtml}</body></html>`);
+              pw.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='UTF-8'>
+  <title>Listines Envías</title>
+  <style>
+    @page { size: letter portrait; margin: 4mm; }
+    body { margin: 0; padding: 0; background: #fff; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .listin-sheet-page { page-break-after: always; break-after: page; page-break-inside: avoid; }
+    @media print { body { margin: 0; } }
+  </style>
+</head>
+<body>
+  ${combinedHtml}
+</body>
+</html>`);
               pw.document.close();
               pw.focus();
               setTimeout(() => { pw.print(); }, 400);
@@ -11189,7 +11246,11 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           console.error('Error al generar PDF de todas las zonas:', err);
           showToast('Error al exportar lote de listines. Abriendo impresión...', 'error');
           const pw3 = window.open('', '_blank', 'width=900,height=700');
-          if (pw3) { pw3.document.write(`<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Listines Envías</title><style>body{margin:0;font-family:system-ui,sans-serif;}.listin-sheet-page{page-break-after:always;}</style></head><body>${combinedHtml}</body></html>`); pw3.document.close(); setTimeout(() => { pw3.print(); }, 400); }
+          if (pw3) { 
+            pw3.document.write(`<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Listines Envías</title><style>@page{size:letter portrait;margin:4mm;}body{margin:0;font-family:system-ui,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}</style></head><body>${combinedHtml}</body></html>`); 
+            pw3.document.close(); 
+            setTimeout(() => { pw3.print(); }, 400); 
+          }
         } finally {
           btnListinDownloadAllPdf.disabled = false;
           btnListinDownloadAllPdf.innerHTML = origHtml;
