@@ -43,8 +43,18 @@ const userInitials = currentUser.nombre
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
     
-    <!-- html2pdf.js para Exportación Directa de Listines PDF (carga sincrónica garantizada) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- html2pdf.js - carga asincrona sin bloquear la pagina, disponible al clicar PDF -->
+    <script>
+      window._html2pdfReady = false;
+      (function() {
+        var s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+        s.onload = function() { window._html2pdfReady = true; };
+        s.onerror = function() { window._html2pdfReady = false; };
+        document.head.appendChild(s);
+      })();
+    </script>
+
     
     <style>
       body {
@@ -10134,8 +10144,22 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         `;
       }
 
+      // Helper: esperar a que html2pdf esté cargado (máx 8 segundos)
+      function waitForHtml2pdf(): Promise<boolean> {
+        return new Promise(resolve => {
+          if ((window as any).html2pdf) { resolve(true); return; }
+          let attempts = 0;
+          const interval = setInterval(() => {
+            attempts++;
+            if ((window as any).html2pdf) { clearInterval(interval); resolve(true); }
+            else if (attempts >= 40) { clearInterval(interval); resolve(false); }
+          }, 200);
+        });
+      }
+
       // 1. Descargar PDF (Zona Activa) a Tamaño Completo
       btnListinDownloadPdf?.addEventListener('click', async () => {
+
         const srcShipments = getListinSourceShipments();
         const orderedActiveGuias = getOrderedActiveGuias(srcShipments);
 
@@ -10221,9 +10245,10 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
           };
 
-          if ((window as any).html2pdf) {
+          const html2pdfLoaded = await waitForHtml2pdf();
+          if (html2pdfLoaded) {
             await (window as any).html2pdf().set(opt).from(tempContainer).save();
-            showToast('PDF del Listín descargado a tamaño completo exitosamente', 'success');
+            showToast('PDF del Listín descargado exitosamente', 'success');
           } else {
             // Fallback: abrir ventana de impresión aislada con solo el listín
             const pw = window.open('', '_blank', 'width=900,height=700');
@@ -10329,10 +10354,12 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             pagebreak: { mode: ['css', 'legacy'] }
           };
 
-          if ((window as any).html2pdf) {
+          const html2pdfLoaded2 = await waitForHtml2pdf();
+          if (html2pdfLoaded2) {
             await (window as any).html2pdf().set(opt).from(tempContainer).save();
-            showToast(`¡Documento PDF de todas las zonas (${activeCities.length} hojas) descargado exitosamente!`, 'success');
+            showToast(`Documento PDF (${activeCities.length} hojas) descargado exitosamente`, 'success');
           } else {
+
             // Fallback: ventana de impresión aislada con todas las zonas
             const pw = window.open('', '_blank', 'width=900,height=700');
             if (pw) {
