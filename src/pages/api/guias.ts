@@ -75,7 +75,8 @@ export const POST: APIRoute = async ({ request }) => {
       pies_cubicos,
       direccion_referencia,
       empresa,
-      lote_despacho
+      lote_despacho,
+      created_at
     } = body;
 
     if (!id_guia || !destinatario || !telefono_principal || !ciudad_destino) {
@@ -106,10 +107,18 @@ export const POST: APIRoute = async ({ request }) => {
       ? parseFloat(pies_cubicos) || null
       : null;
 
+    let finalCreatedAt = new Date().toISOString();
+    if (created_at && created_at.trim()) {
+      const parsed = new Date(created_at.trim());
+      if (!isNaN(parsed.getTime())) {
+        finalCreatedAt = parsed.toISOString();
+      }
+    }
+
     // Calcular lote_despacho automático si no viene especificado
     let finalLote = lote_despacho ? lote_despacho.trim() : null;
     if (!finalLote) {
-      const now = new Date();
+      const now = new Date(finalCreatedAt);
       const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
       const dayNum = d.getUTCDay() || 7;
       d.setUTCDate(d.getUTCDate() + 4 - dayNum);
@@ -166,7 +175,7 @@ export const POST: APIRoute = async ({ request }) => {
         lote_despacho,
         created_at
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, 'Por contactar', $10, $11, $12, $13, $14, NOW()
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, 'Por contactar', $10, $11, $12, $13, $14, $15
       )
       RETURNING *
     `, [
@@ -183,7 +192,8 @@ export const POST: APIRoute = async ({ request }) => {
       autoGpsLat,
       autoGpsLon,
       autoHora,
-      finalLote
+      finalLote,
+      finalCreatedAt
     ]);
 
     const newGuia = insertResult.rows[0];

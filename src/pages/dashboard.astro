@@ -380,6 +380,32 @@ const userInitials = currentUser.nombre
             </select>
           </div>
 
+          <!-- Lote de Despacho & Fecha de Carga (Opcionales) -->
+          <div class="lg:col-span-1 space-y-1">
+            <label for="input-lote" class="block text-xs font-semibold text-slate-700">
+              Lote <span class="text-slate-400 font-normal">(Auto)</span>
+            </label>
+            <input
+              type="text"
+              id="input-lote"
+              list="lotes-datalist"
+              placeholder="Auto según fecha"
+              class="w-full text-xs font-mono uppercase bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+            />
+            <datalist id="lotes-datalist"></datalist>
+          </div>
+
+          <div class="lg:col-span-1 space-y-1">
+            <label for="input-fecha-registro" class="block text-xs font-semibold text-slate-700">
+              Fecha Carga <span class="text-slate-400 font-normal">(Hoy)</span>
+            </label>
+            <input
+              type="date"
+              id="input-fecha-registro"
+              class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer font-medium"
+            />
+          </div>
+
           <!-- Dirección / Referencias -->
           <div class="sm:col-span-2 lg:col-span-2 space-y-1">
             <label for="input-direccion" class="block text-xs font-semibold text-slate-700">
@@ -482,6 +508,20 @@ const userInitials = currentUser.nombre
                 <option value="CURRENT_WEEK">Carga Semana Actual</option>
                 <option value="PENDING_PAST">Pendientes Rezagadas</option>
               </select>
+
+              <!-- Botón: Gestionar / Agregar Lote Manualmente & Editar Fecha -->
+              <button
+                type="button"
+                id="btn-open-gestion-lotes"
+                onclick="window.openGestionLotesModal()"
+                class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer shrink-0"
+                title="Crear lotes manualmente, editar fecha de despacho o reasignar guías"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Agregar Lote</span>
+              </button>
 
               <!-- Botón Rápido: Archivar Entregadas -->
               <button
@@ -2736,6 +2776,31 @@ const userInitials = currentUser.nombre
               </select>
             </div>
 
+            <!-- Lote de Despacho / Manifiesto -->
+            <div class="space-y-1">
+              <label for="edit-lote" class="block text-xs font-bold text-slate-700">
+                Lote de Despacho / Manifiesto
+              </label>
+              <input
+                type="text"
+                id="edit-lote"
+                placeholder="Ej: REL-2026-W35-BRM"
+                class="w-full text-xs font-mono font-bold uppercase bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all"
+              />
+            </div>
+
+            <!-- Fecha de Despacho / Carga -->
+            <div class="space-y-1">
+              <label for="edit-fecha" class="block text-xs font-bold text-slate-700">
+                Fecha de Registro / Despacho
+              </label>
+              <input
+                type="date"
+                id="edit-fecha"
+                class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer"
+              />
+            </div>
+
             <!-- Horario Disponible -->
             <div class="space-y-1">
               <label for="edit-hora" class="block text-xs font-bold text-slate-700">
@@ -2825,6 +2890,302 @@ const userInitials = currentUser.nombre
           </div>
 
         </form>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- MODAL GESTIÓN MANUAL DE LOTES Y RELACIONES DE DESPACHO      -->
+    <!-- ============================================================ -->
+    <div
+      id="modal-gestion-lotes"
+      class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5"
+    >
+      <div class="bg-white rounded-3xl shadow-2xl border border-slate-200/90 w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden animate-fadeIn">
+        
+        <!-- Header del Modal -->
+        <div class="px-5 py-4 sm:px-6 sm:py-5 border-b border-slate-100 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-10 h-10 rounded-2xl bg-white/10 text-indigo-300 flex items-center justify-center shrink-0 border border-white/10 shadow-inner">
+              <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+              </svg>
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="text-sm sm:text-base font-black tracking-tight text-white">Gestión de Lotes & Relaciones de Despacho</h3>
+                <span class="text-[10px] font-mono font-bold bg-indigo-500/30 text-indigo-200 border border-indigo-400/40 px-2 py-0.5 rounded-full">
+                  Control Operativo
+                </span>
+              </div>
+              <p class="text-xs text-slate-300 font-medium truncate">Crea lotes manualmente, modifica la fecha de despacho y agrupa encomiendas</p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onclick="window.closeGestionLotesModal()"
+            class="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer shrink-0"
+            title="Cerrar ventana (Esc)"
+          >
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Pestañas del Modal -->
+        <div class="px-5 sm:px-6 pt-3 pb-0 bg-slate-50/70 border-b border-slate-200/80 flex items-center gap-2 overflow-x-auto custom-scrollbar">
+          <button
+            type="button"
+            id="tab-btn-lote-crear"
+            onclick="window.switchGestionLotesTab('crear')"
+            class="px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all border-b-2 border-indigo-600 text-indigo-600 bg-white shadow-2xs flex items-center gap-1.5 cursor-pointer shrink-0"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span>Crear / Asignar Lote</span>
+          </button>
+          <button
+            type="button"
+            id="tab-btn-lote-editar"
+            onclick="window.switchGestionLotesTab('editar')"
+            class="px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer shrink-0"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            <span>Editar Lote Existente / Fecha</span>
+          </button>
+        </div>
+
+        <!-- Contenido de las Pestañas -->
+        <div class="flex-1 overflow-y-auto p-5 sm:p-6 custom-scrollbar space-y-5">
+          
+          <!-- ============================================== -->
+          <!-- PESTAÑA 1: CREAR / ASIGNAR NUEVO LOTE          -->
+          <!-- ============================================== -->
+          <div id="tab-content-lote-crear" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80">
+              
+              <!-- 1. Fecha de Despacho / Carga -->
+              <div class="space-y-1">
+                <label class="block text-xs font-bold text-slate-700">
+                  Fecha de Despacho / Carga <span class="text-rose-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  id="modal-lote-fecha"
+                  onchange="window.onLoteFormDateChange(this.value)"
+                  class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs"
+                />
+                <span id="modal-lote-week-tag" class="block text-[10px] text-indigo-600 font-bold mt-0.5">Semana calculada</span>
+              </div>
+
+              <!-- 2. Hub / Origen -->
+              <div class="space-y-1">
+                <label class="block text-xs font-bold text-slate-700">
+                  Hub / Origen <span class="text-rose-500">*</span>
+                </label>
+                <select
+                  id="modal-lote-origen"
+                  onchange="window.onLoteFormOrigenChange(this.value)"
+                  class="w-full text-xs font-bold bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs"
+                >
+                  <option value="BRM">Barquisimeto (BRM)</option>
+                  <option value="CCS">Caracas (CCS)</option>
+                  <option value="VLN">Valencia (VLN)</option>
+                  <option value="MAR">Maracaibo (MAR)</option>
+                  <option value="MRD">Mérida (MRD)</option>
+                  <option value="SC">San Cristóbal (SC)</option>
+                  <option value="NAC">Nacional / Consolidado (NAC)</option>
+                </select>
+              </div>
+
+              <!-- 3. Código del Lote / Manifiesto -->
+              <div class="space-y-1">
+                <div class="flex items-center justify-between">
+                  <label class="block text-xs font-bold text-slate-700">
+                    Código / Manifiesto <span class="text-rose-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onclick="window.regenerateLoteCodeSuggestion()"
+                    class="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 hover:underline cursor-pointer"
+                  >
+                    Auto-generar
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  id="modal-lote-codigo"
+                  placeholder="Ej: REL-2026-W35-BRM"
+                  class="w-full text-xs font-mono font-black uppercase bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                />
+              </div>
+            </div>
+
+            <!-- Sección de Asignación de Guías -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between flex-wrap gap-2">
+                <div>
+                  <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-800">Seleccionar Encomiendas para este Lote</h4>
+                  <p class="text-[11px] text-slate-500 font-medium">Marca las guías que pertenecerán a este lote y adoptarán la fecha seleccionada</p>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onclick="window.toggleSelectAllLoteGuias(true)"
+                    class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-all cursor-pointer shadow-2xs"
+                  >
+                    Seleccionar Todas
+                  </button>
+                  <button
+                    type="button"
+                    onclick="window.toggleSelectAllLoteGuias(false)"
+                    class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all cursor-pointer"
+                  >
+                    Deseleccionar
+                  </button>
+                </div>
+              </div>
+
+              <!-- Buscador Rápido de Guías en el Modal -->
+              <div class="flex items-center gap-2">
+                <div class="relative flex-1">
+                  <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    id="modal-lote-guias-search"
+                    placeholder="Filtrar por número de guía, destinatario o ciudad..."
+                    oninput="window.filterModalLoteGuiasList()"
+                    class="w-full text-xs bg-white border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                  />
+                </div>
+                <span id="modal-lote-selected-summary" class="text-xs font-mono font-bold px-3 py-2 rounded-xl bg-slate-100 text-slate-800 border border-slate-200 shrink-0">
+                  0 seleccionadas
+                </span>
+              </div>
+
+              <!-- Lista scrolleable de guías -->
+              <div id="modal-lote-guias-list" class="max-h-[260px] overflow-y-auto custom-scrollbar border border-slate-200/90 rounded-2xl divide-y divide-slate-100 bg-white shadow-2xs">
+                <!-- Se llena dinámicamente -->
+              </div>
+            </div>
+
+            <!-- Botón de Envío -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onclick="window.closeGestionLotesModal()"
+                class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                id="btn-submit-create-lote"
+                onclick="window.submitCreateLoteForm()"
+                class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/25 flex items-center gap-2 cursor-pointer"
+              >
+                <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                <span>Crear Lote y Guardar</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- ============================================== -->
+          <!-- PESTAÑA 2: EDITAR LOTE EXISTENTE / FECHA       -->
+          <!-- ============================================== -->
+          <div id="tab-content-lote-editar" class="hidden space-y-4">
+            <div class="space-y-3 bg-slate-50/80 p-4 sm:p-5 rounded-2xl border border-slate-200/80">
+              
+              <!-- Selector de Lote Existente -->
+              <div class="space-y-1">
+                <label class="block text-xs font-bold text-slate-700">
+                  Seleccionar Lote a Modificar <span class="text-rose-500">*</span>
+                </label>
+                <select
+                  id="modal-edit-lote-select"
+                  onchange="window.onEditLoteSelectChange(this.value)"
+                  class="w-full text-xs font-mono font-bold bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs"
+                >
+                  <option value="">Seleccione un lote...</option>
+                </select>
+              </div>
+
+              <!-- Tarjeta de Estadísticas del Lote -->
+              <div id="modal-edit-lote-stats" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3.5 bg-indigo-50/60 rounded-xl border border-indigo-100 text-xs">
+                <div>
+                  <span class="text-[10px] text-slate-500 font-bold uppercase">Total Guías</span>
+                  <p id="edit-lote-stat-guias" class="text-sm font-black text-slate-900 font-mono">0</p>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-500 font-bold uppercase">Total Piezas</span>
+                  <p id="edit-lote-stat-piezas" class="text-sm font-black text-slate-900 font-mono">0</p>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-500 font-bold uppercase">Volumen</span>
+                  <p id="edit-lote-stat-volumen" class="text-sm font-black text-slate-900 font-mono">0 ft³</p>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-500 font-bold uppercase">Fecha Estimada</span>
+                  <p id="edit-lote-stat-fecha" class="text-xs font-bold text-indigo-700 font-mono truncate">—</p>
+                </div>
+              </div>
+
+              <!-- Modificación de Nombre y Fecha -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+                <div class="space-y-1">
+                  <label class="block text-xs font-bold text-slate-700">
+                    Nuevo Nombre / Código de Lote
+                  </label>
+                  <input
+                    type="text"
+                    id="modal-edit-lote-newname"
+                    placeholder="Ej: REL-2026-W35-BRM"
+                    class="w-full text-xs font-mono font-black uppercase bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                  />
+                  <span class="text-[10px] text-slate-400 font-medium">Deje igual si solo desea cambiar la fecha</span>
+                </div>
+
+                <div class="space-y-1">
+                  <label class="block text-xs font-bold text-slate-700">
+                    Nueva Fecha de Despacho / Carga
+                  </label>
+                  <input
+                    type="date"
+                    id="modal-edit-lote-newdate"
+                    class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-xl px-3 py-2.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs"
+                  />
+                  <label class="flex items-center gap-1.5 text-[11px] text-slate-600 font-medium mt-1 cursor-pointer select-none">
+                    <input type="checkbox" id="modal-edit-lote-update-date-all" checked class="w-3.5 h-3.5 text-indigo-600 rounded" />
+                    <span>Aplicar fecha a todas las guías de este lote</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botón de Envío -->
+            <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onclick="window.closeGestionLotesModal()"
+                class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                id="btn-submit-edit-lote"
+                onclick="window.submitEditLoteForm()"
+                class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-black active:scale-95 text-white text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer"
+              >
+                <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                <span>Guardar Cambios del Lote</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
 
@@ -4228,8 +4589,443 @@ const userInitials = currentUser.nombre
           }
         }
 
+        const lotesDatalist = document.getElementById('lotes-datalist');
+        if (lotesDatalist) {
+          lotesDatalist.innerHTML = Object.keys(loteMap).sort().reverse().map(l => `<option value="${l}">`).join('');
+        }
+
+        if (modalGestionLotes && !modalGestionLotes.classList.contains('hidden')) {
+          populateModalEditLoteSelect(modalEditLoteSelect?.value);
+        }
+
         updateLoteFilterButtons();
       }
+
+      // ============================================================
+      // GESTIÓN MANUAL DE LOTES Y FECHAS DE DESPACHO (MODAL)
+      // ============================================================
+      const modalGestionLotes = document.getElementById('modal-gestion-lotes') as HTMLElement;
+      const modalLoteFecha = document.getElementById('modal-lote-fecha') as HTMLInputElement;
+      const modalLoteOrigen = document.getElementById('modal-lote-origen') as HTMLSelectElement;
+      const modalLoteCodigo = document.getElementById('modal-lote-codigo') as HTMLInputElement;
+      const modalLoteWeekTag = document.getElementById('modal-lote-week-tag') as HTMLElement;
+      const modalLoteGuiasList = document.getElementById('modal-lote-guias-list') as HTMLElement;
+      const modalLoteGuiasSearch = document.getElementById('modal-lote-guias-search') as HTMLInputElement;
+      const modalLoteSelectedSummary = document.getElementById('modal-lote-selected-summary') as HTMLElement;
+      const modalEditLoteSelect = document.getElementById('modal-edit-lote-select') as HTMLSelectElement;
+      const modalEditLoteStats = document.getElementById('modal-edit-lote-stats') as HTMLElement;
+      const modalEditLoteNewname = document.getElementById('modal-edit-lote-newname') as HTMLInputElement;
+      const modalEditLoteNewdate = document.getElementById('modal-edit-lote-newdate') as HTMLInputElement;
+      const modalEditLoteUpdateDateAll = document.getElementById('modal-edit-lote-update-date-all') as HTMLInputElement;
+      const btnSubmitCreateLote = document.getElementById('btn-submit-create-lote') as HTMLButtonElement;
+      const btnSubmitEditLote = document.getElementById('btn-submit-edit-lote') as HTMLButtonElement;
+
+      let selectedLoteGuiaIds = new Set<string>();
+      let isLoteCodigoCustomized = false;
+
+      function openGestionLotesModal(preselectedLote?: string) {
+        if (!modalGestionLotes) return;
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (modalLoteFecha) modalLoteFecha.value = todayStr;
+        if (modalLoteOrigen) modalLoteOrigen.value = 'BRM';
+        isLoteCodigoCustomized = false;
+        
+        regenerateLoteCodeSuggestion();
+
+        selectedLoteGuiaIds.clear();
+        if (modalLoteGuiasSearch) modalLoteGuiasSearch.value = '';
+        renderModalLoteGuias();
+
+        populateModalEditLoteSelect(preselectedLote);
+
+        if (preselectedLote) {
+          switchGestionLotesTab('editar');
+        } else {
+          switchGestionLotesTab('crear');
+        }
+
+        modalGestionLotes.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      }
+      (window as any).openGestionLotesModal = openGestionLotesModal;
+
+      function closeGestionLotesModal() {
+        if (modalGestionLotes) {
+          modalGestionLotes.classList.add('hidden');
+        }
+        document.body.style.overflow = '';
+      }
+      (window as any).closeGestionLotesModal = closeGestionLotesModal;
+
+      modalGestionLotes?.addEventListener('click', (e) => {
+        if (e.target === modalGestionLotes) closeGestionLotesModal();
+      });
+
+      function switchGestionLotesTab(tab: 'crear' | 'editar') {
+        const tabCrearBtn = document.getElementById('tab-btn-lote-crear');
+        const tabEditarBtn = document.getElementById('tab-btn-lote-editar');
+        const contentCrear = document.getElementById('tab-content-lote-crear');
+        const contentEditar = document.getElementById('tab-content-lote-editar');
+
+        if (tab === 'crear') {
+          if (tabCrearBtn) tabCrearBtn.className = 'px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all border-b-2 border-indigo-600 text-indigo-600 bg-white shadow-2xs flex items-center gap-1.5 cursor-pointer shrink-0';
+          if (tabEditarBtn) tabEditarBtn.className = 'px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer shrink-0';
+          contentCrear?.classList.remove('hidden');
+          contentEditar?.classList.add('hidden');
+        } else {
+          if (tabEditarBtn) tabEditarBtn.className = 'px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all border-b-2 border-indigo-600 text-indigo-600 bg-white shadow-2xs flex items-center gap-1.5 cursor-pointer shrink-0';
+          if (tabCrearBtn) tabCrearBtn.className = 'px-4 py-2.5 rounded-t-xl text-xs font-bold transition-all border-b-2 border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100 flex items-center gap-1.5 cursor-pointer shrink-0';
+          contentEditar?.classList.remove('hidden');
+          contentCrear?.classList.add('hidden');
+        }
+      }
+      (window as any).switchGestionLotesTab = switchGestionLotesTab;
+
+      function onLoteFormDateChange(dateVal: string) {
+        if (!dateVal) return;
+        const d = new Date(dateVal + 'T12:00:00Z');
+        if (isNaN(d.getTime())) return;
+
+        const dayNum = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+        const year = d.getUTCFullYear();
+        const weekFormatted = weekNo < 10 ? '0' + weekNo : weekNo.toString();
+
+        if (modalLoteWeekTag) {
+          modalLoteWeekTag.textContent = `Semana ${weekFormatted} (${year})`;
+        }
+
+        if (!isLoteCodigoCustomized && modalLoteCodigo) {
+          const origin = modalLoteOrigen ? modalLoteOrigen.value : 'BRM';
+          modalLoteCodigo.value = `REL-${year}-W${weekFormatted}-${origin}`;
+        }
+      }
+      (window as any).onLoteFormDateChange = onLoteFormDateChange;
+
+      function onLoteFormOrigenChange(originVal: string) {
+        if (!isLoteCodigoCustomized) {
+          regenerateLoteCodeSuggestion();
+        }
+      }
+      (window as any).onLoteFormOrigenChange = onLoteFormOrigenChange;
+
+      function regenerateLoteCodeSuggestion() {
+        isLoteCodigoCustomized = false;
+        const dateVal = modalLoteFecha?.value || new Date().toISOString().split('T')[0];
+        const originVal = modalLoteOrigen?.value || 'BRM';
+
+        const d = new Date(dateVal + 'T12:00:00Z');
+        const dayNum = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+        const year = d.getUTCFullYear();
+        const weekFormatted = weekNo < 10 ? '0' + weekNo : weekNo.toString();
+
+        if (modalLoteCodigo) {
+          modalLoteCodigo.value = `REL-${year}-W${weekFormatted}-${originVal}`;
+        }
+        if (modalLoteWeekTag) {
+          modalLoteWeekTag.textContent = `Semana ${weekFormatted} (${year})`;
+        }
+      }
+      (window as any).regenerateLoteCodeSuggestion = regenerateLoteCodeSuggestion;
+
+      modalLoteCodigo?.addEventListener('input', () => {
+        isLoteCodigoCustomized = true;
+      });
+
+      function renderModalLoteGuias() {
+        if (!modalLoteGuiasList) return;
+
+        const query = (modalLoteGuiasSearch?.value || '').toLowerCase().trim();
+        const filtered = shipments.filter(g => {
+          if (!query) return true;
+          return g.id_guia.toLowerCase().includes(query) ||
+                 (g.destinatario || '').toLowerCase().includes(query) ||
+                 (g.ciudad_destino || '').toLowerCase().includes(query) ||
+                 (g.lote_despacho || '').toLowerCase().includes(query);
+        });
+
+        if (filtered.length === 0) {
+          modalLoteGuiasList.innerHTML = `
+            <div class="p-6 text-center text-slate-400 text-xs font-medium">
+              No se encontraron guías que coincidan con la búsqueda.
+            </div>
+          `;
+          updateModalLoteSummary();
+          return;
+        }
+
+        modalLoteGuiasList.innerHTML = filtered.map(g => {
+          const isSelected = selectedLoteGuiaIds.has(g.id_guia);
+          const weekInfo = getGuiaWeekInfo(g);
+          const currentLote = g.lote_despacho || weekInfo.loteCode;
+
+          return `
+            <label class="flex items-center justify-between p-3 hover:bg-slate-50 transition-colors cursor-pointer text-xs gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <input
+                  type="checkbox"
+                  value="${g.id_guia}"
+                  ${isSelected ? 'checked' : ''}
+                  onchange="window.toggleModalLoteGuia('${g.id_guia}', this.checked)"
+                  class="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-slate-300 cursor-pointer shrink-0"
+                />
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-mono font-bold text-slate-900">#${g.id_guia}</span>
+                    <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200 uppercase">${g.ciudad_destino || 'Sin Ciudad'}</span>
+                    <span class="text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 border border-indigo-200" title="Lote actual">${currentLote}</span>
+                  </div>
+                  <p class="text-slate-600 font-medium truncate max-w-xs mt-0.5">${g.destinatario || '—'}</p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 text-right shrink-0">
+                <span class="font-mono font-bold text-[11px] text-slate-700 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">
+                  ${g.piezas || 1} pza${(g.piezas || 1) !== 1 ? 's' : ''}${g.pies_cubicos ? ' · ' + Number(g.pies_cubicos).toFixed(2) + ' ft³' : ''}
+                </span>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${g.estado === 'Entregado' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'}">
+                  ${g.estado}
+                </span>
+              </div>
+            </label>
+          `;
+        }).join('');
+
+        updateModalLoteSummary();
+      }
+
+      function updateModalLoteSummary() {
+        if (!modalLoteSelectedSummary) return;
+        const selectedGuias = shipments.filter(g => selectedLoteGuiaIds.has(g.id_guia));
+        const totalPzas = selectedGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+        const totalVol = selectedGuias.reduce((acc, g) => acc + (Number(g.pies_cubicos) || 0), 0);
+        modalLoteSelectedSummary.textContent = `${selectedLoteGuiaIds.size} guías (${totalPzas} pzas${totalVol > 0 ? ' · ' + totalVol.toFixed(2) + ' ft³' : ''})`;
+      }
+
+      (window as any).toggleModalLoteGuia = (idGuia: string, checked: boolean) => {
+        if (checked) {
+          selectedLoteGuiaIds.add(idGuia);
+        } else {
+          selectedLoteGuiaIds.delete(idGuia);
+        }
+        updateModalLoteSummary();
+      };
+
+      (window as any).toggleSelectAllLoteGuias = (selectAll: boolean) => {
+        const query = (modalLoteGuiasSearch?.value || '').toLowerCase().trim();
+        const filtered = shipments.filter(g => {
+          if (!query) return true;
+          return g.id_guia.toLowerCase().includes(query) ||
+                 (g.destinatario || '').toLowerCase().includes(query) ||
+                 (g.ciudad_destino || '').toLowerCase().includes(query) ||
+                 (g.lote_despacho || '').toLowerCase().includes(query);
+        });
+
+        if (selectAll) {
+          filtered.forEach(g => selectedLoteGuiaIds.add(g.id_guia));
+        } else {
+          filtered.forEach(g => selectedLoteGuiaIds.delete(g.id_guia));
+        }
+        renderModalLoteGuias();
+      };
+
+      (window as any).filterModalLoteGuiasList = () => {
+        renderModalLoteGuias();
+      };
+
+      function populateModalEditLoteSelect(preselectedLote?: string) {
+        if (!modalEditLoteSelect) return;
+        const loteMap: Record<string, { count: number; guias: GuiaRow[] }> = {};
+
+        shipments.forEach(g => {
+          const info = getGuiaWeekInfo(g);
+          const code = g.lote_despacho || info.loteCode;
+          if (!loteMap[code]) loteMap[code] = { count: 0, guias: [] };
+          loteMap[code].count++;
+          loteMap[code].guias.push(g);
+        });
+
+        let opts = `<option value="">Seleccione un lote para editar...</option>`;
+        const sorted = Object.keys(loteMap).sort().reverse();
+        sorted.forEach(lote => {
+          opts += `<option value="${lote}">${lote} (${loteMap[lote].count} guías)</option>`;
+        });
+        modalEditLoteSelect.innerHTML = opts;
+
+        if (preselectedLote && loteMap[preselectedLote]) {
+          modalEditLoteSelect.value = preselectedLote;
+          onEditLoteSelectChange(preselectedLote);
+        } else if (sorted.length > 0) {
+          modalEditLoteSelect.value = sorted[0];
+          onEditLoteSelectChange(sorted[0]);
+        }
+      }
+
+      function onEditLoteSelectChange(loteCode: string) {
+        if (!loteCode) {
+          if (modalEditLoteStats) modalEditLoteStats.classList.add('hidden');
+          return;
+        }
+
+        const lotGuias = shipments.filter(g => (g.lote_despacho === loteCode) || (getGuiaWeekInfo(g).loteCode === loteCode));
+        const totalPzas = lotGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+        const totalVol = lotGuias.reduce((acc, g) => acc + (Number(g.pies_cubicos) || 0), 0);
+        
+        let estimatedDate = '—';
+        if (lotGuias.length > 0 && lotGuias[0].created_at) {
+          estimatedDate = new Date(lotGuias[0].created_at).toISOString().split('T')[0];
+        }
+
+        if (modalEditLoteNewname) modalEditLoteNewname.value = loteCode;
+        if (modalEditLoteNewdate && estimatedDate !== '—') modalEditLoteNewdate.value = estimatedDate;
+
+        const statGuias = document.getElementById('edit-lote-stat-guias');
+        const statPiezas = document.getElementById('edit-lote-stat-piezas');
+        const statVolumen = document.getElementById('edit-lote-stat-volumen');
+        const statFecha = document.getElementById('edit-lote-stat-fecha');
+
+        if (statGuias) statGuias.textContent = lotGuias.length.toString();
+        if (statPiezas) statPiezas.textContent = totalPzas.toString();
+        if (statVolumen) statVolumen.textContent = `${totalVol.toFixed(2)} ft³`;
+        if (statFecha) statFecha.textContent = estimatedDate;
+
+        if (modalEditLoteStats) modalEditLoteStats.classList.remove('hidden');
+      }
+      (window as any).onEditLoteSelectChange = onEditLoteSelectChange;
+
+      // Submit: Crear / Asignar Lote
+      (window as any).submitCreateLoteForm = async () => {
+        const codigo = (modalLoteCodigo?.value || '').trim().toUpperCase();
+        const fecha = (modalLoteFecha?.value || '').trim();
+
+        if (!codigo) {
+          showToast('Debe ingresar un código para el lote de despacho', 'error');
+          modalLoteCodigo?.focus();
+          return;
+        }
+
+        const idsArray = Array.from(selectedLoteGuiaIds);
+
+        const origHtml = btnSubmitCreateLote.innerHTML;
+        btnSubmitCreateLote.disabled = true;
+        btnSubmitCreateLote.innerHTML = `<span>Guardando...</span>`;
+
+        try {
+          const res = await fetch('/api/guias/lote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'assign',
+              lote_despacho: codigo,
+              fecha: fecha || undefined,
+              guia_ids: idsArray
+            })
+          });
+
+          const json = await res.json();
+          if (res.ok && json.success) {
+            showToast(json.message || `Lote ${codigo} guardado exitosamente`, 'success');
+
+            if (idsArray.length > 0) {
+              const isoDate = fecha ? new Date(fecha + 'T12:00:00Z').toISOString() : undefined;
+              shipments = shipments.map(g => {
+                if (selectedLoteGuiaIds.has(g.id_guia)) {
+                  return {
+                    ...g,
+                    lote_despacho: codigo,
+                    created_at: isoDate || g.created_at
+                  };
+                }
+                return g;
+              });
+            }
+
+            closeGestionLotesModal();
+            updateLoteControls();
+            populateCityFilter();
+            renderViews();
+          } else {
+            showToast(json.message || 'Error al guardar el lote', 'error');
+          }
+        } catch (e) {
+          showToast('Error de conexión al procesar lote', 'error');
+        } finally {
+          btnSubmitCreateLote.disabled = false;
+          btnSubmitCreateLote.innerHTML = origHtml;
+        }
+      };
+
+      // Submit: Editar Lote Existente / Fecha
+      (window as any).submitEditLoteForm = async () => {
+        const oldLote = (modalEditLoteSelect?.value || '').trim();
+        const newLote = (modalEditLoteNewname?.value || '').trim().toUpperCase();
+        const newDate = (modalEditLoteNewdate?.value || '').trim();
+        const updateDateAll = modalEditLoteUpdateDateAll?.checked;
+
+        if (!oldLote) {
+          showToast('Seleccione el lote que desea editar', 'error');
+          return;
+        }
+
+        if (!newLote) {
+          showToast('El código del lote no puede quedar vacío', 'error');
+          return;
+        }
+
+        const origHtml = btnSubmitEditLote.innerHTML;
+        btnSubmitEditLote.disabled = true;
+        btnSubmitEditLote.innerHTML = `<span>Actualizando...</span>`;
+
+        try {
+          const res = await fetch('/api/guias/lote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'edit_lote',
+              old_lote: oldLote,
+              new_lote: newLote,
+              fecha: updateDateAll && newDate ? newDate : undefined
+            })
+          });
+
+          const json = await res.json();
+          if (res.ok && json.success) {
+            showToast(json.message || `Lote ${newLote} actualizado exitosamente`, 'success');
+
+            const isoDate = (updateDateAll && newDate) ? new Date(newDate + 'T12:00:00Z').toISOString() : undefined;
+            shipments = shipments.map(g => {
+              const info = getGuiaWeekInfo(g);
+              const gCode = g.lote_despacho || info.loteCode;
+              if (gCode === oldLote || g.lote_despacho === oldLote) {
+                return {
+                  ...g,
+                  lote_despacho: newLote,
+                  created_at: isoDate || g.created_at
+                };
+              }
+              return g;
+            });
+
+            closeGestionLotesModal();
+            updateLoteControls();
+            populateCityFilter();
+            renderViews();
+          } else {
+            showToast(json.message || 'Error al actualizar lote', 'error');
+          }
+        } catch (e) {
+          showToast('Error de conexión al actualizar lote', 'error');
+        } finally {
+          btnSubmitEditLote.disabled = false;
+          btnSubmitEditLote.innerHTML = origHtml;
+        }
+      };
 
       // Archivar guía individual
       (window as any).archivarGuia = async (idGuia: string) => {
@@ -4572,14 +5368,14 @@ const userInitials = currentUser.nombre
 
                 <!-- Badge de Lote / Semana Operativa -->
                 ${weekInfo.isPastPending ? `
-                  <span class="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs" title="Guía rezagada de semana anterior (${weekInfo.loteCode})">
+                  <button type="button" onclick="window.openGestionLotesModal('${item.lote_despacho || weekInfo.loteCode}')" class="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs hover:bg-amber-200 transition-all cursor-pointer" title="Guía rezagada (${item.lote_despacho || weekInfo.loteCode}) - Clic para gestionar lote y fecha">
                     <svg class="w-3 h-3 text-amber-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                     <span>Rezagada • ${item.lote_despacho || weekInfo.label}</span>
-                  </span>
+                  </button>
                 ` : `
-                  <span class="inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200" title="Lote de despacho: ${item.lote_despacho || weekInfo.loteCode}">
+                  <button type="button" onclick="window.openGestionLotesModal('${item.lote_despacho || weekInfo.loteCode}')" class="inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700 transition-all cursor-pointer" title="Lote: ${item.lote_despacho || weekInfo.loteCode} - Clic para gestionar lote o editar fecha">
                     <span>${item.lote_despacho || weekInfo.loteCode}</span>
-                  </span>
+                  </button>
                 `}
 
                 ${(item.orden_ruta && item.orden_ruta > 0) || item.estado === 'En ruta' || item.estado === 'Entregado' ? `
@@ -6942,6 +7738,8 @@ const userInitials = currentUser.nombre
           const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
 
           const id_guia = guiaInput.value.trim().toUpperCase();
+          const loteInput = document.getElementById('input-lote') as HTMLInputElement;
+          const fechaRegistroInput = document.getElementById('input-fecha-registro') as HTMLInputElement;
 
           // Bloqueo de envío múltiple
           isSubmitting = true;
@@ -6965,7 +7763,9 @@ const userInitials = currentUser.nombre
             piezas: parseInt(piezasInput.value, 10) || 1,
             pies_cubicos: piesCubicosInput && piesCubicosInput.value.trim() ? parseFloat(piesCubicosInput.value.trim()) : undefined,
             empresa: empresaInput ? empresaInput.value.trim() || undefined : undefined,
-            direccion_referencia: dirInput.value.trim() || undefined
+            direccion_referencia: dirInput.value.trim() || undefined,
+            lote_despacho: loteInput && loteInput.value.trim() ? loteInput.value.trim().toUpperCase() : undefined,
+            created_at: fechaRegistroInput && fechaRegistroInput.value.trim() ? fechaRegistroInput.value.trim() : undefined
           };
 
           try {
@@ -6985,9 +7785,12 @@ const userInitials = currentUser.nombre
               piezasInput.value = '1';
               if (piesCubicosInput) piesCubicosInput.value = '';
               if (empresaInput) empresaInput.value = '';
+              if (loteInput) loteInput.value = '';
+              if (fechaRegistroInput) fechaRegistroInput.value = '';
               guiaInput.focus();
 
               populateCityFilter();
+              updateLoteControls();
               renderViews();
               loadFrequentClients();
               (window as any).clearFrequentClientSelection();
@@ -7207,6 +8010,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       const editGpsConfirmado = document.getElementById('edit-gps-confirmado') as HTMLInputElement;
       const editGuiaSaveBtn = document.getElementById('edit-guia-save-btn') as HTMLButtonElement;
 
+      const editLote = document.getElementById('edit-lote') as HTMLInputElement;
+      const editFecha = document.getElementById('edit-fecha') as HTMLInputElement;
+
       function closeEditGuiaModal() {
         if (editGuiaModal) {
           editGuiaModal.classList.add('hidden');
@@ -7251,6 +8057,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         if (editGpsLat) editGpsLat.value = item.gps_latitud ? item.gps_latitud.toString() : '';
         if (editGpsLon) editGpsLon.value = item.gps_longitud ? item.gps_longitud.toString() : '';
         if (editGpsConfirmado) editGpsConfirmado.checked = item.gps_confirmado === true;
+        if (editLote) editLote.value = item.lote_despacho || getGuiaWeekInfo(item).loteCode;
+        if (editFecha) editFecha.value = item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : '';
 
         editGuiaModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
@@ -7274,6 +8082,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         const choferVal = editChofer.value ? parseInt(editChofer.value, 10) : null;
         const latVal = editGpsLat.value ? parseFloat(editGpsLat.value) : null;
         const lonVal = editGpsLon.value ? parseFloat(editGpsLon.value) : null;
+        const loteVal = editLote ? editLote.value.trim().toUpperCase() || null : null;
+        const fechaVal = editFecha ? editFecha.value.trim() : null;
 
         const payload: Record<string, any> = {
           destinatario: editDestinatario.value.trim(),
@@ -7289,7 +8099,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           direccion_referencia: editDireccion.value.trim() || null,
           gps_latitud: latVal,
           gps_longitud: lonVal,
-          gps_confirmado: editGpsConfirmado.checked
+          gps_confirmado: editGpsConfirmado.checked,
+          lote_despacho: loteVal,
+          created_at: fechaVal ? new Date(fechaVal + 'T12:00:00Z').toISOString() : undefined
         };
 
         try {
@@ -7307,12 +8119,14 @@ _Envías C.A. • Transporte y Logística Nacional_`;
               shipments[idx] = {
                 ...shipments[idx],
                 ...payload,
+                created_at: payload.created_at || shipments[idx].created_at,
                 chofer_nombre: choferObj ? choferObj.nombre : null,
                 chofer_telefono: choferObj ? choferObj.telefono : null
               };
             }
 
             populateCityFilter();
+            updateLoteControls();
             renderViews();
             closeEditGuiaModal();
             showToast(`Guía #${id_guia} actualizada correctamente`, 'success');

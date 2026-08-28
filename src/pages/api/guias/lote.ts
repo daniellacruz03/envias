@@ -1,147 +1,218 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/db';
+import { getUserFromCookies } from '../../../lib/auth';
+import { ensureRutasArchivadasSchema } from '../../../lib/rutas_db';
 
-export const POST: APIRoute = async ({ request }) => {
+// POST /api/guias/lote - Creación manual, asignación y edición de lotes y fechas de despacho
+export const POST: APIRoute = async ({ request, cookies }) => {
   try {
-    const body = await request.json();
-    const {
-      ciudad_destino,
-      chofer_id,
-      cambiar_estado,
-      ids_guias
-    } = body;
-
-    const choferIdParsed = chofer_id !== undefined && chofer_id !== null && chofer_id !== '' 
-      ? parseInt(chofer_id, 10) 
-      : null;
-
-    let updateQuery = '';
-    let queryParams: any[] = [];
-
-    // Si se enviaron IDs específicos
-    if (Array.isArray(ids_guias) && ids_guias.length > 0) {
-      const cleanIds = ids_guias.map((id: string) => id.toString().trim().toUpperCase());
-      
-      if (cambiar_estado) {
-        updateQuery = `
-          UPDATE guias
-          SET 
-            chofer_asignado_id = $1,
-            estado = $2
-          WHERE id_guia = ANY($3)
-          RETURNING id_guia, destinatario, ciudad_destino, estado, chofer_asignado_id
-        `;
-        queryParams = [choferIdParsed, cambiar_estado, cleanIds];
-      } else {
-        updateQuery = `
-          UPDATE guias
-          SET chofer_asignado_id = $1
-          WHERE id_guia = ANY($2)
-          RETURNING id_guia, destinatario, ciudad_destino, estado, chofer_asignado_id
-        `;
-        queryParams = [choferIdParsed, cleanIds];
-      }
-    } 
-    // Si se agrupa por ciudad
-    else if (ciudad_destino && typeof ciudad_destino === 'string') {
-      const cleanCiudad = ciudad_destino.trim();
-      
-      if (cambiar_estado) {
-        updateQuery = `
-          UPDATE guias
-          SET 
-            chofer_asignado_id = $1,
-            estado = $2
-          WHERE TRIM(LOWER(ciudad_destino)) = TRIM(LOWER($3))
-          RETURNING id_guia, destinatario, ciudad_destino, estado, chofer_asignado_id
-        `;
-        queryParams = [choferIdParsed, cambiar_estado, cleanCiudad];
-      } else {
-        updateQuery = `
-          UPDATE guias
-          SET chofer_asignado_id = $1
-          WHERE TRIM(LOWER(ciudad_destino)) = TRIM(LOWER($2))
-          RETURNING id_guia, destinatario, ciudad_destino, estado, chofer_asignado_id
-        `;
-        queryParams = [choferIdParsed, cleanCiudad];
-      }
-    } 
-    // Si se despachan todas las guías de un chofer
-    else if (choferIdParsed !== null) {
-      if (cambiar_estado) {
-        updateQuery = `
-          UPDATE guias
-          SET estado = $1
-          WHERE chofer_asignado_id = $2 AND estado != 'Entregado'
-          RETURNING id_guia, destinatario, ciudad_destino, estado, chofer_asignado_id
-        `;
-        queryParams = [cambiar_estado, choferIdParsed];
-      } else {
-        updateQuery = `
-          UPDATE guias
-          SET chofer_asignado_id = $1
-          WHERE chofer_asignado_id = $1
-          RETURNING id_guia, destinatario, ciudad_destino, estado, chofer_asignado_id
-        `;
-        queryParams = [choferIdParsed];
-      }
-    } else {
-      return new Response(JSON.stringify({
-        success: false,
-        message: 'Debes proporcionar una ciudad_destino, una lista de ids_guias o un chofer_id'
-      }), {
-        status: 400,
+    const user = getUserFromCookies(cookies);
+    if (!user) {
+      return new Response(JSON.stringify({ success: false, message: 'No autenticado.' }), {
+        status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    const result = await query(updateQuery, queryParams);
+    if (user.rol === 'Chofer') {
+      return new Response(JSON.stringify({
+        success: false,
+        message: 'Acceso restringido: Solo el personal de Logística o Admin puede gestionar lotes.'
+      }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
-    // Obtener las guías actualizadas con datos del chofer
-    const updatedIds = result.rows.map((r: any) => r.id_guia);
-    
-    let fullGuiasResult: any = { rows: [] };
-    if (updatedIds.length > 0) {
-      fullGuiasResult = await query(`
-        SELECT 
-          g.id_guia,
-          g.destinatario,
-          g.telefono_principal,
-          g.telefono_secundario,
-          g.ciudad_destino,
-          g.piezas,
-          g.pies_cubicos,
-          g.direccion_referencia,
-          g.estado,
-          g.gps_latitud,
-          g.gps_longitud,
-          g.gps_confirmado,
-          g.chofer_asignado_id,
-          g.created_at,
-          u.nombre AS chofer_nombre,
-          u.telefono AS chofer_telefono
-        FROM guias g
-        LEFT JOIN usuarios u ON g.chofer_asignado_id = u.id
-        WHERE g.id_guia = ANY($1)
-        ORDER BY g.created_at DESC
-      `, [updatedIds]);
+    await ensureRutasArchivadasSchema();
+
+    const body = await request.json().catch(() => ({}));
+    const {
+      action,
+      lote_despacho,
+      old_lote,
+      new_lote,
+      fecha,
+      guia_ids
+    } = body;
+
+    // 1. ACCIÓN: Asignar lote y opcionalmente fecha a una lista de guías
+    if (action === 'assign' || action === 'create') {
+      const targetLote = (lote_despacho || new_lote || '').trim();
+      if (!targetLote) {
+        return new Response(JSON.stringify({
+          success: false,
+          message: 'Debe especificar el código del lote de despacho.'
+        }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const ids = Array.isArray(guia_ids)
+        ? guia_ids.map(id => id.toString().trim().toUpperCase()).filter(Boolean)
+        : [];
+
+      let updatedCount = 0;
+
+      if (ids.length > 0) {
+        if (fecha && fecha.trim()) {
+          // Actualizar lote y created_at
+          const parsedDate = new Date(fecha.trim());
+          const isoDate = !isNaN(parsedDate.getTime()) ? parsedDate.toISOString() : new Date().toISOString();
+
+          const updateRes = await query(`
+            UPDATE guias 
+            SET lote_despacho = $1, created_at = $2 
+            WHERE id_guia = ANY($3)
+            RETURNING id_guia
+          `, [targetLote, isoDate, ids]);
+          updatedCount = updateRes.rowCount || updateRes.rows.length;
+        } else {
+          // Solo actualizar lote
+          const updateRes = await query(`
+            UPDATE guias 
+            SET lote_despacho = $1 
+            WHERE id_guia = ANY($2)
+            RETURNING id_guia
+          `, [targetLote, ids]);
+          updatedCount = updateRes.rowCount || updateRes.rows.length;
+        }
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: ids.length > 0
+          ? `Lote ${targetLote} asignado a ${updatedCount} guía${updatedCount !== 1 ? 's' : ''} exitosamente.`
+          : `Lote ${targetLote} registrado correctamente.`,
+        data: {
+          lote_despacho: targetLote,
+          updatedCount,
+          guia_ids: ids
+        }
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // 2. ACCIÓN: Editar o Renombrar un Lote Existente y/o Cambiar su Fecha
+    if (action === 'edit_lote' || action === 'rename') {
+      const sourceLote = (old_lote || lote_despacho || '').trim();
+      const targetLote = (new_lote || lote_despacho || '').trim();
+
+      if (!sourceLote) {
+        return new Response(JSON.stringify({
+          success: false,
+          message: 'Debe indicar el lote original que desea modificar.'
+        }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const updates: string[] = [];
+      const params: any[] = [];
+      let paramIdx = 1;
+
+      if (targetLote && targetLote !== sourceLote) {
+        updates.push(`lote_despacho = $${paramIdx++}`);
+        params.push(targetLote);
+      }
+
+      if (fecha && fecha.trim()) {
+        const parsedDate = new Date(fecha.trim());
+        if (!isNaN(parsedDate.getTime())) {
+          updates.push(`created_at = $${paramIdx++}`);
+          params.push(parsedDate.toISOString());
+        }
+      }
+
+      if (updates.length === 0) {
+        return new Response(JSON.stringify({
+          success: false,
+          message: 'No se indicaron cambios para el lote (nuevo nombre o fecha).'
+        }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      params.push(sourceLote);
+      const updateRes = await query(`
+        UPDATE guias 
+        SET ${updates.join(', ')} 
+        WHERE lote_despacho = $${paramIdx}
+        RETURNING id_guia
+      `, params);
+
+      const affected = updateRes.rowCount || updateRes.rows.length;
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: `Lote actualizado exitosamente en ${affected} guía${affected !== 1 ? 's' : ''}.`,
+        data: {
+          old_lote: sourceLote,
+          new_lote: targetLote || sourceLote,
+          affected
+        }
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // 3. ACCIÓN: Actualizar fecha de una o varias guías específicas
+    if (action === 'update_date') {
+      const ids = Array.isArray(guia_ids)
+        ? guia_ids.map(id => id.toString().trim().toUpperCase()).filter(Boolean)
+        : [];
+
+      if (ids.length === 0 || !fecha) {
+        return new Response(JSON.stringify({
+          success: false,
+          message: 'Debe especificar las guías y la nueva fecha.'
+        }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const parsedDate = new Date(fecha.trim());
+      const isoDate = !isNaN(parsedDate.getTime()) ? parsedDate.toISOString() : new Date().toISOString();
+
+      const updateRes = await query(`
+        UPDATE guias 
+        SET created_at = $1 
+        WHERE id_guia = ANY($2)
+        RETURNING id_guia
+      `, [isoDate, ids]);
+
+      const affected = updateRes.rowCount || updateRes.rows.length;
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: `Fecha actualizada para ${affected} guía${affected !== 1 ? 's' : ''}.`,
+        data: { affected, guia_ids: ids, fecha: isoDate }
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     return new Response(JSON.stringify({
-      success: true,
-      message: `Se actualizaron ${result.rowCount} guías exitosamente.`,
-      count: result.rowCount,
-      data: fullGuiasResult.rows
+      success: false,
+      message: 'Acción no reconocida. Acciones válidas: assign, create, edit_lote, rename, update_date.'
     }), {
-      status: 200,
+      status: 400,
       headers: { 'Content-Type': 'application/json' }
     });
 
   } catch (error: any) {
-    console.error('[API /api/guias/lote POST Error]:', error);
+    console.error('[API /api/guias/lote Error]:', error);
     return new Response(JSON.stringify({
       success: false,
-      message: 'Error al procesar asignación por lote',
+      message: 'Error en el servidor al gestionar lote',
       error: error.message
     }), {
       status: 500,

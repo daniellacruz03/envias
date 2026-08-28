@@ -100,6 +100,7 @@ export const PATCH: APIRoute = async ({ params, request }) => {
       'comprobante_base64',
       'recibido_por',
       'lote_despacho',
+      'created_at',
       'archivada',
       'ruta_archivada_id'
     ];
