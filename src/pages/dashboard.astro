@@ -43,8 +43,8 @@ const userInitials = currentUser.nombre
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
     
-    <!-- html2pdf.js para Exportación Directa de Listines PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+    <!-- html2pdf.js para Exportación Directa de Listines PDF (carga sincrónica garantizada) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
       body {
@@ -4428,7 +4428,8 @@ const userInitials = currentUser.nombre
         } else if (currentViewMode === 'directorio') {
           renderDirectorioView();
         } else if (currentViewMode === 'escaneos') {
-          loadAndRenderEscaneos();
+          const _loadEscaneos = typeof loadAndRenderEscaneos !== 'undefined' ? loadAndRenderEscaneos : (window as any).loadAndRenderEscaneos;
+          if (typeof _loadEscaneos === 'function') _loadEscaneos();
         } else if (currentViewMode === 'listin') {
           renderListinView();
         } else if (currentViewMode === 'historial') {
@@ -10153,6 +10154,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           <span>Generando PDF...</span>
         `;
 
+        let pageHtml = '';
         try {
           const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
           const driverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
@@ -10181,7 +10183,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             : 'Todas_Zonas';
           const filename = `Listin_Envias_${zoneClean}_${driverClean}_${fecha}.pdf`;
 
-          const pageHtml = createListinHtmlPage({
+          pageHtml = createListinHtmlPage({
             cityName,
             zoneGuias: orderedActiveGuias,
             driverName,
@@ -10223,14 +10225,24 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             await (window as any).html2pdf().set(opt).from(tempContainer).save();
             showToast('PDF del Listín descargado a tamaño completo exitosamente', 'success');
           } else {
-            window.print();
+            // Fallback: abrir ventana de impresión aislada con solo el listín
+            const pw = window.open('', '_blank', 'width=900,height=700');
+            if (pw) {
+              pw.document.write(`<!DOCTYPE html><html><head><meta charset='UTF-8'><title>${filename}</title><style>body{margin:0;padding:0;background:#fff;font-family:'Plus Jakarta Sans',system-ui,sans-serif;}@media print{body{margin:0;}}</style></head><body>${pageHtml}</body></html>`);
+              pw.document.close();
+              pw.focus();
+              setTimeout(() => { pw.print(); }, 400);
+            }
           }
 
           document.body.removeChild(tempContainer);
         } catch (err) {
           console.error('Error al generar PDF:', err);
           showToast('Abriendo cuadro de impresión del navegador...', 'info');
-          window.print();
+          if (pageHtml) {
+            const pw2 = window.open('', '_blank', 'width=900,height=700');
+            if (pw2) { pw2.document.write(`<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Listín Envías</title><style>body{margin:0;font-family:system-ui,sans-serif;}</style></head><body>${pageHtml}</body></html>`); pw2.document.close(); setTimeout(() => { pw2.print(); }, 400); }
+          }
         } finally {
           btnListinDownloadPdf.disabled = false;
           btnListinDownloadPdf.innerHTML = origHtml;
@@ -10255,6 +10267,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           <span>Generando ${listinCitiesOrder.length} listines...</span>
         `;
 
+
+        let combinedHtml = '';
         try {
           const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
           const driverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
@@ -10272,8 +10286,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           tempContainer.style.width = '794px';
           tempContainer.style.backgroundColor = '#ffffff';
 
-          let combinedHtml = '';
+
           const activeCities = listinCitiesOrder.filter(c => !listinExcludedCities.has(c));
+
           activeCities.forEach(cityName => {
             const zoneGuias = getOrderedActiveGuias(srcShipments, cityName);
             if (zoneGuias.length === 0) return;
@@ -10318,14 +10333,22 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             await (window as any).html2pdf().set(opt).from(tempContainer).save();
             showToast(`¡Documento PDF de todas las zonas (${activeCities.length} hojas) descargado exitosamente!`, 'success');
           } else {
-            window.print();
+            // Fallback: ventana de impresión aislada con todas las zonas
+            const pw = window.open('', '_blank', 'width=900,height=700');
+            if (pw) {
+              pw.document.write(`<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Listines Envías</title><style>body{margin:0;padding:0;background:#fff;font-family:'Plus Jakarta Sans',system-ui,sans-serif;}.listin-sheet-page{page-break-after:always;break-after:page;}@media print{body{margin:0;}}</style></head><body>${combinedHtml}</body></html>`);
+              pw.document.close();
+              pw.focus();
+              setTimeout(() => { pw.print(); }, 400);
+            }
           }
 
           document.body.removeChild(tempContainer);
         } catch (err) {
           console.error('Error al generar PDF de todas las zonas:', err);
           showToast('Error al exportar lote de listines. Abriendo impresión...', 'error');
-          window.print();
+          const pw3 = window.open('', '_blank', 'width=900,height=700');
+          if (pw3) { pw3.document.write(`<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Listines Envías</title><style>body{margin:0;font-family:system-ui,sans-serif;}.listin-sheet-page{page-break-after:always;}</style></head><body>${combinedHtml}</body></html>`); pw3.document.close(); setTimeout(() => { pw3.print(); }, 400); }
         } finally {
           btnListinDownloadAllPdf.disabled = false;
           btnListinDownloadAllPdf.innerHTML = origHtml;
