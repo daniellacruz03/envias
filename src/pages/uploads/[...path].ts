@@ -1,4 +1,4 @@
-﻿import type { APIRoute } from 'astro';
+import type { APIRoute } from 'astro';
 import fs from 'fs/promises';
 import path from 'path';
 import { query } from '../../lib/db';
@@ -84,7 +84,18 @@ export const GET: APIRoute = async ({ params }) => {
     `, [searchUrl, `%${filenameOnly}%`]);
 
     if (guiaRes.rows.length > 0 && guiaRes.rows[0].comprobante_base64) {
-      const rawBase64 = guiaRes.rows[0].comprobante_base64.replace(/^data:image\/\w+;base64,/, '');
+      let rawBase64 = guiaRes.rows[0].comprobante_base64;
+      if (typeof rawBase64 === 'string' && rawBase64.trim().startsWith('[')) {
+        try {
+          const parsed = JSON.parse(rawBase64);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const urls = (guiaRes.rows[0].comprobante_url || '').split(',');
+            const foundIdx = urls.findIndex((u: string) => u.includes(filenameOnly));
+            rawBase64 = (foundIdx >= 0 && parsed[foundIdx]) ? parsed[foundIdx] : parsed[0];
+          }
+        } catch {}
+      }
+      rawBase64 = rawBase64.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(rawBase64, 'base64');
 
       try {

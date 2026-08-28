@@ -36,22 +36,27 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
 
     const currentUrl = guiaRes.rows[0].comprobante_url;
 
-    // 2. Si hay archivo en disco, intentar eliminarlo
-    if (currentUrl && currentUrl.startsWith('/uploads/')) {
-      const relPath = currentUrl.replace(/^\/uploads\//, '');
-      const possiblePaths = [
-        path.join(process.cwd(), 'public', 'uploads', relPath),
-        path.join(process.cwd(), 'dist', 'client', 'uploads', relPath),
-        path.join(process.cwd(), 'uploads', relPath)
-      ];
+    // 2. Si hay archivos en disco, intentar eliminarlos
+    if (currentUrl) {
+      const urls = currentUrl.split(',').map((s: string) => s.trim()).filter(Boolean);
+      for (const u of urls) {
+        if (u.startsWith('/uploads/')) {
+          const relPath = u.replace(/^\/uploads\//, '');
+          const possiblePaths = [
+            path.join(process.cwd(), 'public', 'uploads', relPath),
+            path.join(process.cwd(), 'dist', 'client', 'uploads', relPath),
+            path.join(process.cwd(), 'uploads', relPath)
+          ];
 
-      for (const p of possiblePaths) {
-        try {
-          if (fs.existsSync(p)) {
-            fs.unlinkSync(p);
+          for (const p of possiblePaths) {
+            try {
+              if (fs.existsSync(p)) {
+                fs.unlinkSync(p);
+              }
+            } catch (e) {
+              console.warn('[DELETE Foto Warning]: No se pudo borrar archivo físico:', p, e);
+            }
           }
-        } catch (e) {
-          console.warn('[DELETE Foto Warning]: No se pudo borrar archivo físico:', p, e);
         }
       }
     }

@@ -707,8 +707,8 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             </div>
 
             <!-- Zona de Carga de Foto de Comprobante: Cámara y Galería -->
-            <div id="dropzone-delivery-photo" class="space-y-2">
-              <!-- Botones de selección Cámara / Galería cuando no hay foto -->
+            <div id="dropzone-delivery-photo" class="space-y-2.5">
+              <!-- Botones iniciales Cámara / Galería -->
               <div id="photo-placeholder" class="grid grid-cols-2 gap-2.5">
                 <!-- 1. Botón Tomar Foto con Cámara -->
                 <div class="relative bg-slate-900 hover:bg-black text-white rounded-2xl p-3.5 flex flex-col items-center justify-center gap-1.5 shadow-sm transition-all text-center select-none overflow-hidden cursor-pointer">
@@ -731,12 +731,13 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
                   </div>
                 </div>
 
-                <!-- 2. Botón Seleccionar de Galería -->
+                <!-- 2. Botón Seleccionar de Galería (MULTIPLE) -->
                 <div class="relative bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-800 rounded-2xl p-3.5 flex flex-col items-center justify-center gap-1.5 transition-all text-center select-none overflow-hidden cursor-pointer">
                   <input
                     type="file"
                     id="modal-delivery-photo-gallery"
                     accept="image/*"
+                    multiple
                     class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                   />
                   <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center pointer-events-none">
@@ -745,23 +746,58 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
                     </svg>
                   </div>
                   <div class="pointer-events-none">
-                    <p class="text-xs font-bold">Galería</p>
-                    <p class="text-[9px] text-slate-500">Elegir de fotos</p>
+                    <p class="text-xs font-bold">Elegir de Galería</p>
+                    <p class="text-[9px] text-slate-500">Seleccionar varias fotos</p>
                   </div>
                 </div>
               </div>
 
-              <!-- Vista previa de foto cargada -->
-              <div id="photo-preview-container" class="hidden space-y-2 border border-slate-200 rounded-2xl p-3 bg-slate-50">
-                <img id="photo-preview-img" class="w-full max-h-40 object-contain rounded-xl border border-slate-200 bg-white" alt="Comprobante" />
-                <div class="flex items-center justify-between px-1 text-[11px]">
-                  <span class="text-emerald-700 font-bold flex items-center gap-1">
-                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                    <span id="photo-status-text">Comprobante optimizado</span>
-                  </span>
-                  <button type="button" onclick="window.resetDeliveryPhotoState()" class="text-rose-600 hover:text-rose-700 font-bold underline text-xs cursor-pointer">
-                    Cambiar foto
+              <!-- Vista previa de fotos cargadas (Galería Multi-foto) -->
+              <div id="photo-preview-container" class="hidden space-y-2.5 border border-slate-200 rounded-2xl p-3 bg-slate-50">
+                <!-- Barra superior de estado -->
+                <div class="flex items-center justify-between px-0.5 text-xs">
+                  <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                    <span id="photo-count-badge" class="font-bold text-slate-900 truncate">0 fotos seleccionadas</span>
+                    <span id="photo-size-badge" class="text-[10px] font-mono bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold shrink-0">0 KB</span>
+                  </div>
+                  <button type="button" onclick="window.resetDeliveryPhotoState()" class="text-rose-600 hover:text-rose-700 font-bold text-[11px] underline cursor-pointer shrink-0">
+                    Limpiar
                   </button>
+                </div>
+
+                <!-- Grid de miniaturas -->
+                <div id="delivery-photos-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2"></div>
+
+                <!-- Botones de añadir más fotos -->
+                <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200">
+                  <div class="relative bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl py-2 px-2.5 flex items-center justify-center gap-1.5 text-center select-none overflow-hidden cursor-pointer text-xs font-bold shadow-2xs">
+                    <input
+                      type="file"
+                      id="modal-delivery-add-camera"
+                      accept="image/*"
+                      capture="environment"
+                      class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                    />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-emerald-600 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    <span class="pointer-events-none text-[11px]">Tomar otra foto</span>
+                  </div>
+
+                  <div class="relative bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-xl py-2 px-2.5 flex items-center justify-center gap-1.5 text-center select-none overflow-hidden cursor-pointer text-xs font-bold shadow-2xs">
+                    <input
+                      type="file"
+                      id="modal-delivery-add-gallery"
+                      accept="image/*"
+                      multiple
+                      class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                    />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-600 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    <span class="pointer-events-none text-[11px]">Añadir de galería</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -853,14 +889,15 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
     <!-- ========================================== -->
     <!-- 5. LIGHTBOX VISOR DE FOTOS CON ZOOM         -->
     <!-- ========================================== -->
-    <div id="lightbox-modal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md hidden items-center justify-center p-4">
+    <div id="lightbox-modal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md hidden items-center justify-center p-3 sm:p-4">
       <div class="relative max-w-lg w-full bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl p-4 space-y-3">
         <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
-          <div>
-            <h4 class="text-xs font-bold text-white" id="lightbox-title">Comprobante</h4>
-            <p class="text-[10px] text-slate-400" id="lightbox-info"></p>
+          <div class="min-w-0">
+            <h4 class="text-xs font-bold text-white truncate" id="lightbox-title">Comprobante</h4>
+            <p class="text-[10px] text-slate-400 truncate" id="lightbox-info"></p>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 shrink-0">
+            <span id="lightbox-counter" class="hidden text-[10px] font-mono bg-slate-800 text-indigo-300 px-2 py-0.5 rounded-full font-bold">1 / 1</span>
             <button type="button" id="lightbox-delete-btn" class="hidden text-xs font-semibold px-2.5 py-1 bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white rounded-xl border border-rose-500/30 transition-all cursor-pointer items-center gap-1">
               <svg class="w-3.5 h-3.5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
               <span>Eliminar</span>
@@ -870,8 +907,17 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             </button>
           </div>
         </div>
-        <div class="flex items-center justify-center max-h-[70vh] overflow-hidden rounded-2xl bg-black">
+
+        <div class="relative flex items-center justify-center max-h-[70vh] overflow-hidden rounded-2xl bg-black group">
           <img id="lightbox-img" src="" alt="Comprobante" class="max-h-[68vh] w-auto object-contain rounded-xl" />
+
+          <!-- Botones de Navegación Anterior / Siguiente -->
+          <button type="button" id="lightbox-prev-btn" class="hidden absolute left-2 p-2 rounded-full bg-black/60 hover:bg-black/90 text-white border border-white/20 transition-all cursor-pointer shadow-lg">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <button type="button" id="lightbox-next-btn" class="hidden absolute right-2 p-2 rounded-full bg-black/60 hover:bg-black/90 text-white border border-white/20 transition-all cursor-pointer shadow-lg">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+          </button>
         </div>
       </div>
     </div>
@@ -1354,11 +1400,134 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       var modalIncidentNote = document.getElementById('modal-incident-note');
       var modalDeliveryPhotoCamera = document.getElementById('modal-delivery-photo-camera');
       var modalDeliveryPhotoGallery = document.getElementById('modal-delivery-photo-gallery');
+      var modalDeliveryAddCamera = document.getElementById('modal-delivery-add-camera');
+      var modalDeliveryAddGallery = document.getElementById('modal-delivery-add-gallery');
       var photoPlaceholder = document.getElementById('photo-placeholder');
       var photoPreviewContainer = document.getElementById('photo-preview-container');
-      var photoPreviewImg = document.getElementById('photo-preview-img');
+      var deliveryPhotosGrid = document.getElementById('delivery-photos-grid');
+      var photoCountBadge = document.getElementById('photo-count-badge');
       var photoSizeBadge = document.getElementById('photo-size-badge');
-      var photoStatusText = document.getElementById('photo-status-text');
+
+      var currentDeliveryPhotos = []; // array de { blob: Blob, file: File, sizeKb: number, previewUrl: string }
+
+      function renderDeliveryPhotosGrid() {
+        if (!deliveryPhotosGrid) return;
+        var count = currentDeliveryPhotos.length;
+
+        if (count === 0) {
+          if (photoPlaceholder) photoPlaceholder.classList.remove('hidden');
+          if (photoPreviewContainer) photoPreviewContainer.classList.add('hidden');
+          if (modalConfirmBtn) modalConfirmBtn.disabled = true;
+          return;
+        }
+
+        if (photoPlaceholder) photoPlaceholder.classList.add('hidden');
+        if (photoPreviewContainer) photoPreviewContainer.classList.remove('hidden');
+        if (modalConfirmBtn) modalConfirmBtn.disabled = false;
+
+        var totalKb = currentDeliveryPhotos.reduce(function(acc, p) { return acc + (p.sizeKb || 0); }, 0);
+        if (photoCountBadge) {
+          photoCountBadge.textContent = count + ' foto' + (count !== 1 ? 's' : '') + ' seleccionada' + (count !== 1 ? 's' : '');
+        }
+        if (photoSizeBadge) {
+          photoSizeBadge.textContent = '~' + totalKb + ' KB total';
+          photoSizeBadge.classList.remove('hidden');
+        }
+
+        var html = '';
+        currentDeliveryPhotos.forEach(function(item, idx) {
+          html += '<div class="relative group rounded-xl overflow-hidden border border-slate-300 bg-white aspect-square flex items-center justify-center shadow-2xs">' +
+              '<img src="' + item.previewUrl + '" alt="Foto ' + (idx + 1) + '" class="w-full h-full object-cover" />' +
+              '<span class="absolute top-1 left-1 bg-slate-900/80 text-white font-mono text-[9px] font-bold px-1.5 py-0.2 rounded-md shadow-xs">#' + (idx + 1) + '</span>' +
+              '<button type="button" onclick="window.removeDeliveryPhoto(' + idx + ')" class="absolute top-1 right-1 w-5 h-5 bg-rose-600 hover:bg-rose-700 text-white rounded-full flex items-center justify-center shadow-xs cursor-pointer transition-all" title="Eliminar esta foto">' +
+                '<svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>' +
+              '</button>' +
+              '<span class="absolute bottom-1 right-1 bg-black/70 text-white font-mono text-[8px] px-1 rounded">' + item.sizeKb + 'KB</span>' +
+            '</div>';
+        });
+
+        deliveryPhotosGrid.innerHTML = html;
+      }
+
+      window.removeDeliveryPhoto = function(idx) {
+        if (idx >= 0 && idx < currentDeliveryPhotos.length) {
+          var removed = currentDeliveryPhotos.splice(idx, 1)[0];
+          if (removed && removed.previewUrl) {
+            try { URL.revokeObjectURL(removed.previewUrl); } catch(e) {}
+          }
+          renderDeliveryPhotosGrid();
+        }
+      };
+
+      function resetDeliveryPhotoState() {
+        currentDeliveryPhotos.forEach(function(p) {
+          if (p.previewUrl) {
+            try { URL.revokeObjectURL(p.previewUrl); } catch(e) {}
+          }
+        });
+        currentDeliveryPhotos = [];
+        if (modalDeliveryPhotoCamera) modalDeliveryPhotoCamera.value = '';
+        if (modalDeliveryPhotoGallery) modalDeliveryPhotoGallery.value = '';
+        if (modalDeliveryAddCamera) modalDeliveryAddCamera.value = '';
+        if (modalDeliveryAddGallery) modalDeliveryAddGallery.value = '';
+        renderDeliveryPhotosGrid();
+      }
+      window.resetDeliveryPhotoState = resetDeliveryPhotoState;
+
+      async function handleDeliveryFilesSelected(files) {
+        if (!files || files.length === 0) return;
+
+        if (photoCountBadge) photoCountBadge.textContent = 'Comprimiendo ' + files.length + ' foto(s)...';
+        if (modalConfirmBtn) modalConfirmBtn.disabled = true;
+
+        for (var i = 0; i < files.length; i++) {
+          var file = files[i];
+          try {
+            var result = await compressImage(file, 1200, 1600, 0.75);
+            var blob = result.blob || file;
+            var previewUrl = URL.createObjectURL(blob);
+            currentDeliveryPhotos.push({
+              file: file,
+              blob: blob,
+              sizeKb: result.sizeKb,
+              previewUrl: previewUrl
+            });
+          } catch (err) {
+            console.error('Error optimizando foto:', err);
+          }
+        }
+
+        renderDeliveryPhotosGrid();
+      }
+
+      if (modalDeliveryPhotoCamera) {
+        modalDeliveryPhotoCamera.addEventListener('change', function(e) {
+          var files = e.target.files ? Array.from(e.target.files) : [];
+          handleDeliveryFilesSelected(files);
+          e.target.value = '';
+        });
+      }
+      if (modalDeliveryPhotoGallery) {
+        modalDeliveryPhotoGallery.addEventListener('change', function(e) {
+          var files = e.target.files ? Array.from(e.target.files) : [];
+          handleDeliveryFilesSelected(files);
+          e.target.value = '';
+        });
+      }
+      if (modalDeliveryAddCamera) {
+        modalDeliveryAddCamera.addEventListener('change', function(e) {
+          var files = e.target.files ? Array.from(e.target.files) : [];
+          handleDeliveryFilesSelected(files);
+          e.target.value = '';
+        });
+      }
+      if (modalDeliveryAddGallery) {
+        modalDeliveryAddGallery.addEventListener('change', function(e) {
+          var files = e.target.files ? Array.from(e.target.files) : [];
+          handleDeliveryFilesSelected(files);
+          e.target.value = '';
+        });
+      }
 
       function setDeliveryModalMode(mode) {
         modalDeliveryMode = mode;
@@ -1383,18 +1552,6 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
 
       if (modalTabSuccessBtn) modalTabSuccessBtn.addEventListener('click', function() { setDeliveryModalMode('success'); });
       if (modalTabIncidentBtn) modalTabIncidentBtn.addEventListener('click', function() { setDeliveryModalMode('incident'); });
-
-      function resetDeliveryPhotoState() {
-        currentCompressedBlob = null;
-        if (modalDeliveryPhotoCamera) modalDeliveryPhotoCamera.value = '';
-        if (modalDeliveryPhotoGallery) modalDeliveryPhotoGallery.value = '';
-        if (photoPreviewImg) photoPreviewImg.src = '';
-        if (photoPlaceholder) photoPlaceholder.classList.remove('hidden');
-        if (photoPreviewContainer) photoPreviewContainer.classList.add('hidden');
-        if (photoSizeBadge) photoSizeBadge.classList.add('hidden');
-        if (modalConfirmBtn) modalConfirmBtn.disabled = true;
-      }
-      window.resetDeliveryPhotoState = resetDeliveryPhotoState;
 
       window.openDeliveryModal = function(idGuia, destinatario, direccion, stopNumber, guiasLabel, totalPiezas, totalVolumen) {
         activeModalGuiaId = idGuia;
@@ -1426,64 +1583,31 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeDeliveryModal);
       if (modalCancelBtn) modalCancelBtn.addEventListener('click', closeDeliveryModal);
 
-      async function handleDeliveryPhotoSelected(file) {
-        if (!file) return;
-
-        if (photoPlaceholder) photoPlaceholder.classList.add('hidden');
-        if (photoPreviewContainer) photoPreviewContainer.classList.remove('hidden');
-        if (photoStatusText) photoStatusText.textContent = 'Optimizando foto...';
-        if (modalConfirmBtn) modalConfirmBtn.disabled = true;
-
-        try {
-          var result = await compressImage(file, 1200, 1600, 0.75);
-          currentCompressedBlob = result.blob || file;
-          if (photoPreviewImg) photoPreviewImg.src = URL.createObjectURL(file);
-          if (photoStatusText) photoStatusText.textContent = 'Foto lista (' + result.sizeKb + ' KB optimizada)';
-          if (photoSizeBadge) {
-            photoSizeBadge.textContent = result.sizeKb + ' KB';
-            photoSizeBadge.classList.remove('hidden');
-          }
-          if (modalConfirmBtn) modalConfirmBtn.disabled = false;
-        } catch (err) {
-          console.error('Error optimizando foto de entrega:', err);
-          showToast('Error al procesar la foto', 'error');
-          resetDeliveryPhotoState();
-        }
-      }
-
-      // Manejo de la foto de entrega (Cámara y Galería)
-      if (modalDeliveryPhotoCamera) {
-        modalDeliveryPhotoCamera.addEventListener('change', function(e) {
-          var file = e.target.files ? e.target.files[0] : null;
-          handleDeliveryPhotoSelected(file);
-        });
-      }
-      if (modalDeliveryPhotoGallery) {
-        modalDeliveryPhotoGallery.addEventListener('change', function(e) {
-          var file = e.target.files ? e.target.files[0] : null;
-          handleDeliveryPhotoSelected(file);
-        });
-      }
-
-      // Submit Confirmar Entrega
+      // Submit Confirmar Entrega (Múltiples Fotos)
       if (modalConfirmBtn) {
         modalConfirmBtn.addEventListener('click', async function() {
           if (!activeModalGuiaId) return;
-          if (!currentCompressedBlob) {
-            showToast('Debes tomar o subir una foto del comprobante sin excepción', 'error');
+          if (!currentDeliveryPhotos || currentDeliveryPhotos.length === 0) {
+            showToast('Debes tomar o subir al menos una foto del comprobante', 'error');
             return;
           }
 
           modalConfirmBtn.disabled = true;
           var originalHtml = modalConfirmBtn.innerHTML;
-          modalConfirmBtn.innerHTML = '<svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg><span>Guardando...</span>';
+          modalConfirmBtn.innerHTML = '<svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg><span>Subiendo ' + currentDeliveryPhotos.length + ' foto(s)...</span>';
 
           try {
             var formData = new FormData();
             formData.append('id_guia', activeModalGuiaId);
             formData.append('tipo_resultado', 'entregado');
             formData.append('recibido_por', modalRecibidoPor ? modalRecibidoPor.value.trim() : '');
-            formData.append('foto', currentCompressedBlob, 'comprobante.jpg');
+
+            // Añadir todas las fotos comprimidas
+            currentDeliveryPhotos.forEach(function(item, idx) {
+              formData.append('fotos', item.blob, item.file.name || ('comprobante_' + idx + '.jpg'));
+            });
+            // Compatibilidad retroactiva con endpoint antiguo
+            formData.append('foto', currentDeliveryPhotos[0].blob, 'comprobante_0.jpg');
 
             var res = await fetch('/api/chofer/entregar', {
               method: 'POST',
@@ -1505,7 +1629,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               closeDeliveryModal();
               renderCards();
               updateMapMarkers();
-              showToast(data.message || '¡Entrega confirmada y comprobante guardado!', 'success');
+              showToast(data.message || '¡Entrega confirmada y fotos guardadas!', 'success');
             } else {
               showToast(data.message || 'Error al registrar entrega', 'error');
               modalConfirmBtn.disabled = false;
@@ -1903,10 +2027,14 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
                 '<svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>' +
                 '<span>Confirmar Entrega</span>' +
               '</button>' : (isDelivered && stop.comprobante_url ?
-              '<button type="button" onclick="window.openLightbox(\'' + stop.comprobante_url + '\', \'Parada #' + stopNum + ' - ' + stop.destinatario + '\', \'Guías: ' + stop.guiasLabel + '\', \'' + firstGuiaId + '\')" class="w-full tap-active py-3 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer text-center">' +
-                '<svg class="w-4 h-4 text-slate-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>' +
-                '<span>Ver Comprobante de Entrega</span>' +
-              '</button>' :
+              (function() {
+                var pCount = stop.comprobante_url.split(',').filter(Boolean).length;
+                var pText = pCount > 1 ? ('Ver Comprobantes (' + pCount + ' fotos)') : 'Ver Comprobante de Entrega';
+                return '<button type="button" onclick="window.openLightbox(\'' + stop.comprobante_url + '\', \'Parada #' + stopNum + ' - ' + stop.destinatario + '\', \'Guías: ' + stop.guiasLabel + '\', \'' + firstGuiaId + '\')" class="w-full tap-active py-3 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer text-center">' +
+                  '<svg class="w-4 h-4 text-slate-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>' +
+                  '<span>' + pText + '</span>' +
+                '</button>';
+              })() :
               '<button type="button" onclick="window.openDeliveryModal(\'' + stop.guiasIds + '\', \'' + destEscaped + '\', \'' + dirEscaped + '\', ' + stopNum + ', \'' + stop.guiasLabel + '\', ' + stop.totalPiezas + ', ' + stop.totalPiesCubicos + ')" class="w-full tap-active py-3 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer text-center">' +
                 '<span>Actualizar Estado de Entrega</span>' +
               '</button>'
@@ -2370,7 +2498,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
 
 
       // ====================================================
-      // MÓDULO 4: LIGHTBOX
+      // MÓDULO 4: LIGHTBOX (SOPORTE MULTI-FOTO / CARRUSEL)
       // ====================================================
       var lightboxModal = document.getElementById('lightbox-modal');
       var lightboxImg = document.getElementById('lightbox-img');
@@ -2378,12 +2506,42 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       var lightboxInfo = document.getElementById('lightbox-info');
       var lightboxCloseBtn = document.getElementById('lightbox-close-btn');
       var lightboxDeleteBtn = document.getElementById('lightbox-delete-btn');
+      var lightboxPrevBtn = document.getElementById('lightbox-prev-btn');
+      var lightboxNextBtn = document.getElementById('lightbox-next-btn');
+      var lightboxCounter = document.getElementById('lightbox-counter');
 
       var currentChoferLightboxGuiaId = null;
+      var currentLightboxUrls = [];
+      var currentLightboxIndex = 0;
+
+      function renderLightboxPhoto() {
+        if (!lightboxImg || currentLightboxUrls.length === 0) return;
+        var url = currentLightboxUrls[currentLightboxIndex];
+        lightboxImg.src = url;
+
+        if (currentLightboxUrls.length > 1) {
+          if (lightboxCounter) {
+            lightboxCounter.textContent = (currentLightboxIndex + 1) + ' / ' + currentLightboxUrls.length;
+            lightboxCounter.classList.remove('hidden');
+          }
+          if (lightboxPrevBtn) lightboxPrevBtn.classList.remove('hidden');
+          if (lightboxNextBtn) lightboxNextBtn.classList.remove('hidden');
+        } else {
+          if (lightboxCounter) lightboxCounter.classList.add('hidden');
+          if (lightboxPrevBtn) lightboxPrevBtn.classList.add('hidden');
+          if (lightboxNextBtn) lightboxNextBtn.classList.add('hidden');
+        }
+      }
 
       window.openLightbox = function(url, title, info, guiaId) {
-        if (!lightboxModal || !lightboxImg) return;
-        lightboxImg.src = url;
+        if (!lightboxModal || !lightboxImg || !url) return;
+        if (Array.isArray(url)) {
+          currentLightboxUrls = url;
+        } else {
+          currentLightboxUrls = url.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+        }
+        currentLightboxIndex = 0;
+
         if (lightboxTitle) lightboxTitle.textContent = title || 'Comprobante';
         if (lightboxInfo) lightboxInfo.textContent = info || '';
 
@@ -2398,9 +2556,30 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           }
         }
 
+        renderLightboxPhoto();
         lightboxModal.classList.remove('hidden');
         lightboxModal.classList.add('flex');
       };
+
+      if (lightboxPrevBtn) {
+        lightboxPrevBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (currentLightboxUrls.length > 1) {
+            currentLightboxIndex = (currentLightboxIndex - 1 + currentLightboxUrls.length) % currentLightboxUrls.length;
+            renderLightboxPhoto();
+          }
+        });
+      }
+
+      if (lightboxNextBtn) {
+        lightboxNextBtn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (currentLightboxUrls.length > 1) {
+            currentLightboxIndex = (currentLightboxIndex + 1) % currentLightboxUrls.length;
+            renderLightboxPhoto();
+          }
+        });
+      }
 
       if (lightboxDeleteBtn) {
         lightboxDeleteBtn.addEventListener('click', async function() {
@@ -2448,6 +2627,8 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         }
         if (lightboxImg) lightboxImg.src = '';
         currentChoferLightboxGuiaId = null;
+        currentLightboxUrls = [];
+        currentLightboxIndex = 0;
       }
 
       if (lightboxCloseBtn) lightboxCloseBtn.addEventListener('click', closeLightbox);

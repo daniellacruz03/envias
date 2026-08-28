@@ -210,7 +210,10 @@ Astro.response.headers.set('Expires', '0');
               <svg class="w-3.5 h-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              <span>Toca para ampliar</span>
+              <span id="result-comprobante-label">Toca para ampliar</span>
+            </div>
+            <div id="result-comprobante-count-badge" class="hidden absolute top-2 right-2 bg-slate-900/85 backdrop-blur-xs text-white font-mono text-[9px] font-bold px-2 py-0.5 rounded-md shadow-xs">
+              0 fotos
             </div>
           </div>
 
@@ -218,6 +221,31 @@ Astro.response.headers.set('Expires', '0');
             <span class="text-slate-500">Recibido por:</span>
             <span class="font-bold text-slate-900" id="result-recibido-text">---</span>
           </div>
+        </div>
+
+        <!-- Botones de Acción / Compartir Información del Envío -->
+        <div id="result-share-container" class="pt-2 border-t border-slate-200/60 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            id="btn-share-tracking"
+            class="flex-1 tap-active py-2.5 px-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm shadow-indigo-600/20 cursor-pointer active:scale-[0.98]"
+          >
+            <svg class="w-4 h-4 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+            </svg>
+            <span id="btn-share-tracking-text">Compartir Información</span>
+          </button>
+
+          <a
+            id="btn-whatsapp-share-tracking"
+            href="#"
+            target="_blank"
+            class="tap-active py-2.5 px-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center active:scale-[0.98]"
+            title="Compartir por WhatsApp"
+          >
+            <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.585 1.961.947 3.224.947 3.182 0 5.768-2.586 5.768-5.766 0-3.18-2.586-5.766-5.766-5.766zm9.969 5.828c0 5.518-4.482 10-10 10-1.748 0-3.385-.45-4.818-1.237l-5.182 1.409 1.433-5.068c-.89-1.488-1.433-3.232-1.433-5.104 0-5.518 4.482-10 10-10s10 4.482 10 10z"/></svg>
+            <span>WhatsApp</span>
+          </a>
         </div>
 
       </div>
@@ -321,12 +349,23 @@ Astro.response.headers.set('Expires', '0');
             <h4 class="text-sm font-bold truncate" id="tracking-lightbox-title">Comprobante de Entrega</h4>
             <p class="text-[11px] text-slate-400 truncate" id="tracking-lightbox-subtitle">Envías C.A.</p>
           </div>
-          <button type="button" id="tracking-lightbox-close-btn" class="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors cursor-pointer">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
+          <div class="flex items-center gap-2">
+            <span id="tracking-lightbox-counter" class="hidden text-[10px] font-mono bg-white/10 text-indigo-300 px-2 py-0.5 rounded-full font-bold">1 / 1</span>
+            <button type="button" id="tracking-lightbox-close-btn" class="p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors cursor-pointer">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
         </div>
-        <div class="w-full flex items-center justify-center overflow-hidden rounded-2xl bg-black/40 border border-white/10 p-1">
+        <div class="relative w-full flex items-center justify-center overflow-hidden rounded-2xl bg-black/40 border border-white/10 p-1">
           <img id="tracking-lightbox-img" src="" alt="Comprobante ampliado" class="max-h-[75vh] w-auto max-w-full object-contain rounded-xl" />
+
+          <!-- Botones navegación multi-foto -->
+          <button type="button" id="tracking-lightbox-prev-btn" class="hidden absolute left-2 p-2.5 rounded-full bg-black/60 hover:bg-black/90 text-white border border-white/20 transition-all cursor-pointer shadow-lg">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <button type="button" id="tracking-lightbox-next-btn" class="hidden absolute right-2 p-2.5 rounded-full bg-black/60 hover:bg-black/90 text-white border border-white/20 transition-all cursor-pointer shadow-lg">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+          </button>
         </div>
       </div>
     </div>
@@ -381,20 +420,133 @@ Astro.response.headers.set('Expires', '0');
   const step3 = document.getElementById('step-3') as HTMLElement;
   const step4 = document.getElementById('step-4') as HTMLElement;
 
-  // Manejo de Ampliación de Foto de Comprobante (Lightbox)
+  // Elementos de Compartir Guía
+  const btnShareTracking = document.getElementById('btn-share-tracking') as HTMLButtonElement;
+  const btnShareTrackingText = document.getElementById('btn-share-tracking-text') as HTMLElement;
+  const btnWhatsAppShare = document.getElementById('btn-whatsapp-share-tracking') as HTMLAnchorElement;
+  let currentTrackingGuia: any = null;
+
+  function buildShareText(guia: any) {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://envias-production.up.railway.app';
+    const trackingUrl = `${origin}/login?guia=${encodeURIComponent(guia.id_guia)}`;
+    const volText = guia.pies_cubicos ? ` • ${Number(guia.pies_cubicos).toFixed(2)} ft³` : '';
+    
+    let text = `Envías C.A. — Seguimiento de Envío\n` +
+      `Guía: #${guia.id_guia}\n` +
+      `Estado: ${guia.estado || 'En proceso'}\n` +
+      `Destinatario: ${guia.destinatario || 'Cliente'}\n` +
+      `Destino: ${guia.ciudad_destino || 'Venezuela'}\n` +
+      `Piezas: ${guia.piezas || 1} pza(s)${volText}\n`;
+      
+    if (guia.recibido_por) {
+      text += `Recibido por: ${guia.recibido_por}\n`;
+    }
+    text += `Rastrear en línea: ${trackingUrl}`;
+
+    return {
+      text: text,
+      url: trackingUrl
+    };
+  }
+
+  function updateShareLinks(guia: any) {
+    if (!guia) return;
+    const shareData = buildShareText(guia);
+    if (btnWhatsAppShare) {
+      btnWhatsAppShare.href = `https://wa.me/?text=${encodeURIComponent(shareData.text)}`;
+    }
+  }
+
+  // Evento de botón de compartir (Web Share API o Portapapeles)
+  btnShareTracking?.addEventListener('click', async () => {
+    if (!currentTrackingGuia) return;
+    const shareData = buildShareText(currentTrackingGuia);
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Rastreo Guía #${currentTrackingGuia.id_guia} - Envías C.A.`,
+          text: shareData.text,
+          url: shareData.url
+        });
+        return;
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+
+    // Fallback portapapeles
+    try {
+      await navigator.clipboard.writeText(shareData.text);
+      if (btnShareTrackingText) {
+        btnShareTrackingText.textContent = '¡Información Copiada al Portapapeles!';
+        setTimeout(() => {
+          if (btnShareTrackingText) btnShareTrackingText.textContent = 'Compartir Información';
+        }, 2500);
+      }
+    } catch (err) {
+      console.error('Error al copiar al portapapeles:', err);
+    }
+  });
+
+  // Manejo de Ampliación de Foto de Comprobante (Lightbox con soporte multi-foto)
+  const trackingLightboxPrevBtn = document.getElementById('tracking-lightbox-prev-btn') as HTMLButtonElement;
+  const trackingLightboxNextBtn = document.getElementById('tracking-lightbox-next-btn') as HTMLButtonElement;
+  const trackingLightboxCounter = document.getElementById('tracking-lightbox-counter') as HTMLElement;
+  const resultComprobanteCountBadge = document.getElementById('result-comprobante-count-badge') as HTMLElement;
+
+  let currentTrackingUrls: string[] = [];
+  let currentTrackingPhotoIndex = 0;
+
+  function renderTrackingLightboxPhoto() {
+    if (!trackingLightboxImg || currentTrackingUrls.length === 0) return;
+    trackingLightboxImg.src = currentTrackingUrls[currentTrackingPhotoIndex];
+
+    if (currentTrackingUrls.length > 1) {
+      if (trackingLightboxCounter) {
+        trackingLightboxCounter.textContent = `${currentTrackingPhotoIndex + 1} / ${currentTrackingUrls.length}`;
+        trackingLightboxCounter.classList.remove('hidden');
+      }
+      trackingLightboxPrevBtn?.classList.remove('hidden');
+      trackingLightboxNextBtn?.classList.remove('hidden');
+    } else {
+      trackingLightboxCounter?.classList.add('hidden');
+      trackingLightboxPrevBtn?.classList.add('hidden');
+      trackingLightboxNextBtn?.classList.add('hidden');
+    }
+  }
+
   resultComprobantePreviewBtn?.addEventListener('click', () => {
-    if (!resultComprobanteImg?.src) return;
-    if (trackingLightboxImg) trackingLightboxImg.src = resultComprobanteImg.src;
+    if (currentTrackingUrls.length === 0) return;
+    currentTrackingPhotoIndex = 0;
+    renderTrackingLightboxPhoto();
     if (trackingLightboxTitle) trackingLightboxTitle.textContent = `Comprobante de Entrega ${resultGuideId?.textContent || ''}`;
     if (trackingLightboxSubtitle) trackingLightboxSubtitle.textContent = `${resultRecipient?.textContent || ''} • ${resultCity?.textContent || ''}`;
     trackingLightboxModal?.classList.remove('hidden');
     trackingLightboxModal?.classList.add('flex');
   });
 
+  trackingLightboxPrevBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (currentTrackingUrls.length > 1) {
+      currentTrackingPhotoIndex = (currentTrackingPhotoIndex - 1 + currentTrackingUrls.length) % currentTrackingUrls.length;
+      renderTrackingLightboxPhoto();
+    }
+  });
+
+  trackingLightboxNextBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (currentTrackingUrls.length > 1) {
+      currentTrackingPhotoIndex = (currentTrackingPhotoIndex + 1) % currentTrackingUrls.length;
+      renderTrackingLightboxPhoto();
+    }
+  });
+
   function closeTrackingLightbox() {
     trackingLightboxModal?.classList.add('hidden');
     trackingLightboxModal?.classList.remove('flex');
     if (trackingLightboxImg) trackingLightboxImg.src = '';
+    currentTrackingPhotoIndex = 0;
   }
 
   trackingLightboxCloseBtn?.addEventListener('click', closeTrackingLightbox);
@@ -543,10 +695,21 @@ Astro.response.headers.set('Expires', '0');
       highlightStep(step4);
     }
 
-    // Foto / Comprobante de Entrega del Chofer
+    // Foto / Comprobante de Entrega del Chofer (Múltiples fotos)
     if (guia.comprobante_url) {
-      resultComprobanteImg.src = guia.comprobante_url;
+      currentTrackingUrls = guia.comprobante_url.split(',').map((s: string) => s.trim()).filter(Boolean);
+      resultComprobanteImg.src = currentTrackingUrls[0] || '';
       resultComprobanteContainer.classList.remove('hidden');
+
+      if (currentTrackingUrls.length > 1) {
+        if (resultComprobanteCountBadge) {
+          resultComprobanteCountBadge.textContent = `${currentTrackingUrls.length} fotos adjuntas`;
+          resultComprobanteCountBadge.classList.remove('hidden');
+        }
+      } else {
+        resultComprobanteCountBadge?.classList.add('hidden');
+      }
+
       if (guia.recibido_por) {
         resultRecibidoText.textContent = guia.recibido_por;
         resultRecibidoContainer.classList.remove('hidden');
@@ -554,9 +717,15 @@ Astro.response.headers.set('Expires', '0');
         resultRecibidoContainer.classList.add('hidden');
       }
     } else {
+      currentTrackingUrls = [];
       resultComprobanteContainer.classList.add('hidden');
       resultComprobanteImg.src = '';
+      resultComprobanteCountBadge?.classList.add('hidden');
     }
+
+    // Actualizar datos de compartir
+    currentTrackingGuia = guia;
+    updateShareLinks(guia);
 
     trackingResultCard.classList.remove('hidden');
   }
@@ -650,10 +819,14 @@ Astro.response.headers.set('Expires', '0');
     errorBanner?.classList.remove('hidden');
   }
 
-  // Protección contra bfcache (si el usuario cierra sesión y pulsa "Atrás" en el navegador)
-  window.addEventListener('pageshow', (event) => {
-    if (event.persisted) {
-      window.location.reload();
+  // Auto-consulta si la URL contiene parámetro de guía (?guia=XXXX o ?tracking=XXXX)
+  window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const guiaParam = urlParams.get('guia') || urlParams.get('tracking');
+    if (guiaParam && trackingInput) {
+      trackingInput.value = guiaParam.toUpperCase();
+      btnClearTracking?.classList.remove('hidden');
+      trackingForm?.dispatchEvent(new Event('submit'));
     }
   });
 </script>

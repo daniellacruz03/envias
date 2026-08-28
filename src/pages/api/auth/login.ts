@@ -18,11 +18,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    // Buscar en PostgreSQL por email o teléfono
+    // Buscar en PostgreSQL por email, alias/prefijo, teléfono o nombre
     const result = await query(`
       SELECT id, nombre, telefono, rol, email, password
       FROM usuarios
-      WHERE LOWER(email) = LOWER($1) OR telefono = $1
+      WHERE LOWER(email) = LOWER($1) 
+         OR telefono = $1 
+         OR LOWER(nombre) = LOWER($1)
+         OR LOWER(SPLIT_PART(email, '@', 1)) = LOWER($1)
       LIMIT 1
     `, [identifier]);
 

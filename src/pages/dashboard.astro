@@ -69,9 +69,16 @@ const userInitials = currentUser.nombre
 
       /* Estilos de Impresión Oficial (@media print) */
       @media print {
-        body {
-          background: white !important;
-          color: black !important;
+        @page {
+          size: letter portrait;
+          margin: 4mm 5mm 4mm 5mm;
+        }
+        html, body {
+          background: #ffffff !important;
+          color: #000000 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
         }
         body * {
           visibility: hidden !important;
@@ -84,17 +91,16 @@ const userInitials = currentUser.nombre
           left: 0 !important;
           top: 0 !important;
           width: 100% !important;
+          max-width: 100% !important;
+          min-height: auto !important;
           margin: 0 !important;
-          padding: 4mm 6mm !important;
-          background: white !important;
+          padding: 2mm 3mm !important;
+          background: #ffffff !important;
           box-shadow: none !important;
           border: none !important;
-          color: black !important;
+          border-radius: 0 !important;
+          color: #000000 !important;
           z-index: 9999999 !important;
-        }
-        @page {
-          size: letter portrait;
-          margin: 6mm 6mm 6mm 6mm;
         }
       }
     </style>
@@ -2408,7 +2414,7 @@ const userInitials = currentUser.nombre
         <!-- Área de Inspección / Imagen con Zoom y Arrastre Pan -->
         <div
           id="lightbox-viewport"
-          class="flex-1 overflow-hidden relative flex items-center justify-center bg-black/70 cursor-grab active:cursor-grabbing"
+          class="flex-1 overflow-hidden relative flex items-center justify-center bg-black/70 cursor-grab active:cursor-grabbing group"
           title="Usa la rueda del ratón para hacer zoom o arrastra para mover"
         >
           <img
@@ -2418,6 +2424,24 @@ const userInitials = currentUser.nombre
             class="max-w-full max-h-[82vh] object-contain rounded-xl shadow-2xl pointer-events-none select-none transition-transform duration-75"
             style="transform-origin: center center;"
           />
+
+          <!-- Botones de Navegación Multi-Foto -->
+          <button
+            id="lightbox-prev-btn"
+            type="button"
+            class="hidden absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-slate-900/80 hover:bg-slate-900 text-white border border-slate-700 shadow-2xl transition-all cursor-pointer z-20 active:scale-95"
+            title="Foto anterior"
+          >
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+          </button>
+          <button
+            id="lightbox-next-btn"
+            type="button"
+            class="hidden absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-slate-900/80 hover:bg-slate-900 text-white border border-slate-700 shadow-2xl transition-all cursor-pointer z-20 active:scale-95"
+            title="Foto siguiente"
+          >
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+          </button>
 
           <!-- Guía flotante en esquina -->
           <div class="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-xs text-[10px] text-slate-400 font-medium px-2.5 py-1 rounded-lg border border-slate-800 pointer-events-none flex items-center gap-1.5">
@@ -3952,11 +3976,12 @@ const userInitials = currentUser.nombre
         const currentVal = filterCiudad.value;
         const uniqueCities = Array.from(new Set(shipments.map(s => s.ciudad_destino).filter(Boolean))).sort();
         
-        filterCiudad.innerHTML = '<option value="ALL">Todas las Ciudades</option>';
+        filterCiudad.innerHTML = `<option value="ALL">Todas las Ciudades (${shipments.length} ${shipments.length === 1 ? 'guía' : 'guías'})</option>`;
         uniqueCities.forEach(city => {
+          const cityGuiasCount = shipments.filter(s => s.ciudad_destino === city).length;
           const opt = document.createElement('option');
           opt.value = city;
-          opt.textContent = city;
+          opt.textContent = `${city} (${cityGuiasCount} ${cityGuiasCount === 1 ? 'guía' : 'guías'})`;
           filterCiudad.appendChild(opt);
         });
 
@@ -3966,6 +3991,7 @@ const userInitials = currentUser.nombre
 
         if (citiesCountPill) {
           citiesCountPill.textContent = uniqueCities.length.toString();
+          citiesCountPill.title = `${uniqueCities.length} ciudades (${shipments.length} guías registradas)`;
         }
       }
 
@@ -4277,7 +4303,7 @@ const userInitials = currentUser.nombre
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span>Foto</span>
+                    <span>${item.comprobante_url.split(',').filter(Boolean).length > 1 ? `Fotos (${item.comprobante_url.split(',').filter(Boolean).length})` : 'Foto'}</span>
                   </button>
                 ` : ''}
 
@@ -4484,8 +4510,64 @@ const userInitials = currentUser.nombre
         });
 
         const cityNames = Object.keys(cityMap).sort();
+        const totalCiudades = cityNames.length;
+        const totalGuias = filtered.length;
+        const totalPiezas = filtered.reduce((acc, curr) => acc + (curr.piezas || 1), 0);
 
-        viewContainerCities.innerHTML = cityNames.map(cityName => {
+        if (totalCiudades === 0) {
+          viewContainerCities.innerHTML = '';
+          return;
+        }
+
+        // 1. Barra de Resumen Superior: Total de ciudades y desglose de guías por ciudad
+        const summaryHeaderHtml = `
+          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-md shadow-indigo-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              </div>
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h3 class="text-base font-extrabold text-slate-900">Envíos Agrupados por Ciudad</h3>
+                  <span class="text-xs font-black px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    ${totalCiudades} ${totalCiudades === 1 ? 'Ciudad' : 'Ciudades'} &bull; ${totalGuias} ${totalGuias === 1 ? 'Guía' : 'Guías'}
+                  </span>
+                  <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                    ${totalPiezas} ${totalPiezas === 1 ? 'Pieza' : 'Piezas'}
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500 font-medium mt-0.5">
+                  Resumen de distribución de guías por cada destino. Haz clic en una ciudad para ubicar sus envíos.
+                </p>
+              </div>
+            </div>
+
+            <!-- Chips de acceso rápido y conteo de guías por ciudad -->
+            <div class="flex items-center gap-1.5 flex-wrap">
+              ${cityNames.map(cityName => {
+                const count = cityMap[cityName].length;
+                const theme = getCityColorTheme(cityName);
+                const cityKey = encodeURIComponent(cityName);
+                return `
+                  <button
+                    type="button"
+                    onclick="document.getElementById('city-card-${cityKey}')?.scrollIntoView({ behavior: 'smooth', block: 'start' })"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold ${theme.badgeBg} hover:opacity-90 active:scale-95 transition-all cursor-pointer shadow-2xs"
+                    title="Ver ${cityName} (${count} ${count === 1 ? 'guía' : 'guías'})"
+                  >
+                    <span>${cityName}:</span>
+                    <span class="px-1.5 py-0.2 rounded-md bg-white/90 text-slate-900 font-black text-[11px] border border-slate-200/60">${count} ${count === 1 ? 'guía' : 'guías'}</span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+
+        // 2. Tarjetas de cada ciudad
+        const cardsHtml = cityNames.map(cityName => {
           const cityGuias = cityMap[cityName];
           const theme = getCityColorTheme(cityName);
           const totalPieces = cityGuias.reduce((acc, curr) => acc + (curr.piezas || 1), 0);
@@ -4525,7 +4607,7 @@ const userInitials = currentUser.nombre
           `;
 
           return `
-            <div class="bg-white border-y border-r ${theme.cardBorder} ${theme.accentBorder} border-l-[5px] rounded-2xl shadow-xs hover:shadow-md overflow-hidden transition-all duration-200">
+            <div id="city-card-${cityKey}" class="bg-white border-y border-r ${theme.cardBorder} ${theme.accentBorder} border-l-[5px] rounded-2xl shadow-xs hover:shadow-md overflow-hidden transition-all duration-200">
               
               <!-- Cabecera de la Ciudad (Card Header con Color Distintivo) -->
               <div class="p-4 sm:p-5 border-b border-slate-100 bg-gradient-to-r ${theme.headerBg} flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -4541,23 +4623,35 @@ const userInitials = currentUser.nombre
                   <div>
                     <div class="flex items-center gap-2 flex-wrap">
                       <h4 class="text-base font-extrabold text-slate-900 tracking-tight">${cityName}</h4>
-                      <span class="text-xs font-bold px-2.5 py-0.5 rounded-full ${theme.badgeBg}">
-                        ${cityGuias.length} ${cityGuias.length === 1 ? 'guía' : 'guías'}${uniqueClientsCount < cityGuias.length ? ` (${uniqueClientsCount} clientes/paradas)` : ''} • ${totalPieces} ${totalPieces === 1 ? 'pieza' : 'piezas'}${totalVol > 0 ? ' • ' + totalVol.toFixed(2) + ' ft³' : ''}
+                      
+                      <!-- Badge Destacado de Cantidad de Guías -->
+                      <span class="inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-xl ${theme.badgeBg} shadow-2xs">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span>${cityGuias.length} ${cityGuias.length === 1 ? 'Guía' : 'Guías'}</span>
                       </span>
+
+                      <!-- Badge de Paradas / Clientes -->
+                      <span class="text-xs font-bold px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 border border-slate-200">
+                        ${uniqueClientsCount} ${uniqueClientsCount === 1 ? 'cliente/parada' : 'clientes/paradas'} • ${totalPieces} ${totalPieces === 1 ? 'pieza' : 'piezas'}${totalVol > 0 ? ' • ' + totalVol.toFixed(2) + ' ft³' : ''}
+                      </span>
+
                       ${gpsCount > 0 ? `
-                        <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          ${gpsCount} con GPS
+                        <span class="text-xs font-bold px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
+                          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          <span>${gpsCount} con GPS</span>
                         </span>
                       ` : ''}
                     </div>
 
                     <!-- Píldoras de estado -->
                     <div class="flex items-center gap-1.5 flex-wrap mt-1.5 text-[11px]">
-                      ${porContactarCount > 0 ? `<span class="px-2 py-0.2 rounded-md bg-amber-50 text-amber-700 border border-amber-200 font-semibold">${porContactarCount} Por contactar</span>` : ''}
-                      ${contactadoCount > 0 ? `<span class="px-2 py-0.2 rounded-md bg-sky-50 text-sky-700 border border-sky-200 font-semibold">${contactadoCount} Contactado</span>` : ''}
-                      ${enRutaCount > 0 ? `<span class="px-2 py-0.2 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold">${enRutaCount} En ruta</span>` : ''}
-                      ${entregadoCount > 0 ? `<span class="px-2 py-0.2 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">${entregadoCount} Entregado</span>` : ''}
-                      ${cityGuias.filter(g => g.estado === 'No entregado').length > 0 ? `<span class="px-2 py-0.2 rounded-md bg-rose-50 text-rose-700 border border-rose-200 font-semibold">${cityGuias.filter(g => g.estado === 'No entregado').length} No entregado</span>` : ''}
+                      ${porContactarCount > 0 ? `<span class="px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 font-semibold">${porContactarCount} Por contactar</span>` : ''}
+                      ${contactadoCount > 0 ? `<span class="px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 border border-sky-200 font-semibold">${contactadoCount} Contactado</span>` : ''}
+                      ${enRutaCount > 0 ? `<span class="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold">${enRutaCount} En ruta</span>` : ''}
+                      ${entregadoCount > 0 ? `<span class="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">${entregadoCount} Entregado</span>` : ''}
+                      ${cityGuias.filter(g => g.estado === 'No entregado').length > 0 ? `<span class="px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 font-semibold">${cityGuias.filter(g => g.estado === 'No entregado').length} No entregado</span>` : ''}
                     </div>
                   </div>
                 </div>
@@ -4620,7 +4714,14 @@ const userInitials = currentUser.nombre
                   <thead>
                     <tr class="bg-slate-50/60 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                       <th class="py-2.5 px-4">Guía & Piezas</th>
-                      <th class="py-2.5 px-4">Dest                  <tbody class="divide-y divide-slate-100 bg-white">
+                      <th class="py-2.5 px-4">Destinatario</th>
+                      <th class="py-2.5 px-4">Estado</th>
+                      <th class="py-2.5 px-4">Ubicación GPS</th>
+                      <th class="py-2.5 px-4">Chofer</th>
+                      <th class="py-2.5 px-4 text-right">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 bg-white">
                     ${(() => {
                       // Agrupar guías de la ciudad por cliente único para mostrar 1 sola fila consolidada por parada/cliente
                       const clientMap: Record<string, GuiaRow[]> = {};
@@ -4836,6 +4937,8 @@ const userInitials = currentUser.nombre
             </div>
           `;
         }).join('');
+
+        viewContainerCities.innerHTML = summaryHeaderHtml + cardsHtml;
       }
 
       // Toggle colapsar ciudad
@@ -5265,14 +5368,14 @@ const userInitials = currentUser.nombre
                               onclick="window.openLightbox('${g.comprobante_url}', '${isNoEntregado ? 'Evidencia de Intento Fallido' : 'Comprobante de Entrega'} - Guía #${g.id_guia}', '${g.recibido_por ? `${isNoEntregado ? 'Motivo:' : 'Recibido por:'} ${g.recibido_por.replace(/'/g, "\\'")}` : ''} • Chofer: ${driver.nombre}', '${g.id_guia}', 'guia')"
                               title="Haz clic para ampliar la foto"
                             >
-                              <img src="${g.comprobante_url}" alt="Comprobante #${g.id_guia}" class="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-200" />
+                              <img src="${g.comprobante_url.split(',')[0]}" alt="Comprobante #${g.id_guia}" class="w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-200" />
                               <div class="absolute inset-0 bg-slate-900/50 opacity-0 group-hover/thumb:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-[11px] font-bold">
                                 <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
                                 <span>Ver ${isNoEntregado ? 'Evidencia' : 'Comprobante'}</span>
                               </div>
                               <span class="absolute bottom-1 right-1 bg-black/75 text-white text-[9px] font-bold px-1.5 py-0.2 rounded backdrop-blur-2xs flex items-center gap-0.5">
                                 <svg class="w-2.5 h-2.5 ${isNoEntregado ? 'text-rose-400' : 'text-emerald-400'}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                                <span>Foto</span>
+                                <span>${g.comprobante_url.split(',').filter(Boolean).length > 1 ? `${g.comprobante_url.split(',').filter(Boolean).length} fotos` : 'Foto'}</span>
                               </span>
                             </div>
                           ` : `
@@ -6855,13 +6958,42 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         applyTransform();
       }
 
-      (window as any).openLightbox = (imgUrl: string, title?: string, info?: string, targetId?: string | number, targetType?: 'guia' | 'escaneo') => {
-        if (!lightboxModal || !lightboxImg) return;
+      const lightboxPrevBtn = document.getElementById('lightbox-prev-btn') as HTMLButtonElement;
+      const lightboxNextBtn = document.getElementById('lightbox-next-btn') as HTMLButtonElement;
+      let currentLightboxUrls: string[] = [];
+      let currentLightboxIndex = 0;
+      let currentLightboxBaseInfo = '';
+
+      function renderLightboxPhoto() {
+        if (!lightboxImg || currentLightboxUrls.length === 0) return;
         resetZoom();
-        lightboxImg.src = imgUrl;
+        const url = currentLightboxUrls[currentLightboxIndex];
+        lightboxImg.src = url;
+        if (lightboxExternalLink) lightboxExternalLink.href = url;
+
+        if (currentLightboxUrls.length > 1) {
+          if (lightboxInfo) {
+            lightboxInfo.textContent = `${currentLightboxBaseInfo ? currentLightboxBaseInfo + ' • ' : ''}Foto ${currentLightboxIndex + 1} de ${currentLightboxUrls.length}`;
+          }
+          lightboxPrevBtn?.classList.remove('hidden');
+          lightboxNextBtn?.classList.remove('hidden');
+        } else {
+          if (lightboxInfo) {
+            lightboxInfo.textContent = currentLightboxBaseInfo;
+          }
+          lightboxPrevBtn?.classList.add('hidden');
+          lightboxNextBtn?.classList.add('hidden');
+        }
+      }
+
+      (window as any).openLightbox = (imgUrl: string, title?: string, info?: string, targetId?: string | number, targetType?: 'guia' | 'escaneo') => {
+        if (!lightboxModal || !lightboxImg || !imgUrl) return;
+        currentLightboxUrls = imgUrl.split(',').map(s => s.trim()).filter(Boolean);
+        currentLightboxIndex = 0;
+        currentLightboxBaseInfo = info || '';
+
         if (lightboxTitle) lightboxTitle.textContent = title || 'Visualizador de Imagen';
-        if (lightboxInfo) lightboxInfo.textContent = info || '';
-        if (lightboxExternalLink) lightboxExternalLink.href = imgUrl;
+        if (lightboxInfo) lightboxInfo.textContent = currentLightboxBaseInfo;
 
         currentLightboxTargetId = targetId || null;
         currentLightboxTargetType = targetType || (targetId ? 'guia' : null);
@@ -6874,10 +7006,27 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           }
         }
 
+        renderLightboxPhoto();
         lightboxModal.classList.remove('hidden');
         lightboxModal.classList.add('flex');
         document.body.style.overflow = 'hidden';
       };
+
+      lightboxPrevBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (currentLightboxUrls.length > 1) {
+          currentLightboxIndex = (currentLightboxIndex - 1 + currentLightboxUrls.length) % currentLightboxUrls.length;
+          renderLightboxPhoto();
+        }
+      });
+
+      lightboxNextBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (currentLightboxUrls.length > 1) {
+          currentLightboxIndex = (currentLightboxIndex + 1) % currentLightboxUrls.length;
+          renderLightboxPhoto();
+        }
+      });
 
       // Handler para eliminar foto desde el Lightbox
       lightboxDeleteBtn?.addEventListener('click', async () => {
@@ -7615,7 +7764,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                                   <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                   </svg>
-                                  <span>Foto</span>
+                                  <span>${g.comprobante_url.split(',').filter(Boolean).length > 1 ? `Fotos (${g.comprobante_url.split(',').filter(Boolean).length})` : 'Foto'}</span>
                                 </button>
                               ` : `
                                 <span class="text-[10px] text-slate-300 italic">—</span>
@@ -8617,10 +8766,10 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         listinCitiesOrder.forEach(cityName => {
           const count = srcShipments.filter(g => (g.ciudad_destino || 'Sin Ciudad').trim() === cityName).length;
           const isSelected = listinSelectedZones.size === 1 && listinSelectedZones.has(cityName) ? 'selected' : '';
-          selectHtml += `<option value="${cityName}" ${isSelected}>📍 ${cityName} (${count} guías)</option>`;
+          selectHtml += `<option value="${cityName}" ${isSelected}>${cityName} (${count} guías)</option>`;
         });
         if (listinSelectedZones.size > 1) {
-          selectHtml += `<option value="COMBINED" selected>✓ ${listinSelectedZones.size} Zonas Combinadas</option>`;
+          selectHtml += `<option value="COMBINED" selected>${listinSelectedZones.size} Zonas Combinadas</option>`;
         }
         listinZoneSelect.innerHTML = selectHtml;
 
@@ -9040,17 +9189,17 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           const rightVol = right && right.pies_cubicos ? Number(right.pies_cubicos).toFixed(2) : (right ? '-' : '');
 
           tableHtml += `
-            <tr class="h-6 border-b border-black/30 text-black">
+            <tr style="height: 25px;" class="border-b border-black text-black">
               <!-- Bloque Izquierdo -->
-              <td class="py-1 px-1 border-r border-black font-mono font-bold text-center">${left ? left.id_guia : ''}</td>
-              <td class="py-1 px-0.5 border-r border-black text-center font-bold">${left ? (left.piezas || 1) : ''}</td>
-              <td class="py-1 px-0.5 border-r border-black text-center font-mono font-bold text-slate-700">${leftVol}</td>
-              <td class="py-1 px-1.5 border-r-2 border-black font-bold uppercase truncate max-w-[120px]">${left ? left.ciudad_destino : ''}</td>
+              <td class="py-0.5 px-1 border-r border-black font-mono font-bold text-center text-[11px]">${left ? left.id_guia : '&nbsp;'}</td>
+              <td class="py-0.5 px-0.5 border-r border-black text-center font-bold text-[11px]">${left ? (left.piezas || 1) : '&nbsp;'}</td>
+              <td class="py-0.5 px-0.5 border-r border-black text-center font-mono font-bold text-[10px] text-slate-800">${left ? leftVol : '&nbsp;'}</td>
+              <td class="py-0.5 px-1.5 border-r-2 border-black font-bold uppercase truncate max-w-[130px] text-[11px]">${left ? left.ciudad_destino : '&nbsp;'}</td>
               <!-- Bloque Derecho -->
-              <td class="py-1 px-1 border-r border-black font-mono font-bold text-center">${right ? right.id_guia : ''}</td>
-              <td class="py-1 px-0.5 border-r border-black text-center font-bold">${right ? (right.piezas || 1) : ''}</td>
-              <td class="py-1 px-0.5 border-r border-black text-center font-mono font-bold text-slate-700">${rightVol}</td>
-              <td class="py-1 px-1.5 font-bold uppercase truncate max-w-[120px]">${right ? right.ciudad_destino : ''}</td>
+              <td class="py-0.5 px-1 border-r border-black font-mono font-bold text-center text-[11px]">${right ? right.id_guia : '&nbsp;'}</td>
+              <td class="py-0.5 px-0.5 border-r border-black text-center font-bold text-[11px]">${right ? (right.piezas || 1) : '&nbsp;'}</td>
+              <td class="py-0.5 px-0.5 border-r border-black text-center font-mono font-bold text-[10px] text-slate-800">${right ? rightVol : '&nbsp;'}</td>
+              <td class="py-0.5 px-1.5 font-bold uppercase truncate max-w-[130px] text-[11px]">${right ? right.ciudad_destino : '&nbsp;'}</td>
             </tr>
           `;
         }
@@ -9418,11 +9567,22 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
       });
 
-      // Helper para generar el HTML de una hoja de zona específica
-      function buildZoneSheetHtml(cityName: string, zoneGuias: GuiaRow[], driverName: string, placa: string, fecha: string): string {
-        const totalGuias = zoneGuias.length;
-        const totalPiezas = zoneGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
-        const totalVolumen = zoneGuias.reduce((acc, g) => acc + (Number(g.pies_cubicos) || 0), 0);
+      // Helper unificado para generar la hoja oficial de Listín a tamaño completo (Carta 100%)
+      function createListinHtmlPage(params: {
+        cityName: string;
+        zoneGuias: GuiaRow[];
+        driverName: string;
+        placa: string;
+        fecha: string;
+        totalGuias: number;
+        totalPiezas: number;
+        totalVolumen: number;
+        totalZonas: number;
+        isMultiPage?: boolean;
+      }): string {
+        const { cityName, zoneGuias, driverName, placa, fecha, totalGuias, totalPiezas, totalVolumen, totalZonas, isMultiPage } = params;
+        
+        // 22 filas llenan verticalmente la hoja carta de forma equilibrada
         const rowCount = Math.max(Math.ceil(zoneGuias.length / 2), 22);
         const leftGuias = zoneGuias.slice(0, rowCount);
         const rightGuias = zoneGuias.slice(rowCount, rowCount * 2);
@@ -9436,73 +9596,132 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           const rightVol = right && right.pies_cubicos ? Number(right.pies_cubicos).toFixed(2) : (right ? '-' : '');
 
           tableRows += `
-            <tr class="h-6 border-b border-black/30 text-black">
-              <td class="py-1 px-1 border-r border-black font-mono font-bold text-center">${left ? left.id_guia : ''}</td>
-              <td class="py-1 px-0.5 border-r border-black text-center font-bold">${left ? (left.piezas || 1) : ''}</td>
-              <td class="py-1 px-0.5 border-r border-black text-center font-mono font-bold text-slate-700">${leftVol}</td>
-              <td class="py-1 px-1.5 border-r-2 border-black font-bold uppercase truncate max-w-[120px]">${left ? left.ciudad_destino : ''}</td>
-              <td class="py-1 px-1 border-r border-black font-mono font-bold text-center">${right ? right.id_guia : ''}</td>
-              <td class="py-1 px-0.5 border-r border-black text-center font-bold">${right ? (right.piezas || 1) : ''}</td>
-              <td class="py-1 px-0.5 border-r border-black text-center font-mono font-bold text-slate-700">${rightVol}</td>
-              <td class="py-1 px-1.5 font-bold uppercase truncate max-w-[120px]">${right ? right.ciudad_destino : ''}</td>
+            <tr style="height: 25px;" class="border-b border-black text-black">
+              <td style="width: 15%; padding: 2px 4px; border-right: 1px solid #000; font-family: monospace; font-weight: 900; text-align: center; font-size: 11px;">${left ? left.id_guia : '&nbsp;'}</td>
+              <td style="width: 7%; padding: 2px 2px; border-right: 1px solid #000; font-weight: bold; text-align: center; font-size: 11px;">${left ? (left.piezas || 1) : '&nbsp;'}</td>
+              <td style="width: 8%; padding: 2px 2px; border-right: 1px solid #000; font-family: monospace; font-weight: bold; text-align: center; font-size: 10px; color: #1e293b;">${left ? leftVol : '&nbsp;'}</td>
+              <td style="width: 20%; padding: 2px 6px; border-right: 2px solid #000; font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px;">${left ? left.ciudad_destino : '&nbsp;'}</td>
+              <td style="width: 15%; padding: 2px 4px; border-right: 1px solid #000; font-family: monospace; font-weight: 900; text-align: center; font-size: 11px;">${right ? right.id_guia : '&nbsp;'}</td>
+              <td style="width: 7%; padding: 2px 2px; border-right: 1px solid #000; font-weight: bold; text-align: center; font-size: 11px;">${right ? (right.piezas || 1) : '&nbsp;'}</td>
+              <td style="width: 8%; padding: 2px 2px; border-right: 1px solid #000; font-family: monospace; font-weight: bold; text-align: center; font-size: 10px; color: #1e293b;">${right ? rightVol : '&nbsp;'}</td>
+              <td style="width: 20%; padding: 2px 6px; font-weight: bold; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px;">${right ? right.ciudad_destino : '&nbsp;'}</td>
             </tr>
           `;
         }
 
-        const volTagZone = totalVolumen > 0 ? `, ${totalVolumen.toFixed(2)} FT³` : '';
+        const volTag = totalVolumen > 0 ? `, ${totalVolumen.toFixed(2)} FT³` : '';
+        const pageBreakStyle = isMultiPage ? 'page-break-after: always; break-after: page;' : '';
 
         return `
-          <div class="w-full max-w-[760px] min-h-[960px] bg-white p-6 sm:p-7 rounded-xl text-black font-sans text-xs border border-slate-300 my-4" style="page-break-after: always; break-after: page;">
-            <div class="flex items-start justify-between border-b-2 border-black pb-3 mb-2.5">
-              <div class="flex items-center gap-3">
-                <img src="/logo.png" alt="Envías C.A." class="h-12 w-auto object-contain shrink-0 mix-blend-multiply" />
+          <div class="listin-sheet-page" style="width: 794px; min-width: 794px; max-width: 794px; min-height: 1040px; box-sizing: border-box; padding: 18px 22px; margin: 0 auto; background-color: #ffffff; color: #000000; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; ${pageBreakStyle}">
+            
+            <!-- 1. Header Oficial -->
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 8px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <img src="/logo.png" alt="Envías C.A." style="height: 48px; width: auto; object-fit: contain; mix-blend-mode: multiply;" />
                 <div>
-                  <h1 class="text-xl font-black tracking-tighter leading-none">ENVÍAS C.A.</h1>
-                  <p class="text-[9px] font-black uppercase tracking-widest text-slate-800">Transporte y Encomiendas</p>
-                  <p class="text-[8px] font-bold text-slate-600">Hub Central Barquisimeto &bull; Entregas Nacionales</p>
+                  <h1 style="font-size: 22px; font-weight: 900; letter-spacing: -0.05em; line-height: 1; margin: 0; color: #000;">ENVÍAS C.A.</h1>
+                  <p style="font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; color: #1e293b; margin: 3px 0 0 0;">Transporte y Encomiendas</p>
+                  <p style="font-size: 8px; font-weight: bold; color: #475569; margin: 2px 0 0 0;">Hub Central Barquisimeto &bull; Entregas Nacionales</p>
                 </div>
               </div>
-              <div class="border border-black rounded-lg p-2.5 w-64 space-y-1 text-[11px] bg-slate-50">
-                <div class="flex items-center justify-between border-b border-slate-300 pb-0.5"><span class="font-bold">FECHA:</span><span class="font-mono font-bold">${fecha}</span></div>
-                <div class="flex items-center justify-between border-b border-slate-300 pb-0.5"><span class="font-bold">PLACA:</span><span class="font-mono font-bold">${placa}</span></div>
-                <div class="flex items-center justify-between border-b border-slate-300 pb-0.5"><span class="font-bold">CHOFER:</span><span class="font-bold truncate max-w-[130px]">${driverName}</span></div>
-                <div class="flex items-center justify-between pt-0.5"><span class="font-black">DESTINO / ZONA:</span><span class="font-black font-mono uppercase truncate max-w-[130px]">${cityName}</span></div>
+
+              <!-- Cuadro Metadatos -->
+              <div style="border: 2px solid #000; border-radius: 6px; padding: 8px 12px; width: 250px; font-size: 11px; background-color: #f8fafc;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 3px;">
+                  <span style="font-weight: bold;">FECHA:</span>
+                  <span style="font-family: monospace; font-weight: bold;">${fecha}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 3px;">
+                  <span style="font-weight: bold;">PLACA:</span>
+                  <span style="font-family: monospace; font-weight: bold;">${placa}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #cbd5e1; padding-bottom: 3px; margin-bottom: 3px;">
+                  <span style="font-weight: bold;">CHOFER:</span>
+                  <span style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;">${driverName}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding-top: 1px;">
+                  <span style="font-weight: 900; color: #000;">DESTINO/ZONA:</span>
+                  <span style="font-weight: 900; font-family: monospace; text-transform: uppercase; color: #000; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px;">${cityName}</span>
+                </div>
               </div>
             </div>
-            <div class="text-center mb-2">
-              <h2 class="text-xs font-black uppercase tracking-widest border-y border-black py-0.5 bg-slate-100 flex items-center justify-center gap-2">
+
+            <!-- 2. Título del Documento -->
+            <div style="text-align: center; margin-bottom: 8px;">
+              <div style="font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; border: 2px solid #000; padding: 4px 8px; background-color: #f1f5f9; display: flex; align-items: center; justify-content: center; gap: 8px;">
                 <span>LISTÍN DE CARGA Y DESPACHO DE GUÍAS</span>
-                <span class="text-black">&bull;</span>
-                <span class="font-mono uppercase font-black">DESTINO: ${cityName} (${totalGuias} GUÍAS, ${totalPiezas} PZAS${volTagZone})</span>
-              </h2>
+                <span>&bull;</span>
+                <span style="font-family: monospace; text-transform: uppercase; font-weight: 900;">DESTINO: ${cityName.toUpperCase()} (${totalGuias} GUÍAS, ${totalPiezas} PZAS${volTag})</span>
+              </div>
             </div>
-            <div class="w-full mb-3">
-              <table class="w-full border-collapse text-[10px] border-2 border-black">
+
+            <!-- 3. Tabla Dual (8 Columnas) -->
+            <div style="width: 100%; margin-bottom: 8px;">
+              <table style="width: 100%; border-collapse: collapse; border: 2px solid #000; font-size: 11px;">
                 <thead>
-                  <tr class="bg-slate-200 text-black uppercase font-black text-center border-b-2 border-black">
-                    <th class="py-1 px-1 border-r border-black w-[15%]">NRO DE GUIA</th>
-                    <th class="py-1 px-0.5 border-r border-black w-[7%]">PIEZAS</th>
-                    <th class="py-1 px-0.5 border-r border-black w-[8%]">FT³</th>
-                    <th class="py-1 px-1.5 border-r-2 border-black w-[20%]">DESTINO</th>
-                    <th class="py-1 px-1 border-r border-black w-[15%]">NRO DE GUIA</th>
-                    <th class="py-1 px-0.5 border-r border-black w-[7%]">PIEZAS</th>
-                    <th class="py-1 px-0.5 border-r border-black w-[8%]">FT³</th>
-                    <th class="py-1 px-1.5 w-[20%]">DESTINO</th>
+                  <tr style="background-color: #e2e8f0; color: #000; text-transform: uppercase; font-weight: 900; text-align: center; border-bottom: 2px solid #000; font-size: 10px;">
+                    <th style="width: 15%; padding: 4px 2px; border-right: 1px solid #000;">NRO DE GUIA</th>
+                    <th style="width: 7%; padding: 4px 2px; border-right: 1px solid #000;">PIEZAS</th>
+                    <th style="width: 8%; padding: 4px 2px; border-right: 1px solid #000;">FT³</th>
+                    <th style="width: 20%; padding: 4px 4px; border-right: 2px solid #000;">DESTINO</th>
+                    <th style="width: 15%; padding: 4px 2px; border-right: 1px solid #000;">NRO DE GUIA</th>
+                    <th style="width: 7%; padding: 4px 2px; border-right: 1px solid #000;">PIEZAS</th>
+                    <th style="width: 8%; padding: 4px 2px; border-right: 1px solid #000;">FT³</th>
+                    <th style="width: 20%; padding: 4px 4px;">DESTINO</th>
                   </tr>
                 </thead>
-                <tbody class="font-mono font-semibold divide-y divide-black/40">
+                <tbody style="font-family: monospace; font-weight: 600;">
                   ${tableRows}
                 </tbody>
               </table>
             </div>
+
+            <!-- 4. Resumen de Totales -->
+            <div style="border: 2px solid #000; background-color: #f1f5f9; padding: 6px 14px; border-radius: 4px; font-weight: 900; font-size: 11px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+              <div>TOTAL GUÍAS: <span style="color: #000; font-family: monospace; font-weight: 900;">${totalGuias}</span></div>
+              <div>TOTAL PIEZAS: <span style="color: #000; font-family: monospace; font-weight: 900;">${totalPiezas}</span></div>
+              <div>TOTAL VOLUMEN: <span style="color: #000; font-family: monospace; font-weight: 900;">${totalVolumen.toFixed(2)} ft³</span></div>
+              <div>TOTAL ZONAS: <span style="color: #000; font-family: monospace; font-weight: 900;">${totalZonas}</span></div>
+            </div>
+
+            <!-- 5. Firmas -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px; padding-top: 18px; padding-bottom: 4px; text-align: center; font-size: 11px; font-weight: bold;">
+              <div>
+                <div style="border-top: 2px solid #000; width: 190px; margin: 0 auto 4px auto;"></div>
+                <p style="margin: 0; color: #000; font-weight: bold;">Firma Despacho / Almacén</p>
+                <p style="margin: 2px 0 0 0; font-size: 9px; color: #64748b; font-weight: normal;">Envías C.A. - Logística Central</p>
+              </div>
+              <div>
+                <div style="border-top: 2px solid #000; width: 190px; margin: 0 auto 4px auto;"></div>
+                <p style="margin: 0; color: #000; font-weight: bold;">Firma Chofer Receptor</p>
+                <p style="margin: 2px 0 0 0; font-size: 9px; color: #64748b; font-weight: normal;">Conforme con bultos y guías físicas</p>
+              </div>
+            </div>
+
+            <!-- 6. Pie de Página con Código de Barras -->
+            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 9px; color: #64748b; padding-top: 8px; border-top: 1px solid #cbd5e1; margin-top: 8px;">
+              <span>Envías C.A. &bull; Sistema Oficial de Despacho y Logística</span>
+              <div style="display: flex; align-items: center; gap: 4px; font-family: monospace; font-weight: 900; color: #000; font-size: 10px;">
+                <span>||| | | |||| | ||||| || |</span>
+                <span>7 599187 000185</span>
+              </div>
+            </div>
+
           </div>
         `;
       }
 
-      // 1. Descargar PDF (Zona Activa)
+      // 1. Descargar PDF (Zona Activa) a Tamaño Completo
       btnListinDownloadPdf?.addEventListener('click', async () => {
-        const element = document.getElementById('listin-print-wrapper');
-        if (!element) return;
+        const srcShipments = getListinSourceShipments();
+        const orderedActiveGuias = getOrderedActiveGuias(srcShipments);
+
+        if (orderedActiveGuias.length === 0) {
+          showToast('No hay guías activas para generar el listín', 'error');
+          return;
+        }
+
         const origHtml = btnListinDownloadPdf.innerHTML;
         btnListinDownloadPdf.disabled = true;
         btnListinDownloadPdf.innerHTML = `
@@ -9515,29 +9734,78 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
         try {
           const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
+          const driverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
+            ? selectedDriverOption.text.replace(/\s*\(ID:.*?\)\s*/g, '') 
+            : 'FLOTA CENTRAL / DESPACHO GENERAL';
           const driverClean = selectedDriverOption && listinDriverSelect.value !== 'ALL'
             ? selectedDriverOption.text.replace(/[^a-zA-Z0-9]/g, '_')
             : 'Flota_General';
+          const placa = listinPlacaInput?.value?.trim()?.toUpperCase() || 'NO ASIGNADA';
+          const fecha = listinFechaInput?.value || new Date().toISOString().split('T')[0];
+
+          let cityName = 'TODAS LAS ZONAS';
+          if (listinSelectedZones.size === 1) {
+            cityName = Array.from(listinSelectedZones)[0];
+          } else if (listinSelectedZones.size > 1) {
+            cityName = listinCitiesOrder.filter(c => listinSelectedZones.has(c)).join(' · ');
+          }
+
+          const totalGuias = orderedActiveGuias.length;
+          const totalPiezas = orderedActiveGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+          const totalVolumen = orderedActiveGuias.reduce((acc, g) => acc + (Number(g.pies_cubicos) || 0), 0);
+          const totalZonas = new Set(orderedActiveGuias.map(g => (g.ciudad_destino || '').trim())).size;
+
           const zoneClean = listinSelectedZones.size > 0 
             ? Array.from(listinSelectedZones).join('_').replace(/[^a-zA-Z0-9]/g, '_') 
             : 'Todas_Zonas';
-          const fecha = listinFechaInput?.value || 'fecha';
           const filename = `Listin_Envias_${zoneClean}_${driverClean}_${fecha}.pdf`;
 
+          const pageHtml = createListinHtmlPage({
+            cityName,
+            zoneGuias: orderedActiveGuias,
+            driverName,
+            placa,
+            fecha,
+            totalGuias,
+            totalPiezas,
+            totalVolumen,
+            totalZonas,
+            isMultiPage: false
+          });
+
+          const tempContainer = document.createElement('div');
+          tempContainer.id = 'temp-listin-single-pdf';
+          tempContainer.style.position = 'fixed';
+          tempContainer.style.left = '-9999px';
+          tempContainer.style.top = '0';
+          tempContainer.style.width = '794px';
+          tempContainer.style.backgroundColor = '#ffffff';
+          tempContainer.innerHTML = pageHtml;
+          document.body.appendChild(tempContainer);
+
           const opt = {
-            margin: [6, 6, 6, 6],
+            margin: [4, 4, 4, 4],
             filename: filename,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
+            html2canvas: {
+              scale: 2,
+              useCORS: true,
+              letterRendering: true,
+              logging: false,
+              width: 794,
+              windowWidth: 794
+            },
             jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
           };
 
           if ((window as any).html2pdf) {
-            await (window as any).html2pdf().set(opt).from(element).save();
-            showToast('PDF del Listín descargado exitosamente', 'success');
+            await (window as any).html2pdf().set(opt).from(tempContainer).save();
+            showToast('PDF del Listín descargado a tamaño completo exitosamente', 'success');
           } else {
             window.print();
           }
+
+          document.body.removeChild(tempContainer);
         } catch (err) {
           console.error('Error al generar PDF:', err);
           showToast('Abriendo cuadro de impresión del navegador...', 'info');
@@ -9548,7 +9816,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
       });
 
-      // 2. Descargar Todos los Listines (1 Hoja Oficial por cada Zona)
+      // 2. Descargar Todos los Listines (1 Hoja Oficial por cada Zona) a Tamaño Completo
       btnListinDownloadAllPdf?.addEventListener('click', async () => {
         const srcShipments = getListinSourceShipments();
         if (srcShipments.length === 0 || listinCitiesOrder.length === 0) {
@@ -9577,34 +9845,57 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           // Construir contenedor temporal con 1 hoja por cada zona
           const tempContainer = document.createElement('div');
           tempContainer.id = 'temp-multi-listin-pdf';
-          tempContainer.style.position = 'absolute';
+          tempContainer.style.position = 'fixed';
           tempContainer.style.left = '-9999px';
           tempContainer.style.top = '0';
-          tempContainer.style.width = '760px';
+          tempContainer.style.width = '794px';
+          tempContainer.style.backgroundColor = '#ffffff';
 
           let combinedHtml = '';
-          listinCitiesOrder.forEach(cityName => {
-            if (listinExcludedCities.has(cityName)) return;
+          const activeCities = listinCitiesOrder.filter(c => !listinExcludedCities.has(c));
+          activeCities.forEach(cityName => {
             const zoneGuias = getOrderedActiveGuias(srcShipments, cityName);
             if (zoneGuias.length === 0) return;
-            combinedHtml += buildZoneSheetHtml(cityName, zoneGuias, driverName, placa, fecha);
+            const totalGuias = zoneGuias.length;
+            const totalPiezas = zoneGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+            const totalVolumen = zoneGuias.reduce((acc, g) => acc + (Number(g.pies_cubicos) || 0), 0);
+            
+            combinedHtml += createListinHtmlPage({
+              cityName,
+              zoneGuias,
+              driverName,
+              placa,
+              fecha,
+              totalGuias,
+              totalPiezas,
+              totalVolumen,
+              totalZonas: 1,
+              isMultiPage: true
+            });
           });
 
           tempContainer.innerHTML = combinedHtml;
           document.body.appendChild(tempContainer);
 
           const opt = {
-            margin: [6, 6, 6, 6],
+            margin: [4, 4, 4, 4],
             filename: `Listines_Envias_Todas_Las_Zonas_${fecha}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, letterRendering: true, logging: false },
+            html2canvas: {
+              scale: 2,
+              useCORS: true,
+              letterRendering: true,
+              logging: false,
+              width: 794,
+              windowWidth: 794
+            },
             jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
             pagebreak: { mode: ['css', 'legacy'] }
           };
 
           if ((window as any).html2pdf) {
             await (window as any).html2pdf().set(opt).from(tempContainer).save();
-            showToast(`¡Documento PDF de todas las zonas (${listinCitiesOrder.length} hojas) descargado exitosamente!`, 'success');
+            showToast(`¡Documento PDF de todas las zonas (${activeCities.length} hojas) descargado exitosamente!`, 'success');
           } else {
             window.print();
           }

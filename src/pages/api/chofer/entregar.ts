@@ -55,34 +55,62 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const primaryIdGuia = idGuiasArray[0];
 
-    let publicUrl: string | null = null;
-    let comprobanteBase64: string | null = null;
+    // 3. Procesar Fotos (Soporte individual y múltiple)
+    const uploadedFiles: File[] = [];
+    const rawFotos = formData.getAll('fotos');
+    if (rawFotos && rawFotos.length > 0) {
+      for (const item of rawFotos) {
+        if (item instanceof File && item.size > 0) {
+          uploadedFiles.push(item);
+        }
+      }
+    }
+    if (uploadedFiles.length === 0) {
+      const singleFoto = formData.get('foto');
+      if (singleFoto && singleFoto instanceof File && singleFoto.size > 0) {
+        uploadedFiles.push(singleFoto);
+      }
+    }
 
-    // Procesar foto si fue adjuntada
-    if (foto && foto instanceof File && foto.size > 0) {
-      const extension = foto.type.includes('png') ? 'png' : (foto.type.includes('webp') ? 'webp' : 'jpg');
-      const cleanId = primaryIdGuia.replace(/[^A-Z0-9_-]/gi, '');
-      const fileName = `comprobante_${cleanId}_${Date.now()}.${extension}`;
-      publicUrl = `/uploads/comprobantes/${fileName}`;
+    const publicUrls: string[] = [];
+    const base64List: string[] = [];
 
-      const arrayBuffer = await foto.arrayBuffer();
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'comprobantes');
+    const distUploadDir = path.join(process.cwd(), 'dist', 'client', 'uploads', 'comprobantes');
+
+    try {
+      await fs.mkdir(uploadDir, { recursive: true });
+      await fs.mkdir(distUploadDir, { recursive: true });
+    } catch {}
+
+    const cleanId = primaryIdGuia.replace(/[^A-Z0-9_-]/gi, '');
+    const now = Date.now();
+
+    for (let i = 0; i < uploadedFiles.length; i++) {
+      const file = uploadedFiles[i];
+      const extension = file.type.includes('png') ? 'png' : (file.type.includes('webp') ? 'webp' : 'jpg');
+      const fileName = `comprobante_${cleanId}_${i}_${now}.${extension}`;
+      const pubUrl = `/uploads/comprobantes/${fileName}`;
+      publicUrls.push(pubUrl);
+
+      const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
       const mimeType = extension === 'png' ? 'image/png' : (extension === 'webp' ? 'image/webp' : 'image/jpeg');
-      comprobanteBase64 = `data:${mimeType};base64,${buffer.toString('base64')}`;
+      const b64 = `data:${mimeType};base64,${buffer.toString('base64')}`;
+      base64List.push(b64);
 
       try {
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'comprobantes');
-        await fs.mkdir(uploadDir, { recursive: true });
-        const filePath = path.join(uploadDir, fileName);
-        await fs.writeFile(filePath, buffer);
-
-        const distUploadDir = path.join(process.cwd(), 'dist', 'client', 'uploads', 'comprobantes');
-        await fs.mkdir(distUploadDir, { recursive: true });
+        await fs.writeFile(path.join(uploadDir, fileName), buffer);
         await fs.writeFile(path.join(distUploadDir, fileName), buffer);
       } catch (fsErr) {
         console.warn('[FS Warning]: Usando base64 en PostgreSQL para comprobante.', fsErr);
       }
     }
+
+    let publicUrl: string | null = publicUrls.length > 0 ? publicUrls.join(',') : null;
+    let comprobanteBase64: string | null = base64List.length > 1 
+      ? JSON.stringify(base64List) 
+      : (base64List.length === 1 ? base64List[0] : null);
 
     let nuevoEstado = 'Entregado';
     let campoRecibido: string | null = null;
