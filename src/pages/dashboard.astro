@@ -4537,6 +4537,7 @@ const userInitials = currentUser.nombre
       }
 
       // Helper para calcular semana ISO e información de lote
+      // Helper para calcular semana ISO e información de lote
       function getGuiaWeekInfo(g: GuiaRow): { week: number; year: number; isCurrentWeek: boolean; isPastPending: boolean; loteCode: string; label: string } {
         const date = g.created_at ? new Date(g.created_at) : new Date();
         const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -4555,7 +4556,27 @@ const userInitials = currentUser.nombre
         const nowYear = nowD.getUTCFullYear();
 
         const isCurrentWeek = (year === nowYear && weekNo === nowWeek);
-        const isPastPending = (!isCurrentWeek) && (g.estado !== 'Entregado');
+        
+        // Comprobar si fue registrada en una fecha anterior a hoy
+        const todayStr = now.toISOString().split('T')[0];
+        const guiaDateStr = g.created_at ? new Date(g.created_at).toISOString().split('T')[0] : todayStr;
+        const isPastDate = guiaDateStr < todayStr;
+
+        // Comprobar si pertenece a un lote distinto al lote activo actual
+        const isDifferentLot = Boolean(activeCargaLote && g.lote_despacho && g.lote_despacho.trim().toUpperCase() !== activeCargaLote.trim().toUpperCase());
+
+        // Es rezagada si aún no está entregada y:
+        // 1. Fue marcada como "No entregado" (incidencia de despacho anterior), O
+        // 2. Es de una semana anterior, O
+        // 3. Es de una fecha anterior a hoy, O
+        // 4. Pertenece a un lote anterior distinto al activo
+        const isPastPending = (g.estado !== 'Entregado') && (
+          g.estado === 'No entregado' ||
+          !isCurrentWeek ||
+          isPastDate ||
+          isDifferentLot
+        );
+
         const weekFormatted = weekNo < 10 ? '0' + weekNo : weekNo.toString();
         const originSlug = (g.ruta_origen || 'BRM').replace(/[^A-Z0-9]/gi, '').slice(0, 3).toUpperCase() || 'BRM';
         const loteCode = g.lote_despacho || `REL-${year}-W${weekFormatted}-${originSlug}`;
@@ -5377,7 +5398,7 @@ const userInitials = currentUser.nombre
           if (currentLoteFilter === 'CURRENT_WEEK') {
             matchLote = weekInfo.isCurrentWeek;
           } else if (currentLoteFilter === 'PENDING_PAST') {
-            matchLote = !weekInfo.isCurrentWeek;
+            matchLote = weekInfo.isPastPending;
           } else if (currentLoteFilter !== 'ALL') {
             matchLote = (item.lote_despacho === currentLoteFilter) || (weekInfo.loteCode === currentLoteFilter);
           }
