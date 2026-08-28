@@ -43,17 +43,7 @@ const userInitials = currentUser.nombre
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
     
-    <!-- html2pdf.js - carga asincrona sin bloquear la pagina, disponible al clicar PDF -->
-    <script>
-      window._html2pdfReady = false;
-      (function() {
-        var s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-        s.onload = function() { window._html2pdfReady = true; };
-        s.onerror = function() { window._html2pdfReady = false; };
-        document.head.appendChild(s);
-      })();
-    </script>
+
 
     
     <style>
@@ -3362,6 +3352,8 @@ const userInitials = currentUser.nombre
     <!-- 4. LÓGICA DEL CLIENTE (SINCRONIZADA CON DB)-->
     <!-- ========================================== -->
     <script>
+      import { downloadListinPdf, downloadAllZonesListinesPdf } from '../lib/listinPdf';
+
       interface Driver {
         id: number;
         nombre: string;
@@ -11319,22 +11311,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       }
       (window as any).printListinDirect = printListinDirect;
 
-      // Helper: esperar a que html2pdf esté cargado (máx 8 segundos)
-      function waitForHtml2pdf(): Promise<boolean> {
-        return new Promise(resolve => {
-          if ((window as any).html2pdf) { resolve(true); return; }
-          let attempts = 0;
-          const interval = setInterval(() => {
-            attempts++;
-            if ((window as any).html2pdf) { clearInterval(interval); resolve(true); }
-            else if (attempts >= 40) { clearInterval(interval); resolve(false); }
-          }, 200);
-        });
-      }
-
-      // 1. Descargar PDF (Zona Activa) a Tamaño Completo
+      // 1. Descargar PDF (Zona Activa) - Generador Vectorial jsPDF
       btnListinDownloadPdf?.addEventListener('click', async () => {
-
         const srcShipments = getListinSourceShipments();
         const orderedActiveGuias = getOrderedActiveGuias(srcShipments);
 
@@ -11353,8 +11331,6 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           <span>Generando PDF...</span>
         `;
 
-        let pageHtml = '';
-        let tempContainer: HTMLElement | null = null;
         try {
           const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
           const driverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
@@ -11383,7 +11359,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             : 'Todas_Zonas';
           const filename = `Listin_Envias_${zoneClean}_${driverClean}_${fecha}.pdf`;
 
-          pageHtml = createListinHtmlPage({
+          downloadListinPdf({
             cityName,
             zoneGuias: orderedActiveGuias,
             driverName,
@@ -11392,62 +11368,21 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             totalGuias,
             totalPiezas,
             totalVolumen,
-            totalZonas,
-            isMultiPage: false
-          });
+            totalZonas
+          }, filename);
 
-          tempContainer = document.createElement('div');
-          tempContainer.id = 'temp-listin-single-pdf';
-          tempContainer.style.position = 'fixed';
-          tempContainer.style.left = '0';
-          tempContainer.style.top = '0';
-          tempContainer.style.zIndex = '9999999';
-          tempContainer.style.width = '794px';
-          tempContainer.style.backgroundColor = '#ffffff';
-          tempContainer.style.pointerEvents = 'none';
-          tempContainer.style.opacity = '1';
-          tempContainer.innerHTML = pageHtml;
-          document.body.appendChild(tempContainer);
-
-          await new Promise(r => setTimeout(r, 250));
-
-          const opt = {
-            margin: [3, 3, 3, 3],
-            filename: filename,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: {
-              scale: 2,
-              useCORS: true,
-              letterRendering: true,
-              logging: false,
-              scrollY: 0,
-              scrollX: 0,
-              windowWidth: 850
-            },
-            jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
-          };
-
-          const html2pdfLoaded = await waitForHtml2pdf();
-          if (html2pdfLoaded) {
-            await (window as any).html2pdf().set(opt).from(tempContainer).save();
-            showToast('PDF del Listín descargado exitosamente', 'success');
-          } else {
-            printListinDirect(false);
-          }
+          showToast('PDF del Listín descargado exitosamente', 'success');
         } catch (err) {
-          console.error('Error al generar PDF:', err);
-          showToast('Abriendo cuadro de impresión del navegador...', 'info');
+          console.error('Error al generar PDF con jsPDF:', err);
+          showToast('Error al generar PDF. Abriendo cuadro de impresión...', 'error');
           printListinDirect(false);
         } finally {
-          if (tempContainer && tempContainer.parentNode) {
-            tempContainer.parentNode.removeChild(tempContainer);
-          }
           btnListinDownloadPdf.disabled = false;
           btnListinDownloadPdf.innerHTML = origHtml;
         }
       });
 
-      // 2. Descargar Todos los Listines (1 Hoja Oficial por cada Zona) a Tamaño Completo
+      // 2. Descargar Todos los Listines (1 Hoja Oficial por cada Zona) - Generador Vectorial jsPDF
       btnListinDownloadAllPdf?.addEventListener('click', async () => {
         const srcShipments = getListinSourceShipments();
         if (srcShipments.length === 0 || listinCitiesOrder.length === 0) {
@@ -11465,88 +11400,37 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           <span>Generando ${listinCitiesOrder.length} listines...</span>
         `;
 
-        let combinedHtml = '';
-        let tempContainer: HTMLElement | null = null;
         try {
           const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
           const driverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
             ? selectedDriverOption.text.replace(/\s*\(ID:.*?\)\s*/g, '') 
             : 'FLOTA CENTRAL / DESPACHO GENERAL';
+          const driverClean = selectedDriverOption && listinDriverSelect.value !== 'ALL'
+            ? selectedDriverOption.text.replace(/[^a-zA-Z0-9]/g, '_')
+            : 'Flota_General';
           const placa = listinPlacaInput?.value?.trim()?.toUpperCase() || 'NO ASIGNADA';
           const fecha = listinFechaInput?.value || new Date().toISOString().split('T')[0];
 
-          // Construir contenedor temporal con 1 hoja por cada zona
-          tempContainer = document.createElement('div');
-          tempContainer.id = 'temp-multi-listin-pdf';
-          tempContainer.style.position = 'fixed';
-          tempContainer.style.left = '0';
-          tempContainer.style.top = '0';
-          tempContainer.style.zIndex = '9999999';
-          tempContainer.style.width = '794px';
-          tempContainer.style.backgroundColor = '#ffffff';
-          tempContainer.style.pointerEvents = 'none';
-          tempContainer.style.opacity = '1';
-
           const activeCities = listinCitiesOrder.filter(c => !listinExcludedCities.has(c));
+          const zonesData = activeCities.map(cityName => ({
+            cityName,
+            zoneGuias: getOrderedActiveGuias(srcShipments, cityName)
+          })).filter(zd => zd.zoneGuias.length > 0);
 
-          activeCities.forEach(cityName => {
-            const zoneGuias = getOrderedActiveGuias(srcShipments, cityName);
-            if (zoneGuias.length === 0) return;
-            const totalGuias = zoneGuias.length;
-            const totalPiezas = zoneGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
-            const totalVolumen = zoneGuias.reduce((acc, g) => acc + (Number(g.pies_cubicos) || 0), 0);
-            
-            combinedHtml += createListinHtmlPage({
-              cityName,
-              zoneGuias,
-              driverName,
-              placa,
-              fecha,
-              totalGuias,
-              totalPiezas,
-              totalVolumen,
-              totalZonas: 1,
-              isMultiPage: true
-            });
-          });
-
-          tempContainer.innerHTML = combinedHtml;
-          document.body.appendChild(tempContainer);
-
-          await new Promise(r => setTimeout(r, 300));
-
-          const opt = {
-            margin: [3, 3, 3, 3],
-            filename: `Listines_Envias_Todas_Las_Zonas_${fecha}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: {
-              scale: 2,
-              useCORS: true,
-              letterRendering: true,
-              logging: false,
-              scrollY: 0,
-              scrollX: 0,
-              windowWidth: 850
-            },
-            jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
-            pagebreak: { mode: ['css', 'legacy'] }
-          };
-
-          const html2pdfLoaded2 = await waitForHtml2pdf();
-          if (html2pdfLoaded2) {
-            await (window as any).html2pdf().set(opt).from(tempContainer).save();
-            showToast(`Documento PDF (${activeCities.length} hojas) descargado exitosamente`, 'success');
-          } else {
-            printListinDirect(true);
+          if (zonesData.length === 0) {
+            showToast('No hay guías en las zonas seleccionadas', 'error');
+            return;
           }
+
+          const filename = `Listines_Envias_Todas_Las_Zonas_${fecha}.pdf`;
+          downloadAllZonesListinesPdf(zonesData, { driverName, placa, fecha }, filename);
+
+          showToast(`Documento PDF (${zonesData.length} zonas) descargado exitosamente`, 'success');
         } catch (err) {
-          console.error('Error al generar PDF de todas las zonas:', err);
+          console.error('Error al generar PDF multipágina:', err);
           showToast('Error al exportar lote de listines. Abriendo impresión...', 'error');
           printListinDirect(true);
         } finally {
-          if (tempContainer && tempContainer.parentNode) {
-            tempContainer.parentNode.removeChild(tempContainer);
-          }
           btnListinDownloadAllPdf.disabled = false;
           btnListinDownloadAllPdf.innerHTML = origHtml;
         }
