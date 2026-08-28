@@ -31,6 +31,9 @@ export const GET: APIRoute = async ({ params }) => {
         g.comprobante_url,
         g.recibido_por,
         g.created_at,
+        g.lote_despacho,
+        g.archivada,
+        g.ruta_archivada_id,
         u.nombre AS chofer_nombre,
         u.telefono AS chofer_telefono
       FROM guias g
@@ -95,7 +98,10 @@ export const PATCH: APIRoute = async ({ params, request }) => {
       'telefono_secundario',
       'comprobante_url',
       'comprobante_base64',
-      'recibido_por'
+      'recibido_por',
+      'lote_despacho',
+      'archivada',
+      'ruta_archivada_id'
     ];
 
     const updates: string[] = [];

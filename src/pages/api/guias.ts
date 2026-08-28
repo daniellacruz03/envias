@@ -32,6 +32,7 @@ export const GET: APIRoute = async ({ url }) => {
         g.created_at,
         g.archivada,
         g.ruta_archivada_id,
+        g.lote_despacho,
         u.nombre AS chofer_nombre,
         u.telefono AS chofer_telefono
       FROM guias g
@@ -73,7 +74,8 @@ export const POST: APIRoute = async ({ request }) => {
       piezas,
       pies_cubicos,
       direccion_referencia,
-      empresa
+      empresa,
+      lote_despacho
     } = body;
 
     if (!id_guia || !destinatario || !telefono_principal || !ciudad_destino) {
@@ -103,6 +105,20 @@ export const POST: APIRoute = async ({ request }) => {
     const parsedPiesCubicos = (pies_cubicos !== undefined && pies_cubicos !== null && pies_cubicos !== '')
       ? parseFloat(pies_cubicos) || null
       : null;
+
+    // Calcular lote_despacho automático si no viene especificado
+    let finalLote = lote_despacho ? lote_despacho.trim() : null;
+    if (!finalLote) {
+      const now = new Date();
+      const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+      const dayNum = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+      const year = d.getUTCFullYear();
+      const originSlug = 'BRM';
+      finalLote = `REL-${year}-W${weekNo < 10 ? '0' + weekNo : weekNo}-${originSlug}`;
+    }
 
     // Buscar si el cliente ya tenía GPS confirmado previamente
     let autoGpsConfirmado = false;
@@ -147,9 +163,10 @@ export const POST: APIRoute = async ({ request }) => {
         gps_latitud,
         gps_longitud,
         hora_disponible,
+        lote_despacho,
         created_at
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, 'Por contactar', $10, $11, $12, $13, NOW()
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, 'Por contactar', $10, $11, $12, $13, $14, NOW()
       )
       RETURNING *
     `, [
@@ -165,7 +182,8 @@ export const POST: APIRoute = async ({ request }) => {
       autoGpsConfirmado,
       autoGpsLat,
       autoGpsLon,
-      autoHora
+      autoHora,
+      finalLote
     ]);
 
     const newGuia = insertResult.rows[0];

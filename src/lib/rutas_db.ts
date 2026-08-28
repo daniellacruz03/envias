@@ -39,7 +39,9 @@ export async function ensureRutasArchivadasSchema() {
     await query(`ALTER TABLE guias ADD COLUMN IF NOT EXISTS archivada BOOLEAN DEFAULT false`);
     await query(`ALTER TABLE guias ADD COLUMN IF NOT EXISTS ruta_archivada_id INTEGER REFERENCES rutas_archivadas(id)`);
     await query(`ALTER TABLE guias ADD COLUMN IF NOT EXISTS pies_cubicos NUMERIC(10,2) DEFAULT NULL`);
+    await query(`ALTER TABLE guias ADD COLUMN IF NOT EXISTS lote_despacho VARCHAR(64) DEFAULT NULL`);
     await query(`CREATE INDEX IF NOT EXISTS idx_guias_archivada ON guias(archivada)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_guias_lote_despacho ON guias(lote_despacho)`);
 
     isSchemaInitialized = true;
   } catch (error: any) {
