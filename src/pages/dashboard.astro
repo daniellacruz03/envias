@@ -232,6 +232,40 @@ const userInitials = currentUser.nombre
           </div>
         </div>
 
+        <!-- Banner de Lote Activo para Carga Rápida -->
+        <div id="banner-active-lote" class="hidden mb-3.5 animate-fadeIn">
+          <div class="flex flex-wrap items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-indigo-950 via-slate-900 to-indigo-900 text-white border border-indigo-500/40 shadow-sm text-xs gap-2.5">
+            <div class="flex items-center gap-2.5 flex-wrap min-w-0">
+              <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></div>
+              <span class="text-slate-300 font-semibold">Lote Activo de Carga:</span>
+              <span id="banner-active-lote-code" class="font-mono font-black text-amber-300 bg-black/50 px-2.5 py-1 rounded-lg border border-white/15 shadow-inner tracking-wider">REL-2026-W35-BRM</span>
+              <span id="banner-active-lote-date" class="text-[11px] font-mono font-bold text-slate-200 bg-white/10 px-2 py-1 rounded-md border border-white/10">2026-08-28</span>
+              <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 font-bold px-2 py-0.5 rounded-md flex items-center gap-1">
+                <svg class="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                Asignación automática a cada guía nueva
+              </span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onclick="window.openGestionLotesModal()"
+                class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold transition-all cursor-pointer"
+                title="Cambiar o configurar otro lote"
+              >
+                Cambiar
+              </button>
+              <button
+                type="button"
+                onclick="window.clearActiveCargaLote()"
+                class="px-2 py-1 rounded-lg text-slate-400 hover:text-rose-300 hover:bg-rose-950/40 text-[11px] font-bold transition-all cursor-pointer"
+                title="Desactivar asignación automática de lote"
+              >
+                ✕ Desactivar
+              </button>
+            </div>
+          </div>
+        </div>
+
         <form id="new-shipment-form" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3.5" autocomplete="off">
           
           <!-- Número de Guía -->
@@ -3021,75 +3055,93 @@ const userInitials = currentUser.nombre
               </div>
             </div>
 
-            <!-- Sección de Asignación de Guías -->
-            <div class="space-y-3">
-              <div class="flex items-center justify-between flex-wrap gap-2">
-                <div>
-                  <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-800">Seleccionar Encomiendas para este Lote</h4>
-                  <p class="text-[11px] text-slate-500 font-medium">Marca las guías que pertenecerán a este lote y adoptarán la fecha seleccionada</p>
-                </div>
-                <div class="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onclick="window.toggleSelectAllLoteGuias(true)"
-                    class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-all cursor-pointer shadow-2xs"
-                  >
-                    Seleccionar Todas
-                  </button>
-                  <button
-                    type="button"
-                    onclick="window.toggleSelectAllLoteGuias(false)"
-                    class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all cursor-pointer"
-                  >
-                    Deseleccionar
-                  </button>
-                </div>
+            <!-- Botón Principal: Activar Lote para Carga Rápida Automática -->
+            <div class="p-4 rounded-2xl bg-gradient-to-r from-indigo-50 to-slate-50 border-2 border-indigo-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h4 class="text-xs font-black text-slate-900 flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Fijar como Lote Activo de Trabajo</span>
+                </h4>
+                <p class="text-[11px] text-slate-600 font-medium mt-0.5">Todas las guías que ingreses en "Carga Rápida de Envíos" recibirán este lote y fecha automáticamente.</p>
               </div>
-
-              <!-- Buscador Rápido de Guías en el Modal -->
-              <div class="flex items-center gap-2">
-                <div class="relative flex-1">
-                  <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input
-                    type="text"
-                    id="modal-lote-guias-search"
-                    placeholder="Filtrar por número de guía, destinatario o ciudad..."
-                    oninput="window.filterModalLoteGuiasList()"
-                    class="w-full text-xs bg-white border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
-                  />
-                </div>
-                <span id="modal-lote-selected-summary" class="text-xs font-mono font-bold px-3 py-2 rounded-xl bg-slate-100 text-slate-800 border border-slate-200 shrink-0">
-                  0 seleccionadas
-                </span>
-              </div>
-
-              <!-- Lista scrolleable de guías -->
-              <div id="modal-lote-guias-list" class="max-h-[260px] overflow-y-auto custom-scrollbar border border-slate-200/90 rounded-2xl divide-y divide-slate-100 bg-white shadow-2xs">
-                <!-- Se llena dinámicamente -->
-              </div>
-            </div>
-
-            <!-- Botón de Envío -->
-            <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
               <button
                 type="button"
-                onclick="window.closeGestionLotesModal()"
-                class="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
+                id="btn-set-active-lote-now"
+                onclick="window.setActiveCargaLoteFromModal()"
+                class="px-5 py-3 rounded-xl bg-slate-900 hover:bg-black active:scale-95 text-white text-xs font-black transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer shrink-0"
               >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                id="btn-submit-create-lote"
-                onclick="window.submitCreateLoteForm()"
-                class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold transition-all shadow-md shadow-indigo-500/25 flex items-center gap-2 cursor-pointer"
-              >
-                <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                <span>Crear Lote y Guardar</span>
+                <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                <span>Activar este Lote</span>
               </button>
             </div>
+
+            <!-- Sección Opcional Plegable: Asignar también a Encomiendas Ya Registradas -->
+            <details class="group bg-slate-50/70 border border-slate-200/90 rounded-2xl p-4 transition-all">
+              <summary class="text-xs font-bold text-slate-700 cursor-pointer flex items-center justify-between select-none">
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-slate-400 group-open:rotate-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                  <span>¿Deseas asignar también este lote a guías ya registradas anteriormente?</span>
+                </div>
+                <span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">Opcional</span>
+              </summary>
+
+              <div class="mt-4 space-y-3 pt-3 border-t border-slate-200">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <p class="text-[11px] text-slate-500 font-medium">Marca las guías existentes que deseas mover a este nuevo lote</p>
+                  <div class="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onclick="window.toggleSelectAllLoteGuias(true)"
+                      class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-all cursor-pointer shadow-2xs"
+                    >
+                      Seleccionar Todas
+                    </button>
+                    <button
+                      type="button"
+                      onclick="window.toggleSelectAllLoteGuias(false)"
+                      class="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all cursor-pointer"
+                    >
+                      Deseleccionar
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Buscador Rápido de Guías en el Modal -->
+                <div class="flex items-center gap-2">
+                  <div class="relative flex-1">
+                    <svg class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                      type="text"
+                      id="modal-lote-guias-search"
+                      placeholder="Filtrar por número de guía, destinatario o ciudad..."
+                      oninput="window.filterModalLoteGuiasList()"
+                      class="w-full text-xs bg-white border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+                    />
+                  </div>
+                  <span id="modal-lote-selected-summary" class="text-xs font-mono font-bold px-3 py-2 rounded-xl bg-slate-100 text-slate-800 border border-slate-200 shrink-0">
+                    0 seleccionadas
+                  </span>
+                </div>
+
+                <!-- Lista scrolleable de guías -->
+                <div id="modal-lote-guias-list" class="max-h-[220px] overflow-y-auto custom-scrollbar border border-slate-200/90 rounded-2xl divide-y divide-slate-100 bg-white shadow-2xs">
+                  <!-- Se llena dinámicamente -->
+                </div>
+
+                <div class="pt-2 flex justify-end">
+                  <button
+                    type="button"
+                    id="btn-submit-create-lote"
+                    onclick="window.submitCreateLoteForm()"
+                    class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+                  >
+                    <span>Guardar y Asignar a Guías Marcadas</span>
+                  </button>
+                </div>
+              </div>
+            </details>
           </div>
 
           <!-- ============================================== -->
@@ -4620,18 +4672,102 @@ const userInitials = currentUser.nombre
       const btnSubmitCreateLote = document.getElementById('btn-submit-create-lote') as HTMLButtonElement;
       const btnSubmitEditLote = document.getElementById('btn-submit-edit-lote') as HTMLButtonElement;
 
+      // Estado persistente del Lote Activo para Carga Rápida
+      let activeCargaLote = (typeof localStorage !== 'undefined' ? localStorage.getItem('envias_active_carga_lote') : '') || '';
+      let activeCargaFecha = (typeof localStorage !== 'undefined' ? localStorage.getItem('envias_active_carga_fecha') : '') || '';
+
+      function updateActiveLoteUI() {
+        const bannerActiveLote = document.getElementById('banner-active-lote');
+        const bannerActiveLoteCode = document.getElementById('banner-active-lote-code');
+        const bannerActiveLoteDate = document.getElementById('banner-active-lote-date');
+        const loteInput = document.getElementById('input-lote') as HTMLInputElement;
+        const fechaRegistroInput = document.getElementById('input-fecha-registro') as HTMLInputElement;
+
+        if (activeCargaLote) {
+          if (bannerActiveLote) bannerActiveLote.classList.remove('hidden');
+          if (bannerActiveLoteCode) bannerActiveLoteCode.textContent = activeCargaLote;
+          if (bannerActiveLoteDate) bannerActiveLoteDate.textContent = activeCargaFecha || new Date().toISOString().split('T')[0];
+          if (loteInput && !loteInput.value) loteInput.value = activeCargaLote;
+          if (fechaRegistroInput && !fechaRegistroInput.value) fechaRegistroInput.value = activeCargaFecha;
+        } else {
+          if (bannerActiveLote) bannerActiveLote.classList.add('hidden');
+        }
+      }
+      (window as any).updateActiveLoteUI = updateActiveLoteUI;
+
+      function setActiveCargaLote(loteCode: string, fechaVal?: string) {
+        if (!loteCode) return;
+        activeCargaLote = loteCode.trim().toUpperCase();
+        activeCargaFecha = (fechaVal || new Date().toISOString().split('T')[0]).trim();
+
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('envias_active_carga_lote', activeCargaLote);
+          localStorage.setItem('envias_active_carga_fecha', activeCargaFecha);
+        }
+
+        const loteInput = document.getElementById('input-lote') as HTMLInputElement;
+        const fechaRegistroInput = document.getElementById('input-fecha-registro') as HTMLInputElement;
+        if (loteInput) loteInput.value = activeCargaLote;
+        if (fechaRegistroInput) fechaRegistroInput.value = activeCargaFecha;
+
+        updateActiveLoteUI();
+        showToast(`Lote "${activeCargaLote}" activo. Cada nueva guía se asignará automáticamente aquí.`, 'success');
+      }
+      (window as any).setActiveCargaLote = setActiveCargaLote;
+
+      function clearActiveCargaLote() {
+        activeCargaLote = '';
+        activeCargaFecha = '';
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem('envias_active_carga_lote');
+          localStorage.removeItem('envias_active_carga_fecha');
+        }
+
+        const loteInput = document.getElementById('input-lote') as HTMLInputElement;
+        const fechaRegistroInput = document.getElementById('input-fecha-registro') as HTMLInputElement;
+        if (loteInput) loteInput.value = '';
+        if (fechaRegistroInput) fechaRegistroInput.value = '';
+
+        updateActiveLoteUI();
+        showToast('Asignación automática de lote desactivada.', 'info');
+      }
+      (window as any).clearActiveCargaLote = clearActiveCargaLote;
+
+      function setActiveCargaLoteFromModal() {
+        const codigo = (modalLoteCodigo?.value || '').trim().toUpperCase();
+        const fecha = (modalLoteFecha?.value || '').trim() || new Date().toISOString().split('T')[0];
+
+        if (!codigo) {
+          showToast('Debe indicar un código de lote válido.', 'error');
+          modalLoteCodigo?.focus();
+          return;
+        }
+
+        setActiveCargaLote(codigo, fecha);
+        closeGestionLotesModal();
+
+        const guiaInput = document.getElementById('input-guia') as HTMLInputElement;
+        guiaInput?.focus();
+      }
+      (window as any).setActiveCargaLoteFromModal = setActiveCargaLoteFromModal;
+
       let selectedLoteGuiaIds = new Set<string>();
       let isLoteCodigoCustomized = false;
 
       function openGestionLotesModal(preselectedLote?: string) {
         if (!modalGestionLotes) return;
 
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = activeCargaFecha || new Date().toISOString().split('T')[0];
         if (modalLoteFecha) modalLoteFecha.value = todayStr;
         if (modalLoteOrigen) modalLoteOrigen.value = 'BRM';
         isLoteCodigoCustomized = false;
         
-        regenerateLoteCodeSuggestion();
+        if (activeCargaLote && !preselectedLote) {
+          if (modalLoteCodigo) modalLoteCodigo.value = activeCargaLote;
+          isLoteCodigoCustomized = true;
+        } else {
+          regenerateLoteCodeSuggestion();
+        }
 
         selectedLoteGuiaIds.clear();
         if (modalLoteGuiasSearch) modalLoteGuiasSearch.value = '';
@@ -7753,7 +7889,10 @@ const userInitials = currentUser.nombre
             <span>Guardando en BD...</span>
           `;
 
-          // Payload para PostgreSQL
+          // Payload para PostgreSQL con Lote Activo automático
+          const loteVal = (loteInput && loteInput.value.trim().toUpperCase()) || activeCargaLote || undefined;
+          const fechaVal = (fechaRegistroInput && fechaRegistroInput.value.trim()) || activeCargaFecha || undefined;
+
           const payload = {
             id_guia,
             destinatario: destInput.value.trim(),
@@ -7764,8 +7903,8 @@ const userInitials = currentUser.nombre
             pies_cubicos: piesCubicosInput && piesCubicosInput.value.trim() ? parseFloat(piesCubicosInput.value.trim()) : undefined,
             empresa: empresaInput ? empresaInput.value.trim() || undefined : undefined,
             direccion_referencia: dirInput.value.trim() || undefined,
-            lote_despacho: loteInput && loteInput.value.trim() ? loteInput.value.trim().toUpperCase() : undefined,
-            created_at: fechaRegistroInput && fechaRegistroInput.value.trim() ? fechaRegistroInput.value.trim() : undefined
+            lote_despacho: loteVal,
+            created_at: fechaVal
           };
 
           try {
@@ -7785,16 +7924,17 @@ const userInitials = currentUser.nombre
               piezasInput.value = '1';
               if (piesCubicosInput) piesCubicosInput.value = '';
               if (empresaInput) empresaInput.value = '';
-              if (loteInput) loteInput.value = '';
-              if (fechaRegistroInput) fechaRegistroInput.value = '';
+              if (loteInput) loteInput.value = activeCargaLote || '';
+              if (fechaRegistroInput) fechaRegistroInput.value = activeCargaFecha || '';
               guiaInput.focus();
 
               populateCityFilter();
               updateLoteControls();
+              updateActiveLoteUI();
               renderViews();
               loadFrequentClients();
               (window as any).clearFrequentClientSelection();
-              showToast(`Guía #${id_guia} guardada en PostgreSQL`, 'success');
+              showToast(`Guía #${id_guia} guardada en lote ${loteVal || 'actual'}`, 'success');
             } else {
               showToast(json.message || 'Error al guardar la guía', 'error');
             }
@@ -7813,6 +7953,9 @@ const userInitials = currentUser.nombre
         filterEmpresa?.addEventListener('change', renderViews);
         filterEstado.addEventListener('change', renderViews);
         filterListin?.addEventListener('change', renderViews);
+
+        // Inicializar UI de Lote Activo
+        updateActiveLoteUI();
       }
 
       // Métodos globales para interactividad en tabla (window)
