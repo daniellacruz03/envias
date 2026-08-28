@@ -1138,6 +1138,19 @@ const userInitials = currentUser.nombre
 
               <button
                 type="button"
+                id="btn-listin-print"
+                onclick="window.printListinDirect(false)"
+                class="px-3.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                title="Imprimir o Guardar como PDF directamente en el navegador"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                <span>Imprimir / Guardar</span>
+              </button>
+
+              <button
+                type="button"
                 id="btn-listin-download-pdf"
                 class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
                 title="Descargar hoja PDF de la zona seleccionada"
@@ -1145,13 +1158,13 @@ const userInitials = currentUser.nombre
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                <span>PDF Zona</span>
+                <span>Descargar PDF</span>
               </button>
 
               <button
                 type="button"
                 id="btn-listin-download-all-pdf"
-                class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-black active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
                 title="Descargar un archivo PDF multipágina con 1 hoja oficial por cada zona"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1163,7 +1176,7 @@ const userInitials = currentUser.nombre
               <button
                 type="button"
                 id="btn-listin-send"
-                class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black active:scale-95 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+                class="px-4 py-2 rounded-xl bg-indigo-950 hover:bg-slate-900 active:scale-95 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer"
                 title="Enviar listín oficial al chofer para que lo imprima y revise"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -11207,6 +11220,105 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         return allSheetsHtml;
       }
 
+      // 0. Imprimir Directamente o Guardar como PDF Vectorial Nativo
+      function printListinDirect(isAllZones: boolean = false) {
+        const srcShipments = getListinSourceShipments();
+        if (srcShipments.length === 0) {
+          showToast('No hay guías activas para imprimir el listín', 'error');
+          return;
+        }
+
+        const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
+        const driverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
+          ? selectedDriverOption.text.replace(/\s*\(ID:.*?\)\s*/g, '') 
+          : 'FLOTA CENTRAL / DESPACHO GENERAL';
+        const placa = listinPlacaInput?.value?.trim()?.toUpperCase() || 'NO ASIGNADA';
+        const fecha = listinFechaInput?.value || new Date().toISOString().split('T')[0];
+
+        let htmlToPrint = '';
+
+        if (isAllZones) {
+          const activeCities = listinCitiesOrder.filter(c => !listinExcludedCities.has(c));
+          activeCities.forEach(cityName => {
+            const zoneGuias = getOrderedActiveGuias(srcShipments, cityName);
+            if (zoneGuias.length === 0) return;
+            const totalGuias = zoneGuias.length;
+            const totalPiezas = zoneGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+            const totalVolumen = zoneGuias.reduce((acc, g) => acc + (Number(g.pies_cubicos) || 0), 0);
+            htmlToPrint += createListinHtmlPage({
+              cityName,
+              zoneGuias,
+              driverName,
+              placa,
+              fecha,
+              totalGuias,
+              totalPiezas,
+              totalVolumen,
+              totalZonas: 1,
+              isMultiPage: true
+            });
+          });
+        } else {
+          const orderedActiveGuias = getOrderedActiveGuias(srcShipments);
+          if (orderedActiveGuias.length === 0) {
+            showToast('No hay guías seleccionadas para imprimir', 'error');
+            return;
+          }
+          let cityName = 'TODAS LAS ZONAS';
+          if (listinSelectedZones.size === 1) {
+            cityName = Array.from(listinSelectedZones)[0];
+          } else if (listinSelectedZones.size > 1) {
+            cityName = listinCitiesOrder.filter(c => listinSelectedZones.has(c)).join(' · ');
+          }
+          const totalGuias = orderedActiveGuias.length;
+          const totalPiezas = orderedActiveGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+          const totalVolumen = orderedActiveGuias.reduce((acc, g) => acc + (Number(g.pies_cubicos) || 0), 0);
+          const totalZonas = new Set(orderedActiveGuias.map(g => (g.ciudad_destino || '').trim())).size;
+
+          htmlToPrint = createListinHtmlPage({
+            cityName,
+            zoneGuias: orderedActiveGuias,
+            driverName,
+            placa,
+            fecha,
+            totalGuias,
+            totalPiezas,
+            totalVolumen,
+            totalZonas,
+            isMultiPage: false
+          });
+        }
+
+        const pw = window.open('', '_blank', 'width=950,height=750');
+        if (pw) {
+          pw.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='UTF-8'>
+  <title>Listín de Despacho - Envías C.A.</title>
+  <style>
+    @page { size: letter portrait; margin: 4mm; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; background: #fff; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .listin-sheet-page { page-break-after: always; break-after: page; page-break-inside: avoid; }
+    @media print { body { margin: 0; } }
+  </style>
+</head>
+<body>
+  ${htmlToPrint}
+</body>
+</html>`);
+          pw.document.close();
+          pw.focus();
+          setTimeout(() => {
+            pw.print();
+          }, 350);
+        } else {
+          showToast('Permite las ventanas emergentes en tu navegador para imprimir directamente', 'error');
+        }
+      }
+      (window as any).printListinDirect = printListinDirect;
+
       // Helper: esperar a que html2pdf esté cargado (máx 8 segundos)
       function waitForHtml2pdf(): Promise<boolean> {
         return new Promise(resolve => {
@@ -11242,6 +11354,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         `;
 
         let pageHtml = '';
+        let tempContainer: HTMLElement | null = null;
         try {
           const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
           const driverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
@@ -11283,19 +11396,23 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             isMultiPage: false
           });
 
-          const tempContainer = document.createElement('div');
+          tempContainer = document.createElement('div');
           tempContainer.id = 'temp-listin-single-pdf';
-          tempContainer.style.position = 'absolute';
+          tempContainer.style.position = 'fixed';
           tempContainer.style.left = '0';
           tempContainer.style.top = '0';
-          tempContainer.style.zIndex = '-99999';
-          tempContainer.style.width = '770px';
+          tempContainer.style.zIndex = '9999999';
+          tempContainer.style.width = '794px';
           tempContainer.style.backgroundColor = '#ffffff';
+          tempContainer.style.pointerEvents = 'none';
+          tempContainer.style.opacity = '1';
           tempContainer.innerHTML = pageHtml;
           document.body.appendChild(tempContainer);
 
+          await new Promise(r => setTimeout(r, 250));
+
           const opt = {
-            margin: [4, 4, 4, 4],
+            margin: [3, 3, 3, 3],
             filename: filename,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: {
@@ -11304,7 +11421,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
               letterRendering: true,
               logging: false,
               scrollY: 0,
-              scrollX: 0
+              scrollX: 0,
+              windowWidth: 850
             },
             jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
           };
@@ -11314,44 +11432,16 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             await (window as any).html2pdf().set(opt).from(tempContainer).save();
             showToast('PDF del Listín descargado exitosamente', 'success');
           } else {
-            // Fallback: abrir ventana de impresión aislada con solo el listín
-            const pw = window.open('', '_blank', 'width=900,height=700');
-            if (pw) {
-              pw.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset='UTF-8'>
-  <title>${filename}</title>
-  <style>
-    @page { size: letter portrait; margin: 4mm; }
-    body { margin: 0; padding: 0; background: #fff; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .listin-sheet-page { page-break-after: always; break-after: page; page-break-inside: avoid; }
-    @media print { body { margin: 0; } }
-  </style>
-</head>
-<body>
-  ${pageHtml}
-</body>
-</html>`);
-              pw.document.close();
-              pw.focus();
-              setTimeout(() => { pw.print(); }, 400);
-            }
+            printListinDirect(false);
           }
-
-          document.body.removeChild(tempContainer);
         } catch (err) {
           console.error('Error al generar PDF:', err);
           showToast('Abriendo cuadro de impresión del navegador...', 'info');
-          if (pageHtml) {
-            const pw2 = window.open('', '_blank', 'width=900,height=700');
-            if (pw2) { 
-              pw2.document.write(`<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Listín Envías</title><style>@page{size:letter portrait;margin:4mm;}body{margin:0;font-family:system-ui,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}</style></head><body>${pageHtml}</body></html>`); 
-              pw2.document.close(); 
-              setTimeout(() => { pw2.print(); }, 400); 
-            }
-          }
+          printListinDirect(false);
         } finally {
+          if (tempContainer && tempContainer.parentNode) {
+            tempContainer.parentNode.removeChild(tempContainer);
+          }
           btnListinDownloadPdf.disabled = false;
           btnListinDownloadPdf.innerHTML = origHtml;
         }
@@ -11376,6 +11466,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         `;
 
         let combinedHtml = '';
+        let tempContainer: HTMLElement | null = null;
         try {
           const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
           const driverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
@@ -11385,14 +11476,16 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           const fecha = listinFechaInput?.value || new Date().toISOString().split('T')[0];
 
           // Construir contenedor temporal con 1 hoja por cada zona
-          const tempContainer = document.createElement('div');
+          tempContainer = document.createElement('div');
           tempContainer.id = 'temp-multi-listin-pdf';
-          tempContainer.style.position = 'absolute';
+          tempContainer.style.position = 'fixed';
           tempContainer.style.left = '0';
           tempContainer.style.top = '0';
-          tempContainer.style.zIndex = '-99999';
-          tempContainer.style.width = '770px';
+          tempContainer.style.zIndex = '9999999';
+          tempContainer.style.width = '794px';
           tempContainer.style.backgroundColor = '#ffffff';
+          tempContainer.style.pointerEvents = 'none';
+          tempContainer.style.opacity = '1';
 
           const activeCities = listinCitiesOrder.filter(c => !listinExcludedCities.has(c));
 
@@ -11420,8 +11513,10 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           tempContainer.innerHTML = combinedHtml;
           document.body.appendChild(tempContainer);
 
+          await new Promise(r => setTimeout(r, 300));
+
           const opt = {
-            margin: [4, 4, 4, 4],
+            margin: [3, 3, 3, 3],
             filename: `Listines_Envias_Todas_Las_Zonas_${fecha}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: {
@@ -11430,7 +11525,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
               letterRendering: true,
               logging: false,
               scrollY: 0,
-              scrollX: 0
+              scrollX: 0,
+              windowWidth: 850
             },
             jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
             pagebreak: { mode: ['css', 'legacy'] }
@@ -11441,42 +11537,16 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             await (window as any).html2pdf().set(opt).from(tempContainer).save();
             showToast(`Documento PDF (${activeCities.length} hojas) descargado exitosamente`, 'success');
           } else {
-            // Fallback: ventana de impresión aislada con todas las zonas
-            const pw = window.open('', '_blank', 'width=900,height=700');
-            if (pw) {
-              pw.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <meta charset='UTF-8'>
-  <title>Listines Envías</title>
-  <style>
-    @page { size: letter portrait; margin: 4mm; }
-    body { margin: 0; padding: 0; background: #fff; font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .listin-sheet-page { page-break-after: always; break-after: page; page-break-inside: avoid; }
-    @media print { body { margin: 0; } }
-  </style>
-</head>
-<body>
-  ${combinedHtml}
-</body>
-</html>`);
-              pw.document.close();
-              pw.focus();
-              setTimeout(() => { pw.print(); }, 400);
-            }
+            printListinDirect(true);
           }
-
-          document.body.removeChild(tempContainer);
         } catch (err) {
           console.error('Error al generar PDF de todas las zonas:', err);
           showToast('Error al exportar lote de listines. Abriendo impresión...', 'error');
-          const pw3 = window.open('', '_blank', 'width=900,height=700');
-          if (pw3) { 
-            pw3.document.write(`<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Listines Envías</title><style>@page{size:letter portrait;margin:4mm;}body{margin:0;font-family:system-ui,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact;}</style></head><body>${combinedHtml}</body></html>`); 
-            pw3.document.close(); 
-            setTimeout(() => { pw3.print(); }, 400); 
-          }
+          printListinDirect(true);
         } finally {
+          if (tempContainer && tempContainer.parentNode) {
+            tempContainer.parentNode.removeChild(tempContainer);
+          }
           btnListinDownloadAllPdf.disabled = false;
           btnListinDownloadAllPdf.innerHTML = origHtml;
         }
