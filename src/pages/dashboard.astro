@@ -2068,7 +2068,32 @@ const userInitials = currentUser.nombre
               </div>
             </div>
 
-            <!-- Selección de Zonas -->
+            <!-- Selección de Lote(s) de Despacho / Carga -->
+            <div class="space-y-1.5 pt-1">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5">
+                  <label class="block text-xs font-bold text-slate-700">Lotes de Carga / Despacho</label>
+                  <span class="text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-full">Por Lote</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button type="button" id="planner-lote-select-all-btn" onclick="window.selectAllLoteZones()" class="hidden text-[10px] font-bold text-indigo-600 hover:text-indigo-800 hover:underline transition-colors cursor-pointer" title="Cargar todas las ciudades asociadas a este lote">
+                    Seleccionar zonas del lote
+                  </button>
+                  <button type="button" id="planner-lote-clear-btn" onclick="window.clearLoteSelection()" class="hidden text-[10px] font-bold text-slate-500 hover:text-rose-600 transition-colors cursor-pointer">
+                    Restablecer lotes
+                  </button>
+                </div>
+              </div>
+              <div id="planner-lote-chips" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar rounded-xl bg-slate-50 border border-slate-200 p-2.5">
+                <!-- Chips dinámicos de Lotes -->
+              </div>
+              <div id="planner-selected-lotes-display" class="hidden flex flex-wrap items-center gap-1.5 pt-0.5">
+                <span class="text-[10px] font-bold text-purple-700 uppercase tracking-wide">Lotes:</span>
+                <span id="planner-selected-lotes-labels" class="text-[11px] font-bold text-slate-800"></span>
+              </div>
+            </div>
+
+            <!-- Selección de Zonas / Ciudades -->
             <div class="space-y-1.5 pt-1">
               <div class="flex items-center justify-between">
                 <label class="block text-xs font-bold text-slate-700">Zonas / Ciudades a Despachar</label>
@@ -2077,7 +2102,7 @@ const userInitials = currentUser.nombre
                 </button>
               </div>
               <div id="planner-zone-chips" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto custom-scrollbar rounded-xl bg-slate-50 border border-slate-200 p-2.5">
-                <!-- Chips dinámicos -->
+                <!-- Chips dinámicos de Zonas -->
               </div>
               <div id="planner-selected-zones-display" class="hidden flex flex-wrap items-center gap-1.5 pt-0.5">
                 <span class="text-[10px] font-bold text-indigo-700 uppercase tracking-wide">Zonas:</span>
@@ -2099,6 +2124,9 @@ const userInitials = currentUser.nombre
               </span>
               <span id="planner-zone-count-badge" class="bg-indigo-100 border border-indigo-200 text-indigo-800 px-2.5 py-1 rounded-lg font-bold">
                 <span id="planner-zone-zones-count">0</span> zonas
+              </span>
+              <span id="planner-lote-count-badge" class="bg-purple-100 border border-purple-200 text-purple-800 px-2.5 py-1 rounded-lg font-bold">
+                <span id="planner-zone-lotes-count">0</span> lotes
               </span>
             </div>
 
@@ -11460,6 +11488,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       // Estado del planificador
       let circuitStops: CircuitStopGroup[] = [];
       let selectedZones = new Set<string>();   // Zonas seleccionadas (multi)
+      let selectedLotes = new Set<string>();   // Lotes seleccionados (multi: 'ALL', 'CURRENT_WEEK', 'PENDING_PAST', o códigos)
       let circuitOptimized = false;
       let plannerMapInstance: any = null;
       let plannerMapVisible = false;
@@ -11472,6 +11501,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       const plannerZonePendingCount = document.getElementById('planner-zone-pending-count');
       const plannerZoneTotalCount = document.getElementById('planner-zone-total-count');
       const plannerZoneZonesCount = document.getElementById('planner-zone-zones-count');
+      const plannerZoneLotesCount = document.getElementById('planner-zone-lotes-count');
       const plannerNoGpsWarning = document.getElementById('planner-no-gps-warning');
       const plannerNoGpsWarningText = document.getElementById('planner-no-gps-warning-text');
       
@@ -11496,6 +11526,39 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       const plannerCancelBtn = document.getElementById('planner-cancel-btn');
       const plannerCloseBtn = document.getElementById('route-planner-close-btn');
       const circuitSaveDefaultCheckbox = document.getElementById('circuit-save-default-checkbox') as HTMLInputElement;
+
+      // Helper: Obtener código de lote normalizado de una guía
+      function getGuiaLoteCode(g: GuiaRow): string {
+        if (g.lote_despacho && g.lote_despacho.trim()) {
+          return g.lote_despacho.trim();
+        }
+        const info = getGuiaWeekInfo(g);
+        return (info.loteCode || 'LOTE-GENERAL').trim();
+      }
+
+      // Helper: Obtener universo de guías activas para el planificador
+      function getActivePlannerShipments(): GuiaRow[] {
+        const isPastIncluded = selectedLotes.has('PENDING_PAST');
+        return shipments.filter(g => {
+          if (isPastIncluded && g.estado === 'No entregado') return true;
+          return g.estado !== 'Entregado' && g.estado !== 'No entregado';
+        });
+      }
+
+      // Helper: Filtrar guías según la selección activa de lotes
+      function filterShipmentsBySelectedLotes(shipmentList: GuiaRow[]): GuiaRow[] {
+        if (selectedLotes.size === 0 || selectedLotes.has('ALL')) {
+          return shipmentList;
+        }
+        return shipmentList.filter(g => {
+          const info = getGuiaWeekInfo(g);
+          const code = getGuiaLoteCode(g);
+          if (selectedLotes.has('CURRENT_WEEK') && info.isCurrentWeek) return true;
+          if (selectedLotes.has('PENDING_PAST') && g.estado === 'No entregado') return true;
+          if (selectedLotes.has(code)) return true;
+          return false;
+        });
+      }
 
       // Ubicaciones de ejemplo y sedes de Venezuela
       const POPULAR_LOCATIONS = [
@@ -11544,20 +11607,204 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         if (dropdown) dropdown.classList.add('hidden');
       };
 
-      // Función: renderizar los chips de zonas disponibles
+      // Función: renderizar chips de lotes de carga
+      function renderLoteChips() {
+        const chipsContainer = document.getElementById('planner-lote-chips');
+        if (!chipsContainer) return;
+
+        const activeShipments = getActivePlannerShipments();
+        if (activeShipments.length === 0) {
+          chipsContainer.innerHTML = '<span class="text-[11px] text-slate-400 italic">No hay guías activas para agrupar por lote.</span>';
+          return;
+        }
+
+        const loteCounts: Record<string, { total: number; conGps: number; isCurrentWeek?: boolean; isPastPending?: boolean }> = {};
+        let currentWeekTotal = 0;
+        let currentWeekGps = 0;
+        let pastPendingTotal = 0;
+        let pastPendingGps = 0;
+
+        activeShipments.forEach(g => {
+          const info = getGuiaWeekInfo(g);
+          const code = getGuiaLoteCode(g);
+          const hasGps = Boolean(
+            g.gps_confirmado && g.gps_latitud != null && g.gps_longitud != null &&
+            !isNaN(Number(g.gps_latitud)) && !isNaN(Number(g.gps_longitud))
+          );
+
+          if (info.isCurrentWeek) {
+            currentWeekTotal++;
+            if (hasGps) currentWeekGps++;
+          }
+          if (g.estado === 'No entregado') {
+            pastPendingTotal++;
+            if (hasGps) pastPendingGps++;
+          }
+
+          if (!loteCounts[code]) {
+            loteCounts[code] = { total: 0, conGps: 0, isCurrentWeek: info.isCurrentWeek, isPastPending: g.estado === 'No entregado' };
+          }
+          loteCounts[code].total++;
+          if (hasGps) loteCounts[code].conGps++;
+        });
+
+        const isAllSelected = selectedLotes.size === 0 || selectedLotes.has('ALL');
+        const isCurrentWeekSelected = selectedLotes.has('CURRENT_WEEK');
+        const isPastPendingSelected = selectedLotes.has('PENDING_PAST');
+
+        let html = `
+          <!-- Todos los lotes -->
+          <button
+            type="button"
+            onclick="window.toggleLoteChip('ALL')"
+            class="lote-chip inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
+              isAllSelected
+                ? 'bg-purple-700 border-purple-800 text-white shadow-xs'
+                : 'bg-white border-slate-200 text-slate-700 hover:border-purple-400 hover:text-purple-700 hover:bg-purple-50'
+            }"
+          >
+            <span>Todos los Lotes</span>
+            <span class="text-[10px] font-black ${isAllSelected ? 'text-purple-200' : 'text-slate-400'}">${activeShipments.length}g</span>
+          </button>
+
+          <!-- Semana Actual -->
+          <button
+            type="button"
+            onclick="window.toggleLoteChip('CURRENT_WEEK')"
+            class="lote-chip inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
+              isCurrentWeekSelected
+                ? 'bg-blue-600 border-blue-700 text-white shadow-xs'
+                : 'bg-white border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-700 hover:bg-blue-50'
+            }"
+          >
+            <span>Semana Actual</span>
+            <span class="text-[10px] font-black ${isCurrentWeekSelected ? 'text-blue-200' : 'text-slate-400'}">${currentWeekTotal}g/${currentWeekGps}GPS</span>
+          </button>
+        `;
+
+        if (pastPendingTotal > 0) {
+          html += `
+            <!-- Rezagadas -->
+            <button
+              type="button"
+              onclick="window.toggleLoteChip('PENDING_PAST')"
+              class="lote-chip inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
+                isPastPendingSelected
+                  ? 'bg-amber-600 border-amber-700 text-white shadow-xs'
+                  : 'bg-white border-slate-200 text-slate-700 hover:border-amber-400 hover:text-amber-700 hover:bg-amber-50'
+              }"
+            >
+              <span>Rezagadas</span>
+              <span class="text-[10px] font-black ${isPastPendingSelected ? 'text-amber-200' : 'text-slate-400'}">${pastPendingTotal}g/${pastPendingGps}GPS</span>
+            </button>
+          `;
+        }
+
+        const sortedLotes = Object.keys(loteCounts).sort();
+        sortedLotes.forEach(loteCode => {
+          const data = loteCounts[loteCode];
+          const isSelected = selectedLotes.has(loteCode);
+
+          html += `
+            <button
+              type="button"
+              data-lote="${loteCode}"
+              onclick="window.toggleLoteChip('${loteCode.replace(/'/g, "\\'")}')"
+              class="lote-chip inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${
+                isSelected
+                  ? 'bg-purple-600 border-purple-700 text-white shadow-xs'
+                  : 'bg-white border-slate-200 text-slate-700 hover:border-purple-400 hover:text-purple-700 hover:bg-purple-50'
+              }"
+            >
+              <span class="font-mono">${loteCode}</span>
+              <span class="text-[10px] font-black ${isSelected ? 'text-purple-200' : 'text-slate-400'}">${data.total}g/${data.conGps}GPS</span>
+            </button>
+          `;
+        });
+
+        chipsContainer.innerHTML = html;
+
+        // Actualizar visibilidad de botones y label de lotes seleccionados
+        const clearBtn = document.getElementById('planner-lote-clear-btn');
+        const selectAllBtn = document.getElementById('planner-lote-select-all-btn');
+        const displayEl = document.getElementById('planner-selected-lotes-display');
+        const labelsEl = document.getElementById('planner-selected-lotes-labels');
+
+        if (!isAllSelected && selectedLotes.size > 0) {
+          if (clearBtn) clearBtn.classList.remove('hidden');
+          if (selectAllBtn) selectAllBtn.classList.remove('hidden');
+          if (displayEl) displayEl.classList.remove('hidden');
+          if (labelsEl) {
+            const labels = [...selectedLotes].map(l => {
+              if (l === 'CURRENT_WEEK') return 'Semana Actual';
+              if (l === 'PENDING_PAST') return 'Rezagadas';
+              return l;
+            });
+            labelsEl.textContent = labels.join(' + ');
+          }
+        } else {
+          if (clearBtn) clearBtn.classList.add('hidden');
+          if (selectAllBtn) selectAllBtn.classList.add('hidden');
+          if (displayEl) displayEl.classList.add('hidden');
+        }
+      }
+
+      // Función: toggle de chip de lote
+      window.toggleLoteChip = function(loteKey: string) {
+        if (loteKey === 'ALL') {
+          selectedLotes.clear();
+          selectedLotes.add('ALL');
+        } else {
+          selectedLotes.delete('ALL');
+          if (selectedLotes.has(loteKey)) {
+            selectedLotes.delete(loteKey);
+            if (selectedLotes.size === 0) {
+              selectedLotes.add('ALL');
+            }
+          } else {
+            selectedLotes.add(loteKey);
+          }
+        }
+        renderLoteChips();
+        renderZoneChips();
+        actualizarCircuitoDesdeZonas();
+      };
+
+      // Función: limpiar selección de lotes
+      window.clearLoteSelection = function() {
+        selectedLotes.clear();
+        selectedLotes.add('ALL');
+        renderLoteChips();
+        renderZoneChips();
+        actualizarCircuitoDesdeZonas();
+      };
+
+      // Función: seleccionar todas las zonas del lote activo
+      window.selectAllLoteZones = function() {
+        const activeShipments = getActivePlannerShipments();
+        const filteredByLote = filterShipmentsBySelectedLotes(activeShipments);
+        const loteZones = [...new Set(filteredByLote.map(g => (g.ciudad_destino || '').trim()).filter(Boolean))];
+        
+        selectedZones.clear();
+        loteZones.forEach(z => selectedZones.add(z));
+        renderZoneChips();
+        actualizarCircuitoDesdeZonas();
+      };
+
+      // Función: renderizar los chips de zonas disponibles (filtradas según lote seleccionado)
       function renderZoneChips() {
         const chipsContainer = document.getElementById('planner-zone-chips');
         if (!chipsContainer) return;
 
-        const activeShipments = shipments.filter(g =>
-          g.estado !== 'Entregado' && g.estado !== 'No entregado'
-        );
+        const activeShipments = getActivePlannerShipments();
+        const filteredByLote = filterShipmentsBySelectedLotes(activeShipments);
+
         const ciudadesUnicas = [...new Set(
-          activeShipments.map(g => (g.ciudad_destino || '').trim()).filter(Boolean)
+          filteredByLote.map(g => (g.ciudad_destino || '').trim()).filter(Boolean)
         )].sort();
 
         if (ciudadesUnicas.length === 0) {
-          chipsContainer.innerHTML = '<span class="text-[11px] text-slate-400 italic">No hay guías activas con ciudad asignada.</span>';
+          chipsContainer.innerHTML = '<span class="text-[11px] text-slate-400 italic">No hay guías activas para los lotes seleccionados.</span>';
           return;
         }
 
@@ -11565,7 +11812,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
         chipsContainer.innerHTML = ciudadesUnicas.map(ciudad => {
           const isSelected = selectedZones.has(ciudad);
-          const guiasZona = activeShipments.filter(g =>
+          const guiasZona = filteredByLote.filter(g =>
             (g.ciudad_destino || '').trim().toLowerCase() === ciudad.toLowerCase()
           );
           const conGps = guiasZona.filter(g =>
@@ -11656,7 +11903,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         return groups;
       }
 
-      // Función: actualizar circuito a partir de las zonas seleccionadas
+      // Función: actualizar circuito a partir de las zonas y lotes seleccionados
       function actualizarCircuitoDesdeZonas(customGuiasParam?: GuiaRow[] | null) {
         const zoneClearBtn = document.getElementById('planner-zone-clear-btn');
         const selectedDisplay = document.getElementById('planner-selected-zones-display');
@@ -11679,13 +11926,15 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           selectedLabels.textContent = [...selectedZones].join(' + ');
         }
 
-        // Filtrar guías de TODAS las zonas seleccionadas (activas) o usar customGuiasParam
-        const guiasZonas: GuiaRow[] = customGuiasParam && customGuiasParam.length > 0
-          ? customGuiasParam
-          : shipments.filter(g =>
-              selectedZones.has((g.ciudad_destino || '').trim()) &&
-              g.estado !== 'Entregado' && g.estado !== 'No entregado'
-            );
+        // Filtrar guías de TODAS las zonas seleccionadas intersectadas con lotes (o usar customGuiasParam)
+        let guiasZonas: GuiaRow[] = [];
+        if (customGuiasParam && customGuiasParam.length > 0) {
+          guiasZonas = customGuiasParam;
+        } else {
+          const active = getActivePlannerShipments();
+          const byLote = filterShipmentsBySelectedLotes(active);
+          guiasZonas = byLote.filter(g => selectedZones.has((g.ciudad_destino || '').trim()));
+        }
 
         // Auto-detección del chofer asignado a las guías de las zonas seleccionadas
         if (plannerDriverSelect) {
@@ -11729,11 +11978,16 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         );
         const guiasSinGps = guiasZonas.length - guiasConGps.length;
 
+        // Lotes únicos presentes en el circuito
+        const lotesEnCircuito = new Set(guiasZonas.map(g => getGuiaLoteCode(g)));
+
         // Actualizar contadores
         if (plannerZoneGpsCount) plannerZoneGpsCount.textContent = String(guiasConGps.length);
         if (plannerZonePendingCount) plannerZonePendingCount.textContent = String(guiasSinGps);
         if (plannerZoneTotalCount) plannerZoneTotalCount.textContent = String(guiasZonas.length);
         if (plannerZoneZonesCount) plannerZoneZonesCount.textContent = String(selectedZones.size || 1);
+        const plannerZoneLotesBadge = document.getElementById('planner-zone-lotes-count');
+        if (plannerZoneLotesBadge) plannerZoneLotesBadge.textContent = String(lotesEnCircuito.size);
         if (plannerZoneSummary) plannerZoneSummary.classList.remove('hidden');
 
         // Advertencia GPS
@@ -11759,9 +12013,11 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
         renderCircuitStops();
       }
+      (window as any).actualizarCircuitoDesdeZonas = actualizarCircuitoDesdeZonas;
+      (window as any).actualizarCircuitoDesdeLotesYZonas = actualizarCircuitoDesdeZonas;
 
-      // Función: abrir el modal del planificador con soporte para chofer, ciudad o guías pre-asignadas
-      window.openRoutePlannerModal = function(driverId?: number | string | null, zoneName?: string | null, customGuias?: GuiaRow[] | null) {
+      // Función: abrir el modal del planificador con soporte para chofer, ciudad o guías pre-asignadas o lote pre-asignado
+      window.openRoutePlannerModal = function(driverId?: number | string | null, zoneName?: string | null, customGuias?: GuiaRow[] | null, preselectedLote?: string | null) {
         if (!routePlannerModal) return;
 
         // Poblar selector de choferes con toda la flota
@@ -11792,8 +12048,19 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         updateStartSublabel();
         updateEndSublabel();
 
-        // Resetear estado
+        // Resetear estado de zonas y lotes
         selectedZones.clear();
+        selectedLotes.clear();
+        const effectiveLote = (preselectedLote && preselectedLote.trim()) 
+          ? preselectedLote.trim() 
+          : (currentLoteFilter && currentLoteFilter !== 'ALL' ? currentLoteFilter : null);
+
+        if (effectiveLote) {
+          selectedLotes.add(effectiveLote);
+        } else {
+          selectedLotes.add('ALL');
+        }
+
         circuitStops = [];
         circuitOptimized = false;
         plannerMapVisible = false;
@@ -11850,6 +12117,14 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           driverZones.forEach(z => selectedZones.add(z));
         }
 
+        // Si hay un lote efectivo y aún no hay zonas seleccionadas, auto-cargar todas las ciudades de ese lote
+        if (effectiveLote && selectedZones.size === 0 && (!customGuias || customGuias.length === 0)) {
+          const activeShipments = getActivePlannerShipments();
+          const filteredByLote = filterShipmentsBySelectedLotes(activeShipments);
+          const loteZones = [...new Set(filteredByLote.map(g => (g.ciudad_destino || '').trim()).filter(Boolean))];
+          loteZones.forEach(z => selectedZones.add(z));
+        }
+
         // Fijar chofer en el selector si fue identificado
         if (targetDriverId && plannerDriverSelect) {
           plannerDriverSelect.value = targetDriverId;
@@ -11860,7 +12135,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           }
         }
 
-        // Renderizar chips y paradas
+        // Renderizar chips de lotes, zonas y paradas
+        renderLoteChips();
         renderZoneChips();
         actualizarCircuitoDesdeZonas(customGuias);
 
@@ -12032,11 +12308,19 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                             <span class="text-indigo-600 font-extrabold">#${g.id_guia}</span>
                             <span class="text-slate-400">&bull;</span>
                             <span>${g.piezas || 1} pz${(g.piezas || 1) > 1 ? 's' : ''}</span>
+                            <span class="text-slate-300">&bull;</span>
+                            <span class="text-purple-700 font-mono text-[9px]">${getGuiaLoteCode(g)}</span>
                           </span>
                         `).join('')}
                       </div>
                     ` : `
-                      <p class="text-[10px] text-slate-500 font-medium truncate">${stop.ciudad_destino || ''} &bull; Guía #${stop.guias[0]?.id_guia || ''}</p>
+                      <p class="text-[10px] text-slate-500 font-medium truncate flex items-center gap-1.5 flex-wrap mt-0.5">
+                        <span>${stop.ciudad_destino || ''}</span>
+                        <span>&bull;</span>
+                        <span class="font-bold text-slate-700">Guía #${stop.guias[0]?.id_guia || ''}</span>
+                        <span>&bull;</span>
+                        <span class="inline-flex items-center px-1.5 py-0.2 rounded bg-purple-50 border border-purple-200 text-purple-700 font-mono font-bold text-[9px]">${getGuiaLoteCode(stop.guias[0])}</span>
+                      </p>
                     `}
                   </div>
 
