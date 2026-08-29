@@ -12632,30 +12632,87 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         actualizarCircuitoDesdeZonas();
       };
 
+      // Helper para obtener coordenadas de ciudad en Venezuela (fallback cuando no hay GPS cliente)
+      function getCityFallbackCoordinates(cityName: string): { lat: number; lon: number } {
+        const clean = (cityName || '').trim().toLowerCase();
+        
+        const cityMap: Record<string, { lat: number; lon: number }> = {
+          'barquisimeto': { lat: 10.0808, lon: -69.3756 },
+          'cabudare': { lat: 10.0333, lon: -69.2667 },
+          'carora': { lat: 10.1755, lon: -70.0827 },
+          'quibor': { lat: 9.9286, lon: -69.6201 },
+          'el tocuyo': { lat: 9.7872, lon: -69.7928 },
+          'sanare': { lat: 9.7486, lon: -69.6583 },
+          'duaca': { lat: 10.2933, lon: -69.1625 },
+          'sarare': { lat: 9.7867, lon: -69.1656 },
+          'acarigua': { lat: 9.5545, lon: -69.2006 },
+          'araure': { lat: 9.5606, lon: -69.2144 },
+          'guanare': { lat: 9.0439, lon: -69.7421 },
+          'barinas': { lat: 8.6226, lon: -70.2075 },
+          'valencia': { lat: 10.1620, lon: -68.0077 },
+          'maracay': { lat: 10.2469, lon: -67.5958 },
+          'caracas': { lat: 10.4934, lon: -66.9299 },
+          'maracaibo': { lat: 10.6544, lon: -71.6385 },
+          'san cristobal': { lat: 7.7669, lon: -72.2250 },
+          'merida': { lat: 8.5738, lon: -71.1851 },
+          'valera': { lat: 9.3178, lon: -70.6036 },
+          'trujillo': { lat: 9.3667, lon: -70.4333 },
+          'san carlos': { lat: 9.6611, lon: -68.5833 },
+          'san felipe': { lat: 10.3397, lon: -68.7425 },
+          'chabasquen': { lat: 9.4286, lon: -69.9483 },
+          'bocono': { lat: 9.2458, lon: -70.2583 },
+          'bejuma': { lat: 10.1742, lon: -68.2589 },
+          'guacara': { lat: 10.2281, lon: -67.8767 },
+          'puerto cabello': { lat: 10.4731, lon: -68.0125 },
+          'barcelona': { lat: 10.1362, lon: -64.6862 },
+          'puerto la cruz': { lat: 10.2167, lon: -64.6333 },
+          'anaco': { lat: 9.4389, lon: -64.4611 },
+          'el tigre': { lat: 8.8878, lon: -64.2456 },
+          'maturin': { lat: 9.7456, lon: -63.1833 },
+          'ciudad bolivar': { lat: 8.1292, lon: -63.5408 },
+          'puerto ordaz': { lat: 8.2947, lon: -62.7483 },
+          'cabimas': { lat: 10.3833, lon: -71.4500 },
+          'ciudad ojeda': { lat: 10.2000, lon: -71.3167 }
+        };
+
+        for (const [key, coords] of Object.entries(cityMap)) {
+          if (clean.includes(key) || key.includes(clean)) return coords;
+        }
+
+        return { lat: 10.0808, lon: -69.3756 }; // Hub Barquisimeto
+      }
+
       // Función: agrupar guías con mismo cliente y misma ubicación satelital en 1 sola parada
       function groupGuiasIntoCircuitStops(guias: GuiaRow[]): CircuitStopGroup[] {
         const groups: CircuitStopGroup[] = [];
 
         guias.forEach(guia => {
-          const lat = Number(guia.gps_latitud);
-          const lon = Number(guia.gps_longitud);
-          const normClient = normalizeText(guia.destinatario || '');
-          const cleanPhone = (guia.telefono_destinatario || '').replace(/\D/g, '');
+          let lat = (guia.gps_latitud != null && !isNaN(Number(guia.gps_latitud))) ? Number(guia.gps_latitud) : null;
+          let lon = (guia.gps_longitud != null && !isNaN(Number(guia.gps_longitud))) ? Number(guia.gps_longitud) : null;
 
-          // Unir si es el mismo cliente (por nombre normalizado o teléfono idéntico) Y misma ubicación (< 60m)
+          if (lat == null || lon == null) {
+            const fallback = getCityFallbackCoordinates(guia.ciudad_destino || '');
+            lat = fallback.lat;
+            lon = fallback.lon;
+          }
+
+          const normClient = normalizeText(guia.destinatario || '');
+          const cleanPhone = (guia.telefono_principal || guia.telefono_secundario || (guia as any).telefono_destinatario || '').replace(/\D/g, '');
+
+          // Unir si es el mismo cliente (por nombre normalizado o teléfono idéntico) Y misma ubicación o ciudad
           const existing = groups.find(grp => {
             const sameClientName = normClient && normalizeText(grp.destinatario) === normClient;
             const samePhone = cleanPhone.length >= 7 && (grp.telefono_destinatario || '').replace(/\D/g, '') === cleanPhone;
             const clientMatches = Boolean(sameClientName || samePhone);
 
-            const distKm = calculateDistance(grp.lat, grp.lon, lat, lon);
-            const sameLocation = distKm < 0.06; // Menos de 60 metros
+            const distKm = calculateDistance(grp.lat, grp.lon, lat!, lon!);
+            const sameLocation = distKm < 0.1 || (grp.ciudad_destino.trim().toLowerCase() === (guia.ciudad_destino || '').trim().toLowerCase());
 
             return clientMatches && sameLocation;
           });
 
           const piezasNum = Number(guia.piezas) || 1;
-          const volNum = Number((guia as any).volumen_pies_cubicos || guia.volumen_total || 0);
+          const volNum = Number(guia.pies_cubicos || (guia as any).volumen_pies_cubicos || 0);
 
           if (existing) {
             existing.guias.push(guia);
@@ -12669,10 +12726,10 @@ _Envías C.A. • Transporte y Logística Nacional_`;
               id: `stop-${guia.id_guia}`,
               destinatario: guia.destinatario || 'Cliente',
               ciudad_destino: guia.ciudad_destino || '',
-              telefono_destinatario: guia.telefono_destinatario,
-              direccion_destino: guia.direccion_destino,
-              lat,
-              lon,
+              telefono_destinatario: guia.telefono_principal || guia.telefono_secundario || (guia as any).telefono_destinatario,
+              direccion_destino: guia.direccion_referencia || (guia as any).direccion_destino,
+              lat: lat!,
+              lon: lon!,
               guias: [guia],
               totalPiezas: piezasNum,
               totalVolumen: volNum,
@@ -12771,17 +12828,17 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         if (plannerZoneLotesBadge) plannerZoneLotesBadge.textContent = String(lotesEnCircuito.size);
         if (plannerZoneSummary) plannerZoneSummary.classList.remove('hidden');
 
-        // Advertencia GPS
+        // Advertencia informativa GPS
         if (guiasSinGps > 0 && plannerNoGpsWarning && plannerNoGpsWarningText) {
           const zonasList = [...selectedZones].join(', ') || 'Zona seleccionada';
-          plannerNoGpsWarningText.textContent = `${guiasSinGps} guía${guiasSinGps > 1 ? 's' : ''} en (${zonasList}) no tienen GPS confirmado. Solo las ${guiasConGps.length} guías con GPS se incluirán.`;
+          plannerNoGpsWarningText.textContent = `${guiasSinGps} guía${guiasSinGps > 1 ? 's' : ''} en (${zonasList}) no tienen GPS confirmado por cliente. Se asignarán al chofer usando la ubicación de referencia de su ciudad.`;
           plannerNoGpsWarning.classList.remove('hidden');
         } else if (plannerNoGpsWarning) {
           plannerNoGpsWarning.classList.add('hidden');
         }
 
-        // Agrupar guías con mismo cliente y ubicación en paradas únicas
-        circuitStops = groupGuiasIntoCircuitStops(guiasConGps);
+        // Agrupar TODAS las guías de las zonas seleccionadas en paradas de circuito (usando fallback de ciudad si no tienen GPS)
+        circuitStops = groupGuiasIntoCircuitStops(guiasZonas);
         circuitOptimized = false;
         
         // Auto-optimizar TSP si hay paradas
