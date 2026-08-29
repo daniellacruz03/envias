@@ -2086,15 +2086,22 @@ const userInitials = currentUser.nombre
                 </select>
               </div>
 
-              <!-- Tiempo por Entrega -->
+              <!-- Organizar Ruta por Lote / Despacho -->
               <div class="space-y-1">
-                <label class="block text-xs font-bold text-slate-700">Tiempo por Entrega</label>
-                <select id="planner-service-time" class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 focus:bg-white focus:outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 transition-all cursor-pointer">
-                  <option value="5">5 min por parada (rápida)</option>
-                  <option value="8" selected>8 min (estándar)</option>
-                  <option value="12">12 min (múltiples piezas)</option>
-                  <option value="20">20 min (compleja)</option>
+                <div class="flex items-center justify-between">
+                  <label class="block text-xs font-bold text-slate-700">Organizar por Lote</label>
+                  <span id="planner-lote-active-badge" class="text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-full">
+                    Por Lote
+                  </span>
+                </div>
+                <select
+                  id="planner-lote-select"
+                  onchange="window.onPlannerLoteSelectChange(this.value)"
+                  class="w-full text-xs font-bold bg-purple-50/50 border border-purple-200 rounded-xl px-3.5 py-2.5 text-purple-950 focus:bg-white focus:outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-600/20 transition-all cursor-pointer shadow-2xs"
+                >
+                  <!-- Dinámico por JS -->
                 </select>
+                <input type="hidden" id="planner-service-time" value="8" />
               </div>
             </div>
 
@@ -12423,6 +12430,15 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
         chipsContainer.innerHTML = html;
 
+        // Sincronizar selector desplegable de lote
+        const plannerLoteSelect = document.getElementById('planner-lote-select') as HTMLSelectElement;
+        if (plannerLoteSelect) {
+          const currentSingle = selectedLotes.size === 1 ? [...selectedLotes][0] : (selectedLotes.size === 0 || selectedLotes.has('ALL') ? 'ALL' : '');
+          if (currentSingle && Array.from(plannerLoteSelect.options).some(o => o.value === currentSingle)) {
+            plannerLoteSelect.value = currentSingle;
+          }
+        }
+
         // Actualizar visibilidad de botones y label de lotes seleccionados
         const clearBtn = document.getElementById('planner-lote-clear-btn');
         const selectAllBtn = document.getElementById('planner-lote-select-all-btn');
@@ -12447,6 +12463,72 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           if (displayEl) displayEl.classList.add('hidden');
         }
       }
+
+      // Función: Poblar opciones del selector desplegable de lote del planificador
+      function populatePlannerLoteSelect(selectedVal?: string | null) {
+        const select = document.getElementById('planner-lote-select') as HTMLSelectElement;
+        if (!select) return;
+
+        const activeShipments = getActivePlannerShipments();
+        const loteCounts: Record<string, number> = {};
+        let currentWeekTotal = 0;
+        let pastPendingTotal = 0;
+
+        activeShipments.forEach(g => {
+          const info = getGuiaWeekInfo(g);
+          const code = getGuiaLoteCode(g);
+          if (g.estado === 'No entregado') {
+            pastPendingTotal++;
+          } else if (info.isCurrentWeek) {
+            currentWeekTotal++;
+          }
+          loteCounts[code] = (loteCounts[code] || 0) + 1;
+        });
+
+        let opts = `
+          <option value="ALL">Todos los Lotes (${activeShipments.length} guías)</option>
+          <option value="CURRENT_WEEK">Carga Semana Actual (${currentWeekTotal} guías)</option>
+        `;
+        if (pastPendingTotal > 0) {
+          opts += `<option value="PENDING_PAST">Rezagadas / No Entregadas (${pastPendingTotal} guías)</option>`;
+        }
+
+        const sortedLotes = Object.keys(loteCounts).sort();
+        if (sortedLotes.length > 0) {
+          opts += `<optgroup label="Lotes de Despacho Específicos">`;
+          sortedLotes.forEach(lote => {
+            opts += `<option value="${lote}">${lote} (${loteCounts[lote]} guías)</option>`;
+          });
+          opts += `</optgroup>`;
+        }
+
+        select.innerHTML = opts;
+        const targetVal = selectedVal || 'ALL';
+        if (Array.from(select.options).some(o => o.value === targetVal)) {
+          select.value = targetVal;
+        } else {
+          select.value = 'ALL';
+        }
+      }
+
+      // Función: Evento de cambio en el selector desplegable de lote del planificador
+      window.onPlannerLoteSelectChange = function(loteKey: string) {
+        selectedLotes.clear();
+        selectedLotes.add(loteKey || 'ALL');
+
+        // Si se selecciona un lote específico, semana actual o rezagadas, pre-seleccionar automáticamente sus ciudades
+        if (loteKey && loteKey !== 'ALL') {
+          const activeShipments = getActivePlannerShipments();
+          const filteredByLote = filterShipmentsBySelectedLotes(activeShipments);
+          const loteZones = [...new Set(filteredByLote.map(g => (g.ciudad_destino || '').trim()).filter(Boolean))];
+          selectedZones.clear();
+          loteZones.forEach(z => selectedZones.add(z));
+        }
+
+        renderLoteChips();
+        renderZoneChips();
+        actualizarCircuitoDesdeZonas();
+      };
 
       // Función: toggle de chip de lote
       window.toggleLoteChip = function(loteKey: string) {
@@ -12834,7 +12916,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           }
         }
 
-        // Renderizar chips de lotes, zonas y paradas
+        // Poblar selector de lote del planificador y renderizar chips y zonas
+        populatePlannerLoteSelect(effectiveLote || 'ALL');
         renderLoteChips();
         renderZoneChips();
         actualizarCircuitoDesdeZonas(customGuias);
