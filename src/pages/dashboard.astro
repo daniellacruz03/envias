@@ -1128,6 +1128,19 @@ const userInitials = currentUser.nombre
 
               <button
                 type="button"
+                id="btn-listin-order-routes"
+                onclick="window.orderListinByTSP()"
+                class="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                title="Ordenar guías automáticamente según la ruta satelital de entrega (TSP)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>Ordenar por Ruta (TSP)</span>
+              </button>
+
+              <button
+                type="button"
                 id="btn-listin-print"
                 onclick="window.printListinDirect(false)"
                 class="px-3.5 py-2 rounded-xl bg-slate-700 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
@@ -1143,7 +1156,7 @@ const userInitials = currentUser.nombre
                 type="button"
                 id="btn-listin-download-pdf"
                 class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
-                title="Descargar hoja PDF de la zona seleccionada"
+                title="Descargar hoja PDF de la zona o ruta seleccionada"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -1155,12 +1168,12 @@ const userInitials = currentUser.nombre
                 type="button"
                 id="btn-listin-download-all-pdf"
                 class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-black active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
-                title="Descargar un archivo PDF multipágina con 1 hoja oficial por cada zona"
+                title="Descargar un archivo PDF multipágina con 1 hoja oficial por cada ruta/zona"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
                 </svg>
-                <span>PDF Todas las Zonas</span>
+                <span>PDF Todas las Rutas</span>
               </button>
 
               <button
@@ -1177,19 +1190,40 @@ const userInitials = currentUser.nombre
             </div>
           </div>
 
-          <!-- Selector y Píldoras Multi-Zona (Combinar Zonas en un Solo Listín) -->
+          <!-- Selector y Píldoras Rápidas (Organizar por Rutas de Chofer o por Zonas) -->
           <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs space-y-2.5">
             <div class="flex items-center justify-between gap-3 flex-wrap">
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
-                  <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                  <span>Combinar Zonas en Listín:</span>
-                </span>
+              <div class="flex items-center gap-3 flex-wrap">
+                <!-- Toggle de tipo de filtro: Rutas vs Zonas -->
+                <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-xs">
+                  <button
+                    type="button"
+                    id="btn-listin-filter-routes"
+                    onclick="window.setListinFilterType('routes')"
+                    class="px-3 py-1.5 rounded-lg font-bold transition-all bg-indigo-600 text-white shadow-xs cursor-pointer flex items-center gap-1.5"
+                    title="Ver y seleccionar por rutas de chofer"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                    <span>Por Rutas de Chofer</span>
+                  </button>
+                  <button
+                    type="button"
+                    id="btn-listin-filter-zones"
+                    onclick="window.setListinFilterType('zones')"
+                    class="px-3 py-1.5 rounded-lg font-bold text-slate-600 hover:text-slate-900 transition-all cursor-pointer flex items-center gap-1.5"
+                    title="Ver y seleccionar por ciudades / zonas individuales"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    <span>Por Zonas / Ciudades</span>
+                  </button>
+                </div>
+
                 <select
                   id="listin-zone-select"
-                  class="text-xs font-bold bg-slate-100 border border-slate-300 rounded-lg px-2.5 py-1 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                  aria-label="Seleccionar filtro de listín"
+                  class="text-xs font-bold bg-slate-100 border border-slate-300 rounded-lg px-2.5 py-1.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
                 >
-                  <option value="ALL">Todas las Zonas (Lote Consolidado)</option>
+                  <option value="ALL">Todas las Rutas / Zonas (Consolidado)</option>
                 </select>
               </div>
 
@@ -1198,7 +1232,7 @@ const userInitials = currentUser.nombre
                   type="button"
                   onclick="window.toggleListinZone('ALL')"
                   class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold transition-all cursor-pointer"
-                  title="Incluir todas las zonas"
+                  title="Incluir todas las rutas / zonas"
                 >
                   Todas
                 </button>
@@ -1213,9 +1247,9 @@ const userInitials = currentUser.nombre
               </div>
             </div>
 
-            <!-- Píldoras Multi-Seleccionables de Zonas -->
+            <!-- Píldoras Multi-Seleccionables de Rutas o Zonas -->
             <div class="space-y-1">
-              <p class="text-[10px] text-slate-400 font-medium">Haz clic en una o varias zonas para combinarlas en el mismo listín de despacho:</p>
+              <p id="listin-pills-label" class="text-[10px] text-slate-500 font-medium">Haz clic en una ruta para cargarla con su chofer y paradas en orden:</p>
               <div id="listin-zone-pills" class="flex flex-wrap items-center gap-1.5 pt-0.5">
                 <!-- JS Render -->
               </div>
@@ -1225,7 +1259,7 @@ const userInitials = currentUser.nombre
           <!-- Contenedor Principal: 2 Columnas (Jerarquía a la Izquierda, Vista Previa a la Derecha) -->
           <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
             
-            <!-- Columna Izquierda (xl:col-span-5): Organizador Jerárquico de Ciudades y Guías -->
+            <!-- Columna Izquierda (xl:col-span-5): Organizador Jerárquico de Rutas, Ciudades y Guías -->
             <div class="xl:col-span-5 space-y-4">
               <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm space-y-3">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-2.5 gap-2 flex-wrap">
@@ -1233,15 +1267,23 @@ const userInitials = currentUser.nombre
                     <span class="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs">
                       1
                     </span>
-                    <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider" id="listin-panel-title">Organizar Listín</h3>
+                    <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider" id="listin-panel-title">Organizar Listín por Rutas</h3>
                   </div>
 
-                  <!-- Selector de Modo de Ordenación -->
+                  <!-- Selector de Modo de Ordenación (Por Rutas, Por Zonas, Lista 1..N) -->
                   <div class="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 text-[11px]">
                     <button
                       type="button"
-                      id="btn-listin-mode-zones"
+                      id="btn-listin-mode-routes"
                       class="px-2.5 py-1 rounded-lg font-bold transition-all bg-white text-slate-900 shadow-xs cursor-pointer"
+                      title="Organizar por rutas de chofer y circuitos secuenciales"
+                    >
+                      Por Rutas
+                    </button>
+                    <button
+                      type="button"
+                      id="btn-listin-mode-zones"
+                      class="px-2.5 py-1 rounded-lg font-bold text-slate-500 hover:text-slate-900 transition-all cursor-pointer"
                       title="Organizar por grupos de zonas/ciudades y ordenar guías internas"
                     >
                       Por Zonas
@@ -3765,8 +3807,12 @@ const userInitials = currentUser.nombre
       const btnListinNextZone = document.getElementById('btn-listin-next-zone') as HTMLButtonElement;
       const listinHierarchyList = document.getElementById('listin-hierarchy-list') as HTMLElement;
       const listinCitiesCount = document.getElementById('listin-cities-count') as HTMLElement;
+      const btnListinModeRoutes = document.getElementById('btn-listin-mode-routes') as HTMLButtonElement;
       const btnListinModeZones = document.getElementById('btn-listin-mode-zones') as HTMLButtonElement;
       const btnListinModeFlat = document.getElementById('btn-listin-mode-flat') as HTMLButtonElement;
+      const btnListinFilterRoutes = document.getElementById('btn-listin-filter-routes') as HTMLButtonElement;
+      const btnListinFilterZones = document.getElementById('btn-listin-filter-zones') as HTMLButtonElement;
+      const listinPillsLabel = document.getElementById('listin-pills-label') as HTMLElement;
       const listinSearchInput = document.getElementById('listin-search-input') as HTMLInputElement;
       const btnListinToggleAllCollapse = document.getElementById('btn-listin-toggle-all-collapse') as HTMLButtonElement;
       const listinPanelTitle = document.getElementById('listin-panel-title') as HTMLElement;
@@ -10066,6 +10112,13 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       // =========================================================
       // MÓDULO 6: CREAR LISTÍN DE CARGA / DESPACHO & EXPORTACIÓN PDF
       // =========================================================
+      let listinFilterType: 'routes' | 'zones' = 'routes';
+      let listinActiveRoute: string = 'ALL';
+      let listinRoutesOrder: string[] = [];
+      let listinRouteGuiasOrder: Record<string, string[]> = {};
+      let listinExcludedRoutes: Set<string> = new Set();
+      let listinCollapsedRoutes: Set<string> = new Set();
+
       let listinSelectedZones: Set<string> = new Set();
       let listinActiveZone: string = 'ALL';
       let listinCitiesOrder: string[] = [];
@@ -10074,17 +10127,29 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       let listinExcludedGuiaIds: Set<string> = new Set();
       let listinExcludedCities: Set<string> = new Set();
       let listinCollapsedCities: Set<string> = new Set();
-      let listinViewSubMode: 'zones' | 'flat' = 'zones';
+      let listinViewSubMode: 'routes' | 'zones' | 'flat' = 'routes';
       let listinSearchQuery: string = '';
 
       // Drag and drop tracking
       let draggedGuiaId: string | null = null;
       let draggedCityName: string | null = null;
+      let draggedRouteKey: string | null = null;
       let draggedZoneName: string | null = null;
 
       // Pre-cargar fecha actual en el input de fecha
       if (listinFechaInput && !listinFechaInput.value) {
         listinFechaInput.value = new Date().toISOString().split('T')[0];
+      }
+
+      interface ListinRouteGroup {
+        key: string;
+        driverId: number | null;
+        driverName: string;
+        driverPlaca: string;
+        cities: string[];
+        guias: GuiaRow[];
+        totalPiezas: number;
+        totalVolumen: number;
       }
 
       function populateListinDriverSelect() {
@@ -10130,6 +10195,76 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         });
       }
 
+      function getListinRoutes(srcShipments: GuiaRow[]): ListinRouteGroup[] {
+        const routeGroupsMap = new Map<string, ListinRouteGroup>();
+
+        srcShipments.forEach(g => {
+          const dId = g.chofer_asignado_id != null ? Number(g.chofer_asignado_id) : null;
+          const driverObj = dId != null ? drivers.find(d => d.id === dId) : null;
+          const key = dId != null ? `driver-${dId}` : 'unassigned';
+          const driverName = driverObj ? driverObj.nombre : (dId != null ? `Chofer #${dId}` : 'Sin Asignar / Almacén');
+          const driverPlaca = (driverObj as any)?.placa || 'NO ASIGNADA';
+
+          if (!routeGroupsMap.has(key)) {
+            routeGroupsMap.set(key, {
+              key,
+              driverId: dId,
+              driverName,
+              driverPlaca,
+              cities: [],
+              guias: [],
+              totalPiezas: 0,
+              totalVolumen: 0
+            });
+          }
+
+          const group = routeGroupsMap.get(key)!;
+          group.guias.push(g);
+          group.totalPiezas += (g.piezas || 1);
+          group.totalVolumen += (Number(g.pies_cubicos) || 0);
+          const city = (g.ciudad_destino || 'Sin Ciudad').trim();
+          if (city && !group.cities.includes(city)) {
+            group.cities.push(city);
+          }
+        });
+
+        const groups = Array.from(routeGroupsMap.values());
+
+        // Ordenar rutas: choferes asignados primero, sin asignar al final
+        groups.sort((a, b) => {
+          if (a.driverId !== null && b.driverId === null) return -1;
+          if (a.driverId === null && b.driverId !== null) return 1;
+          return a.driverName.localeCompare(b.driverName);
+        });
+
+        // Asegurar que las guías de cada ruta respeten el orden secuencial
+        groups.forEach(group => {
+          const existingOrder = listinRouteGuiasOrder[group.key] || [];
+          if (existingOrder.length > 0) {
+            const mapG = new Map(group.guias.map(g => [g.id_guia, g]));
+            const sorted: GuiaRow[] = [];
+            existingOrder.forEach(id => {
+              const g = mapG.get(id);
+              if (g) sorted.push(g);
+            });
+            group.guias.forEach(g => {
+              if (!existingOrder.includes(g.id_guia)) sorted.push(g);
+            });
+            group.guias = sorted;
+          } else {
+            group.guias.sort((a, b) => {
+              const ordA = (a.orden_ruta && a.orden_ruta > 0) ? a.orden_ruta : 9999;
+              const ordB = (b.orden_ruta && b.orden_ruta > 0) ? b.orden_ruta : 9999;
+              if (ordA !== ordB) return ordA - ordB;
+              return a.id_guia.localeCompare(b.id_guia, undefined, { numeric: true });
+            });
+          }
+          listinRouteGuiasOrder[group.key] = group.guias.map(g => g.id_guia);
+        });
+
+        return groups;
+      }
+
       function syncListinCitiesOrder(availableCities: string[]) {
         const kept = listinCitiesOrder.filter(c => availableCities.includes(c));
         availableCities.forEach(c => {
@@ -10139,6 +10274,20 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       }
 
       function syncListinState(srcShipments: GuiaRow[]) {
+        // 1. Sincronizar Rutas
+        const routes = getListinRoutes(srcShipments);
+        const availableRouteKeys = routes.map(r => r.key);
+        const keptRoutes = listinRoutesOrder.filter(k => availableRouteKeys.includes(k));
+        availableRouteKeys.forEach(k => {
+          if (!keptRoutes.includes(k)) keptRoutes.push(k);
+        });
+        listinRoutesOrder = keptRoutes;
+
+        if (listinActiveRoute !== 'ALL' && !availableRouteKeys.includes(listinActiveRoute)) {
+          listinActiveRoute = 'ALL';
+        }
+
+        // 2. Sincronizar Ciudades
         const uniqueCities = Array.from(new Set(srcShipments.map(g => (g.ciudad_destino || 'Sin Ciudad').trim()))).filter(Boolean);
         if (listinCitiesOrder.length === 0 || !listinCitiesOrder.some(c => uniqueCities.includes(c))) {
           uniqueCities.sort((a, b) => a.localeCompare(b));
@@ -10165,10 +10314,17 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         const allSrcIds = srcShipments.map(g => g.id_guia);
         if (listinFlatGuiasOrder.length === 0) {
           const flat: string[] = [];
-          listinCitiesOrder.forEach(cityName => {
-            const gIds = listinCityGuiasOrder[cityName] || [];
-            flat.push(...gIds);
-          });
+          if (listinViewSubMode === 'routes') {
+            listinRoutesOrder.forEach(rKey => {
+              const rGuias = listinRouteGuiasOrder[rKey] || [];
+              flat.push(...rGuias);
+            });
+          } else {
+            listinCitiesOrder.forEach(cityName => {
+              const gIds = listinCityGuiasOrder[cityName] || [];
+              flat.push(...gIds);
+            });
+          }
           listinFlatGuiasOrder = flat;
         } else {
           const kept = listinFlatGuiasOrder.filter(id => allSrcIds.includes(id));
@@ -10179,12 +10335,19 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
       }
 
-      function syncFlatFromZones() {
+      function syncFlatFromRoutesOrZones() {
         const flat: string[] = [];
-        listinCitiesOrder.forEach(cityName => {
-          const gIds = listinCityGuiasOrder[cityName] || [];
-          flat.push(...gIds);
-        });
+        if (listinViewSubMode === 'routes') {
+          listinRoutesOrder.forEach(rKey => {
+            const gIds = listinRouteGuiasOrder[rKey] || [];
+            flat.push(...gIds);
+          });
+        } else {
+          listinCitiesOrder.forEach(cityName => {
+            const gIds = listinCityGuiasOrder[cityName] || [];
+            flat.push(...gIds);
+          });
+        }
         listinFlatGuiasOrder = flat;
       }
 
@@ -10192,6 +10355,18 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         const mapById = new Map(srcShipments.map(g => [g.id_guia, g]));
         const ordered: GuiaRow[] = [];
 
+        // Si se seleccionó una ruta específica
+        if (listinActiveRoute !== 'ALL') {
+          const rGuias = listinRouteGuiasOrder[listinActiveRoute] || [];
+          rGuias.forEach(id => {
+            if (listinExcludedGuiaIds.has(id)) return;
+            const g = mapById.get(id);
+            if (g) ordered.push(g);
+          });
+          return ordered;
+        }
+
+        // Si se especificó una zona concreta
         if (specificZone !== undefined) {
           if (specificZone !== 'ALL') {
             const guiaIds = listinCityGuiasOrder[specificZone] || [];
@@ -10229,7 +10404,17 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           return ordered;
         }
 
-        if (listinViewSubMode === 'flat') {
+        if (listinViewSubMode === 'routes') {
+          listinRoutesOrder.forEach(rKey => {
+            if (listinExcludedRoutes.has(rKey)) return;
+            const guiaIds = listinRouteGuiasOrder[rKey] || [];
+            guiaIds.forEach(id => {
+              if (listinExcludedGuiaIds.has(id)) return;
+              const g = mapById.get(id);
+              if (g) ordered.push(g);
+            });
+          });
+        } else if (listinViewSubMode === 'flat') {
           listinFlatGuiasOrder.forEach(id => {
             if (listinExcludedGuiaIds.has(id)) return;
             const g = mapById.get(id);
@@ -10258,47 +10443,111 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       function renderListinZoneControls(srcShipments: GuiaRow[]) {
         if (!listinZoneSelect || !listinZonePills) return;
 
-        // Actualizar Select de Zonas
-        let selectHtml = `<option value="ALL" ${listinSelectedZones.size === 0 ? 'selected' : ''}>Todas las Zonas (Lote Consolidado - ${srcShipments.length} guías)</option>`;
-        listinCitiesOrder.forEach(cityName => {
-          const count = srcShipments.filter(g => (g.ciudad_destino || 'Sin Ciudad').trim() === cityName).length;
-          const isSelected = listinSelectedZones.size === 1 && listinSelectedZones.has(cityName) ? 'selected' : '';
-          selectHtml += `<option value="${cityName}" ${isSelected}>${cityName} (${count} guías)</option>`;
-        });
-        if (listinSelectedZones.size > 1) {
-          selectHtml += `<option value="COMBINED" selected>${listinSelectedZones.size} Zonas Combinadas</option>`;
+        // Actualizar estilos de los botones de toggle Rutas vs Zonas
+        if (btnListinFilterRoutes && btnListinFilterZones) {
+          if (listinFilterType === 'routes') {
+            btnListinFilterRoutes.className = 'px-3 py-1.5 rounded-lg font-bold transition-all bg-indigo-600 text-white shadow-xs cursor-pointer flex items-center gap-1.5';
+            btnListinFilterZones.className = 'px-3 py-1.5 rounded-lg font-bold text-slate-600 hover:text-slate-900 transition-all cursor-pointer flex items-center gap-1.5';
+            if (listinPillsLabel) listinPillsLabel.textContent = 'Haz clic en una ruta para cargarla con su chofer y paradas en orden:';
+          } else {
+            btnListinFilterZones.className = 'px-3 py-1.5 rounded-lg font-bold transition-all bg-indigo-600 text-white shadow-xs cursor-pointer flex items-center gap-1.5';
+            btnListinFilterRoutes.className = 'px-3 py-1.5 rounded-lg font-bold text-slate-600 hover:text-slate-900 transition-all cursor-pointer flex items-center gap-1.5';
+            if (listinPillsLabel) listinPillsLabel.textContent = 'Haz clic en una o varias zonas para combinarlas en el mismo listín de despacho:';
+          }
         }
-        listinZoneSelect.innerHTML = selectHtml;
 
-        // Actualizar Píldoras de Zonas Rápidas Multi-Selección
-        let pillsHtml = `
-          <button
-            type="button"
-            onclick="window.toggleListinZone('ALL')"
-            class="px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${listinSelectedZones.size === 0 ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}"
-          >
-            <span>Todas las Zonas</span>
-            <span class="text-[10px] px-1.5 py-0.2 rounded-full ${listinSelectedZones.size === 0 ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'} font-mono">${srcShipments.length}</span>
-          </button>
-        `;
+        // ==========================================
+        // TIPO 1: PÍLDORAS Y SELECTOR POR RUTAS
+        // ==========================================
+        if (listinFilterType === 'routes') {
+          const routes = getListinRoutes(srcShipments);
 
-        listinCitiesOrder.forEach(cityName => {
-          const count = srcShipments.filter(g => (g.ciudad_destino || 'Sin Ciudad').trim() === cityName).length;
-          const isSelected = listinSelectedZones.has(cityName);
-          pillsHtml += `
+          // Select de Rutas
+          let selectHtml = `<option value="ALL" ${listinActiveRoute === 'ALL' ? 'selected' : ''}>Todas las Rutas (Consolidado - ${srcShipments.length} guías)</option>`;
+          routes.forEach(r => {
+            const isSelected = listinActiveRoute === r.key ? 'selected' : '';
+            const citiesStr = r.cities.slice(0, 3).join(' • ') + (r.cities.length > 3 ? ` +${r.cities.length - 3}` : '');
+            selectHtml += `<option value="${r.key}" ${isSelected}>Ruta: ${r.driverName} (${citiesStr} - ${r.guias.length}g)</option>`;
+          });
+          listinZoneSelect.innerHTML = selectHtml;
+
+          // Píldoras de Rutas
+          let pillsHtml = `
             <button
               type="button"
-              onclick="window.toggleListinZone('${cityName.replace(/'/g, "\\'")}')"
-              class="px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${isSelected ? 'bg-indigo-600 text-white shadow-xs ring-2 ring-indigo-300' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}"
+              onclick="window.selectListinRoute('ALL')"
+              class="px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${listinActiveRoute === 'ALL' ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}"
             >
-              ${isSelected ? '<svg class="w-3 h-3 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>' : ''}
-              <span>${cityName}</span>
-              <span class="text-[10px] px-1.5 py-0.2 rounded-full ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'} font-mono">${count}</span>
+              <span>Todas las Rutas</span>
+              <span class="text-[10px] px-1.5 py-0.2 rounded-full ${listinActiveRoute === 'ALL' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'} font-mono">${srcShipments.length}</span>
             </button>
           `;
-        });
 
-        listinZonePills.innerHTML = pillsHtml;
+          routes.forEach(r => {
+            const isSelected = listinActiveRoute === r.key;
+            const citiesSummary = r.cities.slice(0, 2).join(' • ') + (r.cities.length > 2 ? ` +${r.cities.length - 2}` : '');
+            pillsHtml += `
+              <button
+                type="button"
+                onclick="window.selectListinRoute('${r.key}')"
+                class="px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${isSelected ? 'bg-indigo-600 text-white shadow-xs ring-2 ring-indigo-300' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}"
+              >
+                ${isSelected ? '<svg class="w-3 h-3 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>' : '<svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>'}
+                <span>${r.driverName}</span>
+                <span class="text-[10px] text-slate-400 ${isSelected ? 'text-indigo-200' : ''} font-normal hidden sm:inline">(${citiesSummary})</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded-full ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'} font-mono">${r.guias.length}</span>
+              </button>
+            `;
+          });
+
+          listinZonePills.innerHTML = pillsHtml;
+
+        // ==========================================
+        // TIPO 2: PÍLDORAS Y SELECTOR POR ZONAS
+        // ==========================================
+        } else {
+          // Select de Zonas
+          let selectHtml = `<option value="ALL" ${listinSelectedZones.size === 0 ? 'selected' : ''}>Todas las Zonas (Lote Consolidado - ${srcShipments.length} guías)</option>`;
+          listinCitiesOrder.forEach(cityName => {
+            const count = srcShipments.filter(g => (g.ciudad_destino || 'Sin Ciudad').trim() === cityName).length;
+            const isSelected = listinSelectedZones.size === 1 && listinSelectedZones.has(cityName) ? 'selected' : '';
+            selectHtml += `<option value="${cityName}" ${isSelected}>${cityName} (${count} guías)</option>`;
+          });
+          if (listinSelectedZones.size > 1) {
+            selectHtml += `<option value="COMBINED" selected>${listinSelectedZones.size} Zonas Combinadas</option>`;
+          }
+          listinZoneSelect.innerHTML = selectHtml;
+
+          // Píldoras de Zonas Rápidas Multi-Selección
+          let pillsHtml = `
+            <button
+              type="button"
+              onclick="window.toggleListinZone('ALL')"
+              class="px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${listinSelectedZones.size === 0 ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}"
+            >
+              <span>Todas las Zonas</span>
+              <span class="text-[10px] px-1.5 py-0.2 rounded-full ${listinSelectedZones.size === 0 ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'} font-mono">${srcShipments.length}</span>
+            </button>
+          `;
+
+          listinCitiesOrder.forEach(cityName => {
+            const count = srcShipments.filter(g => (g.ciudad_destino || 'Sin Ciudad').trim() === cityName).length;
+            const isSelected = listinSelectedZones.has(cityName);
+            pillsHtml += `
+              <button
+                type="button"
+                onclick="window.toggleListinZone('${cityName.replace(/'/g, "\\'")}')"
+                class="px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${isSelected ? 'bg-indigo-600 text-white shadow-xs ring-2 ring-indigo-300' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}"
+              >
+                ${isSelected ? '<svg class="w-3 h-3 text-white shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>' : ''}
+                <span>${cityName}</span>
+                <span class="text-[10px] px-1.5 py-0.2 rounded-full ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-800'} font-mono">${count}</span>
+              </button>
+            `;
+          });
+
+          listinZonePills.innerHTML = pillsHtml;
+        }
       }
 
       function renderListinView() {
@@ -10309,13 +10558,21 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         renderListinZoneControls(srcShipments);
 
         if (listinCitiesCount) {
-          if (listinSelectedZones.size === 1) {
+          if (listinActiveRoute !== 'ALL') {
+            const routes = getListinRoutes(srcShipments);
+            const rObj = routes.find(r => r.key === listinActiveRoute);
+            const rCount = rObj ? rObj.guias.length : 0;
+            listinCitiesCount.textContent = `Ruta: ${rObj?.driverName || listinActiveRoute} (${rCount} guías)`;
+          } else if (listinSelectedZones.size === 1) {
             const zName = Array.from(listinSelectedZones)[0];
             const zoneGuiasCount = getOrderedActiveGuias(srcShipments, zName).length;
             listinCitiesCount.textContent = `Zona: ${zName} (${zoneGuiasCount} guías)`;
           } else if (listinSelectedZones.size > 1) {
             const combinedCount = getOrderedActiveGuias(srcShipments).length;
             listinCitiesCount.textContent = `${listinSelectedZones.size} zonas combinadas (${combinedCount} guías)`;
+          } else if (listinViewSubMode === 'routes') {
+            const routes = getListinRoutes(srcShipments);
+            listinCitiesCount.textContent = `${routes.length} rutas planificadas`;
           } else if (listinViewSubMode === 'zones') {
             listinCitiesCount.textContent = `${listinCitiesOrder.length} zonas consolidado`;
           } else {
@@ -10324,10 +10581,21 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           }
         }
 
-        // Actualizar botones de submodo en UI
-        if (btnListinModeZones && btnListinModeFlat) {
-          if (listinViewSubMode === 'zones') {
+        // Actualizar botones de submodo en UI (Por Rutas, Por Zonas, Lista 1..N)
+        if (btnListinModeRoutes && btnListinModeZones && btnListinModeFlat) {
+          if (listinViewSubMode === 'routes') {
+            btnListinModeRoutes.className = 'px-2.5 py-1 rounded-lg font-bold transition-all bg-white text-slate-900 shadow-xs cursor-pointer';
+            btnListinModeZones.className = 'px-2.5 py-1 rounded-lg font-bold text-slate-500 hover:text-slate-900 transition-all cursor-pointer';
+            btnListinModeFlat.className = 'px-2.5 py-1 rounded-lg font-bold text-slate-500 hover:text-slate-900 transition-all cursor-pointer';
+            if (listinPanelTitle) {
+              listinPanelTitle.textContent = listinActiveRoute !== 'ALL' 
+                ? `Ruta: ${listinActiveRoute.replace('driver-', 'Chofer #')}` 
+                : 'Organizar Listín por Rutas';
+            }
+            if (listinInstructionsText) listinInstructionsText.innerHTML = 'Organizado por rutas de chofer. Usa <span class="font-bold text-slate-700">▲</span> <span class="font-bold text-slate-700">▼</span> o arrastra <span class="font-bold text-slate-700">⠿</span> para secuenciar paradas.';
+          } else if (listinViewSubMode === 'zones') {
             btnListinModeZones.className = 'px-2.5 py-1 rounded-lg font-bold transition-all bg-white text-slate-900 shadow-xs cursor-pointer';
+            btnListinModeRoutes.className = 'px-2.5 py-1 rounded-lg font-bold text-slate-500 hover:text-slate-900 transition-all cursor-pointer';
             btnListinModeFlat.className = 'px-2.5 py-1 rounded-lg font-bold text-slate-500 hover:text-slate-900 transition-all cursor-pointer';
             if (listinPanelTitle) {
               listinPanelTitle.textContent = listinSelectedZones.size === 1 
@@ -10339,6 +10607,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             if (listinInstructionsText) listinInstructionsText.innerHTML = 'Usa las flechas <span class="font-bold text-slate-700">▲</span> <span class="font-bold text-slate-700">▼</span> o arrastra <span class="font-bold text-slate-700">⠿</span> las zonas y guías para cambiar el orden.';
           } else {
             btnListinModeFlat.className = 'px-2.5 py-1 rounded-lg font-bold transition-all bg-white text-slate-900 shadow-xs cursor-pointer';
+            btnListinModeRoutes.className = 'px-2.5 py-1 rounded-lg font-bold text-slate-500 hover:text-slate-900 transition-all cursor-pointer';
             btnListinModeZones.className = 'px-2.5 py-1 rounded-lg font-bold text-slate-500 hover:text-slate-900 transition-all cursor-pointer';
             if (listinPanelTitle) listinPanelTitle.textContent = 'Lista Continua de Guías (1..N)';
             if (listinInstructionsText) listinInstructionsText.innerHTML = 'Orden libre continuo del 1 al N. Usa <span class="font-bold text-slate-700">▲</span> <span class="font-bold text-slate-700">▼</span> o arrastra <span class="font-bold text-slate-700">⠿</span> para ubicar cada guía.';
@@ -10368,9 +10637,202 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         const mapById = new Map(srcShipments.map(g => [g.id_guia, g]));
 
         // ==========================================
-        // MODO 1: AGRUPADO POR ZONAS (Jerárquico)
+        // MODO 1: AGRUPADO POR RUTAS DE CHOFER
         // ==========================================
-        if (listinViewSubMode === 'zones') {
+        if (listinViewSubMode === 'routes') {
+          const allRoutes = getListinRoutes(srcShipments);
+          const displayRoutes = listinActiveRoute !== 'ALL'
+            ? allRoutes.filter(r => r.key === listinActiveRoute)
+            : allRoutes;
+
+          listinHierarchyList.innerHTML = displayRoutes.map((route, routeIdx) => {
+            const rawGuiaIds = listinRouteGuiasOrder[route.key] || [];
+            let routeGuias = rawGuiaIds.map(id => mapById.get(id)).filter(Boolean) as GuiaRow[];
+
+            // Filtro de búsqueda
+            if (query) {
+              const matchesRoute = route.driverName.toLowerCase().includes(query) || route.cities.some(c => c.toLowerCase().includes(query));
+              if (!matchesRoute) {
+                routeGuias = routeGuias.filter(g => 
+                  g.id_guia.toLowerCase().includes(query) || 
+                  (g.destinatario || '').toLowerCase().includes(query) ||
+                  (g.ciudad_destino || '').toLowerCase().includes(query)
+                );
+                if (routeGuias.length === 0) return '';
+              }
+            }
+
+            const totalPiezas = routeGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+            const totalVol = routeGuias.reduce((acc, g) => acc + (Number(g.pies_cubicos) || 0), 0);
+            const isExcluded = listinExcludedRoutes.has(route.key);
+            const isCollapsed = listinCollapsedRoutes.has(route.key) && listinActiveRoute === 'ALL';
+            const isFocused = listinActiveRoute === route.key;
+            const citiesTrail = route.cities.slice(0, 3).join(' ➔ ') + (route.cities.length > 3 ? ` +${route.cities.length - 3}` : '');
+
+            return `
+              <div
+                class="bg-slate-50 border ${isFocused ? 'border-indigo-400 ring-2 ring-indigo-500/20 bg-indigo-50/10' : (isExcluded ? 'border-slate-200 opacity-60' : 'border-slate-200/90')} rounded-xl p-3 space-y-2.5 transition-all"
+                ondragover="window.onListinRouteDragOver(event)"
+                ondrop="window.onListinRouteDrop(event, '${route.key}')"
+              >
+                <!-- Encabezado de la Ruta -->
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <!-- Grip de Arrastre de Ruta -->
+                    <div
+                      draggable="true"
+                      ondragstart="window.onListinRouteDragStart(event, '${route.key}')"
+                      class="text-slate-400 hover:text-slate-700 cursor-grab active:cursor-grabbing p-0.5"
+                      title="Arrastrar para mover ruta completa"
+                    >
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/></svg>
+                    </div>
+
+                    <input
+                      type="checkbox"
+                      ${!isExcluded ? 'checked' : ''}
+                      onchange="window.toggleListinRoute('${route.key}', this.checked)"
+                      class="w-4 h-4 rounded text-slate-900 focus:ring-slate-900 cursor-pointer"
+                      title="Incluir / excluir ruta completa del listín"
+                    />
+                    <span class="w-6 h-6 rounded-md ${isFocused ? 'bg-indigo-600' : 'bg-slate-900'} text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                      R${routeIdx + 1}
+                    </span>
+                    <div class="min-w-0">
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <p class="text-xs font-black text-slate-900 truncate">${route.driverName}</p>
+                        ${route.driverPlaca && route.driverPlaca !== 'NO ASIGNADA' ? `<span class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-200 text-slate-700">${route.driverPlaca}</span>` : ''}
+                      </div>
+                      <p class="text-[10px] text-slate-500 font-medium truncate">
+                        <span class="font-bold text-indigo-700">${citiesTrail || 'Sin Ciudad'}</span>
+                        <span>&bull;</span>
+                        <span>${routeGuias.length} guías · ${totalPiezas} pzas${totalVol > 0 ? ` · ${totalVol.toFixed(2)} ft³` : ''}</span>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-1 shrink-0">
+                    <!-- Botón de Enfocar Esta Ruta -->
+                    <button
+                      type="button"
+                      onclick="window.selectListinRoute('${route.key}')"
+                      class="px-2 py-1 rounded-lg ${isFocused ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white hover:bg-slate-200 text-slate-700 border border-slate-200'} text-[10px] font-bold transition-all cursor-pointer"
+                      title="Ver y generar exclusivamente la hoja de esta ruta"
+                    >
+                      ${isFocused ? 'Hoja de Ruta Activa' : 'Ver Hoja de Ruta'}
+                    </button>
+
+                    <!-- Subir Prioridad de Ruta -->
+                    <button
+                      type="button"
+                      onclick="window.moveListinRoute('${route.key}', -1)"
+                      ${routeIdx === 0 ? 'disabled' : ''}
+                      class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                      title="Subir prioridad de ruta"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                    </button>
+
+                    <!-- Bajar Prioridad de Ruta -->
+                    <button
+                      type="button"
+                      onclick="window.moveListinRoute('${route.key}', 1)"
+                      ${routeIdx === allRoutes.length - 1 ? 'disabled' : ''}
+                      class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                      title="Bajar prioridad de ruta"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+
+                    <!-- Expandir / Colapsar -->
+                    <button
+                      type="button"
+                      onclick="window.toggleListinRouteCollapse('${route.key}')"
+                      class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-500 transition-colors cursor-pointer ml-0.5"
+                      title="${isCollapsed ? 'Ver paradas' : 'Ocultar paradas'}"
+                    >
+                      <svg class="w-3.5 h-3.5 ${isCollapsed ? '' : 'rotate-180'} transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Lista secuencial de paradas de la ruta -->
+                ${!isCollapsed ? `
+                  <div class="space-y-1.5 pl-6 border-l-2 border-indigo-200 pt-1">
+                    ${routeGuias.map((g, gIdx) => {
+                      const isGuiaExcluded = listinExcludedGuiaIds.has(g.id_guia) || isExcluded;
+                      const hasGps = Boolean(g.latitud && g.longitud);
+                      const stopNumber = g.orden_ruta && g.orden_ruta > 0 ? g.orden_ruta : (gIdx + 1);
+
+                      return `
+                        <div
+                          draggable="true"
+                          ondragstart="window.onListinGuiaDragStart(event, '${g.id_guia}', '${route.key}')"
+                          ondragend="window.onListinGuiaDragEnd(event)"
+                          ondragover="window.onListinGuiaDragOver(event)"
+                          ondrop="window.onListinGuiaDrop(event, '${g.id_guia}', '${route.key}')"
+                          class="flex items-center justify-between py-1.5 px-2 rounded-lg bg-white border border-slate-200/80 shadow-2xs hover:border-slate-300 text-xs gap-2 transition-all"
+                        >
+                          <!-- Grip, Checkbox, Número de Parada, Guía, Destinatario y Ciudad -->
+                          <div class="flex items-center gap-1.5 min-w-0">
+                            <span class="text-slate-300 hover:text-slate-600 cursor-grab active:cursor-grabbing shrink-0" title="Arrastrar para secuenciar parada">
+                              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9h8M8 15h8"/></svg>
+                            </span>
+                            <input
+                              type="checkbox"
+                              ${!isGuiaExcluded ? 'checked' : ''}
+                              onchange="window.toggleListinGuia('${g.id_guia}', this.checked)"
+                              class="w-3.5 h-3.5 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer shrink-0"
+                              title="Incluir / excluir parada del listín"
+                            />
+                            <span class="w-5 h-5 rounded-md bg-indigo-50 border border-indigo-200 text-indigo-700 font-mono font-black text-[10px] flex items-center justify-center shrink-0" title="Parada #${stopNumber}">
+                              ${stopNumber}
+                            </span>
+                            <span class="font-mono font-bold text-slate-900 shrink-0">#${g.id_guia}</span>
+                            <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 border border-slate-200 shrink-0 truncate max-w-[80px]">${g.ciudad_destino || 'Sin Ciudad'}</span>
+                            <span class="text-slate-600 truncate max-w-[100px] sm:max-w-[120px] font-medium" title="${g.destinatario}">${g.destinatario}</span>
+                            ${hasGps ? '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="GPS Confirmado"></span>' : ''}
+                          </div>
+
+                          <!-- Piezas y Botones ▲ ▼ de Parada -->
+                          <div class="flex items-center gap-1 shrink-0">
+                            <span class="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono font-bold text-[9px]">${g.piezas || 1} pz${(g.piezas || 1) !== 1 ? 's' : ''}${g.pies_cubicos ? ' · ' + Number(g.pies_cubicos).toFixed(2) + ' ft³' : ''}</span>
+                            
+                            <!-- Subir Parada -->
+                            <button
+                              type="button"
+                              onclick="window.moveListinRouteGuia('${route.key}', '${g.id_guia}', -1)"
+                              ${gIdx === 0 ? 'disabled' : ''}
+                              class="p-1 rounded-md bg-slate-50 hover:bg-slate-200 text-slate-700 border border-slate-200 disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
+                              title="Subir esta parada en la ruta"
+                            >
+                              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
+                            </button>
+
+                            <!-- Bajar Parada -->
+                            <button
+                              type="button"
+                              onclick="window.moveListinRouteGuia('${route.key}', '${g.id_guia}', 1)"
+                              ${gIdx === routeGuias.length - 1 ? 'disabled' : ''}
+                              class="p-1 rounded-md bg-slate-50 hover:bg-slate-200 text-slate-700 border border-slate-200 disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
+                              title="Bajar esta parada en la ruta"
+                            >
+                              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                          </div>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          }).join('');
+
+        // ==========================================
+        // MODO 2: AGRUPADO POR ZONAS (Jerárquico)
+        // ==========================================
+        } else if (listinViewSubMode === 'zones') {
           const displayCities = listinSelectedZones.size > 0 
             ? listinCitiesOrder.filter(c => listinSelectedZones.has(c)) 
             : listinCitiesOrder;
@@ -10546,7 +11008,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           }).join('');
 
         // ==========================================
-        // MODO 2: LISTA CONTINUA (1..N)
+        // MODO 3: LISTA CONTINUA (1..N)
         // ==========================================
         } else {
           let flatGuias = listinFlatGuiasOrder.map(id => mapById.get(id)).filter(Boolean) as GuiaRow[];
@@ -10630,17 +11092,29 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       function renderListinPrintPreview(srcShipments: GuiaRow[]) {
         // Metadatos
         const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
-        const driverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
+        let driverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
           ? selectedDriverOption.text.replace(/\s*\(ID:.*?\)\s*/g, '') 
           : 'FLOTA CENTRAL / DESPACHO GENERAL';
-        const placa = listinPlacaInput?.value?.trim()?.toUpperCase() || 'NO ASIGNADA';
+        let placa = listinPlacaInput?.value?.trim()?.toUpperCase() || 'NO ASIGNADA';
         const fecha = listinFechaInput?.value || new Date().toISOString().split('T')[0];
+
+        // Si hay una ruta activa específica seleccionada, auto-asignar su chofer y placa si aplica
+        if (listinActiveRoute !== 'ALL') {
+          const routes = getListinRoutes(srcShipments);
+          const activeRouteObj = routes.find(r => r.key === listinActiveRoute);
+          if (activeRouteObj) {
+            driverName = activeRouteObj.driverName;
+            if (activeRouteObj.driverPlaca && activeRouteObj.driverPlaca !== 'NO ASIGNADA') {
+              placa = activeRouteObj.driverPlaca;
+            }
+          }
+        }
 
         if (previewListinFecha) previewListinFecha.textContent = fecha;
         if (previewListinPlaca) previewListinPlaca.textContent = placa;
         if (previewListinChofer) previewListinChofer.textContent = driverName;
 
-        // Construir array de guías respetando la zona activa y el orden exacto configurado
+        // Construir array de guías respetando la ruta o zona activa y el orden exacto configurado
         const orderedActiveGuias = getOrderedActiveGuias(srcShipments);
 
         const totalGuias = orderedActiveGuias.length;
@@ -10656,10 +11130,17 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         const volTagBanner = totalVolumen > 0 ? `, ${totalVolumen.toFixed(2)} FT³` : '';
 
         // Actualizar Encabezado de Destino en la Hoja Física Oficial
-        if (listinSelectedZones.size === 0) {
+        if (listinActiveRoute !== 'ALL') {
+          const routes = getListinRoutes(srcShipments);
+          const activeRouteObj = routes.find(r => r.key === listinActiveRoute);
+          const rCities = activeRouteObj ? activeRouteObj.cities.join(' · ').toUpperCase() : 'RUTA ESPECÍFICA';
+          if (previewListinDestino) previewListinDestino.textContent = rCities;
+          if (previewListinTitleZona) previewListinTitleZona.textContent = `RUTA: ${driverName.toUpperCase()} • ${rCities} (${totalGuias} GUÍAS, ${totalPiezas} PZAS${volTagBanner})`;
+          if (previewListinCurrentBadge) previewListinCurrentBadge.textContent = `RUTA: ${driverName.toUpperCase()}`;
+        } else if (listinSelectedZones.size === 0) {
           if (previewListinDestino) previewListinDestino.textContent = 'TODAS (CONSOLIDADO)';
-          if (previewListinTitleZona) previewListinTitleZona.textContent = `DESTINO: TODAS LAS ZONAS (${totalGuias} GUÍAS, ${totalPiezas} PZAS${volTagBanner})`;
-          if (previewListinCurrentBadge) previewListinCurrentBadge.textContent = `ZONA: TODAS (${uniqueActiveCities} CIUDADES)`;
+          if (previewListinTitleZona) previewListinTitleZona.textContent = `DESTINO: TODAS LAS RUTAS / ZONAS (${totalGuias} GUÍAS, ${totalPiezas} PZAS${volTagBanner})`;
+          if (previewListinCurrentBadge) previewListinCurrentBadge.textContent = `CONSOLIDADO (${uniqueActiveCities} CIUDADES)`;
         } else if (listinSelectedZones.size === 1) {
           const zName = Array.from(listinSelectedZones)[0];
           if (previewListinDestino) previewListinDestino.textContent = zName;
@@ -10708,11 +11189,111 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       }
 
       // ==========================================
-      // FUNCIONES GLOBALES DE REORDENACIÓN Y ZONAS
+      // FUNCIONES GLOBALES DE REORDENACIÓN Y RUTAS
       // ==========================================
 
-      // 0. Toggle y Selección de Zonas
+      // 0. Toggle de tipo de filtro: Rutas vs Zonas
+      (window as any).setListinFilterType = (type: 'routes' | 'zones') => {
+        listinFilterType = type;
+        listinViewSubMode = type === 'routes' ? 'routes' : 'zones';
+        renderListinView();
+      };
+
+      // 0.1 Selección de Ruta
+      (window as any).selectListinRoute = (routeKey: string) => {
+        listinActiveRoute = routeKey;
+        if (routeKey !== 'ALL') {
+          listinSelectedZones.clear();
+          const srcShipments = getListinSourceShipments();
+          const routes = getListinRoutes(srcShipments);
+          const rObj = routes.find(r => r.key === routeKey);
+          if (rObj && rObj.driverId !== null && listinDriverSelect) {
+            listinDriverSelect.value = String(rObj.driverId);
+          }
+        }
+        renderListinView();
+      };
+
+      // 0.2 Excluir / Incluir Ruta
+      (window as any).toggleListinRoute = (routeKey: string, isIncluded: boolean) => {
+        if (isIncluded) {
+          listinExcludedRoutes.delete(routeKey);
+        } else {
+          listinExcludedRoutes.add(routeKey);
+        }
+        renderListinView();
+      };
+
+      // 0.3 Colapsar / Expandir Ruta
+      (window as any).toggleListinRouteCollapse = (routeKey: string) => {
+        if (listinCollapsedRoutes.has(routeKey)) {
+          listinCollapsedRoutes.delete(routeKey);
+        } else {
+          listinCollapsedRoutes.add(routeKey);
+        }
+        renderListinView();
+      };
+
+      // 0.4 Mover Ruta Completa
+      (window as any).moveListinRoute = (routeKey: string, direction: number) => {
+        const idx = listinRoutesOrder.indexOf(routeKey);
+        if (idx === -1) return;
+        const newIdx = idx + direction;
+        if (newIdx < 0 || newIdx >= listinRoutesOrder.length) return;
+        const temp = listinRoutesOrder[idx];
+        listinRoutesOrder[idx] = listinRoutesOrder[newIdx];
+        listinRoutesOrder[newIdx] = temp;
+        syncFlatFromRoutesOrZones();
+        renderListinView();
+      };
+
+      // 0.5 Mover Guía dentro de una Ruta
+      (window as any).moveListinRouteGuia = (routeKey: string, guiaId: string, direction: number) => {
+        const arr = listinRouteGuiasOrder[routeKey];
+        if (!arr) return;
+        const idx = arr.indexOf(guiaId);
+        if (idx === -1) return;
+        const newIdx = idx + direction;
+        if (newIdx < 0 || newIdx >= arr.length) return;
+        const temp = arr[idx];
+        arr[idx] = arr[newIdx];
+        arr[newIdx] = temp;
+        syncFlatFromRoutesOrZones();
+        renderListinView();
+      };
+
+      // 0.6 Drag & Drop de Rutas
+      (window as any).onListinRouteDragStart = (e: DragEvent, routeKey: string) => {
+        draggedRouteKey = routeKey;
+        if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', routeKey);
+        }
+      };
+
+      (window as any).onListinRouteDragOver = (e: DragEvent) => {
+        e.preventDefault();
+        if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+      };
+
+      (window as any).onListinRouteDrop = (e: DragEvent, targetRouteKey: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!draggedRouteKey || draggedRouteKey === targetRouteKey) return;
+        const fromIdx = listinRoutesOrder.indexOf(draggedRouteKey);
+        const toIdx = listinRoutesOrder.indexOf(targetRouteKey);
+        if (fromIdx !== -1 && toIdx !== -1) {
+          listinRoutesOrder.splice(fromIdx, 1);
+          listinRoutesOrder.splice(toIdx, 0, draggedRouteKey);
+        }
+        syncFlatFromRoutesOrZones();
+        draggedRouteKey = null;
+        renderListinView();
+      };
+
+      // 0.7 Toggle y Selección de Zonas
       (window as any).toggleListinZone = (zoneName: string) => {
+        listinActiveRoute = 'ALL';
         if (zoneName === 'ALL') {
           listinSelectedZones.clear();
           listinActiveZone = 'ALL';
@@ -10730,12 +11311,14 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       };
 
       (window as any).clearListinZones = () => {
+        listinActiveRoute = 'ALL';
         listinSelectedZones.clear();
         listinActiveZone = 'ALL';
         renderListinView();
       };
 
       (window as any).selectListinZone = (zoneName: string) => {
+        listinActiveRoute = 'ALL';
         if (zoneName === 'ALL') {
           listinSelectedZones.clear();
           listinActiveZone = 'ALL';
@@ -10758,7 +11341,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         const temp = arr[idx];
         arr[idx] = arr[newIdx];
         arr[newIdx] = temp;
-        syncFlatFromZones();
+        syncFlatFromRoutesOrZones();
         renderListinView();
       };
 
@@ -10783,14 +11366,14 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         const temp = listinCitiesOrder[idx];
         listinCitiesOrder[idx] = listinCitiesOrder[newIdx];
         listinCitiesOrder[newIdx] = temp;
-        syncFlatFromZones();
+        syncFlatFromRoutesOrZones();
         renderListinView();
       };
 
       // 4. Drag & Drop de Guías
-      (window as any).onListinGuiaDragStart = (e: DragEvent, guiaId: string, cityName: string) => {
+      (window as any).onListinGuiaDragStart = (e: DragEvent, guiaId: string, parentKey: string) => {
         draggedGuiaId = guiaId;
-        draggedCityName = cityName;
+        draggedCityName = parentKey;
         if (e.dataTransfer) {
           e.dataTransfer.effectAllowed = 'move';
           e.dataTransfer.setData('text/plain', guiaId);
@@ -10809,14 +11392,27 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
       };
 
-      (window as any).onListinGuiaDrop = (e: DragEvent, targetGuiaId: string, targetCityName: string) => {
+      (window as any).onListinGuiaDrop = (e: DragEvent, targetGuiaId: string, targetParentKey: string) => {
         e.preventDefault();
         e.stopPropagation();
         if (!draggedGuiaId || draggedGuiaId === targetGuiaId) return;
 
-        if (listinViewSubMode === 'zones') {
-          if (draggedCityName === targetCityName) {
-            const arr = listinCityGuiasOrder[targetCityName];
+        if (listinViewSubMode === 'routes') {
+          if (draggedCityName === targetParentKey) {
+            const arr = listinRouteGuiasOrder[targetParentKey];
+            if (arr) {
+              const fromIdx = arr.indexOf(draggedGuiaId);
+              const toIdx = arr.indexOf(targetGuiaId);
+              if (fromIdx !== -1 && toIdx !== -1) {
+                arr.splice(fromIdx, 1);
+                arr.splice(toIdx, 0, draggedGuiaId);
+              }
+            }
+          }
+          syncFlatFromRoutesOrZones();
+        } else if (listinViewSubMode === 'zones') {
+          if (draggedCityName === targetParentKey) {
+            const arr = listinCityGuiasOrder[targetParentKey];
             if (arr) {
               const fromIdx = arr.indexOf(draggedGuiaId);
               const toIdx = arr.indexOf(targetGuiaId);
@@ -10826,9 +11422,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
               }
             }
           } else if (draggedCityName) {
-            // Mover guía entre diferentes zonas
             const srcArr = listinCityGuiasOrder[draggedCityName];
-            const destArr = listinCityGuiasOrder[targetCityName];
+            const destArr = listinCityGuiasOrder[targetParentKey];
             if (srcArr && destArr) {
               const fromIdx = srcArr.indexOf(draggedGuiaId);
               if (fromIdx !== -1) srcArr.splice(fromIdx, 1);
@@ -10837,7 +11432,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
               else destArr.push(draggedGuiaId);
             }
           }
-          syncFlatFromZones();
+          syncFlatFromRoutesOrZones();
         } else {
           const fromIdx = listinFlatGuiasOrder.indexOf(draggedGuiaId);
           const toIdx = listinFlatGuiasOrder.indexOf(targetGuiaId);
@@ -10876,7 +11471,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           listinCitiesOrder.splice(fromIdx, 1);
           listinCitiesOrder.splice(toIdx, 0, draggedZoneName);
         }
-        syncFlatFromZones();
+        syncFlatFromRoutesOrZones();
         draggedZoneName = null;
         renderListinView();
       };
@@ -10909,6 +11504,52 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         renderListinView();
       };
 
+      // 7. Ordenar por Ruta Satelital (TSP / orden_ruta)
+      (window as any).orderListinByTSP = () => {
+        const srcShipments = getListinSourceShipments();
+        const hubCoords = { lat: 10.0808, lon: -69.3756 }; // Hub Central Barquisimeto
+
+        // Ordenar internamente cada ruta
+        Object.keys(listinRouteGuiasOrder).forEach(rKey => {
+          const gIds = listinRouteGuiasOrder[rKey] || [];
+          const gObjs = gIds.map(id => srcShipments.find(g => g.id_guia === id)).filter(Boolean) as GuiaRow[];
+
+          // Si tienen orden_ruta > 0, ordenar por orden_ruta; de lo contrario por cercanía GPS al Hub
+          gObjs.sort((a, b) => {
+            const ordA = (a.orden_ruta && a.orden_ruta > 0) ? a.orden_ruta : 9999;
+            const ordB = (b.orden_ruta && b.orden_ruta > 0) ? b.orden_ruta : 9999;
+            if (ordA !== 9999 || ordB !== 9999) return ordA - ordB;
+
+            const latA = a.latitud ? Number(a.latitud) : hubCoords.lat;
+            const lonA = a.longitud ? Number(a.longitud) : hubCoords.lon;
+            const latB = b.latitud ? Number(b.latitud) : hubCoords.lat;
+            const lonB = b.longitud ? Number(b.longitud) : hubCoords.lon;
+            const distA = calculateDistance(hubCoords.lat, hubCoords.lon, latA, lonA);
+            const distB = calculateDistance(hubCoords.lat, hubCoords.lon, latB, lonB);
+            return distA - distB;
+          });
+
+          listinRouteGuiasOrder[rKey] = gObjs.map(g => g.id_guia);
+        });
+
+        // Ordenar también internamente cada ciudad por cercanía o orden_ruta
+        Object.keys(listinCityGuiasOrder).forEach(city => {
+          const gIds = listinCityGuiasOrder[city] || [];
+          const gObjs = gIds.map(id => srcShipments.find(g => g.id_guia === id)).filter(Boolean) as GuiaRow[];
+          gObjs.sort((a, b) => {
+            const ordA = (a.orden_ruta && a.orden_ruta > 0) ? a.orden_ruta : 9999;
+            const ordB = (b.orden_ruta && b.orden_ruta > 0) ? b.orden_ruta : 9999;
+            if (ordA !== 9999 || ordB !== 9999) return ordA - ordB;
+            return a.id_guia.localeCompare(b.id_guia, undefined, { numeric: true });
+          });
+          listinCityGuiasOrder[city] = gObjs.map(g => g.id_guia);
+        });
+
+        syncFlatFromRoutesOrZones();
+        showToast('Listín organizado según la secuencia de ruta satelital (TSP)', 'success');
+        renderListinView();
+      };
+
       // Listeners de Cambios de Filtros y Configuración
       const listinLoteSelect = document.getElementById('listin-lote-select') as HTMLSelectElement;
       listinLoteSelect?.addEventListener('change', () => {
@@ -10921,6 +11562,12 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       });
 
       listinDriverSelect?.addEventListener('change', () => {
+        const val = listinDriverSelect.value;
+        if (val !== 'ALL') {
+          listinActiveRoute = `driver-${val}`;
+        } else {
+          listinActiveRoute = 'ALL';
+        }
         renderListinView();
       });
       listinPlacaInput?.addEventListener('input', () => {
@@ -10934,14 +11581,19 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
       });
 
-      // Selector de Zona por Dropdown
+      // Selector de Zona o Ruta por Dropdown
       listinZoneSelect?.addEventListener('change', () => {
         const val = listinZoneSelect.value || 'ALL';
-        if (val === 'ALL') {
-          listinSelectedZones.clear();
-        } else if (val !== 'COMBINED') {
-          listinSelectedZones.clear();
-          listinSelectedZones.add(val);
+        if (listinFilterType === 'routes') {
+          listinActiveRoute = val;
+        } else {
+          listinActiveRoute = 'ALL';
+          if (val === 'ALL') {
+            listinSelectedZones.clear();
+          } else if (val !== 'COMBINED') {
+            listinSelectedZones.clear();
+            listinSelectedZones.add(val);
+          }
         }
         renderListinView();
       });
@@ -10977,9 +11629,15 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         renderListinView();
       });
 
-      // Selector de Submodo (Por Zonas vs Lista Plana)
+      // Selector de Submodo (Por Rutas vs Por Zonas vs Lista Plana)
+      btnListinModeRoutes?.addEventListener('click', () => {
+        listinViewSubMode = 'routes';
+        listinFilterType = 'routes';
+        renderListinView();
+      });
       btnListinModeZones?.addEventListener('click', () => {
         listinViewSubMode = 'zones';
+        listinFilterType = 'zones';
         renderListinView();
       });
       btnListinModeFlat?.addEventListener('click', () => {
@@ -10994,12 +11652,20 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         renderListinHierarchy(srcShipments);
       });
 
-      // Botón Expandir / Colapsar Todas las Zonas
+      // Botón Expandir / Colapsar Todas las Zonas / Rutas
       btnListinToggleAllCollapse?.addEventListener('click', () => {
-        if (listinCollapsedCities.size >= listinCitiesOrder.length) {
-          listinCollapsedCities.clear();
+        if (listinViewSubMode === 'routes') {
+          if (listinCollapsedRoutes.size >= listinRoutesOrder.length) {
+            listinCollapsedRoutes.clear();
+          } else {
+            listinRoutesOrder.forEach(r => listinCollapsedRoutes.add(r));
+          }
         } else {
-          listinCitiesOrder.forEach(c => listinCollapsedCities.add(c));
+          if (listinCollapsedCities.size >= listinCitiesOrder.length) {
+            listinCollapsedCities.clear();
+          } else {
+            listinCitiesOrder.forEach(c => listinCollapsedCities.add(c));
+          }
         }
         const srcShipments = getListinSourceShipments();
         renderListinHierarchy(srcShipments);
@@ -11012,7 +11678,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         Object.keys(listinCityGuiasOrder).forEach(city => {
           listinCityGuiasOrder[city].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
         });
-        syncFlatFromZones();
+        syncFlatFromRoutesOrZones();
         showToast('Jerarquía de zonas y guías ordenadas de la A a la Z', 'success');
         renderListinView();
       });
@@ -11250,43 +11916,77 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
 
         const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
-        const driverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
+        let driverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
           ? selectedDriverOption.text.replace(/\s*\(ID:.*?\)\s*/g, '') 
           : 'FLOTA CENTRAL / DESPACHO GENERAL';
-        const placa = listinPlacaInput?.value?.trim()?.toUpperCase() || 'NO ASIGNADA';
+        let placa = listinPlacaInput?.value?.trim()?.toUpperCase() || 'NO ASIGNADA';
         const fecha = listinFechaInput?.value || new Date().toISOString().split('T')[0];
 
         let htmlToPrint = '';
 
         if (isAllZones) {
-          const activeCities = listinCitiesOrder.filter(c => !listinExcludedCities.has(c));
-          activeCities.forEach(cityName => {
-            const zoneGuias = getOrderedActiveGuias(srcShipments, cityName);
-            if (zoneGuias.length === 0) return;
-            const totalGuias = zoneGuias.length;
-            const totalPiezas = zoneGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
-            const totalVolumen = zoneGuias.reduce((acc, g) => acc + (Number(g.pies_cubicos) || 0), 0);
-            htmlToPrint += createListinHtmlPage({
-              cityName,
-              zoneGuias,
-              driverName,
-              placa,
-              fecha,
-              totalGuias,
-              totalPiezas,
-              totalVolumen,
-              totalZonas: 1,
-              isMultiPage: true
+          if (listinViewSubMode === 'routes') {
+            const routes = getListinRoutes(srcShipments).filter(r => !listinExcludedRoutes.has(r.key));
+            routes.forEach(route => {
+              const rGuias = route.guias.filter(g => !listinExcludedGuiaIds.has(g.id_guia));
+              if (rGuias.length === 0) return;
+              const totalGuias = rGuias.length;
+              const totalPiezas = rGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+              const totalVolumen = rGuias.reduce((acc, g) => acc + (Number(g.pies_cubicos) || 0), 0);
+              const rCities = route.cities.join(' · ');
+              htmlToPrint += createListinHtmlPage({
+                cityName: `RUTA: ${route.driverName} • ${rCities}`,
+                zoneGuias: rGuias,
+                driverName: route.driverName,
+                placa: route.driverPlaca || placa,
+                fecha,
+                totalGuias,
+                totalPiezas,
+                totalVolumen,
+                totalZonas: route.cities.length,
+                isMultiPage: true
+              });
             });
-          });
+          } else {
+            const activeCities = listinCitiesOrder.filter(c => !listinExcludedCities.has(c));
+            activeCities.forEach(cityName => {
+              const zoneGuias = getOrderedActiveGuias(srcShipments, cityName);
+              if (zoneGuias.length === 0) return;
+              const totalGuias = zoneGuias.length;
+              const totalPiezas = zoneGuias.reduce((acc, g) => acc + (g.piezas || 1), 0);
+              const totalVolumen = zoneGuias.reduce((acc, g) => acc + (Number(g.pies_cubicos) || 0), 0);
+              htmlToPrint += createListinHtmlPage({
+                cityName,
+                zoneGuias,
+                driverName,
+                placa,
+                fecha,
+                totalGuias,
+                totalPiezas,
+                totalVolumen,
+                totalZonas: 1,
+                isMultiPage: true
+              });
+            });
+          }
         } else {
           const orderedActiveGuias = getOrderedActiveGuias(srcShipments);
           if (orderedActiveGuias.length === 0) {
             showToast('No hay guías seleccionadas para imprimir', 'error');
             return;
           }
-          let cityName = 'TODAS LAS ZONAS';
-          if (listinSelectedZones.size === 1) {
+          let cityName = 'TODAS LAS RUTAS / ZONAS';
+          if (listinActiveRoute !== 'ALL') {
+            const routes = getListinRoutes(srcShipments);
+            const activeRouteObj = routes.find(r => r.key === listinActiveRoute);
+            if (activeRouteObj) {
+              cityName = `RUTA: ${activeRouteObj.driverName} • ${activeRouteObj.cities.join(' · ')}`;
+              driverName = activeRouteObj.driverName;
+              if (activeRouteObj.driverPlaca && activeRouteObj.driverPlaca !== 'NO ASIGNADA') {
+                placa = activeRouteObj.driverPlaca;
+              }
+            }
+          } else if (listinSelectedZones.size === 1) {
             cityName = Array.from(listinSelectedZones)[0];
           } else if (listinSelectedZones.size > 1) {
             cityName = listinCitiesOrder.filter(c => listinSelectedZones.has(c)).join(' · ');
@@ -11340,7 +12040,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       }
       (window as any).printListinDirect = printListinDirect;
 
-      // 1. Descargar PDF (Zona Activa) - Generador Vectorial jsPDF
+      // 1. Descargar PDF (Ruta o Zona Activa) - Generador Vectorial jsPDF
       btnListinDownloadPdf?.addEventListener('click', async () => {
         const srcShipments = getListinSourceShipments();
         const orderedActiveGuias = getOrderedActiveGuias(srcShipments);
@@ -11362,20 +12062,36 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
         try {
           const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
-          const driverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
+          let driverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
             ? selectedDriverOption.text.replace(/\s*\(ID:.*?\)\s*/g, '') 
             : 'FLOTA CENTRAL / DESPACHO GENERAL';
-          const driverClean = selectedDriverOption && listinDriverSelect.value !== 'ALL'
+          let driverClean = selectedDriverOption && listinDriverSelect.value !== 'ALL'
             ? selectedDriverOption.text.replace(/[^a-zA-Z0-9]/g, '_')
             : 'Flota_General';
-          const placa = listinPlacaInput?.value?.trim()?.toUpperCase() || 'NO ASIGNADA';
+          let placa = listinPlacaInput?.value?.trim()?.toUpperCase() || 'NO ASIGNADA';
           const fecha = listinFechaInput?.value || new Date().toISOString().split('T')[0];
 
-          let cityName = 'TODAS LAS ZONAS';
-          if (listinSelectedZones.size === 1) {
+          let cityName = 'TODAS LAS RUTAS / ZONAS';
+          let zoneClean = 'Todas_Zonas';
+
+          if (listinActiveRoute !== 'ALL') {
+            const routes = getListinRoutes(srcShipments);
+            const activeRouteObj = routes.find(r => r.key === listinActiveRoute);
+            if (activeRouteObj) {
+              cityName = `RUTA: ${activeRouteObj.driverName} • ${activeRouteObj.cities.join(' · ')}`;
+              driverName = activeRouteObj.driverName;
+              driverClean = activeRouteObj.driverName.replace(/[^a-zA-Z0-9]/g, '_');
+              zoneClean = activeRouteObj.cities.join('_').replace(/[^a-zA-Z0-9]/g, '_') || 'Ruta';
+              if (activeRouteObj.driverPlaca && activeRouteObj.driverPlaca !== 'NO ASIGNADA') {
+                placa = activeRouteObj.driverPlaca;
+              }
+            }
+          } else if (listinSelectedZones.size === 1) {
             cityName = Array.from(listinSelectedZones)[0];
+            zoneClean = cityName.replace(/[^a-zA-Z0-9]/g, '_');
           } else if (listinSelectedZones.size > 1) {
             cityName = listinCitiesOrder.filter(c => listinSelectedZones.has(c)).join(' · ');
+            zoneClean = Array.from(listinSelectedZones).join('_').replace(/[^a-zA-Z0-9]/g, '_');
           }
 
           const totalGuias = orderedActiveGuias.length;
@@ -11383,9 +12099,6 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           const totalVolumen = orderedActiveGuias.reduce((acc, g) => acc + (Number(g.pies_cubicos) || 0), 0);
           const totalZonas = new Set(orderedActiveGuias.map(g => (g.ciudad_destino || '').trim())).size;
 
-          const zoneClean = listinSelectedZones.size > 0 
-            ? Array.from(listinSelectedZones).join('_').replace(/[^a-zA-Z0-9]/g, '_') 
-            : 'Todas_Zonas';
           const filename = `Listin_Envias_${zoneClean}_${driverClean}_${fecha}.pdf`;
 
           downloadListinPdf({
@@ -11411,11 +12124,11 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
       });
 
-      // 2. Descargar Todos los Listines (1 Hoja Oficial por cada Zona) - Generador Vectorial jsPDF
+      // 2. Descargar Todos los Listines (1 Hoja Oficial por cada Ruta o Zona) - Generador Vectorial jsPDF
       btnListinDownloadAllPdf?.addEventListener('click', async () => {
         const srcShipments = getListinSourceShipments();
-        if (srcShipments.length === 0 || listinCitiesOrder.length === 0) {
-          showToast('No hay zonas con guías registradas para generar listines', 'error');
+        if (srcShipments.length === 0) {
+          showToast('No hay guías registradas para generar listines', 'error');
           return;
         }
 
@@ -11426,35 +12139,48 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
           </svg>
-          <span>Generando ${listinCitiesOrder.length} listines...</span>
+          <span>Generando listines...</span>
         `;
 
         try {
           const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
-          const driverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
+          const defaultDriverName = selectedDriverOption && listinDriverSelect.value !== 'ALL' 
             ? selectedDriverOption.text.replace(/\s*\(ID:.*?\)\s*/g, '') 
             : 'FLOTA CENTRAL / DESPACHO GENERAL';
-          const driverClean = selectedDriverOption && listinDriverSelect.value !== 'ALL'
-            ? selectedDriverOption.text.replace(/[^a-zA-Z0-9]/g, '_')
-            : 'Flota_General';
-          const placa = listinPlacaInput?.value?.trim()?.toUpperCase() || 'NO ASIGNADA';
+          const defaultPlaca = listinPlacaInput?.value?.trim()?.toUpperCase() || 'NO ASIGNADA';
           const fecha = listinFechaInput?.value || new Date().toISOString().split('T')[0];
 
-          const activeCities = listinCitiesOrder.filter(c => !listinExcludedCities.has(c));
-          const zonesData = activeCities.map(cityName => ({
-            cityName,
-            zoneGuias: getOrderedActiveGuias(srcShipments, cityName)
-          })).filter(zd => zd.zoneGuias.length > 0);
+          if (listinViewSubMode === 'routes') {
+            const routes = getListinRoutes(srcShipments).filter(r => !listinExcludedRoutes.has(r.key));
+            const routesData = routes.map(r => ({
+              cityName: `RUTA: ${r.driverName} • ${r.cities.join(' · ')}`,
+              zoneGuias: r.guias.filter(g => !listinExcludedGuiaIds.has(g.id_guia))
+            })).filter(rd => rd.zoneGuias.length > 0);
 
-          if (zonesData.length === 0) {
-            showToast('No hay guías en las zonas seleccionadas', 'error');
-            return;
+            if (routesData.length === 0) {
+              showToast('No hay guías en las rutas seleccionadas', 'error');
+              return;
+            }
+
+            const filename = `Listines_Envias_Todas_Las_Rutas_${fecha}.pdf`;
+            downloadAllZonesListinesPdf(routesData, { driverName: defaultDriverName, placa: defaultPlaca, fecha }, filename);
+            showToast(`Documento PDF (${routesData.length} rutas) descargado exitosamente`, 'success');
+          } else {
+            const activeCities = listinCitiesOrder.filter(c => !listinExcludedCities.has(c));
+            const zonesData = activeCities.map(cityName => ({
+              cityName,
+              zoneGuias: getOrderedActiveGuias(srcShipments, cityName)
+            })).filter(zd => zd.zoneGuias.length > 0);
+
+            if (zonesData.length === 0) {
+              showToast('No hay guías en las zonas seleccionadas', 'error');
+              return;
+            }
+
+            const filename = `Listines_Envias_Todas_Las_Zonas_${fecha}.pdf`;
+            downloadAllZonesListinesPdf(zonesData, { driverName: defaultDriverName, placa: defaultPlaca, fecha }, filename);
+            showToast(`Documento PDF (${zonesData.length} zonas) descargado exitosamente`, 'success');
           }
-
-          const filename = `Listines_Envias_Todas_Las_Zonas_${fecha}.pdf`;
-          downloadAllZonesListinesPdf(zonesData, { driverName, placa, fecha }, filename);
-
-          showToast(`Documento PDF (${zonesData.length} zonas) descargado exitosamente`, 'success');
         } catch (err) {
           console.error('Error al generar PDF multipágina:', err);
           showToast('Error al exportar lote de listines. Abriendo impresión...', 'error');
