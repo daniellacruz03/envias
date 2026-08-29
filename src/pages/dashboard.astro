@@ -6427,15 +6427,74 @@ const userInitials = currentUser.nombre
       // Operaciones en Lote Multi-Guía
       (window as any).updateMultiGuiaStatus = async function(guiaIdsCsv: string, newStatus: string) {
         const ids = guiaIdsCsv.split(',').map(s => s.trim()).filter(Boolean);
-        for (const id of ids) {
-          await (window as any).updateShipmentStatus(id, newStatus);
+        if (ids.length === 0) return;
+
+        try {
+          const res = await fetch('/api/guias/lote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'bulk_assign',
+              ids_guias: ids,
+              cambiar_estado: newStatus
+            })
+          });
+
+          const json = await res.json();
+          if (res.ok && json.success) {
+            shipments.forEach(s => {
+              if (ids.includes(s.id_guia)) {
+                s.estado = newStatus;
+              }
+            });
+            renderViews();
+            updateKPIs();
+            showToast(`Estado actualizado a "${newStatus}" para ${ids.length} guía${ids.length > 1 ? 's' : ''}`, 'info');
+          } else {
+            showToast(json.message || 'Error al actualizar estado', 'error');
+          }
+        } catch (err) {
+          showToast('Error de red al actualizar estado', 'error');
         }
       };
 
       (window as any).updateMultiGuiaDriver = async function(guiaIdsCsv: string, driverIdVal: string) {
         const ids = guiaIdsCsv.split(',').map(s => s.trim()).filter(Boolean);
-        for (const id of ids) {
-          await (window as any).updateShipmentDriver(id, driverIdVal);
+        if (ids.length === 0) return;
+        const chofer_id = driverIdVal ? parseInt(driverIdVal, 10) : null;
+        const driverObj = drivers.find(d => d.id === chofer_id);
+        const driverName = driverObj ? driverObj.nombre : 'Sin Asignar';
+
+        try {
+          const res = await fetch('/api/guias/lote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'bulk_assign',
+              ids_guias: ids,
+              chofer_id: chofer_id,
+              cambiar_estado: chofer_id ? 'En ruta' : undefined
+            })
+          });
+
+          const json = await res.json();
+          if (res.ok && json.success) {
+            shipments.forEach(s => {
+              if (ids.includes(s.id_guia)) {
+                s.chofer_asignado_id = chofer_id;
+                s.chofer_nombre = driverObj ? driverObj.nombre : null;
+                if (chofer_id && s.estado !== 'Entregado') {
+                  s.estado = 'En ruta';
+                }
+              }
+            });
+            renderViews();
+            showToast(`Chofer ${driverName} asignado para ${ids.map(i => '#' + i).join(', ')}`, 'info');
+          } else {
+            showToast(json.message || 'Error al asignar chofer', 'error');
+          }
+        } catch (err) {
+          showToast('Error de red al asignar chofer', 'error');
         }
       };
 
@@ -7289,6 +7348,7 @@ const userInitials = currentUser.nombre
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              action: 'bulk_assign',
               ciudad_destino: cityName,
               chofer_id: chofer_id,
               cambiar_estado: chofer_id ? 'En ruta' : undefined // Al asignar chofer masivo pasa a 'En ruta'
@@ -7310,7 +7370,7 @@ const userInitials = currentUser.nombre
             });
 
             renderViews();
-            showToast(`Se asignaron ${json.count || 'las'} guías de ${cityName} a ${driverName} (En ruta)`, 'success');
+            showToast(`Se asignaron ${json.count || 'las'} guías de ${cityName} a ${driverName}${chofer_id ? ' (En ruta)' : ''}`, 'success');
           } else {
             showToast(json.message || 'Error al asignar chofer en lote', 'error');
           }
@@ -8713,6 +8773,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              action: 'bulk_assign',
               chofer_id: driverId,
               cambiar_estado: 'En ruta'
             })

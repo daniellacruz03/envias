@@ -3,7 +3,7 @@ import { query } from '../../../lib/db';
 import { getUserFromCookies } from '../../../lib/auth';
 import { ensureRutasArchivadasSchema } from '../../../lib/rutas_db';
 
-// POST /api/guias/lote - Creación manual, asignación y edición de lotes y fechas de despacho
+// POST /api/guias/lote - Creación manual/edición de lotes de despacho y asignación masiva de chofer/estado
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     const user = getUserFromCookies(cookies);
@@ -17,7 +17,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     if (user.rol === 'Chofer') {
       return new Response(JSON.stringify({
         success: false,
-        message: 'Acceso restringido: Solo el personal de Logística o Admin puede gestionar lotes.'
+        message: 'Acceso restringido: Solo el personal de Logística o Admin puede gestionar lotes o asignaciones.'
       }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' }
@@ -33,11 +33,15 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       old_lote,
       new_lote,
       fecha,
-      guia_ids
+      guia_ids,
+      ids_guias,
+      ciudad_destino,
+      chofer_id,
+      cambiar_estado
     } = body;
 
-    // 1. ACCIÓN: Asignar lote y opcionalmente fecha a una lista de guías
-    if (action === 'assign' || action === 'create') {
+    // 1. ACCIÓN: Asignar lote de despacho y opcionalmente fecha a una lista de guías
+    if ((action === 'assign' || action === 'create' || action === 'assign_lote' || action === 'create_lote') && (lote_despacho || new_lote)) {
       const targetLote = (lote_despacho || new_lote || '').trim();
       if (!targetLote) {
         return new Response(JSON.stringify({
@@ -49,8 +53,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         });
       }
 
-      const ids = Array.isArray(guia_ids)
-        ? guia_ids.map(id => id.toString().trim().toUpperCase()).filter(Boolean)
+      const ids = Array.isArray(guia_ids || ids_guias)
+        ? (guia_ids || ids_guias).map((id: any) => id.toString().trim().toUpperCase()).filter(Boolean)
         : [];
 
       let updatedCount = 0;
@@ -164,8 +168,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // 3. ACCIÓN: Actualizar fecha de una o varias guías específicas
     if (action === 'update_date') {
-      const ids = Array.isArray(guia_ids)
-        ? guia_ids.map(id => id.toString().trim().toUpperCase()).filter(Boolean)
+      const ids = Array.isArray(guia_ids || ids_guias)
+        ? (guia_ids || ids_guias).map((id: any) => id.toString().trim().toUpperCase()).filter(Boolean)
         : [];
 
       if (ids.length === 0 || !fecha) {
@@ -200,9 +204,169 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
+    // 4. ACCIÓN: Asignación Masiva / Operación en Lote (por Ciudad, Chofer o IDs de Guías)
+    const hasChoferParam = chofer_id !== undefined;
+    const choferIdParsed = (chofer_id !== undefined && chofer_id !== null && chofer_id !== '')
+      ? parseInt(chofer_id.toString(), 10)
+      : null;
+
+    const ids = Array.isArray(ids_guias || guia_ids)
+      ? (ids_guias || guia_ids).map((id: any) => id.toString().trim().toUpperCase()).filter(Boolean)
+      : [];
+
+    const isBulkOperation =
+      action === 'bulk_assign' ||
+      action === 'bulk' ||
+      action === 'batch' ||
+      action === 'assign_driver' ||
+      action === 'assign_chofer' ||
+      action === 'assign' ||
+      ciudad_destino !== undefined ||
+      (hasChoferParam && !lote_despacho && !old_lote) ||
+      (ids.length > 0 && (hasChoferParam || cambiar_estado));
+
+    if (isBulkOperation) {
+      let updateQuery = '';
+      let queryParams: any[] = [];
+
+      // A. Masivo por lista explícita de IDs
+      if (ids.length > 0) {
+        if (hasChoferParam && cambiar_estado) {
+          updateQuery = `
+            UPDATE guias
+            SET 
+              chofer_asignado_id = $1,
+              estado = $2
+            WHERE id_guia = ANY($3)
+            RETURNING id_guia, destinatario, ciudad_destino, estado, chofer_asignado_id
+          `;
+          queryParams = [choferIdParsed, cambiar_estado, ids];
+        } else if (hasChoferParam) {
+          updateQuery = `
+            UPDATE guias
+            SET chofer_asignado_id = $1
+            WHERE id_guia = ANY($2)
+            RETURNING id_guia, destinatario, ciudad_destino, estado, chofer_asignado_id
+          `;
+          queryParams = [choferIdParsed, ids];
+        } else if (cambiar_estado) {
+          updateQuery = `
+            UPDATE guias
+            SET estado = $1
+            WHERE id_guia = ANY($2)
+            RETURNING id_guia, destinatario, ciudad_destino, estado, chofer_asignado_id
+          `;
+          queryParams = [cambiar_estado, ids];
+        }
+      }
+      // B. Masivo por Ciudad de Destino
+      else if (ciudad_destino && typeof ciudad_destino === 'string') {
+        const cleanCiudad = ciudad_destino.trim();
+        if (hasChoferParam && cambiar_estado) {
+          updateQuery = `
+            UPDATE guias
+            SET 
+              chofer_asignado_id = $1,
+              estado = CASE WHEN estado != 'Entregado' THEN $2 ELSE estado END
+            WHERE TRIM(LOWER(ciudad_destino)) = TRIM(LOWER($3))
+            RETURNING id_guia, destinatario, ciudad_destino, estado, chofer_asignado_id
+          `;
+          queryParams = [choferIdParsed, cambiar_estado, cleanCiudad];
+        } else if (hasChoferParam) {
+          updateQuery = `
+            UPDATE guias
+            SET chofer_asignado_id = $1
+            WHERE TRIM(LOWER(ciudad_destino)) = TRIM(LOWER($2))
+            RETURNING id_guia, destinatario, ciudad_destino, estado, chofer_asignado_id
+          `;
+          queryParams = [choferIdParsed, cleanCiudad];
+        } else if (cambiar_estado) {
+          updateQuery = `
+            UPDATE guias
+            SET estado = CASE WHEN estado != 'Entregado' THEN $1 ELSE estado END
+            WHERE TRIM(LOWER(ciudad_destino)) = TRIM(LOWER($2))
+            RETURNING id_guia, destinatario, ciudad_destino, estado, chofer_asignado_id
+          `;
+          queryParams = [cambiar_estado, cleanCiudad];
+        }
+      }
+      // C. Masivo por Chofer (ej. despachar todas sus guías activas a 'En ruta')
+      else if (choferIdParsed !== null) {
+        if (cambiar_estado) {
+          updateQuery = `
+            UPDATE guias
+            SET estado = $1
+            WHERE chofer_asignado_id = $2 AND estado != 'Entregado'
+            RETURNING id_guia, destinatario, ciudad_destino, estado, chofer_asignado_id
+          `;
+          queryParams = [cambiar_estado, choferIdParsed];
+        } else {
+          updateQuery = `
+            UPDATE guias
+            SET chofer_asignado_id = $1
+            WHERE chofer_asignado_id = $1
+            RETURNING id_guia, destinatario, ciudad_destino, estado, chofer_asignado_id
+          `;
+          queryParams = [choferIdParsed];
+        }
+      }
+
+      if (!updateQuery) {
+        return new Response(JSON.stringify({
+          success: false,
+          message: 'Debe especificar una ciudad de destino, una lista de guías o un chofer para la operación en lote.'
+        }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      const result = await query(updateQuery, queryParams);
+      const updatedCount = result.rowCount || result.rows.length;
+      const updatedIds = result.rows.map((r: any) => r.id_guia);
+
+      let fullGuiasResult: any = { rows: [] };
+      if (updatedIds.length > 0) {
+        fullGuiasResult = await query(`
+          SELECT 
+            g.id_guia,
+            g.destinatario,
+            g.telefono_principal,
+            g.telefono_secundario,
+            g.ciudad_destino,
+            g.piezas,
+            g.pies_cubicos,
+            g.direccion_referencia,
+            g.estado,
+            g.gps_latitud,
+            g.gps_longitud,
+            g.gps_confirmado,
+            g.chofer_asignado_id,
+            g.created_at,
+            g.lote_despacho,
+            u.nombre AS chofer_nombre,
+            u.telefono AS chofer_telefono
+          FROM guias g
+          LEFT JOIN usuarios u ON g.chofer_asignado_id = u.id
+          WHERE g.id_guia = ANY($1)
+          ORDER BY g.created_at DESC
+        `, [updatedIds]);
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: `Se actualizaron ${updatedCount} guía${updatedCount !== 1 ? 's' : ''} exitosamente.`,
+        count: updatedCount,
+        data: fullGuiasResult.rows
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     return new Response(JSON.stringify({
       success: false,
-      message: 'Acción no reconocida. Acciones válidas: assign, create, edit_lote, rename, update_date.'
+      message: 'Acción no reconocida. Acciones válidas: assign, create, edit_lote, rename, update_date o asignación masiva de chofer/ciudad.'
     }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' }
@@ -212,7 +376,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     console.error('[API /api/guias/lote Error]:', error);
     return new Response(JSON.stringify({
       success: false,
-      message: 'Error en el servidor al gestionar lote',
+      message: 'Error en el servidor al procesar la operación de lote',
       error: error.message
     }), {
       status: 500,
