@@ -6062,6 +6062,7 @@ const userInitials = currentUser.nombre
                 ${driver.nombre}
               </option>
             `).join('')}
+            <option value="unassign">-- Desasignar / Sin chofer --</option>
           `;
 
           return `
@@ -7332,16 +7333,29 @@ const userInitials = currentUser.nombre
         }
       };
 
+      const assigningCities = new Set<string>();
+
       // Asignar Chofer a toda la ciudad
       (window as any).assignDriverToCity = async (cityName: string) => {
+        if (assigningCities.has(cityName)) return;
+
         const cityKey = encodeURIComponent(cityName);
         const driverSelect = document.getElementById(`bulk-driver-${cityKey}`) as HTMLSelectElement;
         if (!driverSelect) return;
 
-        const driverIdStr = driverSelect.value;
-        const chofer_id = driverIdStr ? parseInt(driverIdStr, 10) : null;
-        const driverObj = drivers.find(d => d.id === chofer_id);
+        const driverIdStr = (driverSelect.value || '').trim();
+        if (!driverIdStr) {
+          showToast(`Seleccione un chofer de la lista antes de presionar "Asignar a todas" para ${cityName}`, 'warning');
+          driverSelect.focus();
+          return;
+        }
+
+        const isUnassign = driverIdStr === 'unassign' || driverIdStr === 'none';
+        const chofer_id = isUnassign ? null : parseInt(driverIdStr, 10);
+        const driverObj = !isUnassign ? drivers.find(d => d.id === chofer_id) : null;
         const driverName = driverObj ? driverObj.nombre : 'Sin Asignar';
+
+        assigningCities.add(cityName);
 
         try {
           const res = await fetch('/api/guias/lote', {
@@ -7370,13 +7384,20 @@ const userInitials = currentUser.nombre
             });
 
             renderViews();
-            showToast(`Se asignaron ${json.count || 'las'} guías de ${cityName} a ${driverName}${chofer_id ? ' (En ruta)' : ''}`, 'success');
+            showToast(
+              chofer_id
+                ? `Se asignaron ${json.count || 'las'} guías de ${cityName} a ${driverName} (En ruta)`
+                : `Se removió la asignación de chofer para las guías de ${cityName}`,
+              'success'
+            );
           } else {
             showToast(json.message || 'Error al asignar chofer en lote', 'error');
           }
         } catch (err) {
           console.error('Error al asignar por lote:', err);
           showToast('Error de red al procesar asignación por lote', 'error');
+        } finally {
+          assigningCities.delete(cityName);
         }
       };
 
