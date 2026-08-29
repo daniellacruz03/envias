@@ -4693,8 +4693,11 @@ const userInitials = currentUser.nombre
 
         shipments.forEach(g => {
           const info = getGuiaWeekInfo(g);
-          if (info.isCurrentWeek) currentWeekCount++;
-          if (g.estado === 'No entregado') pastPendingCount++;
+          if (g.estado === 'No entregado') {
+            pastPendingCount++;
+          } else if (info.isCurrentWeek) {
+            currentWeekCount++;
+          }
           if (g.estado === 'Entregado') deliveredReadyCount++;
 
           const code = g.lote_despacho || info.loteCode;
@@ -10169,10 +10172,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           // Filtro por Lote de Despacho / Relación
           if (loteFilter === 'CURRENT_WEEK') {
             const info = getGuiaWeekInfo(g);
-            if (!info.isCurrentWeek) return false;
+            if (!info.isCurrentWeek || g.estado === 'No entregado') return false;
           } else if (loteFilter === 'PENDING_PAST') {
-            const info = getGuiaWeekInfo(g);
-            if (!info.isPastPending) return false;
+            if (g.estado !== 'No entregado') return false;
           } else if (loteFilter !== 'ALL') {
             const info = getGuiaWeekInfo(g);
             const gCode = g.lote_despacho || info.loteCode;
@@ -12240,11 +12242,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
       // Helper: Obtener universo de guías activas para el planificador
       function getActivePlannerShipments(): GuiaRow[] {
-        const isPastIncluded = selectedLotes.has('PENDING_PAST');
-        return shipments.filter(g => {
-          if (isPastIncluded && g.estado === 'No entregado') return true;
-          return g.estado !== 'Entregado' && g.estado !== 'No entregado';
-        });
+        return shipments.filter(g => g.estado !== 'Entregado');
       }
 
       // Helper: Filtrar guías según la selección activa de lotes
@@ -12255,7 +12253,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         return shipmentList.filter(g => {
           const info = getGuiaWeekInfo(g);
           const code = getGuiaLoteCode(g);
-          if (selectedLotes.has('CURRENT_WEEK') && info.isCurrentWeek) return true;
+          if (selectedLotes.has('CURRENT_WEEK') && info.isCurrentWeek && g.estado !== 'No entregado') return true;
           if (selectedLotes.has('PENDING_PAST') && g.estado === 'No entregado') return true;
           if (selectedLotes.has(code)) return true;
           return false;
@@ -12334,13 +12332,12 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             !isNaN(Number(g.gps_latitud)) && !isNaN(Number(g.gps_longitud))
           );
 
-          if (info.isCurrentWeek) {
-            currentWeekTotal++;
-            if (hasGps) currentWeekGps++;
-          }
           if (g.estado === 'No entregado') {
             pastPendingTotal++;
             if (hasGps) pastPendingGps++;
+          } else if (info.isCurrentWeek) {
+            currentWeekTotal++;
+            if (hasGps) currentWeekGps++;
           }
 
           if (!loteCounts[code]) {

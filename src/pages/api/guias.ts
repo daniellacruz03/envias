@@ -5,7 +5,7 @@ import { query } from '../../lib/db';
 export const GET: APIRoute = async ({ url }) => {
   try {
     const incluirArchivadas = url.searchParams.get('incluir_archivadas') === 'true';
-    const whereClause = incluirArchivadas ? '' : 'WHERE (g.archivada = false OR g.archivada IS NULL)';
+    const whereClause = incluirArchivadas ? '' : "WHERE (g.archivada = false OR g.archivada IS NULL OR g.estado = 'No entregado')";
 
     const result = await query(`
       SELECT 

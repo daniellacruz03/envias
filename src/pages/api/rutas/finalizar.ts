@@ -181,15 +181,31 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const rutaArchivada = insertResult.rows[0];
 
-    // 6. Actualizar las guías en la tabla `guias` como archivadas
-    const guiaIds = guias.map(g => g.id_guia);
-    await query(`
-      UPDATE guias
-      SET 
-        archivada = true,
-        ruta_archivada_id = $1
-      WHERE id_guia = ANY($2::text[])
-    `, [rutaArchivada.id, guiaIds]);
+    // 6. Actualizar las guías en la tabla `guias`:
+    // Las guías efectivamente entregadas se archivan; las no entregadas quedan activas como rezagadas para re-despacho
+    const entregadasIds = guias.filter(g => g.estado === 'Entregado').map(g => g.id_guia);
+    const noEntregadasIds = guias.filter(g => g.estado !== 'Entregado').map(g => g.id_guia);
+
+    if (entregadasIds.length > 0) {
+      await query(`
+        UPDATE guias
+        SET 
+          archivada = true,
+          ruta_archivada_id = $1
+        WHERE id_guia = ANY($2::text[])
+      `, [rutaArchivada.id, entregadasIds]);
+    }
+
+    if (noEntregadasIds.length > 0) {
+      await query(`
+        UPDATE guias
+        SET 
+          archivada = false,
+          chofer_asignado_id = NULL,
+          orden_ruta = NULL
+        WHERE id_guia = ANY($1::text[])
+      `, [noEntregadasIds]);
+    }
 
     return new Response(JSON.stringify({
       success: true,
