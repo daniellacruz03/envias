@@ -1116,18 +1116,6 @@ const userInitials = currentUser.nombre
             <div class="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                id="btn-listin-auto-tsp"
-                class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                title="Ordenar zonas en orden alfabético"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                </svg>
-                <span>A-Z Jerarquía</span>
-              </button>
-
-              <button
-                type="button"
                 id="btn-listin-order-routes"
                 onclick="window.orderListinByTSP()"
                 class="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
@@ -10602,7 +10590,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                 ? `Organizar Zona: ${Array.from(listinSelectedZones)[0]}` 
                 : listinSelectedZones.size > 1 
                   ? `Organizar ${listinSelectedZones.size} Zonas Combinadas` 
-                  : 'Orden Jerárquico de Zonas';
+                  : 'Organizar por Zonas / Ciudades';
             }
             if (listinInstructionsText) listinInstructionsText.innerHTML = 'Usa las flechas <span class="font-bold text-slate-700">▲</span> <span class="font-bold text-slate-700">▼</span> o arrastra <span class="font-bold text-slate-700">⠿</span> las zonas y guías para cambiar el orden.';
           } else {
@@ -11671,19 +11659,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         renderListinHierarchy(srcShipments);
       });
 
-      // Ordenar Alfabéticamente / Auto Jerarquía
-      btnListinAutoTsp?.addEventListener('click', () => {
-        listinCitiesOrder.sort((a, b) => a.localeCompare(b));
-        // Ordenar también internamente cada ciudad por # de guía
-        Object.keys(listinCityGuiasOrder).forEach(city => {
-          listinCityGuiasOrder[city].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-        });
-        syncFlatFromRoutesOrZones();
-        showToast('Jerarquía de zonas y guías ordenadas de la A a la Z', 'success');
-        renderListinView();
-      });
-
-      // Enviar Listín Oficial al Chofer (Guarda la asignación y orden jerárquico directamente en su portal)
+      // Enviar Listín Oficial al Chofer (Guarda la asignación y orden de paradas directamente en su portal)
       btnListinSend?.addEventListener('click', async () => {
         const selectedDriverOption = listinDriverSelect?.options[listinDriverSelect.selectedIndex];
         const driverId = listinDriverSelect?.value;
