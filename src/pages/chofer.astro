@@ -34,6 +34,7 @@ const guiasResult = await query(`
     g.direccion_referencia,
     g.hora_disponible,
     g.comprobante_url,
+    g.comprobante_base64,
     g.recibido_por,
     g.orden_ruta,
     g.ruta_origen,
@@ -1763,6 +1764,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               totalPiezas: 0,
               totalPiesCubicos: 0,
               comprobante_url: null,
+              comprobante_base64: null,
               recibido_por: null,
               estado: 'Por contactar'
             };
@@ -1799,6 +1801,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             }
           }
           if (g.comprobante_url) stop.comprobante_url = g.comprobante_url;
+          if (g.comprobante_base64) stop.comprobante_base64 = g.comprobante_base64;
           if (g.recibido_por) stop.recibido_por = g.recibido_por;
         });
 
@@ -2534,11 +2537,29 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       }
 
       window.openLightbox = function(url, title, info, guiaId) {
-        if (!lightboxModal || !lightboxImg || !url) return;
-        if (Array.isArray(url)) {
-          currentLightboxUrls = url;
+        if (!lightboxModal || !lightboxImg) return;
+
+        // Resolver base64 desde guiasData si tenemos el guiaId (más confiable en Railway)
+        var resolvedUrl = url;
+        if (guiaId) {
+          // guiaId puede ser una guía única o la primera de un grupo
+          var firstId = String(guiaId).split(',')[0].trim().toUpperCase();
+          var guiaFound = guiasData.find(function(g) { return g.id_guia === firstId; });
+          if (guiaFound && guiaFound.comprobante_base64) {
+            var b64 = guiaFound.comprobante_base64;
+            if (typeof b64 === 'string' && b64.trim().startsWith('[')) {
+              try { var arr = JSON.parse(b64); if (Array.isArray(arr) && arr.length > 0) resolvedUrl = arr.join(','); } catch(e) {}
+            } else if (typeof b64 === 'string' && b64.startsWith('data:')) {
+              resolvedUrl = b64;
+            }
+          }
+        }
+
+        if (!resolvedUrl) return;
+        if (Array.isArray(resolvedUrl)) {
+          currentLightboxUrls = resolvedUrl;
         } else {
-          currentLightboxUrls = url.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+          currentLightboxUrls = resolvedUrl.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
         }
         currentLightboxIndex = 0;
 
