@@ -24,6 +24,7 @@ export const POST: APIRoute = async ({ request }) => {
     const rawRef = data.direccion_referencia !== undefined ? data.direccion_referencia : data.referencias;
     const direccion_referencia = rawRef && typeof rawRef === 'string' ? rawRef.trim() : null;
     const hora_disponible = data.hora_disponible && typeof data.hora_disponible === 'string' ? data.hora_disponible.trim() : null;
+    const recibido_por = data.recibido_por && typeof data.recibido_por === 'string' ? data.recibido_por.trim() : null;
 
     if (!id_guia) {
       return new Response(
@@ -47,10 +48,11 @@ export const POST: APIRoute = async ({ request }) => {
         gps_longitud = COALESCE($2, gps_longitud),
         gps_confirmado = true,
         direccion_referencia = COALESCE($3, direccion_referencia),
-        hora_disponible = COALESCE($5, hora_disponible)
+        hora_disponible = COALESCE($5, hora_disponible),
+        recibido_por = COALESCE($6, recibido_por)
       WHERE id_guia = $4
       RETURNING *
-    `, [latitud, longitud, direccion_referencia, id_guia, hora_disponible]);
+    `, [latitud, longitud, direccion_referencia, id_guia, hora_disponible, recibido_por]);
 
     if (updateResult.rowCount === 0) {
       return new Response(
@@ -72,7 +74,8 @@ export const POST: APIRoute = async ({ request }) => {
             gps_longitud = COALESCE($2, gps_longitud),
             gps_confirmado = true,
             direccion_referencia = COALESCE($3, direccion_referencia),
-            hora_disponible = COALESCE($4, hora_disponible)
+            hora_disponible = COALESCE($4, hora_disponible),
+            recibido_por = COALESCE($9, recibido_por)
           WHERE (
             (LOWER(TRIM(destinatario)) = LOWER(TRIM($5)) AND LOWER(TRIM(ciudad_destino)) = LOWER(TRIM($6)))
             OR (telefono_principal = $7 AND LENGTH($7) >= 7)
@@ -88,7 +91,8 @@ export const POST: APIRoute = async ({ request }) => {
           guiaPrincipal.destinatario,
           guiaPrincipal.ciudad_destino,
           guiaPrincipal.telefono_principal || '',
-          id_guia
+          id_guia,
+          recibido_por
         ]);
 
         guiasAsociadasActualizadas = (propResult.rows || []).map((r: any) => r.id_guia);
@@ -104,6 +108,7 @@ export const POST: APIRoute = async ({ request }) => {
       longitud,
       referencias: direccion_referencia,
       hora_disponible,
+      recibido_por,
       guiasAsociadasActualizadas,
       recibidoEn: new Date().toISOString()
     });
