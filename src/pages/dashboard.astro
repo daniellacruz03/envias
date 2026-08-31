@@ -2195,10 +2195,14 @@ const userInitials = currentUser.nombre
 
             <!-- Botones de Acción de Circuito -->
             <div class="flex items-center justify-between gap-2 pt-1 flex-wrap">
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1.5 flex-wrap">
                 <button type="button" id="btn-optimize-circuit" onclick="window.optimizeCircuit()" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95" title="Reordenar por cercanía satelital">
                   <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                   <span>Optimizar Circuito</span>
+                </button>
+                <button type="button" id="btn-manual-order" onclick="window.activateOrderingMode()" class="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95" title="Ordenar manualmente haciendo clic en cada parada">
+                  <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+                  <span>Ordenar manualmente</span>
                 </button>
                 <button type="button" id="btn-toggle-route-map" onclick="window.togglePlannerRouteMap()" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border border-slate-200 active:scale-95">
                   <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
@@ -13087,6 +13091,52 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         });
       }
 
+      // ===== Modo de Ordenamiento Manual por Clic =====
+      // orderQueue: orden en que el usuario va haciendo clic (posición 0 = primera parada)
+      let orderQueue: number[] = []; // índices de circuitStops en el orden seleccionado
+      let orderingMode = false;      // true cuando el usuario está asignando orden manualmente
+
+      function activateOrderingMode() {
+        orderQueue = [];
+        orderingMode = true;
+        renderCircuitStops();
+        showToast('Modo de ordenamiento activo: haz clic en cada parada en el orden que quieres recorrerla (1, 2, 3...)', 'info');
+      }
+
+      function applyOrderQueue() {
+        if (orderQueue.length !== circuitStops.length) {
+          showToast(`Selecciona todas las paradas (${circuitStops.length}) antes de aplicar el orden.`, 'error');
+          return;
+        }
+        const newOrder = orderQueue.map(i => circuitStops[i]);
+        circuitStops = newOrder;
+        orderingMode = false;
+        orderQueue = [];
+        circuitOptimized = false;
+        renderCircuitStops();
+        showToast('Orden aplicado correctamente.', 'success');
+      }
+
+      function cancelOrderingMode() {
+        orderingMode = false;
+        orderQueue = [];
+        renderCircuitStops();
+      }
+
+      window.clickOrderStop = function(idx: number) {
+        if (!orderingMode) return;
+        if (orderQueue.includes(idx)) {
+          // Desmarcar: quitar del queue
+          orderQueue = orderQueue.filter(i => i !== idx);
+        } else {
+          orderQueue.push(idx);
+        }
+        renderCircuitStops();
+        if (orderQueue.length === circuitStops.length) {
+          applyOrderQueue();
+        }
+      };
+
       // Función: renderizar las tarjetas de paradas con ETA
       function renderCircuitStops() {
         if (!plannerStopsList) return;
@@ -13191,17 +13241,43 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         if (plannerEtaEndMetric) plannerEtaEndMetric.textContent = etaFinalStr;
 
         // Renderizar tarjetas
-        plannerStopsList.innerHTML = stopData.map(({ stop, idx, distKm, travelMin, etaStr, horaAlert }) => {
+        // Banner de modo ordenamiento activo
+        const orderBannerHtml = orderingMode ? `
+          <div class="flex items-center justify-between gap-2 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-2.5 mb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-5 h-5 rounded-full bg-amber-400 text-white text-[10px] font-black flex items-center justify-center animate-pulse">${orderQueue.length + 1}</div>
+              <span class="text-xs font-bold text-amber-800">Modo Ordenar: haz clic en la parada que quieres en la posición <strong>${orderQueue.length + 1}</strong> de ${circuitStops.length}</span>
+            </div>
+            <button type="button" onclick="window.cancelOrderingMode()" class="text-[10px] font-bold text-amber-700 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-2 py-1 rounded-lg transition-colors cursor-pointer">Cancelar</button>
+          </div>
+        ` : '';
+
+        const stopCards = stopData.map(({ stop, idx, distKm, travelMin, etaStr, horaAlert }) => {
           const lat = stop.lat;
           const lon = stop.lon;
           const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
           const isGrouped = stop.guias.length > 1;
 
+          // Estado en el modo de ordenamiento
+          const posInQueue = orderQueue.indexOf(idx);
+          const isSelected = posInQueue !== -1;
+          const borderClass = orderingMode
+            ? (isSelected ? 'border-emerald-400 bg-emerald-50/40 shadow-sm' : 'border-amber-200 bg-amber-50/30 hover:border-amber-400 cursor-pointer')
+            : (isGrouped ? 'border-indigo-200 shadow-xs' : 'border-slate-200 hover:border-slate-300');
+
+          const stopNumBadge = orderingMode
+            ? (isSelected
+                ? `<span class="w-7 h-7 rounded-xl bg-emerald-500 text-white text-[11px] font-black flex items-center justify-center shadow-xs ring-2 ring-emerald-300">${posInQueue + 1}</span>`
+                : `<span class="w-7 h-7 rounded-xl bg-amber-400 text-white text-[11px] font-black flex items-center justify-center shadow-xs opacity-60">?</span>`)
+            : `<span class="w-7 h-7 rounded-xl ${circuitOptimized ? 'bg-indigo-600' : 'bg-slate-800'} text-white text-[11px] font-black flex items-center justify-center shadow-xs">${idx + 1}</span>`;
+
+          const clickAttr = orderingMode ? `onclick="window.clickOrderStop(${idx})" style="cursor:pointer"` : '';
+
           return `
-            <div class="group flex items-start gap-2.5 bg-white border ${isGrouped ? 'border-indigo-200 shadow-xs' : 'border-slate-200'} rounded-2xl p-3.5 hover:border-slate-300 transition-all">
+            <div class="group flex items-start gap-2.5 bg-white border ${borderClass} rounded-2xl p-3.5 transition-all select-none" ${clickAttr}>
               <!-- Número de parada -->
               <div class="flex flex-col items-center gap-0.5 shrink-0 pt-0.5">
-                <span class="w-7 h-7 rounded-xl ${circuitOptimized ? 'bg-indigo-600' : 'bg-slate-800'} text-white text-[11px] font-black flex items-center justify-center shadow-xs">${idx + 1}</span>
+                ${stopNumBadge}
                 ${idx < circuitStops.length - 1 ? '<div class="w-px h-3 bg-slate-200 rounded-full"></div>' : ''}
               </div>
 
@@ -13260,23 +13336,23 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                     ${stop.totalVolumen > 0 ? `<span class="text-[10px] text-slate-500 font-medium">${stop.totalVolumen.toFixed(2)} ft³</span>` : ''}
                     ${horaAlert}
                   </div>
-                  <!-- Botones de acción -->
-                  <div class="flex items-center gap-1">
+                  <!-- Botones de acción (ocultos en modo ordenamiento) -->
+                  ${!orderingMode ? `
+                  <div class="flex items-center gap-1" onclick="event.stopPropagation()">
                     <a href="${gmapsUrl}" target="_blank" rel="noopener" class="p-1 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors" title="Ver en Google Maps">
                       <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                     </a>
-                    <button type="button" onclick="window.moveCircuitStop(${idx}, -1)" class="p-1 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors ${idx === 0 ? 'opacity-30 cursor-default' : 'cursor-pointer'}" title="Subir parada" ${idx === 0 ? 'disabled' : ''}>
-                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-                    </button>
-                    <button type="button" onclick="window.moveCircuitStop(${idx}, 1)" class="p-1 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors ${idx === circuitStops.length - 1 ? 'opacity-30 cursor-default' : 'cursor-pointer'}" title="Bajar parada" ${idx === circuitStops.length - 1 ? 'disabled' : ''}>
-                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
-                  </div>
+                  </div>` : `
+                  <div class="flex items-center gap-1">
+                    ${isSelected ? `<span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">Parada ${posInQueue + 1} de ${circuitStops.length}</span>` : `<span class="text-[10px] font-semibold text-amber-600">Clic para asignar posicion</span>`}
+                  </div>`}
                 </div>
               </div>
             </div>
           `;
         }).join('');
+
+        plannerStopsList.innerHTML = orderBannerHtml + stopCards;
 
         // Generar botones de Google Maps por tramos de 9 paradas
         if (plannerGmapsBatchButtons) {
@@ -13304,7 +13380,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         if (plannerMapVisible) renderCircuitMap();
       }
 
-      // Función: mover una parada del circuito manualmente
+      // Función: mover una parada del circuito manualmente (legado, conservado)
       window.moveCircuitStop = function(idx: number, direction: number) {
         const newIdx = idx + direction;
         if (newIdx < 0 || newIdx >= circuitStops.length) return;
@@ -13312,6 +13388,10 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         circuitOptimized = false;
         renderCircuitStops();
       };
+
+      // Exponer funciones de ordenamiento por clic al scope global
+      window.cancelOrderingMode = cancelOrderingMode;
+      window.activateOrderingMode = activateOrderingMode;
 
       // Algoritmo TSP 2-Opt con soporte para Origen y Destino independientes en CircuitStopGroup[]
       function solveDashboard2Opt(originLat: number, originLon: number, endLat: number, endLon: number, stops: CircuitStopGroup[]): CircuitStopGroup[] {
