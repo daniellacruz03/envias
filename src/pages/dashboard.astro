@@ -1375,7 +1375,7 @@ const userInitials = currentUser.nombre
                   aria-label="Seleccionar despacho a organizar"
                   class="w-full text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-600 transition-all cursor-pointer shadow-2xs"
                 >
-                  <option value="ALL">Todas las Guías (Consolidado General)</option>
+                  <option value="" selected>-- Selecciona un Chofer o Ciudad --</option>
                 </select>
               </div>
 
@@ -10588,10 +10588,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         listinDispatchSelect.innerHTML = html;
 
         // Restaurar valor previo si existe y es válido
-        if (currentVal && Array.from(listinDispatchSelect.options).some(o => o.value === currentVal)) {
-          listinDispatchSelect.value = currentVal;
-          listinDispatchSelection = currentVal;
-        } else if (listinDispatchSelection && Array.from(listinDispatchSelect.options).some(o => o.value === listinDispatchSelection)) {
+        if (listinDispatchSelection && Array.from(listinDispatchSelect.options).some(o => o.value === listinDispatchSelection)) {
           listinDispatchSelect.value = listinDispatchSelection;
         } else {
           listinDispatchSelect.value = '';
