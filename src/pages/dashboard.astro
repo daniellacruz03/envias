@@ -323,6 +323,87 @@ const userInitials = currentUser.nombre
 
         /* --- HISTORIAL Y LISTÍN --- */
         #view-container-historial, #view-container-listin { padding: 0.75rem !important; }
+
+        /* ================================================================ */
+        /* --- PLANIFICADOR DE RUTAS: correcciones completas para móvil --- */
+        /* ================================================================ */
+
+        /* Chips de zonas y lotes: scroll táctil y altura razonable */
+        #planner-lote-chips,
+        #planner-zone-chips {
+          max-height: 6.5rem !important;
+          -webkit-overflow-scrolling: touch !important;
+          overflow-y: auto !important;
+          touch-action: pan-y !important;
+        }
+
+        /* Chips individuales: tap targets más grandes */
+        #planner-lote-chips button,
+        #planner-zone-chips button {
+          min-height: 1.875rem !important;
+          padding: 0.25rem 0.625rem !important;
+          font-size: 0.7rem !important;
+        }
+
+        /* Lista de paradas: menor altura y touch-scroll */
+        #planner-stops-list {
+          max-height: 9rem !important;
+          -webkit-overflow-scrolling: touch !important;
+          touch-action: pan-y !important;
+        }
+
+        /* Mapa interno del planificador: más compacto en móvil */
+        #planner-full-route-map {
+          height: 10rem !important;
+        }
+
+        /* Dropdowns de autocompletado de coordenadas: altura limitada */
+        #start-autocomplete-dropdown,
+        #end-autocomplete-dropdown {
+          max-height: 9rem !important;
+          -webkit-overflow-scrolling: touch !important;
+        }
+
+        /* Contenido desplazable principal del modal: touch scroll */
+        #route-planner-modal .flex-1.overflow-y-auto {
+          -webkit-overflow-scrolling: touch !important;
+          touch-action: pan-y !important;
+        }
+
+        /* Métricas del circuito: 2 columnas siempre (ya tiene grid-cols-2 sm:grid-cols-4) */
+        #route-planner-modal .grid.grid-cols-2 {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+
+        /* Sección 4 (chofer/lote): full-col en móvil (ya OK con grid-cols-1) */
+
+        /* Separadores de sección: texto más pequeño */
+        #route-planner-modal .text-xs.font-extrabold.uppercase.tracking-wider {
+          font-size: 0.6rem !important;
+          letter-spacing: 0.05em !important;
+        }
+
+        /* Botones de acción del circuito: fila scrollable horizontal */
+        #route-planner-modal #btn-optimize-circuit,
+        #route-planner-modal #btn-manual-order {
+          font-size: 0.65rem !important;
+          padding: 0.5rem 0.875rem !important;
+        }
+
+        /* Google Maps por Tramos: scroll horizontal */
+        #planner-gmaps-batch-buttons {
+          overflow-x: auto !important;
+          flex-wrap: nowrap !important;
+          -webkit-overflow-scrolling: touch !important;
+          padding-bottom: 0.25rem !important;
+        }
+
+        /* Listín: scroll táctil en la lista jerárquica */
+        #listin-hierarchy-list {
+          max-height: 55vh !important;
+          -webkit-overflow-scrolling: touch !important;
+          touch-action: pan-y !important;
+        }
       } /* fin @media (max-width: 767px) */
     </style>
   </head>
@@ -11075,27 +11156,12 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                       ${isFocused ? 'Hoja de Ruta Activa' : 'Ver Hoja de Ruta'}
                     </button>
 
-                    <!-- Subir Prioridad de Ruta -->
-                    <button
-                      type="button"
-                      onclick="window.moveListinRoute('${route.key}', -1)"
-                      ${routeIdx === 0 ? 'disabled' : ''}
-                      class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                      title="Subir prioridad de ruta"
-                    >
-                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
-                    </button>
-
-                    <!-- Bajar Prioridad de Ruta -->
-                    <button
-                      type="button"
-                      onclick="window.moveListinRoute('${route.key}', 1)"
-                      ${routeIdx === allRoutes.length - 1 ? 'disabled' : ''}
-                      class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                      title="Bajar prioridad de ruta"
-                    >
-                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
+                    <!-- Selector de Posición de Ruta -->
+                    <select
+                      onchange="window.setListinRoutePosition('${route.key}', parseInt(this.value))"
+                      class="h-6 w-9 text-center text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                      title="Cambiar posición de esta ruta"
+                    >${Array.from({length: allRoutes.length}, (_, i) => `<option value="${i+1}"${routeIdx === i ? ' selected' : ''}>${i+1}</option>`).join('')}</select>
 
                     <!-- Expandir / Colapsar -->
                     <button
@@ -11151,27 +11217,12 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                           <div class="flex items-center gap-1 shrink-0">
                             <span class="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono font-bold text-[9px]">${g.piezas || 1} pz${(g.piezas || 1) !== 1 ? 's' : ''}${g.pies_cubicos ? ' · ' + Number(g.pies_cubicos).toFixed(2) + ' ft³' : ''}</span>
                             
-                            <!-- Subir Parada -->
-                            <button
-                              type="button"
-                              onclick="window.moveListinRouteGuia('${route.key}', '${g.id_guia}', -1)"
-                              ${gIdx === 0 ? 'disabled' : ''}
-                              class="p-1 rounded-md bg-slate-50 hover:bg-slate-200 text-slate-700 border border-slate-200 disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
-                              title="Subir esta parada en la ruta"
-                            >
-                              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
-                            </button>
-
-                            <!-- Bajar Parada -->
-                            <button
-                              type="button"
-                              onclick="window.moveListinRouteGuia('${route.key}', '${g.id_guia}', 1)"
-                              ${gIdx === routeGuias.length - 1 ? 'disabled' : ''}
-                              class="p-1 rounded-md bg-slate-50 hover:bg-slate-200 text-slate-700 border border-slate-200 disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
-                              title="Bajar esta parada en la ruta"
-                            >
-                              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-                            </button>
+                            <!-- Selector de Posición de Parada en Ruta -->
+                            <select
+                              onchange="window.setListinRouteGuiaPosition('${route.key}', '${g.id_guia}', parseInt(this.value))"
+                              class="h-5 w-8 text-center text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-md cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                              title="Cambiar posición de esta parada"
+                            >${Array.from({length: routeGuias.length}, (_, i) => `<option value="${i+1}"${gIdx === i ? ' selected' : ''}>${i+1}</option>`).join('')}</select>
                           </div>
                         </div>
                       `;
@@ -11258,27 +11309,12 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                       ${isFocused ? 'Hoja Activa' : 'Ver Hoja'}
                     </button>
 
-                    <!-- Subir Prioridad de Zona -->
-                    <button
-                      type="button"
-                      onclick="window.moveListinCity('${cityName.replace(/'/g, "\\'")}', -1)"
-                      ${cityIdx === 0 ? 'disabled' : ''}
-                      class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                      title="Subir prioridad de zona"
-                    >
-                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
-                    </button>
-
-                    <!-- Bajar Prioridad de Zona -->
-                    <button
-                      type="button"
-                      onclick="window.moveListinCity('${cityName.replace(/'/g, "\\'")}', 1)"
-                      ${cityIdx === listinCitiesOrder.length - 1 ? 'disabled' : ''}
-                      class="p-1 rounded-lg bg-white hover:bg-slate-200 border border-slate-200 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                      title="Bajar prioridad de zona"
-                    >
-                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-                    </button>
+                    <!-- Selector de Posición de Zona -->
+                    <select
+                      onchange="window.setListinCityPosition('${cityName.replace(/'/g, "\\'")}', parseInt(this.value))"
+                      class="h-6 w-9 text-center text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                      title="Cambiar posición de esta zona"
+                    >${Array.from({length: listinCitiesOrder.length}, (_, i) => `<option value="${i+1}"${cityIdx === i ? ' selected' : ''}>${i+1}</option>`).join('')}</select>
 
                     <!-- Expandir / Colapsar -->
                     <button
@@ -11306,7 +11342,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                           ondrop="window.onListinGuiaDrop(event, '${g.id_guia}', '${cityName.replace(/'/g, "\\'")}')"
                           class="flex items-center justify-between py-1.5 px-2 rounded-lg bg-white border border-slate-200/80 shadow-2xs hover:border-slate-300 text-xs gap-2 transition-all"
                         >
-                          <!-- Grip, Checkbox, Posición, Guía y Destinatario -->
+                          <!-- Grip, Checkbox, Guía y Destinatario -->
                           <div class="flex items-center gap-1.5 min-w-0">
                             <span class="text-slate-300 hover:text-slate-600 cursor-grab active:cursor-grabbing shrink-0" title="Arrastrar para reordenar guía">
                               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9h8M8 15h8"/></svg>
@@ -11325,31 +11361,15 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                             <span class="text-slate-600 truncate max-w-[110px] sm:max-w-[130px] font-medium" title="${g.destinatario}">${g.destinatario}</span>
                           </div>
 
-                          <!-- Piezas y Botones ▲ ▼ de Guía -->
+                          <!-- Piezas y Selector de Posición -->
                           <div class="flex items-center gap-1 shrink-0">
                             <span class="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-mono font-bold text-[9px]">${g.piezas || 1} pza${(g.piezas || 1) !== 1 ? 's' : ''}${g.pies_cubicos ? ' · ' + Number(g.pies_cubicos).toFixed(2) + ' ft³' : ''}</span>
-                            
-                            <!-- Subir Guía -->
-                            <button
-                              type="button"
-                              onclick="window.moveListinGuia('${cityName.replace(/'/g, "\\'")}', '${g.id_guia}', -1)"
-                              ${gIdx === 0 ? 'disabled' : ''}
-                              class="p-1 rounded-md bg-slate-50 hover:bg-slate-200 text-slate-700 border border-slate-200 disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
-                              title="Subir esta guía en el orden de entrega"
-                            >
-                              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
-                            </button>
-
-                            <!-- Bajar Guía -->
-                            <button
-                              type="button"
-                              onclick="window.moveListinGuia('${cityName.replace(/'/g, "\\'")}', '${g.id_guia}', 1)"
-                              ${gIdx === cityGuias.length - 1 ? 'disabled' : ''}
-                              class="p-1 rounded-md bg-slate-50 hover:bg-slate-200 text-slate-700 border border-slate-200 disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
-                              title="Bajar esta guía en el orden de entrega"
-                            >
-                              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-                            </button>
+                            <!-- Selector de Posición de Guía en Zona -->
+                            <select
+                              onchange="window.setListinCityGuiaPosition('${cityName.replace(/'/g, "\\'")}', '${g.id_guia}', parseInt(this.value))"
+                              class="h-5 w-8 text-center text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-md cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                              title="Cambiar posición de esta guía"
+                            >${Array.from({length: cityGuias.length}, (_, i) => `<option value="${i+1}"${gIdx === i ? ' selected' : ''}>${i+1}</option>`).join('')}</select>
                           </div>
                         </div>
                       `;
@@ -11412,27 +11432,12 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                     <div class="flex items-center gap-1 shrink-0">
                       <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono font-bold text-[10px]">${g.piezas || 1} pza${(g.piezas || 1) !== 1 ? 's' : ''}${g.pies_cubicos ? ' · ' + Number(g.pies_cubicos).toFixed(2) + ' ft³' : ''}</span>
                       
-                      <!-- Subir Guía Plana -->
-                      <button
-                        type="button"
-                        onclick="window.moveListinFlatGuia('${g.id_guia}', -1)"
-                        ${idx === 0 ? 'disabled' : ''}
-                        class="p-1 rounded-lg bg-slate-50 hover:bg-slate-200 text-slate-700 border border-slate-200 disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
-                        title="Subir esta guía"
-                      >
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7"/></svg>
-                      </button>
-
-                      <!-- Bajar Guía Plana -->
-                      <button
-                        type="button"
-                        onclick="window.moveListinFlatGuia('${g.id_guia}', 1)"
-                        ${idx === flatGuias.length - 1 ? 'disabled' : ''}
-                        class="p-1 rounded-lg bg-slate-50 hover:bg-slate-200 text-slate-700 border border-slate-200 disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
-                        title="Bajar esta guía"
-                      >
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
-                      </button>
+                      <!-- Selector de Posición de Guía Plana -->
+                      <select
+                        onchange="window.setListinFlatGuiaPosition('${g.id_guia}', parseInt(this.value))"
+                        class="h-6 w-9 text-center text-[10px] font-bold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                        title="Cambiar posición de esta guía"
+                      >${Array.from({length: flatGuias.length}, (_, i) => `<option value="${i+1}"${idx === i ? ' selected' : ''}>${i+1}</option>`).join('')}</select>
                     </div>
                   </div>
                 `;
@@ -11597,6 +11602,65 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         listinRoutesOrder[idx] = listinRoutesOrder[newIdx];
         listinRoutesOrder[newIdx] = temp;
         syncFlatFromRoutesOrZones();
+        renderListinView();
+      };
+
+      // Selectores de posición directa (reemplazan las flechas ▲/▼)
+      (window as any).setListinRoutePosition = (routeKey: string, newPos: number) => {
+        const idx = listinRoutesOrder.indexOf(routeKey);
+        if (idx === -1) return;
+        const targetIdx = Math.max(0, Math.min(newPos - 1, listinRoutesOrder.length - 1));
+        if (targetIdx === idx) return;
+        listinRoutesOrder.splice(idx, 1);
+        listinRoutesOrder.splice(targetIdx, 0, routeKey);
+        syncFlatFromRoutesOrZones();
+        renderListinView();
+      };
+
+      (window as any).setListinRouteGuiaPosition = (routeKey: string, guiaId: string, newPos: number) => {
+        const arr = listinRouteGuiasOrder[routeKey];
+        if (!arr) return;
+        const idx = arr.indexOf(guiaId);
+        if (idx === -1) return;
+        const targetIdx = Math.max(0, Math.min(newPos - 1, arr.length - 1));
+        if (targetIdx === idx) return;
+        arr.splice(idx, 1);
+        arr.splice(targetIdx, 0, guiaId);
+        syncFlatFromRoutesOrZones();
+        renderListinView();
+      };
+
+      (window as any).setListinCityPosition = (cityName: string, newPos: number) => {
+        const idx = listinCitiesOrder.indexOf(cityName);
+        if (idx === -1) return;
+        const targetIdx = Math.max(0, Math.min(newPos - 1, listinCitiesOrder.length - 1));
+        if (targetIdx === idx) return;
+        listinCitiesOrder.splice(idx, 1);
+        listinCitiesOrder.splice(targetIdx, 0, cityName);
+        syncFlatFromRoutesOrZones();
+        renderListinView();
+      };
+
+      (window as any).setListinCityGuiaPosition = (cityName: string, guiaId: string, newPos: number) => {
+        const arr = listinCityGuiasOrder[cityName];
+        if (!arr) return;
+        const idx = arr.indexOf(guiaId);
+        if (idx === -1) return;
+        const targetIdx = Math.max(0, Math.min(newPos - 1, arr.length - 1));
+        if (targetIdx === idx) return;
+        arr.splice(idx, 1);
+        arr.splice(targetIdx, 0, guiaId);
+        syncFlatFromRoutesOrZones();
+        renderListinView();
+      };
+
+      (window as any).setListinFlatGuiaPosition = (guiaId: string, newPos: number) => {
+        const idx = listinFlatGuiasOrder.indexOf(guiaId);
+        if (idx === -1) return;
+        const targetIdx = Math.max(0, Math.min(newPos - 1, listinFlatGuiasOrder.length - 1));
+        if (targetIdx === idx) return;
+        listinFlatGuiasOrder.splice(idx, 1);
+        listinFlatGuiasOrder.splice(targetIdx, 0, guiaId);
         renderListinView();
       };
 
