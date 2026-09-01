@@ -2054,17 +2054,28 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         var filteredStops = getFilteredClientStops();
         var activeStopContainer = document.getElementById('active-stop-card-container');
 
-        // Actualizar Banner de Ciudad Hero
+        // Actualizar Banner de Ciudad Hero de forma inteligente
         var activeCityTitle = document.getElementById('active-city-title');
         var activeCitySubtitle = document.getElementById('active-city-subtitle');
-        var mainCity = (allStops[0] && allStops[0].ciudad_destino) ? allStops[0].ciudad_destino : 'Venezuela';
-        if (activeCityTitle) activeCityTitle.textContent = mainCity.toUpperCase();
-        if (activeCitySubtitle) activeCitySubtitle.textContent = 'Ver Clientes (' + mainCity + ')';
+
+        var cityCounts = {};
+        allStops.forEach(function(s) {
+          var c = (s.ciudad_destino || '').trim();
+          if (c) cityCounts[c] = (cityCounts[c] || 0) + 1;
+        });
+        var sortedCitiesByCount = Object.keys(cityCounts).sort(function(a, b) { return cityCounts[b] - cityCounts[a]; });
 
         // Buscar siguiente parada cliente pendiente
         var nextPendingStop = (allStops || []).find(function(s) {
           return s.estado !== 'Entregado' && s.estado !== 'No entregado';
         });
+
+        var mainCity = (nextPendingStop && nextPendingStop.ciudad_destino) 
+          ? nextPendingStop.ciudad_destino 
+          : (sortedCitiesByCount[0] || 'Venezuela');
+
+        if (activeCityTitle) activeCityTitle.textContent = mainCity.toUpperCase();
+        if (activeCitySubtitle) activeCitySubtitle.textContent = 'Ver Clientes (' + mainCity + ')';
 
         if (activeStopContainer) {
           if (nextPendingStop) {
@@ -2132,12 +2143,11 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
       });
 
       // ----------------------------------------------------
-      // MOTOR GEOGRÁFICO Y PLANIFICADOR SPOKE CIRCUIT
+      // MOTOR GEOGRÁFICO Y ENRUTADOR LOCAL ULTRA-PRECISO
       // ----------------------------------------------------
       var map = null;
       var markersLayer = null;
       var routePolyline = null;
-      var routeGlowPolyline = null;
       var isMapVisible = true;
       var markersByGuiaId = {};
 
@@ -2150,16 +2160,22 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           .trim();
       }
 
+      // Validación estricta de coordenadas reales dentro del territorio venezolano
       function getGuiaCoords(item) {
         if (!item) return null;
-        if (item.gps_latitud && item.gps_longitud) {
-          var lat = parseFloat(item.gps_latitud);
-          var lng = parseFloat(item.gps_longitud);
-          if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
-            return [lat, lng];
-          }
+        var lat = parseFloat(item.gps_latitud);
+        var lng = parseFloat(item.gps_longitud);
+        if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) return null;
+
+        // Auto-corrección si latitud y longitud vinieran invertidas
+        if (lat < 0 && lng > 0) {
+          var tmp = lat; lat = lng; lng = tmp;
         }
-        // Estricto: Cero coordenadas inventadas. Solo coordenadas explícitas enviadas por cliente o logística.
+
+        // Bounding Box Geográfico Oficial de Venezuela (Lat: 0.5 a 13.5, Lng: -74.0 a -59.0)
+        if (lat >= 0.5 && lat <= 13.5 && lng >= -74.0 && lng <= -59.0) {
+          return [lat, lng];
+        }
         return null;
       }
 
@@ -2173,104 +2189,28 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       }
 
-      // Algoritmo TSP 2-Opt que optimiza paradas por cliente único con GPS real
-      function solveTSPWith2Opt(origin, stops) {
-        if (!stops || stops.length <= 1) return stops;
-        
-        var withGps = [];
-        var withoutGps = [];
-        
-        stops.forEach(function(s) {
-          if (getGuiaCoords(s)) {
-            withGps.push(s);
-          } else {
-            withoutGps.push(s);
-          }
-        });
-
-        if (withGps.length <= 1) return stops;
-
-        // 1. Agrupar paradas colindantes (< 180m)
-        var clusters = [];
-        var visited = {};
-        for (var i = 0; i < withGps.length; i++) {
-          if (visited[i]) continue;
-          var group = [withGps[i]];
-          visited[i] = true;
-          var cI = getGuiaCoords(withGps[i]);
-          for (var j = i + 1; j < withGps.length; j++) {
-            if (visited[j]) continue;
-            var cJ = getGuiaCoords(withGps[j]);
-            var d = haversineDistance(cI[0], cI[1], cJ[0], cJ[1]);
-            if (d < 0.18) {
-              group.push(withGps[j]);
-              visited[j] = true;
-            }
-          }
-          clusters.push({ coords: cI, items: group });
-        }
-
-        // 2. Nearest Neighbor en clusters con GPS
-        var remaining = clusters.slice();
-        var tour = [];
-        var curr = origin;
-        while (remaining.length > 0) {
-          var bestIdx = 0;
-          var bestDist = Infinity;
-          for (var r = 0; r < remaining.length; r++) {
-            var c = remaining[r].coords;
-            var dist = haversineDistance(curr[0], curr[1], c[0], c[1]);
-            if (dist < bestDist) { bestDist = dist; bestIdx = r; }
-          }
-          var next = remaining.splice(bestIdx, 1)[0];
-          tour.push(next);
-          curr = next.coords;
-        }
-
-        // 3. Refinamiento 2-Opt
-        var improved = true;
-        var iterations = 0;
-        while (improved && iterations < 60) {
-          improved = false;
-          iterations++;
-          for (var a = 0; a < tour.length - 1; a++) {
-            for (var b = a + 1; b < tour.length; b++) {
-              var pA = a === 0 ? origin : tour[a - 1].coords;
-              var pB = tour[a].coords;
-              var pC = tour[b].coords;
-              var pD = b + 1 < tour.length ? tour[b + 1].coords : origin;
-              var dCurrent = haversineDistance(pA[0], pA[1], pB[0], pB[1]) + haversineDistance(pC[0], pC[1], pD[0], pD[1]);
-              var dNew = haversineDistance(pA[0], pA[1], pC[0], pC[1]) + haversineDistance(pB[0], pB[1], pD[0], pD[1]);
-              if (dNew < dCurrent - 0.001) {
-                var sub = tour.slice(a, b + 1).reverse();
-                tour.splice(a, b - a + 1);
-                for (var s = 0; s < sub.length; s++) { tour.splice(a + s, 0, sub[s]); }
-                improved = true;
-              }
-            }
-          }
-        }
-
-        // 4. Aplanar lista con GPS + añadir paradas sin GPS al final
-        var finalStops = [];
-        tour.forEach(function(cl) {
-          cl.items.forEach(function(item) { finalStops.push(item); });
-        });
-        withoutGps.forEach(function(item) { finalStops.push(item); });
-        return finalStops;
-      }
-
-      // Consulta de geometría vial real vía OSRM
+      // Consulta de geometría vial real vía OSRM (optimizada y con filtrado de duplicados)
       async function fetchOSRMRouteGeometry(waypoints) {
         if (!waypoints || waypoints.length < 2) return waypoints;
         try {
-          var pointsToRequest = waypoints.slice(0, 25);
+          // Filtrar puntos repetidos o extremadamente cercanos (< 15 metros) para evitar bucles
+          var deduped = [waypoints[0]];
+          for (var i = 1; i < waypoints.length; i++) {
+            var prev = deduped[deduped.length - 1];
+            var cur = waypoints[i];
+            if (haversineDistance(prev[0], prev[1], cur[0], cur[1]) > 0.015) {
+              deduped.push(cur);
+            }
+          }
+          if (deduped.length < 2) return waypoints;
+
+          var pointsToRequest = deduped.slice(0, 25);
           var url = 'https://router.project-osrm.org/route/v1/driving/' +
             pointsToRequest.map(function(p) { return p[1].toFixed(5) + ',' + p[0].toFixed(5); }).join(';') +
             '?overview=full&geometries=geojson';
 
           var controller = new AbortController();
-          var timeoutId = setTimeout(function() { controller.abort(); }, 3500);
+          var timeoutId = setTimeout(function() { controller.abort(); }, 4000);
           var res = await fetch(url, { signal: controller.signal });
           clearTimeout(timeoutId);
 
@@ -2282,7 +2222,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
             });
           }
         } catch (e) {
-          console.warn('[OSRM Routing Fallback to Direct Geometry]:', e);
+          console.warn('[OSRM Routing Fallback to Direct Lines]:', e);
         }
         return waypoints;
       }
@@ -2312,56 +2252,27 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         markersLayer.clearLayers();
         markersByGuiaId = {};
 
-        var startLabel = (guiasData[0] && guiasData[0].ruta_origen) ? guiasData[0].ruta_origen : 'Sede Principal Barquisimeto';
-        var endLabel = (guiasData[0] && guiasData[0].ruta_destino) ? guiasData[0].ruta_destino : 'Retorno a Sede Principal Barquisimeto';
-        var startCoords = [10.0808, -69.3756]; // Hub Central Barquisimeto
-
         var clientStops = buildClientStops(guiasData);
 
-        // Verificar si las paradas necesitan ordenamiento 2-Opt
-        var needsSorting = clientStops.some(function(s) { return !s.orden_ruta || s.orden_ruta <= 0; });
-        var sortedStops = clientStops.slice();
-        if (needsSorting) {
-          sortedStops = solveTSPWith2Opt(startCoords, sortedStops);
-          sortedStops.forEach(function(s, i) {
-            s.orden_ruta = i + 1;
-            // Sincronizar en guiasData
-            s.guias.forEach(function(g) { g.orden_ruta = i + 1; });
-          });
-        } else {
-          sortedStops.sort(function(a, b) { return (a.orden_ruta || 999) - (b.orden_ruta || 999); });
-        }
+        // Respetar estrictamente la secuencia oficial del despacho (orden_ruta)
+        var sortedStops = clientStops.slice().sort(function(a, b) {
+          var ordA = (a.orden_ruta && a.orden_ruta > 0) ? a.orden_ruta : 999999;
+          var ordB = (b.orden_ruta && b.orden_ruta > 0) ? b.orden_ruta : 999999;
+          if (ordA !== ordB) return ordA - ordB;
+          return (a.destinatario || '').localeCompare(b.destinatario || '');
+        });
 
-        // Actualizar textos del banner de itinerario
-        var routeStartText = document.getElementById('route-start-text');
-        var routeEndText = document.getElementById('route-end-text');
-        var routeStopsCountText = document.getElementById('route-stops-count-text');
-        if (routeStartText) routeStartText.textContent = startLabel;
-        if (routeEndText) routeEndText.textContent = endLabel;
-        if (routeStopsCountText) routeStopsCountText.textContent = sortedStops.length + ' parada(s) (' + guiasData.length + ' guías)';
-
-        // Buscar la siguiente parada cliente pendiente
+        // Buscar siguiente parada cliente pendiente
         var nextPendingStop = sortedStops.find(function(s) { return s.estado !== 'Entregado' && s.estado !== 'No entregado'; });
 
         var waypoints = [];
+        var stopsWithGpsCount = 0;
 
-        // 1. Marcador de Salida / Almacén (Hub)
-        var hubIcon = L.divIcon({
-          html: '<div style="background:#4338ca;width:32px;height:32px;border-radius:10px;border:2.5px solid white;color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;box-shadow:0 3px 10px rgba(67,56,202,0.4);">' +
-                  '<svg style="width:17px;height:17px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>' +
-                '</div>',
-          className: '',
-          iconSize: [32, 32],
-          iconAnchor: [16, 16]
-        });
-        var startMarker = L.marker(startCoords, { icon: hubIcon }).addTo(markersLayer);
-        startMarker.bindPopup('<div style="font-family:inherit;font-size:12px;"><b style="color:#4338ca;">Punto de Salida</b><br/>' + startLabel + '</div>');
-        waypoints.push(startCoords);
-
-        // 2. Marcadores de las paradas agrupadas por cliente en orden del circuito Spoke
+        // Marcadores de paradas reales con coordenadas válidas
         sortedStops.forEach(function(stop, idx) {
           var coords = getGuiaCoords(stop);
           if (coords) {
+            stopsWithGpsCount++;
             var stopNum = stop.orden_ruta && stop.orden_ruta > 0 ? stop.orden_ruta : (idx + 1);
             var isDelivered = stop.estado === 'Entregado';
             var isIncident = stop.estado === 'No entregado';
@@ -2369,9 +2280,9 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
 
             var bgColor = isDelivered ? '#059669' : isIncident ? '#e11d48' : isNextActive ? '#4f46e5' : '#0f172a';
             var pulseClass = isNextActive ? 'active-stop-pulse' : '';
-            var size = isNextActive ? 34 : 28;
+            var size = isNextActive ? 32 : 26;
 
-            var iconHtml = '<div class="' + pulseClass + '" style="background:' + bgColor + ';width:' + size + 'px;height:' + size + 'px;border-radius:50%;border:2.5px solid white;color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;box-shadow:0 3px 8px rgba(0,0,0,0.35);">' +
+            var iconHtml = '<div class="' + pulseClass + '" style="background:' + bgColor + ';width:' + size + 'px;height:' + size + 'px;border-radius:50%;border:2px solid white;color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;box-shadow:0 2px 6px rgba(0,0,0,0.35);">' +
                 stopNum +
               '</div>';
             var icon = L.divIcon({ html: iconHtml, className: '', iconSize: [size, size], iconAnchor: [size/2, size/2] });
@@ -2400,50 +2311,48 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           }
         });
 
-        // 3. Conexión de retorno
-        var normEnd = normalizeGeoText(endLabel);
-        if (normEnd.indexOf('retorno') !== -1 || normEnd.indexOf('sede') !== -1 || normEnd.indexOf('barquisimeto') !== -1) {
-          waypoints.push(startCoords);
-        }
+        // Actualizar textos del banner de itinerario
+        var routeStartText = document.getElementById('route-start-text');
+        var routeEndText = document.getElementById('route-end-text');
+        var routeStopsCountText = document.getElementById('route-stops-count-text');
+        var firstStopName = sortedStops[0] ? sortedStops[0].destinatario : 'Inicio de Ruta';
+        var lastStopName = sortedStops.length > 1 ? sortedStops[sortedStops.length - 1].destinatario : 'Fin de Ruta';
 
-        // 4. Trazado de Carretera Real con OSRM
+        if (routeStartText) routeStartText.textContent = firstStopName;
+        if (routeEndText) routeEndText.textContent = lastStopName;
+        if (routeStopsCountText) routeStopsCountText.textContent = sortedStops.length + ' paradas (' + stopsWithGpsCount + ' con GPS)';
+
+        // Trazado de ruta vial limpia (sin manchas gigantes ni loops irreales a otras ciudades)
         if (routePolyline) { map.removeLayer(routePolyline); routePolyline = null; }
-        if (routeGlowPolyline) { map.removeLayer(routeGlowPolyline); routeGlowPolyline = null; }
 
         if (waypoints.length > 1) {
-          // Primero dibujar polyline provisional rápido
-          routePolyline = L.polyline(waypoints, { color: '#6366f1', weight: 4, opacity: 0.9 }).addTo(map);
+          // Polyline inicial nítida
+          routePolyline = L.polyline(waypoints, {
+            color: '#4f46e5',
+            weight: 3.5,
+            opacity: 0.85,
+            dashArray: '6, 6',
+            lineCap: 'round',
+            lineJoin: 'round'
+          }).addTo(map);
 
-          if (waypoints.length > 0) {
-            map.fitBounds(L.latLngBounds(waypoints), { padding: [40, 40] });
-          }
+          map.fitBounds(L.latLngBounds(waypoints), { padding: [35, 35], maxZoom: 16 });
 
-          // Luego consultar OSRM para reemplazar con la ruta real exacta
+          // Trazo vial con OSRM sobre las calles reales
           fetchOSRMRouteGeometry(waypoints).then(function(roadCoords) {
             if (!roadCoords || roadCoords.length < 2 || !map) return;
             if (routePolyline) map.removeLayer(routePolyline);
-            if (routeGlowPolyline) map.removeLayer(routeGlowPolyline);
 
-            // Capa de resplandor / casing
-            routeGlowPolyline = L.polyline(roadCoords, {
-              color: '#312e81',
-              weight: 7,
-              opacity: 0.35,
-              lineCap: 'round',
-              lineJoin: 'round'
-            }).addTo(map);
-
-            // Capa principal carretera
             routePolyline = L.polyline(roadCoords, {
               color: '#4f46e5',
-              weight: 4,
-              opacity: 0.95,
+              weight: 3.5,
+              opacity: 0.9,
               lineCap: 'round',
               lineJoin: 'round'
             }).addTo(map);
           });
         } else if (waypoints.length === 1) {
-          map.setView(waypoints[0], 14);
+          map.setView(waypoints[0], 15);
         }
       }
 
