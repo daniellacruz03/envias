@@ -335,40 +335,52 @@ const catalogoCobertura = getCatalogoParaCliente();
             </p>
           </div>
 
-          <!-- Receptor Alternativo -->
-          <div class="space-y-3 p-4 bg-amber-50 border border-amber-200/70 rounded-2xl">
-            <div class="flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span class="text-xs font-bold text-amber-900">Otra persona recibira el paquete?</span>
-              <span class="text-[10px] text-amber-600 font-normal">(opcional)</span>
+          <!-- Receptor Alternativo (Persona Autorizada) -->
+          <div class="space-y-3 p-4 bg-amber-50/80 border border-amber-200/90 rounded-2xl">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span class="text-xs font-bold text-amber-950">¿Otra persona recibirá el paquete?</span>
+              </div>
+              <span class="text-[10px] text-amber-700 bg-amber-100/90 border border-amber-200/70 px-2 py-0.5 rounded-full font-bold">Opcional</span>
             </div>
-            <p class="text-[11px] text-amber-700 leading-snug pl-6">
-              Si un familiar, vecino u otra persona recibira el pedido en tu lugar, ingresa sus datos aqui.
+            <p class="text-[11px] text-amber-800 leading-snug pl-6 font-medium">
+              Si un familiar, vecino u otra persona recibirá el pedido en tu lugar, ingresa sus datos aquí.
             </p>
-            <div class="space-y-2 pl-0">
+            <div class="space-y-2.5 pt-0.5">
               <div class="space-y-1">
-                <label for="receptor-nombre" class="block text-[11px] font-bold text-amber-800">Nombre completo de quien recibe</label>
+                <label for="receptor-nombre" class="block text-[11px] font-bold text-slate-800">
+                  Nombre completo de quién recibe
+                </label>
                 <input
                   type="text"
                   id="receptor-nombre"
                   name="receptor_nombre"
                   maxlength="80"
-                  placeholder="Ej: Maria Garcia, vecino del apt 3B..."
-                  class="w-full text-xs bg-white border border-amber-200 rounded-xl p-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400 transition-all"
+                  placeholder="Ej: María García (Familiar / Vecino)"
+                  class="w-full text-xs bg-white border border-amber-200/90 rounded-xl p-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-medium shadow-2xs"
                 />
               </div>
               <div class="space-y-1">
-                <label for="receptor-telefono" class="block text-[11px] font-bold text-amber-800">Telefono de quien recibe <span class="font-normal text-amber-600">(opcional)</span></label>
+                <div class="flex items-center justify-between">
+                  <label for="receptor-telefono" class="block text-[11px] font-bold text-slate-800">
+                    Teléfono de quién recibe
+                  </label>
+                  <span class="text-[10px] font-extrabold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.2 rounded-md">Obligatorio</span>
+                </div>
                 <input
                   type="tel"
                   id="receptor-telefono"
                   name="receptor_telefono"
                   maxlength="20"
                   placeholder="Ej: 0414-1234567"
-                  class="w-full text-xs bg-white border border-amber-200 rounded-xl p-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400 transition-all font-mono"
+                  class="w-full text-xs bg-white border border-amber-200/90 rounded-xl p-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono shadow-2xs"
                 />
+                <p class="text-[10px] text-slate-500 font-medium leading-tight">
+                  Obligatorio para que el conductor pueda llamar directamente al llegar a tu dirección.
+                </p>
               </div>
             </div>
           </div>
@@ -869,8 +881,37 @@ const catalogoCobertura = getCatalogoParaCliente();
 
       const refs = refInput?.value?.trim() || '';
       const hora = horaInput?.value?.trim() || null;
-      const receptorNombre = (document.getElementById('receptor-nombre')?.value || '').trim();
-      const receptorTelefono = (document.getElementById('receptor-telefono')?.value || '').trim();
+      const receptorNombre = (document.getElementById('receptor-nombre') as HTMLInputElement)?.value?.trim() || '';
+      const receptorTelefono = (document.getElementById('receptor-telefono') as HTMLInputElement)?.value?.trim() || '';
+
+      // Validación de Persona Autorizada a Recibir: si se llena un campo, el teléfono es OBLIGATORIO
+      if (receptorNombre && !receptorTelefono) {
+        showError('Teléfono requerido', 'El número de teléfono de quién recibe es obligatorio para que el conductor pueda comunicarse directamente al llegar.');
+        const telInput = document.getElementById('receptor-telefono');
+        telInput?.focus();
+        telInput?.classList.add('border-rose-500', 'ring-2', 'ring-rose-200');
+        setTimeout(() => telInput?.classList.remove('border-rose-500', 'ring-2', 'ring-rose-200'), 3500);
+        return;
+      }
+
+      if (receptorTelefono && !receptorNombre) {
+        showError('Nombre requerido', 'Ingresa el nombre completo de la persona que recibirá el paquete en tu lugar.');
+        const nomInput = document.getElementById('receptor-nombre');
+        nomInput?.focus();
+        nomInput?.classList.add('border-rose-500', 'ring-2', 'ring-rose-200');
+        setTimeout(() => nomInput?.classList.remove('border-rose-500', 'ring-2', 'ring-rose-200'), 3500);
+        return;
+      }
+
+      if (receptorTelefono) {
+        const cleanDigits = receptorTelefono.replace(/\D/g, '');
+        if (cleanDigits.length < 7) {
+          showError('Teléfono incompleto', 'Ingresa un número de teléfono válido de al menos 7 dígitos (ej: 0414-1234567).');
+          const telInput = document.getElementById('receptor-telefono');
+          telInput?.focus();
+          return;
+        }
+      }
 
       // Construir campo recibido_por si hay receptor alternativo
       let recibidoPorCliente = null;
@@ -895,7 +936,9 @@ const catalogoCobertura = getCatalogoParaCliente();
             longitud: currentCoords.longitude,
             direccion_referencia: refs || undefined,
             hora_disponible: hora || undefined,
-            recibido_por: recibidoPorCliente || undefined
+            recibido_por: recibidoPorCliente || undefined,
+            recibe_persona: receptorNombre || undefined,
+            recibe_telefono: receptorTelefono || undefined
           })
         });
 
