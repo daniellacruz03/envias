@@ -25,7 +25,6 @@ export const GET: APIRoute = async ({ cookies }) => {
         ge.lote_id,
         ge.chofer_id,
         ge.foto_url,
-        ge.foto_base64,
         ge.estado,
         ge.created_at,
         u.nombre AS chofer_nombre,
@@ -52,7 +51,7 @@ export const GET: APIRoute = async ({ cookies }) => {
         };
       }
       const lote = lotesMap[row.lote_id];
-      const fotoUrl = row.foto_base64 || row.foto_url;
+      const fotoUrl = row.foto_url || `/uploads/escaneo_${row.id}.jpg`;
       lote.fotos.push({ id: row.id, foto_url: fotoUrl, estado: row.estado, created_at: row.created_at });
       lote.total++;
       if (row.estado === 'pendiente') lote.pendientes++;

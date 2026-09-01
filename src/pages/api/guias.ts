@@ -21,7 +21,6 @@ export const GET: APIRoute = async ({ url }) => {
         g.direccion_referencia,
         g.hora_disponible,
         g.comprobante_url,
-        g.comprobante_base64,
         g.recibido_por,
         g.orden_ruta,
         g.ruta_origen,
@@ -49,7 +48,10 @@ export const GET: APIRoute = async ({ url }) => {
       data: result.rows
     }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      }
     });
   } catch (error: any) {
     console.error('[API /api/guias GET Error]:', error);

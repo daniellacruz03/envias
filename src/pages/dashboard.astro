@@ -4709,15 +4709,27 @@ const userInitials = currentUser.nombre
   }
 
   // Carga Inicial desde PostgreSQL y sincronización en vivo
+      let isSilentRefreshing = false;
+      let lastSecondarySync = 0;
+
       async function init() {
         attachEvents();
         renderLoading();
         await loadData();
 
-        // Polling automático cada 3.5 segundos en segundo plano para Live Sync
+        // Polling adaptativo en segundo plano: 4.5s cuando la pestaña está activa, 15s cuando está en background
         setInterval(() => {
-          silentRefresh();
-        }, 3500);
+          if (document.hidden) {
+            // Si la pestaña está oculta, reducir la frecuencia de sondeo para ahorrar CPU y red
+            const now = Date.now();
+            if (now - lastSecondarySync > 15000) {
+              lastSecondarySync = now;
+              silentRefresh();
+            }
+          } else {
+            silentRefresh();
+          }
+        }, 4500);
       }
 
       function renderLoading() {
@@ -4794,137 +4806,151 @@ const userInitials = currentUser.nombre
         }
       }
 
-      // Sincronización automática silenciosa en tiempo real
+      // Sincronización automática silenciosa en tiempo real optimizada
       async function silentRefresh() {
-        if (isSubmitting || isLoading) return;
+        if (isSubmitting || isLoading || isSilentRefreshing) return;
+        isSilentRefreshing = true;
+
         try {
-          // 1. Sincronizar guías
+          // 1. Sincronizar guías activas (ligero sin base64)
           const res = await fetch('/api/guias');
-          const json = await res.json();
-          if (res.ok && json.success && Array.isArray(json.data)) {
-            const newShipments: GuiaRow[] = json.data;
-            
-            // Detectar cambios en guías, estados o confirmaciones de GPS
-            let hasChanges = false;
-            if (newShipments.length !== shipments.length) {
-              hasChanges = true;
-            } else {
-              for (let i = 0; i < newShipments.length; i++) {
-                const current = shipments.find(s => s.id_guia === newShipments[i].id_guia);
-                if (!current) {
-                  hasChanges = true;
-                  break;
-                }
-                // Si el cliente acaba de confirmar su ubicación GPS
-                if (!current.gps_confirmado && newShipments[i].gps_confirmado) {
-                  showToast(`Ubicación confirmada por el cliente para la guía #${newShipments[i].id_guia}`, 'success');
-                  hasChanges = true;
-                  break;
-                }
-                if (
-                  current.estado !== newShipments[i].estado ||
-                  current.chofer_asignado_id !== newShipments[i].chofer_asignado_id ||
-                  current.direccion_referencia !== newShipments[i].direccion_referencia ||
-                  current.hora_disponible !== newShipments[i].hora_disponible ||
-                  current.empresa !== newShipments[i].empresa
-                ) {
-                  hasChanges = true;
-                  break;
+          if (res.ok) {
+            const json = await res.json();
+            if (json.success && Array.isArray(json.data)) {
+              const newShipments: GuiaRow[] = json.data;
+              
+              // Detectar cambios en guías, estados o confirmaciones de GPS
+              let hasChanges = false;
+              if (newShipments.length !== shipments.length) {
+                hasChanges = true;
+              } else {
+                for (let i = 0; i < newShipments.length; i++) {
+                  const current = shipments.find(s => s.id_guia === newShipments[i].id_guia);
+                  if (!current) {
+                    hasChanges = true;
+                    break;
+                  }
+                  // Si el cliente acaba de confirmar su ubicación GPS
+                  if (!current.gps_confirmado && newShipments[i].gps_confirmado) {
+                    showToast(`Ubicación confirmada por el cliente para la guía #${newShipments[i].id_guia}`, 'success');
+                    hasChanges = true;
+                    break;
+                  }
+                  if (
+                    current.estado !== newShipments[i].estado ||
+                    current.chofer_asignado_id !== newShipments[i].chofer_asignado_id ||
+                    current.direccion_referencia !== newShipments[i].direccion_referencia ||
+                    current.hora_disponible !== newShipments[i].hora_disponible ||
+                    current.recibe_persona !== newShipments[i].recibe_persona ||
+                    current.recibe_telefono !== newShipments[i].recibe_telefono ||
+                    current.empresa !== newShipments[i].empresa
+                  ) {
+                    hasChanges = true;
+                    break;
+                  }
                 }
               }
-            }
 
-            if (hasChanges) {
-              shipments = newShipments;
-              populateCityFilter();
-              loadFrequentClients();
-              renderViews();
+              if (hasChanges) {
+                shipments = newShipments;
+                populateCityFilter();
+                loadFrequentClients();
+                renderViews();
+              }
             }
           }
 
-          // 2. Sincronizar badge de escaneos y lista en tiempo real si está activa la vista
-          try {
-            const escRes = await fetch('/api/escaneos');
-            if (escRes.ok) {
-              const escData = await escRes.json();
-              const totalPend = escData.totalPendientes || 0;
-              const newLotes = escData.data || [];
+          // 2. Sincronizar escaneos sólo si el usuario está en la vista de escaneos o cada 15 segundos
+          const now = Date.now();
+          const shouldSyncSecondary = currentViewMode === 'escaneos' || currentViewMode === 'historial' || (now - lastSecondarySync > 15000);
+          
+          if (shouldSyncSecondary) {
+            lastSecondarySync = now;
 
-              // Actualizar badge numérico en la pestaña
-              if (escaneosCountPill) {
-                if (totalPend > 0) {
-                  escaneosCountPill.textContent = totalPend.toString();
-                  escaneosCountPill.classList.remove('hidden');
-                  escaneosCountPill.className = 'text-[10px] bg-amber-400 text-white px-1.5 py-0.2 rounded-full font-bold';
-                } else {
-                  escaneosCountPill.classList.add('hidden');
-                }
-              }
+            // Escaneos
+            try {
+              const escRes = await fetch('/api/escaneos');
+              if (escRes.ok) {
+                const escData = await escRes.json();
+                const totalPend = escData.totalPendientes || 0;
+                const newLotes = escData.data || [];
 
-              // Si el usuario está viendo la pestaña de escaneos y el drawer NO está abierto
-              const escaneoDrawerEl = document.getElementById('escaneo-drawer');
-              const isDrawerClosed = !escaneoDrawerEl || escaneoDrawerEl.classList.contains('hidden');
-
-              if (currentViewMode === 'escaneos' && isDrawerClosed) {
-                const prevSummary = JSON.stringify(escaneosData.map((l: any) => ({ id: l.lote_id, total: l.total, pend: l.pendientes, proc: l.procesadas })));
-                const newSummary = JSON.stringify(newLotes.map((l: any) => ({ id: l.lote_id, total: l.total, pend: l.pendientes, proc: l.procesadas })));
-
-                if (prevSummary !== newSummary || escaneosData.length === 0) {
-                  escaneosData = newLotes;
-                  const listEl = document.getElementById('escaneos-list');
-                  const emptyEl = document.getElementById('escaneos-empty');
-                  const loadingEl = document.getElementById('escaneos-loading');
-                  loadingEl?.classList.add('hidden');
-
-                  if (escaneosData.length === 0) {
-                    listEl?.classList.add('hidden');
-                    emptyEl?.classList.remove('hidden');
+                if (escaneosCountPill) {
+                  if (totalPend > 0) {
+                    escaneosCountPill.textContent = totalPend.toString();
+                    escaneosCountPill.classList.remove('hidden');
+                    escaneosCountPill.className = 'text-[10px] bg-amber-400 text-white px-1.5 py-0.2 rounded-full font-bold';
                   } else {
-                    emptyEl?.classList.add('hidden');
-                    if (listEl) {
-                      const renderer = typeof renderEscaneoLote === 'function' ? renderEscaneoLote : (window as any).renderEscaneoLote;
-                      if (renderer) {
-                        listEl.innerHTML = escaneosData.map((lote: any) => renderer(lote)).join('');
-                        listEl.classList.remove('hidden');
-                      }
-                    }
-                    drawerFotosFlat = escaneosData.flatMap((lote: any) =>
-                      (lote.fotos || []).filter((f: any) => f.estado === 'pendiente').map((f: any) => ({
-                        ...f,
-                        chofer_nombre: lote.chofer_nombre,
-                        lote_id: lote.lote_id
-                      }))
-                    );
+                    escaneosCountPill.classList.add('hidden');
                   }
                 }
-              }
-            }
-          } catch(e) {}
 
-          // 3. Sincronizar historial de rutas
-          try {
-            const histRes = await fetch('/api/rutas/historial');
-            if (histRes.ok) {
-              const histData = await histRes.json();
-              if (histData.success && Array.isArray(histData.data)) {
-                if (histData.data.length !== historialRoutes.length) {
-                  historialRoutes = histData.data;
-                  if (historialCountPill) {
-                    historialCountPill.textContent = historialRoutes.length.toString();
-                  }
-                  if (historialBadgeCount) {
-                    historialBadgeCount.textContent = `${historialRoutes.length} ruta${historialRoutes.length !== 1 ? 's' : ''} archivada${historialRoutes.length !== 1 ? 's' : ''}`;
-                  }
-                  if (currentViewMode === 'historial') {
-                    (window as any).filterHistorialData();
+                const escaneoDrawerEl = document.getElementById('escaneo-drawer');
+                const isDrawerClosed = !escaneoDrawerEl || escaneoDrawerEl.classList.contains('hidden');
+
+                if (currentViewMode === 'escaneos' && isDrawerClosed) {
+                  const prevSummary = JSON.stringify(escaneosData.map((l: any) => ({ id: l.lote_id, total: l.total, pend: l.pendientes, proc: l.procesadas })));
+                  const newSummary = JSON.stringify(newLotes.map((l: any) => ({ id: l.lote_id, total: l.total, pend: l.pendientes, proc: l.procesadas })));
+
+                  if (prevSummary !== newSummary || escaneosData.length === 0) {
+                    escaneosData = newLotes;
+                    const listEl = document.getElementById('escaneos-list');
+                    const emptyEl = document.getElementById('escaneos-empty');
+                    const loadingEl = document.getElementById('escaneos-loading');
+                    loadingEl?.classList.add('hidden');
+
+                    if (escaneosData.length === 0) {
+                      listEl?.classList.add('hidden');
+                      emptyEl?.classList.remove('hidden');
+                    } else {
+                      emptyEl?.classList.add('hidden');
+                      if (listEl) {
+                        const renderer = typeof renderEscaneoLote === 'function' ? renderEscaneoLote : (window as any).renderEscaneoLote;
+                        if (renderer) {
+                          listEl.innerHTML = escaneosData.map((lote: any) => renderer(lote)).join('');
+                          listEl.classList.remove('hidden');
+                        }
+                      }
+                      drawerFotosFlat = escaneosData.flatMap((lote: any) =>
+                        (lote.fotos || []).filter((f: any) => f.estado === 'pendiente').map((f: any) => ({
+                          ...f,
+                          chofer_nombre: lote.chofer_nombre,
+                          lote_id: lote.lote_id
+                        }))
+                      );
+                    }
                   }
                 }
               }
+            } catch(e) {}
+
+            // Historial (sólo si está en la pestaña o tras cambio)
+            if (currentViewMode === 'historial') {
+              try {
+                const histRes = await fetch('/api/rutas/historial');
+                if (histRes.ok) {
+                  const histData = await histRes.json();
+                  if (histData.success && Array.isArray(histData.data)) {
+                    if (histData.data.length !== historialRoutes.length) {
+                      historialRoutes = histData.data;
+                      if (historialCountPill) {
+                        historialCountPill.textContent = historialRoutes.length.toString();
+                      }
+                      if (historialBadgeCount) {
+                        historialBadgeCount.textContent = `${historialRoutes.length} ruta${historialRoutes.length !== 1 ? 's' : ''} archivada${historialRoutes.length !== 1 ? 's' : ''}`;
+                      }
+                      (window as any).filterHistorialData();
+                    }
+                  }
+                }
+              } catch(e) {}
             }
-          } catch(e) {}
+          }
 
         } catch (err) {
           // Error silencioso de red sin interrumpir al usuario
+        } finally {
+          isSilentRefreshing = false;
         }
       }
 
@@ -8516,7 +8542,11 @@ const userInitials = currentUser.nombre
           }
         });
 
-        searchInput.addEventListener('input', renderViews);
+        let searchDebounceTimer: any = null;
+        searchInput.addEventListener('input', () => {
+          clearTimeout(searchDebounceTimer);
+          searchDebounceTimer = setTimeout(renderViews, 120);
+        });
         filterCiudad.addEventListener('change', renderViews);
         filterEmpresa?.addEventListener('change', renderViews);
         filterEstado.addEventListener('change', renderViews);
