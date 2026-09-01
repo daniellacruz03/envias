@@ -13,6 +13,8 @@ export const GET: APIRoute = async ({ url }) => {
         g.destinatario,
         g.telefono_principal,
         g.telefono_secundario,
+        g.recibe_persona,
+        g.recibe_telefono,
         g.ciudad_destino,
         g.piezas,
         g.pies_cubicos,
@@ -71,6 +73,8 @@ export const POST: APIRoute = async ({ request }) => {
       destinatario,
       telefono_principal,
       telefono_secundario,
+      recibe_persona,
+      recibe_telefono,
       ciudad_destino,
       piezas,
       pies_cubicos,
@@ -140,12 +144,13 @@ export const POST: APIRoute = async ({ request }) => {
       const previousClientGps = await query(`
         SELECT gps_latitud, gps_longitud, hora_disponible 
         FROM guias 
-        WHERE TRIM(LOWER(destinatario)) = TRIM(LOWER($1)) 
+        WHERE TRIM(UPPER(destinatario)) = TRIM(UPPER($1)) 
+          AND TRIM(UPPER(ciudad_destino)) = TRIM(UPPER($2))
           AND gps_confirmado = true 
           AND gps_latitud IS NOT NULL 
         ORDER BY created_at DESC 
         LIMIT 1
-      `, [destinatario.trim()]);
+      `, [destinatario.trim(), ciudad_destino.trim()]);
 
       if (previousClientGps.rows.length > 0) {
         autoGpsConfirmado = true;
@@ -163,6 +168,8 @@ export const POST: APIRoute = async ({ request }) => {
         destinatario,
         telefono_principal,
         telefono_secundario,
+        recibe_persona,
+        recibe_telefono,
         ciudad_destino,
         piezas,
         pies_cubicos,
@@ -176,7 +183,7 @@ export const POST: APIRoute = async ({ request }) => {
         lote_despacho,
         created_at
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, 'Por contactar', $10, $11, $12, $13, $14, $15
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'Por contactar', $12, $13, $14, $15, $16, $17
       )
       RETURNING *
     `, [
@@ -184,6 +191,8 @@ export const POST: APIRoute = async ({ request }) => {
       destinatario.trim(),
       telefono_principal.trim(),
       telefono_secundario ? telefono_secundario.trim() : null,
+      recibe_persona ? recibe_persona.trim() : null,
+      recibe_telefono ? recibe_telefono.trim() : null,
       ciudad_destino.trim(),
       parseInt(piezas, 10) || 1,
       parsedPiesCubicos,
