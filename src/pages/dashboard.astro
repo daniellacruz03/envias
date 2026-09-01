@@ -1364,123 +1364,160 @@ const userInitials = currentUser.nombre
         <div id="view-container-listin" class="hidden p-4 sm:p-6 bg-slate-50/50 space-y-6">
           
           <!-- Barra Superior de Configuración del Listín -->
-          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-wrap items-center justify-between gap-4">
-            <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
-              
-              <!-- Selector Unificado de Despacho (Chofer, Ciudad o Consolidado) -->
-              <div class="space-y-1 min-w-[220px] flex-1 sm:flex-none">
-                <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Despacho / Hoja de Ruta</label>
-                <select
-                  id="listin-dispatch-select"
-                  aria-label="Seleccionar despacho a organizar"
-                  class="w-full text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-600 transition-all cursor-pointer shadow-2xs"
-                >
-                  <option value="" selected>-- Selecciona un Chofer o Ciudad --</option>
-                </select>
-              </div>
-
-              <!-- Selector de Lote / Relación de Despacho -->
-              <div class="space-y-1 min-w-[170px] flex-1 sm:flex-none">
-                <div class="flex items-center justify-between">
-                  <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Lote / Carga</label>
-                  <span id="listin-lote-count-badge" class="text-[10px] font-mono text-indigo-600 font-extrabold">Todos</span>
+          <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm space-y-3.5">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
+                
+                <!-- Selector Unificado de Despacho (Chofer o Consolidado) -->
+                <div class="space-y-1 min-w-[220px] flex-1 sm:flex-none">
+                  <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Chofer / Despacho</label>
+                  <select
+                    id="listin-dispatch-select"
+                    aria-label="Seleccionar despacho a organizar"
+                    class="w-full text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-600 transition-all cursor-pointer shadow-2xs"
+                  >
+                    <option value="" selected>-- Selecciona un Chofer o Vista --</option>
+                  </select>
                 </div>
-                <select
-                  id="listin-lote-select"
-                  aria-label="Filtrar listín por lote"
-                  class="w-full text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer shadow-2xs"
+
+                <!-- Selector de Lote / Relación de Despacho -->
+                <div class="space-y-1 min-w-[170px] flex-1 sm:flex-none">
+                  <div class="flex items-center justify-between">
+                    <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Lote / Carga</label>
+                    <span id="listin-lote-count-badge" class="text-[10px] font-mono text-indigo-600 font-extrabold">Todos</span>
+                  </div>
+                  <select
+                    id="listin-lote-select"
+                    aria-label="Filtrar listín por lote"
+                    class="w-full text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer shadow-2xs"
+                  >
+                    <option value="ALL">Todos los Lotes</option>
+                    <option value="CURRENT_WEEK">Carga Semana Actual</option>
+                    <option value="PENDING_PAST">Pendientes Rezagadas</option>
+                  </select>
+                </div>
+
+                <!-- Input de Placa -->
+                <div class="space-y-1 w-28">
+                  <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Placa</label>
+                  <input
+                    type="text"
+                    id="listin-placa-input"
+                    placeholder="Ej: A84BT9K"
+                    class="w-full text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 uppercase focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-2xs"
+                  />
+                </div>
+
+                <!-- Input de Fecha -->
+                <div class="space-y-1 w-36">
+                  <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Fecha Despacho</label>
+                  <input
+                    type="date"
+                    id="listin-fecha-input"
+                    class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer shadow-2xs"
+                  />
+                </div>
+              </div>
+
+              <!-- Botones de Acción: Restablecer, Imprimir, Descargar PDF y Enviar Listín -->
+              <div class="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  id="btn-listin-reset-order"
+                  onclick="window.resetListinOrder()"
+                  class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                  title="Restablecer el orden inicial de las guías"
                 >
-                  <option value="ALL">Todos los Lotes</option>
-                  <option value="CURRENT_WEEK">Carga Semana Actual</option>
-                  <option value="PENDING_PAST">Pendientes Rezagadas</option>
-                </select>
-              </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Restablecer</span>
+                </button>
 
-              <!-- Input de Placa -->
-              <div class="space-y-1 w-28">
-                <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Placa</label>
-                <input
-                  type="text"
-                  id="listin-placa-input"
-                  placeholder="Ej: A84BT9K"
-                  class="w-full text-xs font-mono font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 uppercase focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all shadow-2xs"
-                />
-              </div>
+                <button
+                  type="button"
+                  id="btn-listin-print"
+                  onclick="window.printListinDirect(false)"
+                  class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                  title="Imprimir o Guardar como PDF directamente en el navegador"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  <span>Imprimir / Guardar</span>
+                </button>
 
-              <!-- Input de Fecha -->
-              <div class="space-y-1 w-36">
-                <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">Fecha Despacho</label>
-                <input
-                  type="date"
-                  id="listin-fecha-input"
-                  class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all cursor-pointer shadow-2xs"
-                />
+                <button
+                  type="button"
+                  id="btn-listin-download-pdf"
+                  class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                  title="Descargar hoja PDF oficial de esta hoja de ruta"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span>Descargar PDF</span>
+                </button>
+
+                <button
+                  type="button"
+                  id="btn-listin-download-all-pdf"
+                  class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 border border-slate-200 shadow-2xs transition-all cursor-pointer"
+                  title="Descargar un archivo PDF multipágina con 1 hoja oficial por cada ruta/chofer"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                  </svg>
+                  <span>PDF Todas</span>
+                </button>
+
+                <button
+                  type="button"
+                  id="btn-listin-send"
+                  class="px-4 py-2 rounded-xl bg-indigo-950 hover:bg-slate-900 active:scale-95 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+                  title="Enviar listín oficial al chofer para que lo consulte en su portal"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                  <span>Enviar Listín</span>
+                </button>
               </div>
             </div>
 
-            <!-- Botones de Acción: Restablecer, Imprimir, Descargar PDF y Enviar Listín -->
-            <div class="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                id="btn-listin-reset-order"
-                onclick="window.resetListinOrder()"
-                class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs"
-                title="Restablecer el orden inicial de las guías"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                <span>Restablecer</span>
-              </button>
-
-              <button
-                type="button"
-                id="btn-listin-print"
-                onclick="window.printListinDirect(false)"
-                class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
-                title="Imprimir o Guardar como PDF directamente en el navegador"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-                <span>Imprimir / Guardar</span>
-              </button>
-
-              <button
-                type="button"
-                id="btn-listin-download-pdf"
-                class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
-                title="Descargar hoja PDF oficial de esta hoja de ruta"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                <span>Descargar PDF</span>
-              </button>
-
-              <button
-                type="button"
-                id="btn-listin-download-all-pdf"
-                class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 border border-slate-200 shadow-2xs transition-all cursor-pointer"
-                title="Descargar un archivo PDF multipágina con 1 hoja oficial por cada ruta/chofer"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-                </svg>
-                <span>PDF Todas</span>
-              </button>
-
-              <button
-                type="button"
-                id="btn-listin-send"
-                class="px-4 py-2 rounded-xl bg-indigo-950 hover:bg-slate-900 active:scale-95 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all cursor-pointer"
-                title="Enviar listín oficial al chofer para que lo consulte en su portal"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-                <span>Enviar Listín</span>
-              </button>
+            <!-- FILA 2: SELECCIÓN MÚLTIPLE DE CIUDADES / ZONAS -->
+            <div id="listin-city-chips-container" class="pt-3 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div class="flex items-center gap-2 flex-wrap flex-1">
+                <div class="flex items-center gap-1.5 shrink-0 text-slate-700">
+                  <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <span class="text-[11px] font-extrabold uppercase tracking-wider">Ciudades a Incluir:</span>
+                </div>
+                <div id="listin-city-chips-list" class="flex flex-wrap items-center gap-1.5">
+                  <!-- Chips dinámicos de ciudades -->
+                </div>
+              </div>
+              
+              <div class="flex items-center gap-2 shrink-0 self-end md:self-auto">
+                <button
+                  type="button"
+                  onclick="window.selectAllListinCities()"
+                  class="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] transition-colors cursor-pointer"
+                  title="Seleccionar todas las ciudades para el listín"
+                >
+                  Seleccionar Todas
+                </button>
+                <button
+                  type="button"
+                  onclick="window.clearListinCities()"
+                  class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 font-bold text-[11px] transition-colors cursor-pointer"
+                  title="Deseleccionar ciudades"
+                >
+                  Limpiar
+                </button>
+              </div>
             </div>
           </div>
 
@@ -10596,6 +10633,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       // MÓDULO 6: CREAR LISTÍN DE CARGA / DESPACHO & EXPORTACIÓN PDF
       // =========================================================
       let listinDispatchSelection: string = '';
+      let listinSelectedCities: Set<string> = new Set();
       let listinCustomSequence: string[] = [];
       let listinExcludedGuiaIds: Set<string> = new Set();
       let listinSearchQuery: string = '';
@@ -10626,11 +10664,94 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         });
       }
 
+      function renderListinCityChips(srcShipments: GuiaRow[]) {
+        const listEl = document.getElementById('listin-city-chips-list');
+        if (!listEl) return;
+
+        const cityCountsMap = new Map<string, number>();
+        srcShipments.forEach(g => {
+          const city = (g.ciudad_destino || 'Sin Ciudad').trim();
+          if (city) {
+            cityCountsMap.set(city, (cityCountsMap.get(city) || 0) + 1);
+          }
+        });
+
+        const sortedCities = Array.from(cityCountsMap.entries()).sort((a, b) => b[1] - a[1]);
+
+        if (sortedCities.length === 0) {
+          listEl.innerHTML = `<span class="text-xs text-slate-400 font-medium">No hay ciudades registradas</span>`;
+          return;
+        }
+
+        listEl.innerHTML = sortedCities.map(([city, count]) => {
+          const isSelected = listinSelectedCities.has(city);
+          return `
+            <button
+              type="button"
+              onclick="window.toggleListinCityChip('${city.replace(/'/g, "\\'")}')"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border transition-all cursor-pointer select-none active:scale-95 ${
+                isSelected
+                  ? 'bg-indigo-600 border-indigo-700 text-white shadow-xs ring-2 ring-indigo-500/25'
+                  : 'bg-slate-50 border-slate-200/90 text-slate-700 hover:border-indigo-300 hover:bg-white hover:text-indigo-900'
+              }"
+              title="${isSelected ? 'Deseleccionar ' + city : 'Incluir ' + city + ' en el listín'}"
+            >
+              ${isSelected ? `
+                <svg class="w-3.5 h-3.5 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+              ` : ''}
+              <span>${city}</span>
+              <span class="px-1.5 py-0.2 rounded-full font-mono text-[10px] font-black ${isSelected ? 'bg-indigo-500 text-white' : 'bg-slate-200/80 text-slate-700'}">${count}</span>
+            </button>
+          `;
+        }).join('');
+      }
+
+      (window as any).toggleListinCityChip = function(cityName: string) {
+        if (listinSelectedCities.has(cityName)) {
+          listinSelectedCities.delete(cityName);
+        } else {
+          listinSelectedCities.add(cityName);
+        }
+
+        if (listinSelectedCities.size > 0 && (!listinDispatchSelection || listinDispatchSelection.startsWith('city-'))) {
+          listinDispatchSelection = 'custom-cities';
+        } else if (listinSelectedCities.size === 0 && listinDispatchSelection === 'custom-cities') {
+          listinDispatchSelection = 'ALL';
+        }
+
+        listinCustomSequence = [];
+        renderListinView();
+      };
+
+      (window as any).selectAllListinCities = function() {
+        const srcShipments = getListinSourceShipments();
+        srcShipments.forEach(g => {
+          const city = (g.ciudad_destino || 'Sin Ciudad').trim();
+          if (city) listinSelectedCities.add(city);
+        });
+        listinDispatchSelection = 'custom-cities';
+        listinCustomSequence = [];
+        showToast('Todas las ciudades seleccionadas para el listín', 'info');
+        renderListinView();
+      };
+
+      (window as any).clearListinCities = function() {
+        listinSelectedCities.clear();
+        if (listinDispatchSelection === 'custom-cities') {
+          listinDispatchSelection = 'ALL';
+        }
+        listinCustomSequence = [];
+        showToast('Filtro de ciudades restablecido', 'info');
+        renderListinView();
+      };
+
       function populateListinDispatchSelect(srcShipments: GuiaRow[]) {
         if (!listinDispatchSelect) return;
         const currentVal = listinDispatchSelect.value;
 
-        let html = `<option value="">-- Selecciona un Chofer o Ciudad para el Listín --</option>`;
+        let html = `<option value="">-- Elige un Chofer o Vista General --</option>`;
 
         // 1. Grupo de Choferes
         const driverOptions: string[] = [];
@@ -10650,57 +10771,56 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           html += `<optgroup label="Flota de Choferes / Rutas Asignadas">${driverOptions.join('')}</optgroup>`;
         }
 
-        // 2. Grupo de Ciudades / Zonas
-        const cityCountsMap = new Map<string, number>();
-        srcShipments.forEach(g => {
-          const city = (g.ciudad_destino || 'Sin Ciudad').trim();
-          if (city) {
-            cityCountsMap.set(city, (cityCountsMap.get(city) || 0) + 1);
-          }
-        });
-
-        const sortedCities = Array.from(cityCountsMap.entries()).sort((a, b) => b[1] - a[1]);
-        if (sortedCities.length > 0) {
-          const cityOptions = sortedCities.map(([city, count]) => 
-            `<option value="city-${city}">Ciudad: ${city} (${count} guías)</option>`
-          );
-          html += `<optgroup label="Por Ciudades / Zonas Individuales">${cityOptions.join('')}</optgroup>`;
-        }
-
-        // 3. Consolidado General (Al final, para no sobrecargar por defecto)
-        html += `<optgroup label="Consolidado General"><option value="ALL">Todas las Guías (${srcShipments.length} guías del país)</option></optgroup>`;
+        // 2. Vistas Generales
+        html += `<optgroup label="Vistas y Consolidado">
+          <option value="ALL">Todas las Guías (${srcShipments.length} guías del país)</option>
+          <option value="custom-cities">Ciudades Seleccionadas en Chips</option>
+        </optgroup>`;
 
         listinDispatchSelect.innerHTML = html;
 
         // Restaurar valor previo si existe y es válido
         if (listinDispatchSelection && Array.from(listinDispatchSelect.options).some(o => o.value === listinDispatchSelection)) {
           listinDispatchSelect.value = listinDispatchSelection;
+        } else if (listinSelectedCities.size > 0) {
+          listinDispatchSelect.value = 'custom-cities';
+          listinDispatchSelection = 'custom-cities';
         } else {
-          listinDispatchSelect.value = '';
-          listinDispatchSelection = '';
+          listinDispatchSelect.value = 'ALL';
+          listinDispatchSelection = 'ALL';
         }
       }
 
       function getFilteredDispatchShipments(srcShipments: GuiaRow[], specificFilter?: string): GuiaRow[] {
         const sel = specificFilter !== undefined ? specificFilter : listinDispatchSelection;
-        if (!sel) {
+        
+        // 1. Filtrado base por ciudades si hay selección activa de ciudades
+        let baseList = srcShipments;
+        if (listinSelectedCities.size > 0) {
+          baseList = srcShipments.filter(g => {
+            const city = (g.ciudad_destino || 'Sin Ciudad').trim();
+            return listinSelectedCities.has(city);
+          });
+        }
+
+        if (!sel && listinSelectedCities.size === 0) {
           return [];
         }
-        if (sel === 'ALL') {
-          return srcShipments;
+        if (sel === 'ALL' || sel === 'custom-cities' || (!sel && listinSelectedCities.size > 0)) {
+          return baseList;
         }
         if (sel.startsWith('driver-')) {
           const dId = Number(sel.replace('driver-', ''));
-          return srcShipments.filter(g => Number(g.chofer_asignado_id) === dId);
+          return baseList.filter(g => Number(g.chofer_asignado_id) === dId);
         }
         if (sel === 'unassigned') {
-          return srcShipments.filter(g => g.chofer_asignado_id == null);
+          return baseList.filter(g => g.chofer_asignado_id == null);
         }
         if (sel.startsWith('city-')) {
           const cityName = sel.replace('city-', '').trim().toUpperCase();
           return srcShipments.filter(g => (g.ciudad_destino || '').trim().toUpperCase() === cityName);
         }
-        return srcShipments;
+        return baseList;
       }
 
       function syncListinCustomSequence(activeShipments: GuiaRow[]) {
@@ -10750,11 +10870,6 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         const listEl = document.getElementById('listin-city-blocks-list');
         if (!wrapper || !listEl) return;
 
-        if (!listinDispatchSelection || listinDispatchSelection.startsWith('city-')) {
-          wrapper.classList.add('hidden');
-          return;
-        }
-
         const filtered = getFilteredDispatchShipments(srcShipments);
         const cityCountsMap = new Map<string, number>();
         filtered.forEach(g => {
@@ -10789,17 +10904,6 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       function renderListinHierarchy(srcShipments: GuiaRow[]) {
         if (!listinHierarchyList) return;
 
-        if (!listinDispatchSelection) {
-          listinHierarchyList.innerHTML = `
-            <div class="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 text-xs space-y-2">
-              <svg class="w-8 h-8 text-indigo-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
-              <p class="font-bold text-slate-800 text-sm">Selecciona un Chofer o Ciudad arriba</p>
-              <p class="text-[11px] text-slate-400">Elige en el selector superior para preparar y ordenar su hoja de despacho.</p>
-            </div>
-          `;
-          return;
-        }
-
         const filtered = getFilteredDispatchShipments(srcShipments);
         syncListinCustomSequence(filtered);
         const mapById = new Map(filtered.map(g => [g.id_guia, g]));
@@ -10817,8 +10921,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
         if (orderedList.length === 0) {
           listinHierarchyList.innerHTML = `
-            <div class="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-400 text-xs">
-              No hay guías registradas para este despacho o término de búsqueda.
+            <div class="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-400 text-xs space-y-1">
+              <p class="font-bold text-slate-700 text-sm">No hay guías para esta selección</p>
+              <p class="text-[11px] text-slate-400">Selecciona o activa las ciudades deseadas arriba para ver sus guías.</p>
             </div>
           `;
           return;
@@ -10880,7 +10985,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                 </div>
               </div>
 
-              <!-- Botones Rápidos de Salto al Inicio y Fin (Sin Flechas Repetitivas) -->
+              <!-- Botones Rápidos de Salto al Inicio y Fin -->
               <div class="flex items-center gap-1 shrink-0">
                 <button
                   type="button"
@@ -10917,36 +11022,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         let destinoTitulo = 'TODAS LAS RUTAS / ZONAS';
         let destinoBadge = 'CONSOLIDADO';
 
-        if (!sel) {
-          if (previewListinFecha) previewListinFecha.textContent = fecha;
-          if (previewListinPlaca) previewListinPlaca.textContent = 'NO ASIGNADA';
-          if (previewListinChofer) previewListinChofer.textContent = 'SELECCIONA UN CHOFER';
-          if (previewListinDestino) previewListinDestino.textContent = 'SIN SELECCIONAR';
-          if (previewListinTitleZona) previewListinTitleZona.textContent = 'SELECCIONA UN CHOFER O CIUDAD EN EL SELECTOR SUPERIOR';
-          if (previewListinCurrentBadge) previewListinCurrentBadge.textContent = 'SIN SELECCIONAR';
-          if (previewTotalGuias) previewTotalGuias.textContent = '0';
-          if (previewTotalPiezas) previewTotalPiezas.textContent = '0';
-          if (previewTotalVolumen) previewTotalVolumen.textContent = '0.00 ft³';
-          if (previewTotalCiudades) previewTotalCiudades.textContent = '0';
-
-          let emptyTableHtml = '';
-          for (let i = 0; i < 20; i++) {
-            emptyTableHtml += `
-              <tr style="height: 25px;" class="border-b border-black text-black">
-                <td class="py-0.5 px-1 border-r border-black font-mono font-bold text-center text-[11px]">&nbsp;</td>
-                <td class="py-0.5 px-0.5 border-r border-black text-center font-bold text-[11px]">&nbsp;</td>
-                <td class="py-0.5 px-0.5 border-r border-black text-center font-mono font-bold text-[10px]">&nbsp;</td>
-                <td class="py-0.5 px-1.5 border-r-2 border-black font-bold uppercase text-[11px]">&nbsp;</td>
-                <td class="py-0.5 px-1 border-r border-black font-mono font-bold text-center text-[11px]">&nbsp;</td>
-                <td class="py-0.5 px-0.5 border-r border-black text-center font-bold text-[11px]">&nbsp;</td>
-                <td class="py-0.5 px-0.5 border-r border-black text-center font-mono font-bold text-[10px]">&nbsp;</td>
-                <td class="py-0.5 px-1.5 font-bold uppercase text-[11px]">&nbsp;</td>
-              </tr>
-            `;
-          }
-          if (previewListinTbody) previewListinTbody.innerHTML = emptyTableHtml;
-          return;
-        }
+        const citiesSelectedList = Array.from(listinSelectedCities);
 
         if (sel.startsWith('driver-')) {
           const dId = Number(sel.replace('driver-', ''));
@@ -10960,12 +11036,18 @@ _Envías C.A. • Transporte y Logística Nacional_`;
               }
             }
           }
-          destinoTitulo = `RUTA: ${driverName.toUpperCase()}`;
+          const citiesText = citiesSelectedList.length > 0 ? citiesSelectedList.join(' · ').toUpperCase() : 'TODAS LAS ZONAS';
+          destinoTitulo = `RUTA: ${driverName.toUpperCase()} (${citiesText})`;
           destinoBadge = `CHOFER: ${driverName.toUpperCase()}`;
         } else if (sel === 'unassigned') {
           driverName = 'SIN ASIGNAR / ALMACÉN';
-          destinoTitulo = 'ENCOMIENDAS EN ALMACÉN CENTRAL';
+          const citiesText = citiesSelectedList.length > 0 ? citiesSelectedList.join(' · ').toUpperCase() : 'TODAS LAS ZONAS';
+          destinoTitulo = `ENCOMIENDAS EN ALMACÉN CENTRAL (${citiesText})`;
           destinoBadge = 'EN ALMACÉN';
+        } else if (citiesSelectedList.length > 0) {
+          const citiesText = citiesSelectedList.join(' + ').toUpperCase();
+          destinoTitulo = `DESTINO: ${citiesText}`;
+          destinoBadge = citiesSelectedList.length <= 2 ? citiesText : `${citiesSelectedList[0]} (+${citiesSelectedList.length - 1} CIUDADES)`;
         } else if (sel.startsWith('city-')) {
           const cityName = sel.replace('city-', '').trim().toUpperCase();
           destinoTitulo = `DESTINO: ${cityName}`;
@@ -11032,15 +11114,18 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       function renderListinView() {
         const srcShipments = getListinSourceShipments();
         populateListinDispatchSelect(srcShipments);
+        renderListinCityChips(srcShipments);
 
         const filtered = getFilteredDispatchShipments(srcShipments);
         if (listinCitiesCount) {
           listinCitiesCount.textContent = `${filtered.length} guía${filtered.length !== 1 ? 's' : ''}`;
         }
         if (listinPanelTitle) {
-          if (!listinDispatchSelection) {
-            listinPanelTitle.textContent = 'Selecciona una Ruta o Chofer';
-          } else if (listinDispatchSelection === 'ALL') {
+          if (listinSelectedCities.size > 0) {
+            const citiesArray = Array.from(listinSelectedCities);
+            const citiesText = citiesArray.length <= 2 ? citiesArray.join(' + ') : `${citiesArray.slice(0, 2).join(' + ')} (+${citiesArray.length - 2})`;
+            listinPanelTitle.textContent = `Secuencia: ${citiesText}`;
+          } else if (listinDispatchSelection === 'ALL' || listinDispatchSelection === 'custom-cities') {
             listinPanelTitle.textContent = 'Secuencia Consolidada (1..N)';
           } else if (listinDispatchSelection.startsWith('driver-')) {
             const dId = Number(listinDispatchSelection.replace('driver-', ''));
@@ -11051,6 +11136,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           } else if (listinDispatchSelection.startsWith('city-')) {
             const cName = listinDispatchSelection.replace('city-', '');
             listinPanelTitle.textContent = `Secuencia: ${cName}`;
+          } else {
+            listinPanelTitle.textContent = 'Secuencia Consolidada (1..N)';
           }
         }
 
@@ -11580,7 +11667,10 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             cityName = `RUTA: ${driverName} • ${rCities}`;
           } else if (sel === 'unassigned') {
             driverName = 'SIN ASIGNAR / ALMACÉN';
-            cityName = 'ENCOMIENDAS EN ALMACÉN CENTRAL';
+            const rCities = Array.from(new Set(orderedActiveGuias.map(g => (g.ciudad_destino || 'Sin Ciudad').trim()))).join(' · ');
+            cityName = `ENCOMIENDAS EN ALMACÉN CENTRAL • ${rCities}`;
+          } else if (listinSelectedCities.size > 0) {
+            cityName = Array.from(listinSelectedCities).join(' + ').toUpperCase();
           } else if (sel.startsWith('city-')) {
             cityName = sel.replace('city-', '').trim().toUpperCase();
           }
@@ -11677,8 +11767,13 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           } else if (sel === 'unassigned') {
             driverName = 'SIN ASIGNAR / ALMACÉN';
             driverClean = 'Almacen';
-            cityName = 'ENCOMIENDAS EN ALMACÉN CENTRAL';
+            const rCities = Array.from(new Set(orderedActiveGuias.map(g => (g.ciudad_destino || 'Sin Ciudad').trim()))).join(' · ');
+            cityName = `ENCOMIENDAS EN ALMACÉN CENTRAL • ${rCities}`;
             zoneClean = 'Almacen_Central';
+          } else if (listinSelectedCities.size > 0) {
+            const citiesArray = Array.from(listinSelectedCities);
+            cityName = citiesArray.join(' + ').toUpperCase();
+            zoneClean = citiesArray.join('_').replace(/[^a-zA-Z0-9_]/g, '');
           } else if (sel.startsWith('city-')) {
             cityName = sel.replace('city-', '').trim().toUpperCase();
             zoneClean = cityName.replace(/[^a-zA-Z0-9]/g, '_');
