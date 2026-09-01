@@ -10510,7 +10510,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       // =========================================================
       // MÓDULO 6: CREAR LISTÍN DE CARGA / DESPACHO & EXPORTACIÓN PDF
       // =========================================================
-      let listinDispatchSelection: string = 'ALL';
+      let listinDispatchSelection: string = '';
       let listinCustomSequence: string[] = [];
       let listinExcludedGuiaIds: Set<string> = new Set();
       let listinSearchQuery: string = '';
@@ -10543,9 +10543,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
       function populateListinDispatchSelect(srcShipments: GuiaRow[]) {
         if (!listinDispatchSelect) return;
-        const currentVal = listinDispatchSelect.value || 'ALL';
+        const currentVal = listinDispatchSelect.value;
 
-        let html = `<option value="ALL">Todas las Guías (Consolidado General - ${srcShipments.length} guías)</option>`;
+        let html = `<option value="">-- Selecciona un Chofer o Ciudad para el Listín --</option>`;
 
         // 1. Grupo de Choferes
         const driverOptions: string[] = [];
@@ -10582,20 +10582,28 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           html += `<optgroup label="Por Ciudades / Zonas Individuales">${cityOptions.join('')}</optgroup>`;
         }
 
+        // 3. Consolidado General (Al final, para no sobrecargar por defecto)
+        html += `<optgroup label="Consolidado General"><option value="ALL">Todas las Guías (${srcShipments.length} guías del país)</option></optgroup>`;
+
         listinDispatchSelect.innerHTML = html;
 
-        // Restaurar valor previo si existe
-        if (Array.from(listinDispatchSelect.options).some(o => o.value === currentVal)) {
+        // Restaurar valor previo si existe y es válido
+        if (currentVal && Array.from(listinDispatchSelect.options).some(o => o.value === currentVal)) {
           listinDispatchSelect.value = currentVal;
           listinDispatchSelection = currentVal;
+        } else if (listinDispatchSelection && Array.from(listinDispatchSelect.options).some(o => o.value === listinDispatchSelection)) {
+          listinDispatchSelect.value = listinDispatchSelection;
         } else {
-          listinDispatchSelect.value = 'ALL';
-          listinDispatchSelection = 'ALL';
+          listinDispatchSelect.value = '';
+          listinDispatchSelection = '';
         }
       }
 
       function getFilteredDispatchShipments(srcShipments: GuiaRow[], specificFilter?: string): GuiaRow[] {
         const sel = specificFilter !== undefined ? specificFilter : listinDispatchSelection;
+        if (!sel) {
+          return [];
+        }
         if (sel === 'ALL') {
           return srcShipments;
         }
@@ -10660,6 +10668,11 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         const listEl = document.getElementById('listin-city-blocks-list');
         if (!wrapper || !listEl) return;
 
+        if (!listinDispatchSelection || listinDispatchSelection.startsWith('city-')) {
+          wrapper.classList.add('hidden');
+          return;
+        }
+
         const filtered = getFilteredDispatchShipments(srcShipments);
         const cityCountsMap = new Map<string, number>();
         filtered.forEach(g => {
@@ -10693,6 +10706,17 @@ _Envías C.A. • Transporte y Logística Nacional_`;
 
       function renderListinHierarchy(srcShipments: GuiaRow[]) {
         if (!listinHierarchyList) return;
+
+        if (!listinDispatchSelection) {
+          listinHierarchyList.innerHTML = `
+            <div class="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 text-xs space-y-2">
+              <svg class="w-8 h-8 text-indigo-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+              <p class="font-bold text-slate-800 text-sm">Selecciona un Chofer o Ciudad arriba</p>
+              <p class="text-[11px] text-slate-400">Elige en el selector superior para preparar y ordenar su hoja de despacho.</p>
+            </div>
+          `;
+          return;
+        }
 
         const filtered = getFilteredDispatchShipments(srcShipments);
         syncListinCustomSequence(filtered);
@@ -10811,6 +10835,37 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         let destinoTitulo = 'TODAS LAS RUTAS / ZONAS';
         let destinoBadge = 'CONSOLIDADO';
 
+        if (!sel) {
+          if (previewListinFecha) previewListinFecha.textContent = fecha;
+          if (previewListinPlaca) previewListinPlaca.textContent = 'NO ASIGNADA';
+          if (previewListinChofer) previewListinChofer.textContent = 'SELECCIONA UN CHOFER';
+          if (previewListinDestino) previewListinDestino.textContent = 'SIN SELECCIONAR';
+          if (previewListinTitleZona) previewListinTitleZona.textContent = 'SELECCIONA UN CHOFER O CIUDAD EN EL SELECTOR SUPERIOR';
+          if (previewListinCurrentBadge) previewListinCurrentBadge.textContent = 'SIN SELECCIONAR';
+          if (previewTotalGuias) previewTotalGuias.textContent = '0';
+          if (previewTotalPiezas) previewTotalPiezas.textContent = '0';
+          if (previewTotalVolumen) previewTotalVolumen.textContent = '0.00 ft³';
+          if (previewTotalCiudades) previewTotalCiudades.textContent = '0';
+
+          let emptyTableHtml = '';
+          for (let i = 0; i < 20; i++) {
+            emptyTableHtml += `
+              <tr style="height: 25px;" class="border-b border-black text-black">
+                <td class="py-0.5 px-1 border-r border-black font-mono font-bold text-center text-[11px]">&nbsp;</td>
+                <td class="py-0.5 px-0.5 border-r border-black text-center font-bold text-[11px]">&nbsp;</td>
+                <td class="py-0.5 px-0.5 border-r border-black text-center font-mono font-bold text-[10px]">&nbsp;</td>
+                <td class="py-0.5 px-1.5 border-r-2 border-black font-bold uppercase text-[11px]">&nbsp;</td>
+                <td class="py-0.5 px-1 border-r border-black font-mono font-bold text-center text-[11px]">&nbsp;</td>
+                <td class="py-0.5 px-0.5 border-r border-black text-center font-bold text-[11px]">&nbsp;</td>
+                <td class="py-0.5 px-0.5 border-r border-black text-center font-mono font-bold text-[10px]">&nbsp;</td>
+                <td class="py-0.5 px-1.5 font-bold uppercase text-[11px]">&nbsp;</td>
+              </tr>
+            `;
+          }
+          if (previewListinTbody) previewListinTbody.innerHTML = emptyTableHtml;
+          return;
+        }
+
         if (sel.startsWith('driver-')) {
           const dId = Number(sel.replace('driver-', ''));
           const driverObj = drivers.find(d => d.id === dId);
@@ -10901,7 +10956,9 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           listinCitiesCount.textContent = `${filtered.length} guía${filtered.length !== 1 ? 's' : ''}`;
         }
         if (listinPanelTitle) {
-          if (listinDispatchSelection === 'ALL') {
+          if (!listinDispatchSelection) {
+            listinPanelTitle.textContent = 'Selecciona una Ruta o Chofer';
+          } else if (listinDispatchSelection === 'ALL') {
             listinPanelTitle.textContent = 'Secuencia Consolidada (1..N)';
           } else if (listinDispatchSelection.startsWith('driver-')) {
             const dId = Number(listinDispatchSelection.replace('driver-', ''));
