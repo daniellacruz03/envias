@@ -60,14 +60,12 @@ export const GET: APIRoute = async ({ request, cookies, url }) => {
         AND (g.archivada = false OR g.archivada IS NULL)
       ORDER BY 
         CASE 
-          WHEN g.estado = 'En ruta' THEN 1
-          WHEN g.estado = 'Contactado' THEN 2
-          WHEN g.estado = 'Por contactar' THEN 3
-          WHEN g.estado = 'Entregado' THEN 4
-          ELSE 5
+          WHEN g.estado = 'Entregado' THEN 2 
+          ELSE 1 
         END,
         NULLIF(g.orden_ruta, 0) ASC NULLS LAST,
-        g.created_at DESC
+        g.created_at DESC,
+        g.id_guia ASC
     `, [targetChoferId]);
 
     const guias = result.rows;
