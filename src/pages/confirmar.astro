@@ -1,4 +1,4 @@
----
+﻿---
 import Layout from '../layouts/Layout.astro';
 import { query } from '../lib/db';
 import { getCatalogoParaCliente, getPoligonosParaCliente } from '../lib/cobertura';
@@ -34,7 +34,7 @@ if (guiaId) {
     if (result.rows.length > 0) {
       guiaData = result.rows[0];
 
-      // Consultar otras guías pendientes del mismo cliente
+      // Consultar otras guÃ­as pendientes del mismo cliente
       if (guiaData.destinatario && guiaData.ciudad_destino) {
         try {
           const asocRes = await query(`
@@ -135,11 +135,11 @@ const poligonosCobertura = getPoligonosParaCliente();
             </div>
             <div class="space-y-1 text-xs">
               <p class="font-extrabold text-indigo-950 flex items-center gap-1.5">
-                <span>¡Tienes {guiasAsociadas.length + 1} paquetes para recibir!</span>
+                <span>Â¡Tienes {guiasAsociadas.length + 1} paquetes para recibir!</span>
                 <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-200/60 text-indigo-900 uppercase">Mismo Destino</span>
               </p>
               <p class="text-[11px] text-slate-600 font-medium leading-relaxed">
-                Esta confirmación de ubicación satelital se aplicará a tu guía principal <strong class="font-mono font-bold text-slate-900">#{guiaData.id_guia}</strong> y a tus otras guías asociadas: {guiasAsociadas.map((g, idx) => (
+                Esta confirmaciÃ³n de ubicaciÃ³n satelital se aplicarÃ¡ a tu guÃ­a principal <strong class="font-mono font-bold text-slate-900">#{guiaData.id_guia}</strong> y a tus otras guÃ­as asociadas: {guiasAsociadas.map((g, idx) => (
                   <span>
                     <strong class="font-mono font-bold text-indigo-700">#{g.id_guia}</strong>{idx < guiasAsociadas.length - 1 ? ', ' : ''}
                   </span>
@@ -161,7 +161,7 @@ const poligonosCobertura = getPoligonosParaCliente();
               <span class="font-mono font-extrabold text-slate-900 text-sm tracking-wide">#{guiaData.id_guia}</span>
             </div>
             <span class="text-[11px] font-bold bg-white border border-slate-200 px-2.5 py-0.5 rounded-lg text-slate-800 shadow-2xs">
-              {guiaData.piezas || 1} {guiaData.piezas === 1 ? 'Pieza' : 'Piezas'}{guiaData.pies_cubicos ? ` • ${Number(guiaData.pies_cubicos).toFixed(2)} ft³` : ''}
+              {guiaData.piezas || 1} {guiaData.piezas === 1 ? 'Pieza' : 'Piezas'}{guiaData.pies_cubicos ? ` â€¢ ${Number(guiaData.pies_cubicos).toFixed(2)} ftÂ³` : ''}
             </span>
           </div>
           <div class="grid grid-cols-2 gap-2 text-xs">
@@ -242,7 +242,7 @@ const poligonosCobertura = getPoligonosParaCliente();
               ></textarea>
             </div>
 
-            <!-- Formatos y ejemplos rápidos -->
+            <!-- Formatos y ejemplos rÃ¡pidos -->
             <div class="space-y-1.5">
               <p class="text-[11px] text-slate-500 font-medium">
                 Formatos compatibles: Coordenadas (Lat, Lng), enlaces de Google Maps/Waze, o Plus Code (OLC).
@@ -343,31 +343,31 @@ const poligonosCobertura = getPoligonosParaCliente();
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                <span class="text-xs font-bold text-amber-950">¿Otra persona recibirá el paquete?</span>
+                <span class="text-xs font-bold text-amber-950">Â¿Otra persona recibirÃ¡ el paquete?</span>
               </div>
               <span class="text-[10px] text-amber-700 bg-amber-100/90 border border-amber-200/70 px-2 py-0.5 rounded-full font-bold">Opcional</span>
             </div>
             <p class="text-[11px] text-amber-800 leading-snug pl-6 font-medium">
-              Si un familiar, vecino u otra persona recibirá el pedido en tu lugar, ingresa sus datos aquí.
+              Si un familiar, vecino u otra persona recibirÃ¡ el pedido en tu lugar, ingresa sus datos aquÃ­.
             </p>
             <div class="space-y-2.5 pt-0.5">
               <div class="space-y-1">
                 <label for="receptor-nombre" class="block text-[11px] font-bold text-slate-800">
-                  Nombre completo de quién recibe
+                  Nombre completo de quiÃ©n recibe
                 </label>
                 <input
                   type="text"
                   id="receptor-nombre"
                   name="receptor_nombre"
                   maxlength="80"
-                  placeholder="Ej: María García (Familiar / Vecino)"
+                  placeholder="Ej: MarÃ­a GarcÃ­a (Familiar / Vecino)"
                   class="w-full text-xs bg-white border border-amber-200/90 rounded-xl p-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-medium shadow-2xs"
                 />
               </div>
               <div class="space-y-1">
                 <div class="flex items-center justify-between">
                   <label for="receptor-telefono" class="block text-[11px] font-bold text-slate-800">
-                    Teléfono de quién recibe
+                    TelÃ©fono de quiÃ©n recibe
                   </label>
                   <span class="text-[10px] font-extrabold text-rose-600 bg-rose-50 border border-rose-200 px-2 py-0.2 rounded-md">Obligatorio</span>
                 </div>
@@ -380,7 +380,7 @@ const poligonosCobertura = getPoligonosParaCliente();
                   class="w-full text-xs bg-white border border-amber-200/90 rounded-xl p-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all font-mono shadow-2xs"
                 />
                 <p class="text-[10px] text-slate-500 font-medium leading-tight">
-                  Obligatorio para que el conductor pueda llamar directamente al llegar a tu dirección.
+                  Obligatorio para que el conductor pueda llamar directamente al llegar a tu direcciÃ³n.
                 </p>
               </div>
             </div>
@@ -466,284 +466,79 @@ const poligonosCobertura = getPoligonosParaCliente();
   </main>
 </Layout>
 
-<script define:vars={{ guiaData, catalogoCobertura, poligonosCobertura }}>
+<script define:vars={{ guiaData }}>
   if (guiaData) {
     let currentCoords = null;
-    let isSubmitting = false;
+    let isSubmitting   = false;
     let currentActiveTab = 'gps';
-    let zonaActual = null;
 
-    // =====================
-    // GEOFENCING (Polígonos + Haversine fallback)
-    // =====================
-    const FACTOR_AMARILLO = 2.5;
+    // â”€â”€ DOM refs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    const tabBtnGps     = document.getElementById('tab-btn-gps');
+    const tabBtnCoords  = document.getElementById('tab-btn-coords');
+    const tabPanelGps   = document.getElementById('tab-panel-gps');
+    const tabPanelCoords= document.getElementById('tab-panel-coords');
+    const btnGetGps     = document.getElementById('btn-get-gps');
+    const gpsBtnText    = document.getElementById('gps-btn-text');
+    const inputCoords   = document.getElementById('input-coords');
+    const btnPasteClip  = document.getElementById('btn-paste-clipboard');
+    const statusCard    = document.getElementById('coords-status-card');
+    const sourceBadge   = document.getElementById('coords-source-badge');
+    const latlngRow     = document.getElementById('coords-latlng-row');
+    const latEl         = document.getElementById('coords-lat');
+    const lngEl         = document.getElementById('coords-lng');
+    const errorCard     = document.getElementById('gps-error-card');
+    const errorTitle    = document.getElementById('gps-error-title');
+    const errorDesc     = document.getElementById('gps-error-desc');
+    const refInput      = document.getElementById('referencias');
+    const horaInput     = document.getElementById('hora-disponible');
+    const btnSubmit     = document.getElementById('btn-submit-confirmation');
+    const submitHint    = document.getElementById('submit-hint');
+    const gpsForm       = document.getElementById('gps-form');
+    const container     = document.getElementById('confirmation-container');
+    const successScreen = document.getElementById('success-screen');
 
-    function haversineKm(lat1, lng1, lat2, lng2) {
-      const R = 6371;
-      const dLat = ((lat2 - lat1) * Math.PI) / 180;
-      const dLng = ((lng2 - lng1) * Math.PI) / 180;
-      const a = Math.sin(dLat/2)**2 + Math.cos((lat1*Math.PI)/180) * Math.cos((lat2*Math.PI)/180) * Math.sin(dLng/2)**2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    // â”€â”€ Helpers UI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    function showError(t, d) {
+      if (errorTitle) errorTitle.textContent = t;
+      if (errorDesc)  errorDesc.textContent  = d;
+      errorCard?.classList.remove('hidden');
     }
+    function hideError() { errorCard?.classList.add('hidden'); }
 
-    // Ray Casting — réplica del servidor
-    function puntoEnPoligono(lat, lng, poligono) {
-      let dentro = false;
-      const n = poligono.length;
-      let j = n - 1;
-      for (let i = 0; i < n; i++) {
-        const [latI, lngI] = poligono[i];
-        const [latJ, lngJ] = poligono[j];
-        const intersecta = (lngI > lng) !== (lngJ > lng) &&
-          lat < ((latJ - latI) * (lng - lngI)) / (lngJ - lngI) + latI;
-        if (intersecta) dentro = !dentro;
-        j = i;
+    function enableSubmit() {
+      if (btnSubmit) btnSubmit.disabled = false;
+      if (submitHint) {
+        submitHint.textContent = 'Ubicacion lista. Presiona "Confirmar Entrega" para finalizar.';
+        submitHint.className = 'text-[10px] text-emerald-600 text-center mt-2 font-semibold';
       }
-      return dentro;
     }
-
-    function validarConPoligonos(lat, lng) {
-      if (!Array.isArray(poligonosCobertura)) return { encontrado: false, zona: null };
-      try {
-        // ROJO tiene prioridad absoluta
-        for (const poly of poligonosCobertura) {
-          if (poly.tipo === 'ROJO' && puntoEnPoligono(lat, lng, poly.coordenadas)) {
-            return { encontrado: true, zona: 'ROJO', ciudad: poly.ciudad, descripcion: poly.descripcion };
-          }
-        }
-        for (const poly of poligonosCobertura) {
-          if (poly.tipo === 'VERDE' && puntoEnPoligono(lat, lng, poly.coordenadas)) {
-            return { encontrado: true, zona: 'VERDE', ciudad: poly.ciudad, descripcion: poly.descripcion };
-          }
-        }
-        for (const poly of poligonosCobertura) {
-          if (poly.tipo === 'AMARILLO' && puntoEnPoligono(lat, lng, poly.coordenadas)) {
-            return { encontrado: true, zona: 'AMARILLO', ciudad: poly.ciudad, descripcion: poly.descripcion };
-          }
-        }
-      } catch (polyErr) {
-        console.warn('[Poligonos validacion error]:', polyErr);
+    function disableSubmit(reason) {
+      if (btnSubmit) btnSubmit.disabled = true;
+      if (submitHint) {
+        submitHint.textContent = reason || 'Indica tu ubicacion mediante GPS satelital o pegando tus coordenadas para confirmar.';
+        submitHint.className = reason
+          ? 'text-[10px] text-red-500 text-center mt-2 font-medium'
+          : 'text-[10px] text-slate-400 text-center mt-2 font-medium';
       }
-      return { encontrado: false, zona: null };
     }
 
-    function validarZona(lat, lng) {
-      if (lat < 0.6 || lat > 12.5 || lng < -73.5 || lng > -59.5)
-        return { zona: 'ROJO', mensaje: 'Ubicacion fuera de Venezuela. Envias C.A. solo opera en territorio nacional.' };
-
-      // 1. Intentar con polígonos vectoriales (alta precisión)
-      const resPoly = validarConPoligonos(lat, lng);
-      if (resPoly.encontrado) {
-        if (resPoly.zona === 'ROJO')
-          return { zona: 'ROJO', mensaje: `Sin cobertura en ${resPoly.ciudad}: ${resPoly.descripcion || 'Zona restringida.'}` };
-        if (resPoly.zona === 'VERDE')
-          return { zona: 'VERDE', mensaje: `Cobertura confirmada en ${resPoly.ciudad}.` };
-        if (resPoly.zona === 'AMARILLO')
-          return { zona: 'AMARILLO', mensaje: `Zona especial: ${resPoly.ciudad}. ${resPoly.descripcion || ''}` };
-      }
-
-      // 2. Fallback: radio Haversine
-      const hint = (guiaData.ciudad_destino || '').toLowerCase().trim();
-      let ciudades = [...catalogoCobertura];
-      if (hint) ciudades.sort((a,b) => (a.nombre.toLowerCase().includes(hint)?-1:0) - (b.nombre.toLowerCase().includes(hint)?-1:0));
-      let mejor = null, dist = Infinity;
-      for (const c of ciudades) { const d = haversineKm(lat,lng,c.lat,c.lng); if(d<dist){dist=d;mejor=c;} }
-      if (!mejor) return { zona: 'AMARILLO', mensaje: 'Ubicacion registrada en Venezuela.' };
-      if (dist <= mejor.radio) return { zona: 'VERDE', mensaje: `Cobertura confirmada en ${mejor.nombre} (${mejor.region}).` };
-      if (dist <= mejor.radio * FACTOR_AMARILLO) return { zona: 'AMARILLO', mensaje: `Zona especial cerca de ${mejor.nombre} (${Math.round(dist)} km).` };
-      return { zona: 'AMARILLO', mensaje: `Ubicacion registrada en territorio nacional cerca de ${mejor.nombre} (${Math.round(dist)} km).` };
-    }
-
-    function updateCoberturaUI(res) {
-      zonaActual = res.zona;
+    function setCoords(lat, lng, label) {
+      currentCoords = { latitude: lat, longitude: lng };
+      if (latEl) latEl.textContent = lat.toFixed(6);
+      if (lngEl) lngEl.textContent = lng.toFixed(6);
+      if (sourceBadge && label) sourceBadge.textContent = label;
+      statusCard?.classList.remove('hidden');
+      if (latlngRow) { latlngRow.classList.remove('hidden'); latlngRow.style.display = 'flex'; }
+      // Ocultar badge y msg de cobertura (no usados)
       const badge = document.getElementById('cobertura-badge');
       const msg   = document.getElementById('cobertura-msg');
-      const card  = document.getElementById('coords-status-card');
-      const icon  = document.getElementById('coords-status-icon');
-      const row   = document.getElementById('coords-source-row');
-      if (!badge||!msg||!card) return;
-      card.classList.remove('bg-emerald-50','border-emerald-200','text-emerald-900','bg-amber-50','border-amber-200','text-amber-900','bg-red-50','border-red-200','text-red-900');
-      badge.classList.remove('hidden'); msg.classList.remove('hidden'); msg.textContent = res.mensaje;
-
-      if (res.zona === 'VERDE') {
-        card.classList.add('bg-emerald-50','border-emerald-200','text-emerald-900');
-        badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-800 transition-all duration-300'; badge.textContent='COBERTURA OK';
-        msg.className='text-[11px] leading-snug pl-6 font-medium text-emerald-700';
-        if(icon) icon.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>`;
-        if(row){row.classList.remove('text-amber-800','text-red-800');row.classList.add('text-emerald-800');}
-        enableSubmit('Ubicacion satelital capturada');
-
-      } else if (res.zona === 'AMARILLO') {
-        card.classList.add('bg-amber-50','border-amber-200','text-amber-900');
-        badge.className='text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-200 text-amber-800 transition-all duration-300'; badge.textContent='ZONA ESPECIAL';
-        msg.className='text-[11px] leading-snug pl-6 font-medium text-amber-700';
-        if(icon) icon.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>`;
-        if(row){row.classList.remove('text-emerald-800','text-red-800');row.classList.add('text-amber-800');}
-        enableSubmit('Ubicacion capturada (zona especial)');
-
-      } else {
-        card.classList.add('bg-red-50','border-red-200','text-red-900');
-        badge.className='text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-200 text-red-800 transition-all duration-300'; badge.textContent='FUERA DE VENEZUELA';
-        msg.className='text-[11px] leading-snug pl-6 font-medium text-red-700';
-        if(icon) icon.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-red-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>`;
-        if(row){row.classList.remove('text-emerald-800','text-amber-800');row.classList.add('text-red-800');}
-        disableSubmit('Ubicacion fuera del territorio nacional de Venezuela.');
-      }
+      if (badge) badge.classList.add('hidden');
+      if (msg)   msg.classList.add('hidden');
+      hideError();
+      enableSubmit();
     }
 
-    // =====================
-    // OLC / PLUS CODE MOTOR
-    // =====================
-    const OLC_ALPHABET = '23456789CFGHJMPQRVWX';
-
-    function decodeFullOLC(code) {
-      const clean = code.toUpperCase().replace('+', '').replace(/\s+/g, '');
-      if (clean.length < 8) return null;
-      let lat = -90;
-      let lng = -180;
-      let latVal = 20;
-      let lngVal = 20;
-
-      for (let i = 0; i < Math.min(clean.length, 10); i += 2) {
-        const latDigit = OLC_ALPHABET.indexOf(clean[i]);
-        const lngDigit = OLC_ALPHABET.indexOf(clean[i + 1]);
-        if (latDigit === -1 || lngDigit === -1) return null;
-        lat += latDigit * latVal;
-        lng += lngDigit * lngVal;
-        latVal /= 20;
-        lngVal /= 20;
-      }
-      lat += latVal / 2;
-      lng += lngVal / 2;
-      return { lat, lng };
-    }
-
-    function decodeShortOLC(shortCode, refLat = 10.0808, refLng = -69.3756) {
-      const clean = shortCode.toUpperCase().replace('+', '').replace(/\s+/g, '');
-      let bestCoords = null;
-      let minDiff = Infinity;
-
-      for (let c1 of '78') {
-        for (let c2 of '67') {
-          for (let c3 of OLC_ALPHABET) {
-            for (let c4 of OLC_ALPHABET) {
-              const full = `${c1}${c2}${c3}${c4}${clean}`;
-              const decoded = decodeFullOLC(full);
-              if (decoded) {
-                const diff = Math.abs(decoded.lat - refLat) + Math.abs(decoded.lng - refLng);
-                if (diff < minDiff) {
-                  minDiff = diff;
-                  bestCoords = decoded;
-                }
-              }
-            }
-          }
-        }
-      }
-      return bestCoords;
-    }
-
-    // ====================================
-    // DECODIFICADOR UNIVERSAL DE COORDENADAS
-    // ====================================
-    function parseUniversalLocation(input) {
-      if (!input || typeof input !== 'string') return null;
-      const trimmed = input.trim();
-      if (!trimmed) return null;
-
-      // 1. Google Maps URLs / Apple Maps / Waze
-      // Ej: /@10.0808,-69.3756,17z o /place/10.0808,-69.3756 o ?q=10.0808,-69.3756 o ll=10.0808,-69.3756
-      // Acepta 1+ decimales para mayor compatibilidad
-      const urlMatch = trimmed.match(/[@?&/](?:q|query|ll|loc|center|place)?[:=/]*(-?\d{1,2}\.\d+)[,/]+(-?\d{2,3}\.\d+)/i);
-      if (urlMatch) {
-        const lat = parseFloat(urlMatch[1]);
-        const lng = parseFloat(urlMatch[2]);
-        if (!isNaN(lat) && !isNaN(lng)) {
-          return { lat, lng, type: 'url' };
-        }
-      }
-
-      // 2. Grados Minutos Segundos (DMS)
-      // Ej: 10°04'50.9"N 69°22'32.2"W o 10 4 50.9 N, 69 22 32.2 W
-      const dmsMatch = trimmed.match(/(\d{1,2})[°\s]+(\d{1,2})['\s]+([0-9.]+)?["\s]*([NSns])\s*[,;\s/|]+\s*(\d{1,3})[°\s]+(\d{1,2})['\s]+([0-9.]+)?["\s]*([EWewOo])/i);
-      if (dmsMatch) {
-        let lat = parseFloat(dmsMatch[1]) + (parseFloat(dmsMatch[2]) || 0)/60 + (parseFloat(dmsMatch[3]) || 0)/3600;
-        let lng = parseFloat(dmsMatch[5]) + (parseFloat(dmsMatch[6]) || 0)/60 + (parseFloat(dmsMatch[7]) || 0)/3600;
-        if (dmsMatch[4].toUpperCase() === 'S') lat = -lat;
-        if (['W', 'O'].includes(dmsMatch[8].toUpperCase())) lng = -lng;
-        return { lat, lng, type: 'dms' };
-      }
-
-      // 3. Coordenadas Decimales Directas (con o sin letras N/S/E/W/O y °)
-      // Ej: "10.0808, -69.3756", "10.08, -69.37", "10.0808° N, 69.3756° W", "10.0808 / -69.3756"
-      const coordMatch = trimmed.match(/(-?\d{1,2}\.\d{2,})\s*(?:°\s*)?([NSns])?\s*[,;\s/|]+\s*(-?\d{1,3}\.\d{2,})\s*(?:°\s*)?([EWewOo])?/i);
-      if (coordMatch) {
-        let lat = parseFloat(coordMatch[1]);
-        let lng = parseFloat(coordMatch[3]);
-        if (coordMatch[2] && coordMatch[2].toUpperCase() === 'S') lat = -Math.abs(lat);
-        if (coordMatch[4] && ['W', 'O'].includes(coordMatch[4].toUpperCase())) lng = -Math.abs(lng);
-        // Si no tiene signo y lng parece positivo en longitud de Venezuela, invertir a negativo
-        if (lng > 50 && lng < 80) lng = -lng;
-        return { lat, lng, type: 'decimal' };
-      }
-
-      // 4. Código OLC Completo (Plus Code de 8 a 11 chars con +)
-      // Ej: 772G3JJF+8Q
-      const fullOlcMatch = trimmed.match(/([23456789CFGHJMPQRVWX]{8}\+[23456789CFGHJMPQRVWX]{2,3})/i);
-      if (fullOlcMatch) {
-        const decoded = decodeFullOLC(fullOlcMatch[1]);
-        if (decoded) return { lat: decoded.lat, lng: decoded.lng, type: 'olc_full' };
-      }
-
-      // 5. Código OLC Corto (ej: 3M33+54 Barquisimeto)
-      const shortOlcMatch = trimmed.match(/([23456789CFGHJMPQRVWX]{4,7}\+[23456789CFGHJMPQRVWX]{2,3})/i);
-      if (shortOlcMatch) {
-        let refLat = 10.0808;
-        let refLng = -69.3756;
-        const normalized = trimmed.toLowerCase();
-        for (const c of catalogoCobertura) {
-          if (normalized.includes(c.nombre.toLowerCase())) {
-            refLat = c.lat;
-            refLng = c.lng;
-            break;
-          }
-        }
-        const decoded = decodeShortOLC(shortOlcMatch[1], refLat, refLng);
-        if (decoded) return { lat: decoded.lat, lng: decoded.lng, type: 'olc_short' };
-      }
-
-      return null;
-    }
-
-    // DOM refs
-    const tabBtnGps        = document.getElementById('tab-btn-gps');
-    const tabBtnCoords     = document.getElementById('tab-btn-coords');
-    const tabPanelGps      = document.getElementById('tab-panel-gps');
-    const tabPanelCoords   = document.getElementById('tab-panel-coords');
-    const btnGetGps        = document.getElementById('btn-get-gps');
-    const gpsBtnText       = document.getElementById('gps-btn-text');
-    const inputCoords      = document.getElementById('input-coords');
-    const btnPasteClip     = document.getElementById('btn-paste-clipboard');
-    const refContainer     = document.getElementById('referencias-container');
-    const statusCard       = document.getElementById('coords-status-card');
-    const sourceBadge      = document.getElementById('coords-source-badge');
-    const latlngRow        = document.getElementById('coords-latlng-row');
-    const latEl            = document.getElementById('coords-lat');
-    const lngEl            = document.getElementById('coords-lng');
-    const errorCard        = document.getElementById('gps-error-card');
-    const errorTitle       = document.getElementById('gps-error-title');
-    const errorDesc        = document.getElementById('gps-error-desc');
-    const refInput         = document.getElementById('referencias');
-    const horaInput        = document.getElementById('hora-disponible');
-    const btnSubmit        = document.getElementById('btn-submit-confirmation');
-    const submitHint       = document.getElementById('submit-hint');
-    const gpsForm          = document.getElementById('gps-form');
-    const container        = document.getElementById('confirmation-container');
-    const successScreen    = document.getElementById('success-screen');
-
-    // =====================
-    // TABS
-    // =====================
+    // â”€â”€ TABS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function switchTab(tab) {
       currentActiveTab = tab;
       [[tabBtnGps, tabPanelGps, 'gps'], [tabBtnCoords, tabPanelCoords, 'coords']].forEach(([btn, panel, id]) => {
@@ -757,234 +552,159 @@ const poligonosCobertura = getPoligonosParaCliente();
           panel?.classList.add('hidden');
         }
       });
-
       if (tab === 'coords') {
         validatePastedCoords();
       } else {
         if (currentCoords) {
-          updateCoordsState(currentCoords.latitude, currentCoords.longitude, 'Ubicacion GPS satelital');
+          setCoords(currentCoords.latitude, currentCoords.longitude, 'Ubicacion GPS satelital');
         } else {
-          disableSubmit();
           statusCard?.classList.add('hidden');
+          disableSubmit();
         }
       }
     }
 
-    tabBtnGps?.addEventListener('click', () => switchTab('gps'));
+    tabBtnGps?.addEventListener('click',    () => switchTab('gps'));
     tabBtnCoords?.addEventListener('click', () => switchTab('coords'));
 
-    // =====================
-    // GPS NATIVO
-    // =====================
+    // â”€â”€ GPS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     btnGetGps?.addEventListener('click', () => {
       if (!navigator.geolocation) {
-        showError('Geolocalizacion no disponible', 'Tu navegador no soporta GPS.');
+        showError('GPS no disponible', 'Tu navegador no soporta geolocalizaciÃ³n. Usa la opciÃ³n de pegar coordenadas.');
         return;
       }
       hideError();
-      if (gpsBtnText) gpsBtnText.textContent = 'Obteniendo senal GPS...';
       btnGetGps.disabled = true;
+      if (gpsBtnText) gpsBtnText.textContent = 'Obteniendo ubicacion...';
+
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          // Re-habilitar ANTES de updateCoordsState para que un error interno no trabe el boton
           btnGetGps.disabled = false;
           if (gpsBtnText) gpsBtnText.textContent = 'Ubicacion GPS Capturada';
-          try {
-            updateCoordsState(pos.coords.latitude, pos.coords.longitude, 'Ubicacion GPS satelital');
-          } catch (uErr) {
-            console.error('[GPS updateCoordsState error]:', uErr);
-            showError('Error al procesar ubicacion', 'Se obtuvo la senal GPS pero ocurrio un error al validar la zona. Intenta de nuevo.');
-          }
+          setCoords(pos.coords.latitude, pos.coords.longitude, 'Ubicacion GPS satelital');
         },
         (err) => {
           btnGetGps.disabled = false;
           if (gpsBtnText) gpsBtnText.textContent = 'Reintentar capturar GPS';
-          let t = 'Error al obtener ubicacion';
-          let d = 'Activa el GPS y concede permisos.';
-          if (err.code === err.PERMISSION_DENIED) {
-            t = 'Permiso GPS Denegado';
-            d = 'Debes otorgar permiso de ubicacion en los ajustes de tu navegador o usar la pestana de Pegar Coordenadas.';
-          } else if (err.code === err.TIMEOUT) {
-            t = 'Tiempo agotado';
-            d = 'No se pudo obtener senal satelital. Intenta de nuevo o pega tus coordenadas.';
-          } else if (err.code === err.POSITION_UNAVAILABLE) {
-            t = 'Ubicacion no disponible';
-            d = 'El GPS no pudo determinar tu posicion. Verifica que el GPS de tu dispositivo este activado.';
+          if (err.code === 1) {
+            showError('Permiso denegado', 'Debes permitir el acceso a tu ubicacion en el navegador o usar la pestana de Pegar Coordenadas.');
+          } else if (err.code === 3) {
+            showError('Tiempo agotado', 'No se pudo obtener la senal GPS. Intenta de nuevo o pega tus coordenadas.');
+          } else {
+            showError('No se pudo obtener ubicacion', 'Verifica que el GPS de tu dispositivo este activado e intenta de nuevo.');
           }
-          showError(t, d);
         },
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
       );
     });
 
-    // =====================
-    // PEGAR COORDENADAS
-    // =====================
+    // â”€â”€ PEGAR COORDENADAS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    function parseCoords(input) {
+      if (!input || !input.trim()) return null;
+      const s = input.trim();
+
+      // 1. URL de Google Maps / Waze / Apple Maps  /@lat,lng  o  ?q=lat,lng  etc.
+      const urlM = s.match(/[@?&/](?:q|query|ll|loc|center|place)?[:=/]*(-?\d{1,2}\.\d+)[,/]+(-?\d{2,3}\.\d+)/i);
+      if (urlM) {
+        const la = parseFloat(urlM[1]), lo = parseFloat(urlM[2]);
+        if (!isNaN(la) && !isNaN(lo)) return { lat: la, lng: lo };
+      }
+
+      // 2. Coordenadas decimales directas  "10.08, -69.37"
+      const decM = s.match(/(-?\d{1,2}\.\d{2,})\s*Â°?\s*[NSns]?\s*[,;\s/|]+\s*(-?\d{1,3}\.\d{2,})\s*Â°?\s*[EWewOo]?/i);
+      if (decM) {
+        let la = parseFloat(decM[1]), lo = parseFloat(decM[2]);
+        if (lo > 50 && lo < 80) lo = -lo; // longitud Venezuela positiva â†’ negativa
+        if (!isNaN(la) && !isNaN(lo)) return { lat: la, lng: lo };
+      }
+
+      // 3. Grados Minutos Segundos  10Â°04'50"N 69Â°22'32"W
+      const dmsM = s.match(/(\d{1,2})[Â°\s]+(\d{1,2})['\s]+(\d*\.?\d*)["\s]*([NSns])\s*[,;\s/|]+\s*(\d{1,3})[Â°\s]+(\d{1,2})['\s]+(\d*\.?\d*)["\s]*([EWewOo])/i);
+      if (dmsM) {
+        let la = +dmsM[1] + (+dmsM[2])/60 + (+dmsM[3]||0)/3600;
+        let lo = +dmsM[5] + (+dmsM[6])/60 + (+dmsM[7]||0)/3600;
+        if (/[Ss]/.test(dmsM[4])) la = -la;
+        if (/[WwOo]/.test(dmsM[8])) lo = -lo;
+        return { lat: la, lng: lo };
+      }
+
+      return null;
+    }
+
     function validatePastedCoords() {
       const raw = inputCoords?.value?.trim() || '';
       if (!raw) {
-        if (currentActiveTab === 'coords') {
-          currentCoords = null;
-          statusCard?.classList.add('hidden');
-          disableSubmit('Pega tus coordenadas o enlace de mapa para continuar.');
-        }
+        currentCoords = null;
+        statusCard?.classList.add('hidden');
+        disableSubmit('Pega tus coordenadas o enlace de mapa para continuar.');
         return;
       }
-
-      const parsed = parseUniversalLocation(raw);
+      const parsed = parseCoords(raw);
       if (parsed) {
         hideError();
-        let sourceLabel = 'Coordenadas validadas';
-        if (parsed.type === 'url') sourceLabel = 'Enlace de mapa decodificado';
-        else if (parsed.type.startsWith('olc')) sourceLabel = 'Plus Code OLC decodificado';
-        updateCoordsState(parsed.lat, parsed.lng, sourceLabel);
+        setCoords(parsed.lat, parsed.lng, 'Coordenadas validadas');
       } else {
         currentCoords = null;
         statusCard?.classList.add('hidden');
-        showError('Formato no reconocido', 'Ingresa coordenadas como "10.0808, -69.3756", un enlace de Google Maps o un Plus Code (OLC).');
-        disableSubmit('Formato de coordenadas no valido.');
+        showError('Formato no reconocido', 'Ingresa coordenadas como "10.0808, -69.3756" o un enlace de Google Maps.');
+        disableSubmit('Formato no valido.');
       }
     }
 
     inputCoords?.addEventListener('input', validatePastedCoords);
-    inputCoords?.addEventListener('paste', () => {
-      setTimeout(validatePastedCoords, 60);
-    });
+    inputCoords?.addEventListener('paste', () => setTimeout(validatePastedCoords, 60));
 
-    // Botón de pegar portapapeles
     btnPasteClip?.addEventListener('click', async () => {
       try {
-        if (navigator.clipboard && navigator.clipboard.readText) {
-          const clipText = await navigator.clipboard.readText();
-          if (clipText && inputCoords) {
-            inputCoords.value = clipText.trim();
-            validatePastedCoords();
-          }
-        } else if (inputCoords) {
-          inputCoords.focus();
+        if (navigator.clipboard?.readText) {
+          const txt = await navigator.clipboard.readText();
+          if (txt && inputCoords) { inputCoords.value = txt.trim(); validatePastedCoords(); }
+        } else {
+          inputCoords?.focus();
         }
-      } catch (e) {
-        if (inputCoords) inputCoords.focus();
-      }
+      } catch { inputCoords?.focus(); }
     });
 
-    // Botones de ejemplos rápidos
     document.querySelectorAll('.btn-coords-sample').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const sample = btn.getAttribute('data-coords');
-        if (sample && inputCoords) {
-          inputCoords.value = sample;
-          validatePastedCoords();
-        }
+        const s = btn.getAttribute('data-coords');
+        if (s && inputCoords) { inputCoords.value = s; validatePastedCoords(); }
       });
     });
 
-    // =====================
-    // UPDATE COORDS STATE
-    // =====================
-    function updateCoordsState(lat, lng, label) {
-      currentCoords = { latitude: lat, longitude: lng };
-      if (latEl) latEl.textContent = lat.toFixed(6);
-      if (lngEl) lngEl.textContent = lng.toFixed(6);
-      if (sourceBadge && label) sourceBadge.textContent = label;
-      statusCard?.classList.remove('hidden');
-      if (latlngRow) { latlngRow.classList.remove('hidden'); latlngRow.style.display = 'flex'; }
-      hideError();
-      updateCoberturaUI(validarZona(lat, lng));
-    }
-
-    function enableSubmit(label) {
-      if (btnSubmit) {
-        btnSubmit.disabled = false;
-        btnSubmit.classList.remove('bg-slate-400', 'cursor-not-allowed');
-        btnSubmit.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
-      }
-      if (submitHint) {
-        submitHint.textContent = zonaActual === 'AMARILLO'
-          ? 'Zona especial: el equipo validara tu entrega. Puedes confirmar.'
-          : 'Ubicacion lista. Presiona "Confirmar Entrega" para finalizar.';
-        submitHint.classList.remove('text-slate-400', 'text-red-600');
-        submitHint.classList.add(zonaActual === 'AMARILLO' ? 'text-amber-600' : 'text-emerald-600', 'font-semibold');
-      }
-    }
-
-    function disableSubmit(reason) {
-      if (btnSubmit) btnSubmit.disabled = true;
-      if (submitHint) {
-        submitHint.textContent = reason || 'Indica tu ubicacion mediante GPS satelital o pegando tus coordenadas para confirmar.';
-        submitHint.classList.remove('text-emerald-600', 'text-amber-600', 'font-semibold');
-        submitHint.classList.add(reason ? 'text-red-600' : 'text-slate-400');
-      }
-    }
-
-    function showError(t, d) {
-      if (errorTitle) errorTitle.textContent = t;
-      if (errorDesc) errorDesc.textContent = d;
-      errorCard?.classList.remove('hidden');
-    }
-
-    function hideError() {
-      errorCard?.classList.add('hidden');
-    }
-
-    // =====================
-    // SUBMIT
-    // =====================
+    // â”€â”€ SUBMIT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     gpsForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (isSubmitting) return;
-
       if (!currentCoords) {
-        showError('Faltan coordenadas', 'Por favor captura tu posicion GPS o pega tus coordenadas antes de confirmar.');
+        showError('Faltan coordenadas', 'Captura tu GPS o pega tus coordenadas antes de confirmar.');
         return;
       }
 
-      if (zonaActual === 'ROJO') {
-        showError('Fuera de cobertura', 'La ubicacion indicada esta fuera de la zona de cobertura de Envias C.A.');
+      const refs            = refInput?.value?.trim() || '';
+      const hora            = horaInput?.value?.trim() || null;
+      const receptorNombre  = document.getElementById('receptor-nombre')?.value?.trim() || '';
+      const receptorTel     = document.getElementById('receptor-telefono')?.value?.trim() || '';
+
+      if (receptorNombre && !receptorTel) {
+        showError('Telefono requerido', 'El telefono de quien recibe es obligatorio para que el conductor pueda llamar al llegar.');
+        document.getElementById('receptor-telefono')?.focus();
+        return;
+      }
+      if (receptorTel && !receptorNombre) {
+        showError('Nombre requerido', 'Ingresa el nombre de quien recibirÃ¡ el paquete.');
+        document.getElementById('receptor-nombre')?.focus();
+        return;
+      }
+      if (receptorTel && receptorTel.replace(/\D/g,'').length < 7) {
+        showError('Telefono incompleto', 'Ingresa un numero de al menos 7 digitos (ej: 0414-1234567).');
+        document.getElementById('receptor-telefono')?.focus();
         return;
       }
 
-      const refs = refInput?.value?.trim() || '';
-      const hora = horaInput?.value?.trim() || null;
-      const receptorNombre = (document.getElementById('receptor-nombre') as HTMLInputElement)?.value?.trim() || '';
-      const receptorTelefono = (document.getElementById('receptor-telefono') as HTMLInputElement)?.value?.trim() || '';
-
-      // Validación de Persona Autorizada a Recibir: si se llena un campo, el teléfono es OBLIGATORIO
-      if (receptorNombre && !receptorTelefono) {
-        showError('Teléfono requerido', 'El número de teléfono de quién recibe es obligatorio para que el conductor pueda comunicarse directamente al llegar.');
-        const telInput = document.getElementById('receptor-telefono');
-        telInput?.focus();
-        telInput?.classList.add('border-rose-500', 'ring-2', 'ring-rose-200');
-        setTimeout(() => telInput?.classList.remove('border-rose-500', 'ring-2', 'ring-rose-200'), 3500);
-        return;
-      }
-
-      if (receptorTelefono && !receptorNombre) {
-        showError('Nombre requerido', 'Ingresa el nombre completo de la persona que recibirá el paquete en tu lugar.');
-        const nomInput = document.getElementById('receptor-nombre');
-        nomInput?.focus();
-        nomInput?.classList.add('border-rose-500', 'ring-2', 'ring-rose-200');
-        setTimeout(() => nomInput?.classList.remove('border-rose-500', 'ring-2', 'ring-rose-200'), 3500);
-        return;
-      }
-
-      if (receptorTelefono) {
-        const cleanDigits = receptorTelefono.replace(/\D/g, '');
-        if (cleanDigits.length < 7) {
-          showError('Teléfono incompleto', 'Ingresa un número de teléfono válido de al menos 7 dígitos (ej: 0414-1234567).');
-          const telInput = document.getElementById('receptor-telefono');
-          telInput?.focus();
-          return;
-        }
-      }
-
-      // Construir campo recibido_por si hay receptor alternativo
-      let recibidoPorCliente = null;
-      if (receptorNombre) {
-        recibidoPorCliente = receptorTelefono
-          ? `${receptorNombre} (Tel: ${receptorTelefono})`
-          : receptorNombre;
-      }
+      const recibidoPor = receptorNombre
+        ? (receptorTel ? `${receptorNombre} (Tel: ${receptorTel})` : receptorNombre)
+        : null;
 
       isSubmitting = true;
       btnSubmit.disabled = true;
@@ -992,36 +712,35 @@ const poligonosCobertura = getPoligonosParaCliente();
       btnSubmit.innerHTML = `<svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>Guardando confirmacion...</span>`;
 
       try {
-        const res = await fetch('/api/confirmar', {
+        const res  = await fetch('/api/confirmar', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id_guia: guiaData.id_guia,
             latitud: currentCoords.latitude,
             longitud: currentCoords.longitude,
-            direccion_referencia: refs || undefined,
-            hora_disponible: hora || undefined,
-            recibido_por: recibidoPorCliente || undefined,
-            recibe_persona: receptorNombre || undefined,
-            recibe_telefono: receptorTelefono || undefined
+            direccion_referencia: refs   || undefined,
+            hora_disponible:      hora   || undefined,
+            recibido_por:         recibidoPor || undefined,
+            recibe_persona:       receptorNombre || undefined,
+            recibe_telefono:      receptorTel    || undefined,
           })
         });
-
         const json = await res.json();
         if (res.ok && json.success) {
           if (hora) {
             const [h, m] = hora.split(':');
-            const h12 = new Date(0, 0, 0, +h, +m).toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit', hour12: true });
+            const h12 = new Date(0,0,0,+h,+m).toLocaleTimeString('es-VE',{hour:'2-digit',minute:'2-digit',hour12:true});
             const el = document.getElementById('success-hora-value');
-            if (el) el.textContent = h12;
             const row = document.getElementById('success-hora-row');
-            if (row) { row.classList.remove('hidden'); row.style.display = 'flex'; }
+            if (el) el.textContent = h12;
+            if (row) { row.classList.remove('hidden'); row.style.display='flex'; }
           }
-          if (recibidoPorCliente) {
-            const elR = document.getElementById('success-receptor-value');
-            if (elR) elR.textContent = recibidoPorCliente;
+          if (recibidoPor) {
+            const elR  = document.getElementById('success-receptor-value');
             const rowR = document.getElementById('success-receptor-row');
-            if (rowR) { rowR.classList.remove('hidden'); rowR.style.display = 'flex'; }
+            if (elR)  elR.textContent = recibidoPor;
+            if (rowR) { rowR.classList.remove('hidden'); rowR.style.display='flex'; }
           }
           container?.classList.add('hidden');
           successScreen?.classList.remove('hidden');
@@ -1031,8 +750,8 @@ const poligonosCobertura = getPoligonosParaCliente();
           btnSubmit.innerHTML = orig;
           isSubmitting = false;
         }
-      } catch (err) {
-        showError('Error de conexion', 'Hubo un fallo de conexion. Por favor reintenta.');
+      } catch {
+        showError('Error de conexion', 'Fallo la conexion. Por favor reintenta.');
         btnSubmit.disabled = false;
         btnSubmit.innerHTML = orig;
         isSubmitting = false;
