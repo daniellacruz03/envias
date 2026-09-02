@@ -30,6 +30,7 @@ export const GET: APIRoute = async ({ url }) => {
         g.gps_longitud,
         g.gps_confirmado,
         g.empresa,
+        g.nota_cobro,
         g.chofer_asignado_id,
         g.created_at,
         g.archivada,
@@ -81,6 +82,7 @@ export const POST: APIRoute = async ({ request }) => {
       piezas,
       pies_cubicos,
       direccion_referencia,
+      nota_cobro,
       empresa,
       lote_despacho,
       created_at
@@ -176,6 +178,7 @@ export const POST: APIRoute = async ({ request }) => {
         piezas,
         pies_cubicos,
         direccion_referencia,
+        nota_cobro,
         empresa,
         estado,
         gps_confirmado,
@@ -185,7 +188,7 @@ export const POST: APIRoute = async ({ request }) => {
         lote_despacho,
         created_at
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'Por contactar', $12, $13, $14, $15, $16, $17
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'Por contactar', $13, $14, $15, $16, $17, $18
       )
       RETURNING *
     `, [
@@ -199,6 +202,7 @@ export const POST: APIRoute = async ({ request }) => {
       parseInt(piezas, 10) || 1,
       parsedPiesCubicos,
       direccion_referencia ? direccion_referencia.trim() : null,
+      nota_cobro ? nota_cobro.trim() : null,
       empresa ? empresa.trim() : null,
       autoGpsConfirmado,
       autoGpsLat,

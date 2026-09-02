@@ -40,6 +40,7 @@ export const GET: APIRoute = async ({ request, cookies, url }) => {
         g.pies_cubicos,
         g.direccion_referencia,
         g.hora_disponible,
+        g.nota_cobro,
         g.comprobante_url,
         g.comprobante_base64,
         g.recibido_por,

@@ -745,8 +745,27 @@ const userInitials = currentUser.nombre
             />
           </div>
 
+          <!-- Nota de Cobro (Opcional) -->
+          <div class="sm:col-span-2 lg:col-span-2 space-y-1">
+            <label for="input-nota-cobro" class="block text-xs font-semibold text-slate-700 flex items-center justify-between">
+              <span>Nota de Cobro <span class="text-slate-400 font-normal">(Opcional)</span></span>
+              <span class="text-[10px] text-amber-800 font-bold bg-amber-50 border border-amber-200/80 px-1.5 py-0.2 rounded-md">Al entregar</span>
+            </label>
+            <div class="relative">
+              <input
+                type="text"
+                id="input-nota-cobro"
+                placeholder="Ej: Cobrar $15 en efectivo o pago móvil"
+                class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2.5 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all font-medium"
+              />
+              <svg class="w-4 h-4 text-amber-700 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+
           <!-- Botón de Envío -->
-          <div class="sm:col-span-2 lg:col-span-2 flex items-end">
+          <div class="sm:col-span-2 lg:col-span-1 flex items-end">
             <button
               type="submit"
               class="w-full bg-slate-900 hover:bg-black text-white font-semibold text-xs py-2.5 px-4 rounded-xl transition-all duration-200 active:scale-[0.98] shadow-sm flex items-center justify-center gap-2 h-[41px] cursor-pointer"
@@ -3291,6 +3310,20 @@ const userInitials = currentUser.nombre
               />
             </div>
 
+            <!-- Nota de Cobro (Opcional) -->
+            <div class="sm:col-span-2 space-y-1">
+              <label for="edit-nota-cobro" class="block text-xs font-bold text-slate-700 flex items-center justify-between">
+                <span>Nota de Cobro <span class="text-slate-400 font-normal">(Opcional)</span></span>
+                <span class="text-[10px] text-amber-800 font-bold bg-amber-50 border border-amber-200/80 px-1.5 py-0.2 rounded-md">Al entregar</span>
+              </label>
+              <input
+                type="text"
+                id="edit-nota-cobro"
+                placeholder="Ej: Cobrar $15 en efectivo o pago móvil"
+                class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all font-medium"
+              />
+            </div>
+
             <!-- Dirección / Referencias -->
             <div class="sm:col-span-2 space-y-1">
               <label for="edit-direccion" class="block text-xs font-bold text-slate-700">
@@ -3796,6 +3829,7 @@ const userInitials = currentUser.nombre
         pies_cubicos?: number | string | null;
         direccion_referencia?: string | null;
         hora_disponible?: string | null;
+        nota_cobro?: string | null;
         empresa?: string | null;
         comprobante_url?: string | null;
         comprobante_base64?: string | null;
@@ -6101,6 +6135,12 @@ const userInitials = currentUser.nombre
                 <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200 text-[10px] font-bold mt-1 shadow-2xs" title="Persona autorizada a recibir">
                   <svg class="w-3 h-3 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                   <span>Recibe: <strong>${item.recibe_persona || 'Tercero'}</strong>${item.recibe_telefono ? ` &bull; ${item.recibe_telefono}` : ''}</span>
+                </div>
+              ` : ''}
+              ${item.nota_cobro ? `
+                <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-100 text-amber-950 border border-amber-300 text-[10px] font-extrabold mt-1 shadow-2xs" title="Cobro al entregar: ${item.nota_cobro}">
+                  <svg class="w-3 h-3 text-amber-800 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <span>Cobro: <strong>${item.nota_cobro}</strong></span>
                 </div>
               ` : ''}
               ${item.hora_disponible ? `
@@ -8502,6 +8542,7 @@ const userInitials = currentUser.nombre
           const piesCubicosInput = document.getElementById('input-pies-cubicos') as HTMLInputElement;
           const empresaInput = document.getElementById('input-empresa') as HTMLSelectElement;
           const dirInput = document.getElementById('input-direccion') as HTMLInputElement;
+          const notaCobroInput = document.getElementById('input-nota-cobro') as HTMLInputElement;
           const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
 
           const id_guia = guiaInput.value.trim().toUpperCase();
@@ -8534,6 +8575,7 @@ const userInitials = currentUser.nombre
             pies_cubicos: piesCubicosInput && piesCubicosInput.value.trim() ? parseFloat(piesCubicosInput.value.trim()) : undefined,
             empresa: empresaInput ? empresaInput.value.trim() || undefined : undefined,
             direccion_referencia: dirInput.value.trim() || undefined,
+            nota_cobro: notaCobroInput && notaCobroInput.value.trim() ? notaCobroInput.value.trim() : undefined,
             lote_despacho: loteVal,
             created_at: fechaVal
           };
@@ -8555,6 +8597,7 @@ const userInitials = currentUser.nombre
               piezasInput.value = '1';
               if (piesCubicosInput) piesCubicosInput.value = '';
               if (empresaInput) empresaInput.value = '';
+              if (notaCobroInput) notaCobroInput.value = '';
               if (loteInput) loteInput.value = activeCargaLote || '';
               if (fechaRegistroInput) fechaRegistroInput.value = activeCargaFecha || '';
               guiaInput.focus();
@@ -8784,6 +8827,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       const editEstado = document.getElementById('edit-estado') as HTMLSelectElement;
       const editChofer = document.getElementById('edit-chofer') as HTMLSelectElement;
       const editHora = document.getElementById('edit-hora') as HTMLInputElement;
+      const editNotaCobro = document.getElementById('edit-nota-cobro') as HTMLInputElement;
       const editDireccion = document.getElementById('edit-direccion') as HTMLTextAreaElement;
       const editGpsLat = document.getElementById('edit-gps-lat') as HTMLInputElement;
       const editGpsLon = document.getElementById('edit-gps-lon') as HTMLInputElement;
@@ -8835,6 +8879,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         if (editEmpresa) editEmpresa.value = item.empresa || '';
         if (editEstado) editEstado.value = item.estado || 'Por contactar';
         if (editHora) editHora.value = item.hora_disponible || '';
+        if (editNotaCobro) editNotaCobro.value = item.nota_cobro || '';
         if (editDireccion) editDireccion.value = item.direccion_referencia || '';
         if (editGpsLat) editGpsLat.value = item.gps_latitud ? item.gps_latitud.toString() : '';
         if (editGpsLon) editGpsLon.value = item.gps_longitud ? item.gps_longitud.toString() : '';
@@ -8880,6 +8925,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           estado: editEstado.value,
           chofer_asignado_id: choferVal,
           hora_disponible: editHora.value.trim() || null,
+          nota_cobro: editNotaCobro ? editNotaCobro.value.trim() || null : null,
           direccion_referencia: editDireccion.value.trim() || null,
           gps_latitud: latVal,
           gps_longitud: lonVal,

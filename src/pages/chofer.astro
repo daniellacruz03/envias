@@ -35,6 +35,7 @@ const guiasResult = await query(`
     g.pies_cubicos,
     g.direccion_referencia,
     g.hora_disponible,
+    g.nota_cobro,
     g.comprobante_url,
     g.comprobante_base64,
     g.recibido_por,
@@ -959,6 +960,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               recibe_telefono: g.recibe_telefono || null,
               direccion_referencia: g.direccion_referencia || '',
               hora_disponible: g.hora_disponible || '',
+              nota_cobro: g.nota_cobro || '',
               gps_latitud: g.gps_latitud || null,
               gps_longitud: g.gps_longitud || null,
               gps_confirmado: g.gps_confirmado === true,
@@ -992,6 +994,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
           if (!stop.telefono_secundario && g.telefono_secundario) stop.telefono_secundario = g.telefono_secundario;
           if (!stop.ciudad_destino && g.ciudad_destino) stop.ciudad_destino = g.ciudad_destino;
           if (!stop.hora_disponible && g.hora_disponible) stop.hora_disponible = g.hora_disponible;
+          if (!stop.nota_cobro && g.nota_cobro) stop.nota_cobro = g.nota_cobro;
           if (g.orden_ruta && g.orden_ruta > 0) {
             if (!stop.orden_ruta || g.orden_ruta < stop.orden_ruta) stop.orden_ruta = g.orden_ruta;
           }
@@ -1074,6 +1077,17 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
         var firstGuiaId = stop.guias[0] ? stop.guias[0].id_guia : '';
         var totalVolTag = stop.totalPiesCubicos > 0 ? (' • ' + Number(stop.totalPiesCubicos).toFixed(2) + ' ft³') : '';
         var zonaNombre = stop.ciudad_destino || 'Destino';
+
+        var notaCobroBox = '';
+        if (stop.nota_cobro) {
+          notaCobroBox = '<div class="p-2.5 rounded-2xl bg-amber-100/90 border border-amber-300 text-amber-950 font-bold text-xs flex items-center gap-2 shadow-2xs">' +
+            '<svg class="w-4 h-4 text-amber-800 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+            '<div class="min-w-0">' +
+              '<span class="font-extrabold text-[10px] uppercase tracking-wide text-amber-800 block">Cobro al Entregar:</span>' +
+              '<span class="text-xs font-black text-amber-950 truncate block">' + stop.nota_cobro + '</span>' +
+            '</div>' +
+          '</div>';
+        }
 
         var recibePersonaBox = '';
         if (stop.recibe_persona || stop.recibe_telefono) {
@@ -1160,6 +1174,8 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               (stop.telefono_secundario ? ('<span class="text-slate-400 font-mono">/ ' + stop.telefono_secundario + '</span>') : '') +
             '</div>' +
 
+            notaCobroBox +
+
             recibePersonaBox +
 
             '<!-- Dirección de Entrega -->' +
@@ -1168,7 +1184,7 @@ const uniqueCiudades = Array.from(new Set(initialGuias.map(g => g.ciudad_destino
               '<span>' + (stop.direccion_referencia || 'Ubicación confirmada') + '</span>' +
             '</div>' +
 
-            '<!-- Badges de Especificaciones (Horario, Recibido por, GPS) -->' +
+            '<!-- Badges de Especificaciones (Horario, Recibido por, GPS, Cobro) -->' +
             '<div class="flex flex-wrap items-center gap-1.5 pt-0.5">' +
               (stop.hora_disponible ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-100 text-[10px] font-bold"><svg class="w-3 h-3 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Horario: Hasta las ' + stop.hora_disponible + '</span>' : '') +
               (stop.recibido_por ? '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-bold"><svg class="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Recibido: ' + stop.recibido_por + '</span>' : '') +
