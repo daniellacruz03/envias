@@ -1028,6 +1028,30 @@ const userInitials = currentUser.nombre
                 <span>Historial de Rutas</span>
                 <span id="historial-count-pill" class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">0</span>
               </button>
+
+              <button
+                type="button"
+                id="btn-view-sinfoto"
+                class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>Sin Foto</span>
+                <span id="sinfoto-count-pill" class="text-[10px] bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-bold">0</span>
+              </button>
+
+              <button
+                type="button"
+                id="btn-view-facturacion"
+                class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span>Facturación</span>
+                <span class="text-[10px] bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-bold">PDF</span>
+              </button>
             </div>
           </div>
 
@@ -1096,7 +1120,8 @@ const userInitials = currentUser.nombre
               <option value="Por contactar">Por contactar</option>
               <option value="Contactado">Contactado</option>
               <option value="En ruta">En ruta</option>
-              <option value="Entregado">Entregado</option>
+              <option value="Entregado">Entregado con foto</option>
+              <option value="Entregado sin foto">Entregado sin foto</option>
               <option value="No entregado">No entregado / Incidencia</option>
             </select>
 
@@ -1796,6 +1821,177 @@ const userInitials = currentUser.nombre
         <!-- ========================================== -->
         <!-- MODO 7: HISTORIAL Y ARCHIVO DE RUTAS       -->
         <!-- ========================================== -->
+        <!-- ========================================== -->
+        <!-- ========================================== -->
+        <!-- MODO 9: FACTURACIÓN POR COURIER Y EMPRESA  -->
+        <!-- ========================================== -->
+        <div id="view-container-facturacion" class="hidden p-4 sm:p-6 bg-slate-50/50 space-y-5">
+
+          <!-- Cabecera y Botones de Impresión / PDF -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-violet-100 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-lg font-black text-slate-900">Facturación por Courier y Encomiendas</h2>
+                <p class="text-xs text-slate-500">Liquidación y balance agrupado por courier, empresa y cliente con piezas y pies cúbicos.</p>
+              </div>
+            </div>
+
+            <!-- Botones de Acción (Imprimir / Descargar PDF) -->
+            <div class="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                id="btn-facturacion-print"
+                onclick="window.printFacturacionDirect()"
+                class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                title="Imprimir directamente o Guardar como PDF en el navegador"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                <span>Imprimir / Guardar</span>
+              </button>
+
+              <button
+                type="button"
+                id="btn-facturacion-download-pdf"
+                onclick="window.downloadFacturacionPdfDirect()"
+                class="px-3.5 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 active:scale-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                title="Descargar reporte oficial de facturación en archivo PDF"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>Descargar PDF</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Barra de Filtros: Lote, Courier y Buscador -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs">
+            <!-- Filtro de Lotes -->
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Lote</label>
+              <select
+                id="facturacion-filter-lote"
+                class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 cursor-pointer shadow-2xs"
+                onchange="window.renderFacturacionView()"
+              >
+                <option value="ALL">Todos los lotes</option>
+              </select>
+            </div>
+
+            <!-- Filtro de Courier -->
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Courier / Empresa</label>
+              <select
+                id="facturacion-filter-courier"
+                class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 cursor-pointer shadow-2xs"
+                onchange="window.renderFacturacionView()"
+              >
+                <option value="ALL">Todos los couriers</option>
+              </select>
+            </div>
+
+            <!-- Buscador -->
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Buscar</label>
+              <div class="relative">
+                <input
+                  type="text"
+                  id="facturacion-search"
+                  placeholder="Destinatario, guía..."
+                  class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 shadow-2xs transition-all"
+                  oninput="window.renderFacturacionView()"
+                />
+                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Totales Generales -->
+          <div id="facturacion-totales" class="grid grid-cols-2 sm:grid-cols-4 gap-3"></div>
+
+          <!-- Lista de Couriers -->
+          <div id="facturacion-list" class="space-y-5"></div>
+
+          <!-- Empty -->
+          <div id="facturacion-empty" class="hidden p-12 text-center bg-white rounded-3xl border border-dashed border-slate-200">
+            <p class="text-slate-400 font-medium">No hay guías que coincidan con los filtros seleccionados.</p>
+          </div>
+        </div>
+
+        <div id="view-container-sinfoto" class="hidden p-4 sm:p-6 bg-slate-50/50 space-y-6">
+          <!-- Cabecera -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-2xl bg-rose-100 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-lg font-black text-slate-900">Guías Entregadas Sin Foto</h2>
+                <p class="text-xs text-slate-500">Entregas marcadas como "Entregado" sin comprobante fotográfico registrado.</p>
+              </div>
+              <span id="sinfoto-badge-count" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200 ml-2">0 guías</span>
+            </div>
+            <button
+              type="button"
+              onclick="window.loadSinfotoData(true)"
+              class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all cursor-pointer shadow-2xs shrink-0"
+              title="Refrescar"
+            >
+              <svg id="sinfoto-refresh-icon" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Buscador -->
+          <div class="relative max-w-sm">
+            <input
+              type="text"
+              id="sinfoto-search-input"
+              placeholder="Buscar guía, destinatario, ciudad..."
+              class="w-full text-xs bg-white border border-slate-200 rounded-xl pl-8 pr-3 py-2.5 text-slate-800 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 shadow-2xs transition-all"
+              oninput="window.filterSinfotoData()"
+            />
+            <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+
+          <!-- Loading -->
+          <div id="sinfoto-loading" class="hidden flex items-center justify-center py-12 text-slate-400">
+            <svg class="animate-spin w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span class="text-sm font-medium">Cargando guías sin foto...</span>
+          </div>
+
+          <!-- Lista -->
+          <div id="sinfoto-list" class="space-y-4"></div>
+
+          <!-- Empty state -->
+          <div id="sinfoto-empty" class="hidden p-12 text-center bg-white rounded-3xl border border-dashed border-emerald-200">
+            <div class="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 class="font-bold text-slate-700 mb-1">Todo con comprobante</h3>
+            <p class="text-sm text-slate-400">No hay guías entregadas sin foto de comprobante.</p>
+          </div>
+        </div>
+
         <div id="view-container-historial" class="hidden p-4 sm:p-6 bg-slate-50/50 space-y-6">
           
           <!-- Barra Superior de Control y Filtros del Historial -->
@@ -3270,7 +3466,8 @@ const userInitials = currentUser.nombre
                 <option value="Por contactar">Por contactar</option>
                 <option value="Contactado">Contactado</option>
                 <option value="En ruta">En ruta</option>
-                <option value="Entregado">Entregado</option>
+                <option value="Entregado">Entregado con foto</option>
+                <option value="Entregado sin foto">Entregado sin foto</option>
                 <option value="No entregado">No entregado / Incidencia</option>
               </select>
             </div>
@@ -3825,6 +4022,7 @@ const userInitials = currentUser.nombre
     <!-- ========================================== -->
     <script>
       import { downloadListinPdf, downloadAllZonesListinesPdf } from '../lib/listinPdf';
+      import { downloadFacturacionPdf } from '../lib/facturacionPdf';
 
       interface Driver {
         id: number;
@@ -3853,7 +4051,8 @@ const userInitials = currentUser.nombre
         orden_ruta?: number | null;
         ruta_origen?: string | null;
         ruta_destino?: string | null;
-        estado: 'Por contactar' | 'Contactado' | 'En ruta' | 'Entregado' | 'No entregado';
+        estado: 'Por contactar' | 'Contactado' | 'En ruta' | 'Entregado' | 'Entregado sin foto' | 'No entregado';
+        nota_interna?: string | null;
         gps_latitud?: number | null;
         gps_longitud?: number | null;
         gps_confirmado: boolean;
@@ -3904,7 +4103,7 @@ const userInitials = currentUser.nombre
         return guia.comprobante_url || '';
       }
       let isLoading = true;
-      let currentViewMode: 'table' | 'cities' | 'drivers' | 'mapa' | 'directorio' | 'escaneos' | 'listin' | 'historial' = 'table';
+      let currentViewMode: 'table' | 'cities' | 'drivers' | 'mapa' | 'directorio' | 'escaneos' | 'listin' | 'historial' | 'sinfoto' | 'facturacion' = 'table';
       let currentLoteFilter: string = 'ALL'; // 'ALL' | 'CURRENT_WEEK' | 'PENDING_PAST' | lote_despacho code
       let expandedCities: Record<string, boolean> = {};
       let escaneosData: any[] = [];
@@ -3917,6 +4116,9 @@ const userInitials = currentUser.nombre
       let expandedHistorialRouteIds = new Set<number>();
       let selectedHistorialRouteId: number | null = null;
       let historialDetailSearchQuery: string = '';
+      let expandedHistorialDays = new Set<string>(); // dateKeys expandidos en el acordeón
+      let historialAccordionInitialized = false;     // flag para auto-expand solo al cargar
+      let historialGroupBy: 'day' | 'lote' = 'day'; // modo de agrupación del sidebar
 
       // Datos del usuario conectado
       const currentUserDataEl = document.getElementById('current-user-data');
@@ -4191,7 +4393,11 @@ const userInitials = currentUser.nombre
       const viewContainerDirectorio = document.getElementById('view-container-directorio') as HTMLElement;
       const viewContainerEscaneos = document.getElementById('view-container-escaneos') as HTMLElement;
       const viewContainerListin = document.getElementById('view-container-listin') as HTMLElement;
+      const viewContainerSinfoto = document.getElementById('view-container-sinfoto') as HTMLElement;
+      const viewContainerFacturacion = document.getElementById('view-container-facturacion') as HTMLElement;
       const viewContainerHistorial = document.getElementById('view-container-historial') as HTMLElement;
+      const btnViewSinfoto = document.getElementById('btn-view-sinfoto') as HTMLButtonElement;
+      const btnViewFacturacion = document.getElementById('btn-view-facturacion') as HTMLButtonElement;
       const btnViewTable = document.getElementById('btn-view-table') as HTMLButtonElement;
       const btnViewCities = document.getElementById('btn-view-cities') as HTMLButtonElement;
       const btnViewDrivers = document.getElementById('btn-view-drivers') as HTMLButtonElement;
@@ -4214,6 +4420,8 @@ const userInitials = currentUser.nombre
       const listinCountPill = document.getElementById('listin-count-pill') as HTMLElement;
       const historialCountPill = document.getElementById('historial-count-pill') as HTMLElement;
       const historialBadgeCount = document.getElementById('historial-badge-count') as HTMLElement;
+      const sinfotoCountPill = document.getElementById('sinfoto-count-pill') as HTMLElement;
+      const sinfotoBadgeCount = document.getElementById('sinfoto-badge-count') as HTMLElement;
 
       const historialFilterDriver = document.getElementById('historial-filter-driver') as HTMLSelectElement;
       const historialFilterPeriodo = document.getElementById('historial-filter-periodo') as HTMLSelectElement;
@@ -5031,6 +5239,18 @@ const userInitials = currentUser.nombre
                   }
                 }
               } catch(e) {}
+            }
+
+            // Sin Foto: actualizar badge desde shipments en memoria
+            const sinfotoCount = shipments.filter((g: any) => g.estado === 'Entregado sin foto').length;
+            if (sinfotoCountPill) sinfotoCountPill.textContent = sinfotoCount.toString();
+            if (currentViewMode === 'sinfoto') {
+              (window as any).loadSinfotoData();
+            }
+
+            // Facturación: refresco silencioso en tiempo real
+            if (currentViewMode === 'facturacion') {
+              (window as any).renderFacturacionView();
             }
           }
 
@@ -5943,7 +6163,7 @@ const userInitials = currentUser.nombre
         filteredCountBadge.textContent = `${filtered.length} de ${shipments.length} guías`;
         updateKPIs();
 
-        if (filtered.length === 0 && currentViewMode !== 'historial' && currentViewMode !== 'escaneos' && currentViewMode !== 'listin' && currentViewMode !== 'directorio') {
+        if (filtered.length === 0 && currentViewMode !== 'historial' && currentViewMode !== 'escaneos' && currentViewMode !== 'listin' && currentViewMode !== 'directorio' && currentViewMode !== 'sinfoto' && currentViewMode !== 'facturacion') {
           tableBody.innerHTML = '';
           viewContainerCities.innerHTML = '';
           if (viewContainerDrivers) viewContainerDrivers.innerHTML = '';
@@ -5970,6 +6190,10 @@ const userInitials = currentUser.nombre
           renderListinView();
         } else if (currentViewMode === 'historial') {
           renderHistorialView();
+        } else if (currentViewMode === 'sinfoto') {
+          (window as any).loadSinfotoData?.();
+        } else if (currentViewMode === 'facturacion') {
+          (window as any).renderFacturacionView?.();
         }
       }
 
@@ -6005,6 +6229,7 @@ const userInitials = currentUser.nombre
         if (item.estado === 'Contactado') badgeColor = 'bg-sky-50 text-sky-700 border-sky-200/80';
         if (item.estado === 'En ruta') badgeColor = 'bg-indigo-50 text-indigo-700 border-indigo-200/80';
         if (item.estado === 'Entregado') badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200/80';
+        if (item.estado === 'Entregado sin foto') badgeColor = 'bg-amber-50 text-amber-700 border-amber-200/80';
         if (item.estado === 'No entregado') badgeColor = 'bg-rose-50 text-rose-700 border-rose-200/80';
 
         const isGpsConfirmed = item.gps_confirmado === true;
@@ -6184,7 +6409,8 @@ const userInitials = currentUser.nombre
                 <option value="Por contactar" ${item.estado === 'Por contactar' ? 'selected' : ''}>Por contactar</option>
                 <option value="Contactado" ${item.estado === 'Contactado' ? 'selected' : ''}>Contactado</option>
                 <option value="En ruta" ${item.estado === 'En ruta' ? 'selected' : ''}>En ruta</option>
-                <option value="Entregado" ${item.estado === 'Entregado' ? 'selected' : ''}>Entregado</option>
+                <option value="Entregado" ${item.estado === 'Entregado' ? 'selected' : ''}>Entregado con foto</option>
+                <option value="Entregado sin foto" ${item.estado === 'Entregado sin foto' ? 'selected' : ''}>Entregado sin foto</option>
                 <option value="No entregado" ${item.estado === 'No entregado' ? 'selected' : ''}>No entregado</option>
               </select>
             </td>
@@ -6762,7 +6988,8 @@ const userInitials = currentUser.nombre
                                 <option value="Por contactar" ${commonStatus === 'Por contactar' ? 'selected' : ''}>Por contactar</option>
                                 <option value="Contactado" ${commonStatus === 'Contactado' ? 'selected' : ''}>Contactado</option>
                                 <option value="En ruta" ${commonStatus === 'En ruta' ? 'selected' : ''}>En ruta</option>
-                                <option value="Entregado" ${commonStatus === 'Entregado' ? 'selected' : ''}>Entregado</option>
+                                <option value="Entregado" ${commonStatus === 'Entregado' ? 'selected' : ''}>Entregado con foto</option>
+                                <option value="Entregado sin foto" ${commonStatus === 'Entregado sin foto' ? 'selected' : ''}>Entregado sin foto</option>
                                 <option value="No entregado" ${commonStatus === 'No entregado' ? 'selected' : ''}>No entregado</option>
                               </select>
                             </td>
@@ -7891,6 +8118,8 @@ const userInitials = currentUser.nombre
           btnViewEscaneos?.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewListin?.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewHistorial?.classList.remove('tab-btn-active', 'text-slate-600');
+          btnViewSinfoto?.classList.remove('tab-btn-active', 'text-slate-600');
+          btnViewFacturacion?.classList.remove('tab-btn-active', 'text-slate-600');
           
           viewContainerTable.classList.add('hidden');
           viewContainerCities.classList.add('hidden');
@@ -7900,6 +8129,8 @@ const userInitials = currentUser.nombre
           viewContainerEscaneos?.classList.add('hidden');
           viewContainerListin?.classList.add('hidden');
           viewContainerHistorial?.classList.add('hidden');
+          viewContainerSinfoto?.classList.add('hidden');
+          viewContainerFacturacion?.classList.add('hidden');
 
           if (currentViewMode === 'table') {
             btnViewTable.classList.add('tab-btn-active');
@@ -7980,7 +8211,32 @@ const userInitials = currentUser.nombre
             btnViewDirectorio?.classList.add('text-slate-600');
             btnViewEscaneos?.classList.add('text-slate-600');
             btnViewListin?.classList.add('text-slate-600');
+            btnViewSinfoto?.classList.add('text-slate-600');
             viewContainerHistorial?.classList.remove('hidden');
+          } else if (currentViewMode === 'sinfoto') {
+            btnViewSinfoto?.classList.add('tab-btn-active');
+            btnViewTable.classList.add('text-slate-600');
+            btnViewCities.classList.add('text-slate-600');
+            btnViewDrivers.classList.add('text-slate-600');
+            btnViewMapa?.classList.add('text-slate-600');
+            btnViewDirectorio?.classList.add('text-slate-600');
+            btnViewEscaneos?.classList.add('text-slate-600');
+            btnViewListin?.classList.add('text-slate-600');
+            btnViewHistorial?.classList.add('text-slate-600');
+            btnViewFacturacion?.classList.add('text-slate-600');
+            viewContainerSinfoto?.classList.remove('hidden');
+          } else if (currentViewMode === 'facturacion') {
+            btnViewFacturacion?.classList.add('tab-btn-active');
+            btnViewTable.classList.add('text-slate-600');
+            btnViewCities.classList.add('text-slate-600');
+            btnViewDrivers.classList.add('text-slate-600');
+            btnViewMapa?.classList.add('text-slate-600');
+            btnViewDirectorio?.classList.add('text-slate-600');
+            btnViewEscaneos?.classList.add('text-slate-600');
+            btnViewListin?.classList.add('text-slate-600');
+            btnViewHistorial?.classList.add('text-slate-600');
+            btnViewSinfoto?.classList.add('text-slate-600');
+            viewContainerFacturacion?.classList.remove('hidden');
           }
         }
 
@@ -8030,6 +8286,18 @@ const userInitials = currentUser.nombre
           currentViewMode = 'historial';
           updateTabStyles();
           (window as any).loadHistorialData();
+        });
+
+        btnViewSinfoto?.addEventListener('click', () => {
+          currentViewMode = 'sinfoto';
+          updateTabStyles();
+          (window as any).loadSinfotoData();
+        });
+
+        btnViewFacturacion?.addEventListener('click', () => {
+          currentViewMode = 'facturacion';
+          updateTabStyles();
+          (window as any).renderFacturacionView();
         });
 
         // ============================================
@@ -8743,18 +9011,32 @@ const userInitials = currentUser.nombre
       }
 
       // Acción de WhatsApp con plantilla oficial y cambio automático a "Contactado"
+      // Si el cliente tiene múltiples guías (mismo teléfono), se consolidan en un solo mensaje
       (window as any).sendWhatsApp = async (id_guia: string) => {
         const item = shipments.find(s => s.id_guia === id_guia);
         if (!item) return;
 
         const phoneFormatted = formatPhoneForWhatsApp(item.telefono_principal);
         const host = window.location.origin;
-        const customerUrl = `${host}/confirmar?guia=${encodeURIComponent(item.id_guia)}`;
         const customerName = toTitleCase(item.destinatario);
         const city = item.ciudad_destino || 'su localidad';
-        const piecesText = (item.piezas || 1) === 1 ? '1 pieza' : `${item.piezas} piezas`;
 
-        const message = 
+        // Buscar todas las guías activas del mismo cliente (mismo teléfono, no entregadas ni archivadas)
+        const normalizePhone = (p: string) => (p || '').replace(/\D/g, '');
+        const clientPhone = normalizePhone(item.telefono_principal);
+        const clientGuias = shipments.filter(s =>
+          normalizePhone(s.telefono_principal) === clientPhone &&
+          s.estado !== 'Entregado' &&
+          s.estado !== 'No entregado'
+        );
+
+        let message = '';
+
+        if (clientGuias.length <= 1) {
+          // Cliente con una sola guía — mensaje individual
+          const piecesText = (item.piezas || 1) === 1 ? '1 pieza' : `${item.piezas} piezas`;
+          const customerUrl = `${host}/confirmar?guia=${encodeURIComponent(item.id_guia)}`;
+          message =
 `*ENVÍAS C.A. | Notificación de Despacho*
 
 Estimado(a) *${customerName}*,
@@ -8765,15 +9047,43 @@ Para asegurar una entrega puntual y sin contratiempos, por favor confirme su pun
 ${customerUrl}
 
 _Envías C.A. • Transporte y Logística Nacional_`;
+        } else {
+          // Cliente con múltiples guías — mensaje consolidado con lista y un solo link
+          const totalPiezas = clientGuias.reduce((sum, g) => sum + (g.piezas || 1), 0);
+          const guiasList = clientGuias
+            .map(g => `• Guía #${g.id_guia} — ${g.piezas || 1} pieza${(g.piezas || 1) > 1 ? 's' : ''}${g.empresa ? ` (${g.empresa})` : ''}`)
+            .join('\n');
+          // El link de confirmación apunta a la guía disparadora (o la primera del lote)
+          const refGuia = clientGuias.find(g => g.id_guia === id_guia) || clientGuias[0];
+          const customerUrl = `${host}/confirmar?guia=${encodeURIComponent(refGuia.id_guia)}`;
+          message =
+`*ENVÍAS C.A. | Notificación de Despacho*
+
+Estimado(a) *${customerName}*,
+
+Le informamos que tiene *${clientGuias.length} paquetes* (${totalPiezas} pieza${totalPiezas > 1 ? 's' : ''} en total) en proceso de entrega hacia *${city}*:
+
+${guiasList}
+
+Para asegurar una entrega puntual, por favor confirme su punto de entrega en nuestro portal oficial:
+${customerUrl}
+
+_Envías C.A. • Transporte y Logística Nacional_`;
+        }
 
         const whatsappUrl = `https://wa.me/${phoneFormatted}?text=${encodeURIComponent(message)}`;
-
         window.open(whatsappUrl, '_blank');
-        showToast(`Abriendo WhatsApp para guía #${item.id_guia}...`, 'success');
 
-        // Si estaba "Por contactar", pasar automáticamente a "Contactado"
-        if (item.estado === 'Por contactar') {
-          await (window as any).updateShipmentStatus(item.id_guia, 'Contactado');
+        const guiasLabel = clientGuias.length > 1
+          ? `${clientGuias.length} guías de ${customerName}`
+          : `guía #${item.id_guia}`;
+        showToast(`Abriendo WhatsApp para ${guiasLabel}...`, 'success');
+
+        // Marcar como "Contactado" todas las guías activas del cliente
+        for (const g of clientGuias) {
+          if (g.estado === 'Por contactar') {
+            await (window as any).updateShipmentStatus(g.id_guia, 'Contactado');
+          }
         }
       };
 
@@ -9391,6 +9701,8 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             const json = await res.json();
             if (json.success && Array.isArray(json.data)) {
               historialRoutes = json.data;
+              expandedHistorialDays.clear();
+              historialAccordionInitialized = false; // permite auto-expand al primer render
               if (historialCountPill) {
                 historialCountPill.textContent = historialRoutes.length.toString();
               }
@@ -9418,43 +9730,69 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           filteredHistorialRoutes = [...historialRoutes];
         } else {
           filteredHistorialRoutes = historialRoutes.filter((r: any) => {
-            const matchCode = (r.codigo_ruta || '').toLowerCase().includes(query);
-            const matchDriver = (r.chofer_nombre || '').toLowerCase().includes(query);
-            const matchOrig = (r.ruta_origen || '').toLowerCase().includes(query);
-            const matchDest = (r.ruta_destino || '').toLowerCase().includes(query);
-            const matchSnapshot = JSON.stringify(r.guias_snapshot || []).toLowerCase().includes(query);
-            return matchCode || matchDriver || matchOrig || matchDest || matchSnapshot;
+            // Buscar en campos de la ruta
+            if ((r.codigo_ruta || '').toLowerCase().includes(query)) return true;
+            if ((r.chofer_nombre || '').toLowerCase().includes(query)) return true;
+            if ((r.ruta_origen || '').toLowerCase().includes(query)) return true;
+            if ((r.ruta_destino || '').toLowerCase().includes(query)) return true;
+            // Buscar dentro de cada gu\u00eda del snapshot (id, destinatario, tel\u00e9fono, ciudad, empresa)
+            const guias: any[] = Array.isArray(r.guias_snapshot) ? r.guias_snapshot : [];
+            return guias.some((g: any) =>
+              (g.id_guia || '').toLowerCase().includes(query) ||
+              (g.destinatario || '').toLowerCase().includes(query) ||
+              (g.telefono_principal || '').toLowerCase().includes(query) ||
+              (g.telefono_secundario || '').toLowerCase().includes(query) ||
+              (g.ciudad_destino || '').toLowerCase().includes(query) ||
+              (g.empresa || '').toLowerCase().includes(query) ||
+              (g.direccion_referencia || '').toLowerCase().includes(query)
+            );
           });
         }
+        // Reset acorde\u00f3n para que el primer grupo con resultados se auto-expanda
+        expandedHistorialDays.clear();
+        historialAccordionInitialized = false;
         renderHistorialView();
       };
 
-      function getRouteDateCategory(dateStr: string): string {
+      // Retorna una clave canónica de fecha (YYYY-MM-DD) para agrupar rutas del mismo día
+      function getRouteDateKey(dateStr: string): string {
         const d = new Date(dateStr);
-        if (isNaN(d.getTime())) return 'Historial General';
+        if (isNaN(d.getTime())) return 'sin-fecha';
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${dd}`;
+      }
+
+      // Formatea la clave de fecha para el encabezado de grupo del historial
+      function formatDateGroupTitle(dateKey: string): string {
+        if (dateKey === 'sin-fecha') return 'Sin fecha';
+        const d = new Date(dateKey + 'T12:00:00');
+        if (isNaN(d.getTime())) return dateKey;
 
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const rDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        const diffDays = Math.floor((today.getTime() - rDay.getTime()) / 86400000);
 
-        const diffMs = today.getTime() - rDay.getTime();
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const monthNames = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+        const monthFull = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-        if (diffDays <= 0) {
-          return 'Hoy';
-        } else if (diffDays === 1) {
-          return 'Ayer';
-        } else if (diffDays <= 7) {
-          return 'A comienzos de esta semana';
-        } else if (diffDays <= 30) {
-          return 'A comienzos de este mes';
-        } else {
-          const monthNames = [
-            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-          ];
-          return `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
-        }
+        const dayName = dayNames[d.getDay()];
+        const dayNum = d.getDate();
+        const mon = monthNames[d.getMonth()];
+        const year = d.getFullYear();
+
+        if (diffDays <= 0) return `Hoy — ${dayName} ${dayNum} ${mon}`;
+        if (diffDays === 1) return `Ayer — ${dayName} ${dayNum} ${mon}`;
+        if (year === now.getFullYear()) return `${dayName} ${dayNum} ${mon}`;
+        return `${dayName} ${dayNum} ${monthFull[d.getMonth()]} ${year}`;
+      }
+
+      // Alias mantenido para compatibilidad con formatDayMonth (sidebar)
+      function getRouteDateCategory(dateStr: string): string {
+        return getRouteDateKey(dateStr);
       }
 
       function formatDayMonth(dateStr: string): string {
@@ -9481,6 +9819,22 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
         return r.ruta_destino || 'Barquisimeto';
       }
+
+      (window as any).toggleHistorialDay = function(groupKey: string) {
+        if (expandedHistorialDays.has(groupKey)) {
+          expandedHistorialDays.delete(groupKey);
+        } else {
+          expandedHistorialDays.add(groupKey);
+        }
+        renderHistorialView();
+      };
+
+      (window as any).setHistorialGroupBy = function(mode: string) {
+        historialGroupBy = (mode === 'lote') ? 'lote' : 'day';
+        expandedHistorialDays.clear();
+        historialAccordionInitialized = false;
+        renderHistorialView();
+      };
 
       (window as any).selectHistorialRoute = function(routeId: number) {
         selectedHistorialRouteId = routeId;
@@ -9571,18 +9925,42 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           selectedHistorialRouteId = filteredHistorialRoutes[0].id;
         }
 
-        // Agrupar rutas en orden cronológico (Hoy -> Ayer -> A comienzos de esta semana -> A comienzos de este mes -> ...)
+        // Agrupar rutas por día exacto (clave YYYY-MM-DD) — múltiples rutas del mismo día quedan juntas
         const groups: Record<string, any[]> = {};
         const groupOrder: string[] = [];
 
-        filteredHistorialRoutes.forEach((r: any) => {
-          const category = getRouteDateCategory(r.fecha_finalizacion);
-          if (!groups[category]) {
-            groups[category] = [];
-            groupOrder.push(category);
-          }
-          groups[category].push(r);
+        // Ordenar de más reciente a más antiguo antes de agrupar
+        const sortedRoutes = [...filteredHistorialRoutes].sort((a: any, b: any) => {
+          const da = new Date(a.fecha_finalizacion).getTime();
+          const db = new Date(b.fecha_finalizacion).getTime();
+          return db - da;
         });
+
+        // Helper: obtiene el lote dominante de una ruta archivada
+        function getRouteLoteKey(r: any): string {
+          const guias: any[] = Array.isArray(r.guias_snapshot) ? r.guias_snapshot : [];
+          const lotes = guias.map((g: any) => g.lote_despacho).filter(Boolean);
+          if (lotes.length === 0) return 'Sin Lote';
+          const counts: Record<string, number> = {};
+          lotes.forEach((l: string) => { counts[l] = (counts[l] || 0) + 1; });
+          return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+        }
+
+        sortedRoutes.forEach((r: any) => {
+          const key = historialGroupBy === 'lote'
+            ? getRouteLoteKey(r)
+            : getRouteDateKey(r.fecha_finalizacion);
+          if (!groups[key]) {
+            groups[key] = [];
+            groupOrder.push(key);
+          }
+          groups[key].push(r);
+        });
+
+        // Ordenar grupos de lotes alfabéticamente (los de día ya están ordenados por fecha)
+        if (historialGroupBy === 'lote') {
+          groupOrder.sort((a, b) => a.localeCompare(b));
+        }
 
         // Buscar ruta seleccionada
         const selectedRoute = filteredHistorialRoutes.find((r: any) => r.id === selectedHistorialRouteId) || filteredHistorialRoutes[0];
@@ -9591,61 +9969,86 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         // Filtrar guías dentro de la ruta seleccionada si hay búsqueda interna
         const detailQ = (historialDetailSearchQuery || '').toLowerCase().trim();
         const filteredDetailGuias = detailQ
-          ? selectedGuias.filter((g: any) => 
+          ? selectedGuias.filter((g: any) =>
               (g.id_guia || '').toLowerCase().includes(detailQ) ||
               (g.destinatario || '').toLowerCase().includes(detailQ) ||
               (g.ciudad_destino || '').toLowerCase().includes(detailQ) ||
-              (g.telefono_principal || '').toLowerCase().includes(detailQ)
+              (g.telefono_principal || '').toLowerCase().includes(detailQ) ||
+              (g.empresa || '').toLowerCase().includes(detailQ)
             )
           : selectedGuias;
 
-        // Renderizar Lista Agrupada (Sidebar Izquierda)
-        const groupsHTML = groupOrder.map((groupTitle) => {
-          const routesInGroup = groups[groupTitle];
+        // Acordeón: auto-expandir el primer grupo solo una vez al cargar datos
+        if (!historialAccordionInitialized && groupOrder.length > 0) {
+          expandedHistorialDays.add(groupOrder[0]);
+          historialAccordionInitialized = true;
+        }
+
+        const groupsHTML = groupOrder.map((groupKey) => {
+          const routesInGroup = groups[groupKey];
+          const groupTitle = historialGroupBy === 'lote'
+            ? groupKey  // el código de lote ya es legible
+            : formatDateGroupTitle(groupKey);
+          const routeCount = routesInGroup.length;
+          const totalGuias = routesInGroup.reduce((sum: number, r: any) => {
+            return sum + (Array.isArray(r.guias_snapshot) ? r.guias_snapshot.length : (r.total_guias || 0));
+          }, 0);
+          const isExpanded = expandedHistorialDays.has(groupKey);
+          const safeKey = groupKey.replace(/[^a-z0-9-]/gi, '_');
+
           return `
-            <div class="space-y-1">
-              <h5 class="text-xs font-bold text-indigo-900/60 uppercase tracking-wider px-3 pt-3 pb-1">${groupTitle}</h5>
-              <div class="space-y-1">
+            <div class="border-b border-slate-100 last:border-b-0">
+              <!-- Cabecera del día (acordeón) -->
+              <button
+                type="button"
+                onclick="window.toggleHistorialDay('${groupKey}')"
+                class="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer group"
+              >
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <!-- Chevron -->
+                  <svg
+                    class="w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90' : 'rotate-0'}" 
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+                  </svg>
+                  <span class="text-sm font-extrabold text-slate-800 group-hover:text-slate-900">${groupTitle}</span>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                    ${routeCount} ruta${routeCount !== 1 ? 's' : ''}
+                  </span>
+                  <span class="text-[10px] font-semibold text-slate-400">
+                    ${totalGuias} guía${totalGuias !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              </button>
+
+              <!-- Rutas del día (colapsables) -->
+              <div class="${isExpanded ? '' : 'hidden'} pb-1 space-y-0.5 px-2">
                 ${routesInGroup.map((r: any) => {
                   const isSelected = r.id === selectedHistorialRouteId;
-                  const dayMonth = formatDayMonth(r.fecha_finalizacion);
                   const cityDisplay = getRouteCityDisplay(r);
+                  const guiasCount = Array.isArray(r.guias_snapshot) ? r.guias_snapshot.length : (r.total_guias || 0);
+                  const ef = r.porcentaje_efectividad ?? 0;
+                  const efClass = ef >= 80 ? 'bg-emerald-100 text-emerald-700' : ef >= 50 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700';
 
                   return `
                     <div
                       onclick="window.selectHistorialRoute(${r.id})"
-                      class="flex items-center justify-between px-3.5 py-3 rounded-2xl cursor-pointer transition-all duration-150 group ${
+                      class="flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-150 group ${
                         isSelected
-                          ? 'bg-blue-50/90 text-blue-900 border border-blue-200 shadow-xs ring-2 ring-blue-500/15'
-                          : 'hover:bg-slate-50 text-slate-800 border border-transparent hover:border-slate-200/70'
+                          ? 'bg-blue-50 border border-blue-200 ring-1 ring-blue-400/20'
+                          : 'hover:bg-slate-50 border border-transparent hover:border-slate-200/60'
                       }"
                     >
-                      <!-- Columna 1 y 2: Día Mes y Ciudad (Día Mes y Ciudad) -->
-                      <div class="flex items-center gap-3 min-w-0 flex-1">
-                        <span class="text-xs font-bold font-mono w-16 shrink-0 ${isSelected ? 'text-blue-600 font-extrabold' : 'text-slate-400 group-hover:text-slate-600'}">
-                          ${dayMonth}
-                        </span>
-                        <span class="text-sm font-extrabold truncate ${isSelected ? 'text-blue-950 font-black' : 'text-slate-800'}">
-                          ${cityDisplay}
-                        </span>
+                      <div class="min-w-0 flex-1">
+                        <p class="text-sm font-bold truncate ${isSelected ? 'text-blue-900' : 'text-slate-800'}">${cityDisplay}</p>
+                        <p class="text-[11px] ${isSelected ? 'text-blue-500' : 'text-slate-400'}">
+                          ${guiasCount} guía${guiasCount !== 1 ? 's' : ''} &middot; ${r.chofer_nombre || 'Chofer'}
+                        </p>
                       </div>
-
-                      <!-- Columna 3: Chofer y Menú ⋮ -->
-                      <div class="flex items-center gap-2 shrink-0">
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg ${isSelected ? 'bg-blue-200/60 text-blue-900' : 'bg-slate-100 text-slate-600'}">
-                          ${r.chofer_nombre || 'Chofer'}
-                        </span>
-                        <button
-                          type="button"
-                          onclick="event.stopPropagation(); window.selectHistorialRoute(${r.id});"
-                          class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-white/80 transition-colors cursor-pointer"
-                          title="Opciones de ruta"
-                        >
-                          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
-                          </svg>
-                        </button>
-                      </div>
+                      <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-lg shrink-0 ml-2 ${efClass}">${ef}%</span>
                     </div>
                   `;
                 }).join('')}
@@ -9653,6 +10056,7 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             </div>
           `;
         }).join('');
+
 
         // Renderizar Detalle de la Ruta Seleccionada (Pane Derecha)
         let selectedRouteHTML = '';
@@ -9935,8 +10339,26 @@ _Envías C.A. • Transporte y Logística Nacional_`;
                 </div>
               </div>
 
-              <!-- Lista Agrupada -->
-              <div class="p-3 space-y-3 max-h-[640px] overflow-y-auto custom-scrollbar">
+              <!-- Pestañas Por Día / Por Lote -->
+              <div class="flex gap-0.5 p-2 bg-slate-50 border-b border-slate-100">
+                <button
+                  type="button"
+                  onclick="window.setHistorialGroupBy('day')"
+                  class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${historialGroupBy === 'day' ? 'bg-white text-slate-900 shadow-xs border border-slate-200' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'}"
+                >
+                  Por Dia
+                </button>
+                <button
+                  type="button"
+                  onclick="window.setHistorialGroupBy('lote')"
+                  class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${historialGroupBy === 'lote' ? 'bg-white text-slate-900 shadow-xs border border-slate-200' : 'text-slate-500 hover:text-slate-700 hover:bg-white/60'}"
+                >
+                  Por Lote
+                </button>
+              </div>
+
+              <!-- Lista Agrupada (cambia segun pestaña activa) -->
+              <div class="space-y-0 max-h-[580px] overflow-y-auto custom-scrollbar">
                 ${groupsHTML}
               </div>
 
@@ -9973,6 +10395,638 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
         renderHistorialView();
       };
+
+      // ============================================
+      // MÓDULO: GUÍAS ENTREGADAS SIN FOTO
+      // ============================================
+      let sinfotoGuias: any[] = [];
+      let filteredSinfotoGuias: any[] = [];
+
+      const sinfotoListEl = document.getElementById('sinfoto-list') as HTMLElement;
+      const sinfotoEmptyEl = document.getElementById('sinfoto-empty') as HTMLElement;
+      const sinfotoLoadingEl = document.getElementById('sinfoto-loading') as HTMLElement;
+      const sinfotoSearchInput = document.getElementById('sinfoto-search-input') as HTMLInputElement;
+
+      (window as any).loadSinfotoData = async function(isManualRefresh = false) {
+        if (sinfotoLoadingEl) sinfotoLoadingEl.classList.remove('hidden');
+        if (isManualRefresh) {
+          const icon = document.getElementById('sinfoto-refresh-icon');
+          icon?.classList.add('animate-spin');
+        }
+        try {
+          // Filtrar directamente desde shipments cargados: estado === 'Entregado sin foto'
+          sinfotoGuias = shipments.filter((g: any) => g.estado === 'Entregado sin foto');
+          const count = sinfotoGuias.length;
+          if (sinfotoCountPill) sinfotoCountPill.textContent = count.toString();
+          if (sinfotoBadgeCount) sinfotoBadgeCount.textContent = `${count} guía${count !== 1 ? 's' : ''}`;
+          (window as any).filterSinfotoData();
+          if (isManualRefresh) showToast('Guías sin foto actualizadas', 'success');
+        } catch (err) {
+          console.error('Error cargando guías sin foto:', err);
+          if (isManualRefresh) showToast('Error al cargar guías sin foto', 'error');
+        } finally {
+          if (sinfotoLoadingEl) sinfotoLoadingEl.classList.add('hidden');
+          if (isManualRefresh) {
+            const icon = document.getElementById('sinfoto-refresh-icon');
+            icon?.classList.remove('animate-spin');
+          }
+        }
+      };
+
+      (window as any).filterSinfotoData = function() {
+        const q = (sinfotoSearchInput?.value || '').toLowerCase().trim();
+        if (!q) {
+          filteredSinfotoGuias = [...sinfotoGuias];
+        } else {
+          filteredSinfotoGuias = sinfotoGuias.filter((g: any) =>
+            (g.id_guia || '').toLowerCase().includes(q) ||
+            (g.destinatario || '').toLowerCase().includes(q) ||
+            (g.ciudad_destino || '').toLowerCase().includes(q) ||
+            (g.telefono_principal || '').toLowerCase().includes(q) ||
+            (g.empresa || '').toLowerCase().includes(q) ||
+            (g.chofer_nombre || '').toLowerCase().includes(q)
+          );
+        }
+        renderSinfotoView();
+      };
+
+      function renderSinfotoView() {
+        if (!sinfotoListEl || !sinfotoEmptyEl) return;
+
+        if (filteredSinfotoGuias.length === 0) {
+          sinfotoListEl.innerHTML = '';
+          sinfotoEmptyEl.classList.remove('hidden');
+          return;
+        }
+        sinfotoEmptyEl.classList.add('hidden');
+
+        // Agrupar por chofer
+        const groups: Record<string, any[]> = {};
+        const groupOrder: string[] = [];
+        filteredSinfotoGuias.forEach((g: any) => {
+          const key = g.chofer_nombre || 'Sin Asignar';
+          if (!groups[key]) { groups[key] = []; groupOrder.push(key); }
+          groups[key].push(g);
+        });
+
+        sinfotoListEl.innerHTML = groupOrder.map(chofer => {
+          const guias = groups[chofer];
+          return `
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+              <!-- Cabecera del grupo (chofer) -->
+              <div class="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-rose-50/60 to-white border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-700 font-extrabold text-xs shrink-0">
+                    ${chofer.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <p class="text-sm font-extrabold text-slate-900">${chofer}</p>
+                    <p class="text-[10px] text-rose-500 font-semibold">${guias.length} guía${guias.length !== 1 ? 's' : ''} sin foto</p>
+                  </div>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-1 rounded-lg bg-rose-100 text-rose-700 border border-rose-200">
+                  Sin comprobante
+                </span>
+              </div>
+
+              <!-- Tabla de guías -->
+              <div class="overflow-x-auto">
+                <table class="w-full text-xs">
+                  <thead>
+                    <tr class="border-b border-slate-100 bg-slate-50/60">
+                      <th class="py-2 px-3.5 text-left font-bold text-slate-500 uppercase tracking-wider text-[10px]">Guia</th>
+                      <th class="py-2 px-3.5 text-left font-bold text-slate-500 uppercase tracking-wider text-[10px]">Destinatario</th>
+                      <th class="py-2 px-3.5 text-left font-bold text-slate-500 uppercase tracking-wider text-[10px]">Ciudad</th>
+                      <th class="py-2 px-3.5 text-left font-bold text-slate-500 uppercase tracking-wider text-[10px]">Empresa</th>
+                      <th class="py-2 px-3.5 text-left font-bold text-slate-500 uppercase tracking-wider text-[10px]">Telefono</th>
+                      <th class="py-2 px-3.5 text-right font-bold text-slate-500 uppercase tracking-wider text-[10px]">Accion</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${guias.map((g: any) => `
+                      <tr class="hover:bg-rose-50/30 transition-colors">
+                        <td class="py-2.5 px-3.5">
+                          <span class="font-mono font-bold text-slate-900 text-xs">#${g.id_guia}</span>
+                        </td>
+                        <td class="py-2.5 px-3.5">
+                          <p class="font-semibold text-slate-800 truncate max-w-[160px]">${g.destinatario || '—'}</p>
+                        </td>
+                        <td class="py-2.5 px-3.5">
+                          <span class="font-medium text-slate-600">${g.ciudad_destino || '—'}</span>
+                        </td>
+                        <td class="py-2.5 px-3.5">
+                          <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">${g.empresa || '—'}</span>
+                        </td>
+                        <td class="py-2.5 px-3.5">
+                          <span class="text-slate-500">${g.telefono_principal || '—'}</span>
+                        </td>
+                        <td class="py-2.5 px-3.5 text-right">
+                          <a
+                            href="https://wa.me/${(g.telefono_principal || '').replace(/\D/g,'').replace(/^0/,'58')}"
+                            target="_blank"
+                            class="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-[10px] font-bold transition-all"
+                            title="Solicitar foto de comprobante por WhatsApp"
+                          >
+                            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.555 4.118 1.528 5.845L.057 23.886l6.223-1.434A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.885 0-3.656-.51-5.176-1.4l-.371-.22-3.694.851.872-3.584-.241-.382A9.953 9.953 0 012 12C2 6.478 6.478 2 12 2s10 4.478 10 10-4.478 10-10 10z"/></svg>
+                            Solicitar foto
+                          </a>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // ============================================
+      // MÓDULO: FACTURACIÓN POR COURIER Y EMPRESA
+      // ============================================
+
+      // Llenar selectores de lotes y couriers en Facturación manteniendo selección
+      function populateFacturacionFilters() {
+        const loteSelect = document.getElementById('facturacion-filter-lote') as HTMLSelectElement;
+        const courierSelect = document.getElementById('facturacion-filter-courier') as HTMLSelectElement;
+
+        if (loteSelect && shipments.length > 0) {
+          const curVal = loteSelect.value || 'ALL';
+          const loteMap: Record<string, number> = {};
+          shipments.forEach((g: any) => {
+            const info = getGuiaWeekInfo(g);
+            const code = (g.lote_despacho || info.loteCode || '').trim();
+            if (code) {
+              loteMap[code] = (loteMap[code] || 0) + 1;
+            }
+          });
+          const sortedLotes = Object.keys(loteMap).sort((a, b) => b.localeCompare(a));
+          let opts = '<option value="ALL">Todos los lotes</option>';
+          sortedLotes.forEach(l => {
+            opts += `<option value="${l}">${l} (${loteMap[l]} guías)</option>`;
+          });
+          loteSelect.innerHTML = opts;
+          if (Array.from(loteSelect.options).some(o => o.value === curVal)) {
+            loteSelect.value = curVal;
+          }
+        }
+
+        if (courierSelect && shipments.length > 0) {
+          const curVal = courierSelect.value || 'ALL';
+          const courierMap: Record<string, number> = {};
+          shipments.forEach((g: any) => {
+            const c = (g.empresa || 'Sin Courier').trim();
+            courierMap[c] = (courierMap[c] || 0) + 1;
+          });
+          const sortedCouriers = Object.keys(courierMap).sort((a, b) => a.localeCompare(b));
+          let opts = '<option value="ALL">Todos los couriers</option>';
+          sortedCouriers.forEach(c => {
+            opts += `<option value="${c}">${c} (${courierMap[c]} guías)</option>`;
+          });
+          courierSelect.innerHTML = opts;
+          if (Array.from(courierSelect.options).some(o => o.value === curVal)) {
+            courierSelect.value = curVal;
+          }
+        }
+      }
+
+      // Obtener guías filtradas de facturación según lote, courier y buscador
+      function getFilteredFacturacionGuias(): any[] {
+        const loteFilter = (document.getElementById('facturacion-filter-lote') as HTMLSelectElement)?.value || 'ALL';
+        const courierFilter = (document.getElementById('facturacion-filter-courier') as HTMLSelectElement)?.value || 'ALL';
+        const q = ((document.getElementById('facturacion-search') as HTMLInputElement)?.value || '').toLowerCase().trim();
+
+        return shipments.filter((g: any) => {
+          const weekInfo = getGuiaWeekInfo(g);
+          const gLote = (g.lote_despacho || weekInfo.loteCode || '').trim();
+          const gCourier = (g.empresa || 'Sin Courier').trim();
+
+          // Filtro lote
+          if (loteFilter !== 'ALL') {
+            if (gLote !== loteFilter && g.lote_despacho !== loteFilter) return false;
+          }
+
+          // Filtro courier
+          if (courierFilter !== 'ALL') {
+            if (gCourier !== courierFilter) return false;
+          }
+
+          // Filtro buscador
+          if (q) {
+            const searchable = [
+              g.empresa, g.destinatario, g.id_guia, g.ciudad_destino, g.chofer_nombre, gLote
+            ].join(' ').toLowerCase();
+            if (!searchable.includes(q)) return false;
+          }
+
+          return true;
+        });
+      }
+
+      // Construir estructura agrupada por courier y cliente
+      function buildFacturacionCourierGroups(filtered: any[]) {
+        const couriers: Record<string, any[]> = {};
+        const courierOrder: string[] = [];
+        filtered.forEach((g: any) => {
+          const courier = (g.empresa || 'Sin Courier').trim();
+          if (!couriers[courier]) { couriers[courier] = []; courierOrder.push(courier); }
+          couriers[courier].push(g);
+        });
+        courierOrder.sort((a, b) => a.localeCompare(b));
+
+        return courierOrder.map(courier => {
+          const guias = couriers[courier];
+          const cPiezas = guias.reduce((s: number, g: any) => s + (Number(g.piezas) || 0), 0);
+          const cPies = guias.reduce((s: number, g: any) => s + (Number(g.pies_cubicos) || 0), 0);
+
+          const clientes: Record<string, any[]> = {};
+          const clienteOrder: string[] = [];
+          guias.forEach((g: any) => {
+            const cli = (g.destinatario || 'Sin nombre').trim();
+            if (!clientes[cli]) { clientes[cli] = []; clienteOrder.push(cli); }
+            clientes[cli].push(g);
+          });
+          clienteOrder.sort((a, b) => a.localeCompare(b));
+
+          const items = clienteOrder.map(cli => {
+            const cliGuias = clientes[cli];
+            const cliPiezas = cliGuias.reduce((s: number, g: any) => s + (Number(g.piezas) || 0), 0);
+            const cliPies = cliGuias.reduce((s: number, g: any) => s + (Number(g.pies_cubicos) || 0), 0);
+            const ciudades = [...new Set(cliGuias.map((g: any) => g.ciudad_destino).filter(Boolean))].join(', ');
+            const estadosCounts: Record<string, number> = {};
+            cliGuias.forEach((g: any) => { estadosCounts[g.estado] = (estadosCounts[g.estado] || 0) + 1; });
+            const mainEstado = Object.entries(estadosCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
+            const guiaIds = cliGuias.map((g: any) => `#${g.id_guia}`).join(', ');
+
+            return {
+              destinatario: cli,
+              ciudad: ciudades,
+              guias: guiaIds,
+              piezas: cliPiezas,
+              pies_cubicos: cliPies,
+              estado: mainEstado
+            };
+          });
+
+          return {
+            courierName: courier,
+            totalGuias: guias.length,
+            totalPiezas: cPiezas,
+            totalVolumen: cPies,
+            items
+          };
+        });
+      }
+
+      // Render de la vista en pantalla
+      (window as any).renderFacturacionView = function() {
+        const listEl = document.getElementById('facturacion-list') as HTMLElement;
+        const emptyEl = document.getElementById('facturacion-empty') as HTMLElement;
+        const totalesEl = document.getElementById('facturacion-totales') as HTMLElement;
+        if (!listEl || !emptyEl || !totalesEl) return;
+
+        // Actualizar opciones de filtros si llegaron nuevos datos
+        populateFacturacionFilters();
+
+        const filtered = getFilteredFacturacionGuias();
+
+        if (filtered.length === 0) {
+          listEl.innerHTML = '';
+          totalesEl.innerHTML = '';
+          emptyEl.classList.remove('hidden');
+          return;
+        }
+        emptyEl.classList.add('hidden');
+
+        // Totales globales
+        const totalGuias = filtered.length;
+        const totalPiezas = filtered.reduce((s: number, g: any) => s + (Number(g.piezas) || 0), 0);
+        const totalPies = filtered.reduce((s: number, g: any) => s + (Number(g.pies_cubicos) || 0), 0);
+        const groups = buildFacturacionCourierGroups(filtered);
+        const totalCouriers = groups.length;
+
+        totalesEl.innerHTML = `
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col gap-1 shadow-sm">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Guías</span>
+            <span class="text-2xl font-black text-slate-900">${totalGuias}</span>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col gap-1 shadow-sm">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Piezas</span>
+            <span class="text-2xl font-black text-slate-900">${totalPiezas}</span>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col gap-1 shadow-sm">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pies Cúbicos</span>
+            <span class="text-2xl font-black text-slate-900">${totalPies.toFixed(2)} ft³</span>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col gap-1 shadow-sm">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Couriers</span>
+            <span class="text-2xl font-black text-violet-700">${totalCouriers}</span>
+          </div>
+        `;
+
+        listEl.innerHTML = groups.map(group => {
+          const courierInitials = group.courierName.slice(0, 2).toUpperCase();
+
+          return `
+            <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+
+              <!-- Cabecera del Courier -->
+              <div class="flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-violet-50/70 to-white border-b border-slate-100">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center text-white font-black text-xs shrink-0 shadow-sm">
+                    ${courierInitials}
+                  </div>
+                  <div>
+                    <p class="text-sm font-extrabold text-slate-900">${group.courierName}</p>
+                    <p class="text-[10px] text-slate-500 font-medium">${group.totalGuias} guía${group.totalGuias !== 1 ? 's' : ''} · ${group.items.length} cliente${group.items.length !== 1 ? 's' : ''}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="text-right">
+                    <p class="text-[10px] text-slate-400 font-medium">Piezas</p>
+                    <p class="text-base font-black text-slate-900">${group.totalPiezas}</p>
+                  </div>
+                  <div class="w-px h-8 bg-slate-200"></div>
+                  <div class="text-right">
+                    <p class="text-[10px] text-slate-400 font-medium">Pies Cúbicos</p>
+                    <p class="text-base font-black text-violet-700">${group.totalVolumen.toFixed(2)} ft³</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tabla de clientes/destinatarios -->
+              <div class="overflow-x-auto">
+                <table class="w-full text-xs">
+                  <thead>
+                    <tr class="border-b border-slate-100 bg-slate-50/60">
+                      <th class="py-2 px-4 text-left font-bold text-slate-500 uppercase tracking-wider text-[10px]">Destinatario</th>
+                      <th class="py-2 px-4 text-left font-bold text-slate-500 uppercase tracking-wider text-[10px]">Ciudad</th>
+                      <th class="py-2 px-4 text-left font-bold text-slate-500 uppercase tracking-wider text-[10px]">Guías</th>
+                      <th class="py-2 px-4 text-center font-bold text-slate-500 uppercase tracking-wider text-[10px]">Piezas</th>
+                      <th class="py-2 px-4 text-center font-bold text-slate-500 uppercase tracking-wider text-[10px]">Pies Cúbicos</th>
+                      <th class="py-2 px-4 text-left font-bold text-slate-500 uppercase tracking-wider text-[10px]">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    ${group.items.map(cli => {
+                      const estadoColor =
+                        cli.estado === 'Entregado' ? 'bg-emerald-100 text-emerald-700' :
+                        cli.estado === 'Entregado sin foto' ? 'bg-amber-100 text-amber-700' :
+                        cli.estado === 'En ruta' ? 'bg-indigo-100 text-indigo-700' :
+                        cli.estado === 'No entregado' ? 'bg-rose-100 text-rose-700' :
+                        'bg-slate-100 text-slate-600';
+
+                      return `
+                        <tr class="hover:bg-violet-50/20 transition-colors">
+                          <td class="py-2.5 px-4">
+                            <p class="font-semibold text-slate-800 truncate max-w-[180px]" title="${cli.destinatario}">${cli.destinatario}</p>
+                          </td>
+                          <td class="py-2.5 px-4 text-slate-500 font-medium">${cli.ciudad || '—'}</td>
+                          <td class="py-2.5 px-4">
+                            <p class="text-[10px] text-slate-400 font-mono truncate max-w-[140px]" title="${cli.guias}">${cli.guias}</p>
+                          </td>
+                          <td class="py-2.5 px-4 text-center">
+                            <span class="font-bold text-slate-900">${cli.piezas}</span>
+                          </td>
+                          <td class="py-2.5 px-4 text-center">
+                            <span class="font-bold text-violet-700">${cli.pies_cubicos.toFixed(2)} ft³</span>
+                          </td>
+                          <td class="py-2.5 px-4">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-lg ${estadoColor}">${cli.estado}</span>
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
+                    <!-- Subtotal row -->
+                    <tr class="bg-violet-50/40 border-t border-violet-100">
+                      <td class="py-2 px-4 text-[10px] font-black text-violet-700 uppercase tracking-wider" colspan="3">Subtotal ${group.courierName}</td>
+                      <td class="py-2 px-4 text-center font-black text-slate-900 text-xs">${group.totalPiezas}</td>
+                      <td class="py-2 px-4 text-center font-black text-violet-700 text-xs">${group.totalVolumen.toFixed(2)} ft³</td>
+                      <td></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }).join('');
+      };
+
+      // Impresión directa / Guardar como PDF en navegador
+      function printFacturacionDirect() {
+        const filtered = getFilteredFacturacionGuias();
+        if (filtered.length === 0) {
+          showToast('No hay datos de facturación para imprimir con los filtros seleccionados', 'error');
+          return;
+        }
+
+        const groups = buildFacturacionCourierGroups(filtered);
+        const totalGuias = filtered.length;
+        const totalPiezas = filtered.reduce((s: number, g: any) => s + (Number(g.piezas) || 0), 0);
+        const totalPies = filtered.reduce((s: number, g: any) => s + (Number(g.pies_cubicos) || 0), 0);
+        const totalCouriers = groups.length;
+
+        const loteSelect = document.getElementById('facturacion-filter-lote') as HTMLSelectElement;
+        const courierSelect = document.getElementById('facturacion-filter-courier') as HTMLSelectElement;
+
+        const loteLabel = loteSelect?.value !== 'ALL' ? (loteSelect?.selectedOptions[0]?.text || loteSelect?.value) : 'Todos los lotes';
+        const courierLabel = courierSelect?.value !== 'ALL' ? courierSelect?.value : 'Todos los couriers';
+        const fecha = new Date().toISOString().split('T')[0];
+
+        let courierTablesHtml = '';
+        groups.forEach(g => {
+          let rowsHtml = '';
+          g.items.forEach(it => {
+            rowsHtml += `
+              <tr style="border-bottom: 1px solid #e2e8f0; font-size: 11px;">
+                <td style="padding: 5px 8px; font-weight: bold; color: #0f172a;">${it.destinatario}</td>
+                <td style="padding: 5px 8px; color: #475569;">${it.ciudad || '—'}</td>
+                <td style="padding: 5px 8px; font-family: monospace; font-weight: 700; color: #334155;">${it.guias}</td>
+                <td style="padding: 5px 8px; text-align: center; font-weight: bold;">${it.piezas}</td>
+                <td style="padding: 5px 8px; text-align: center; font-weight: bold; color: #4338ca;">${it.pies_cubicos.toFixed(2)} ft³</td>
+                <td style="padding: 5px 8px; text-align: center;"><span style="display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 9.5px; font-weight: bold; background: #f1f5f9; color: #334155;">${it.estado}</span></td>
+              </tr>
+            `;
+          });
+
+          courierTablesHtml += `
+            <div style="margin-bottom: 18px; page-break-inside: avoid; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden;">
+              <div style="background: #4f46e5; color: #ffffff; padding: 7px 12px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-weight: 900; font-size: 13px; text-transform: uppercase;">COURIER: ${g.courierName}</div>
+                <div style="font-size: 10.5px; font-weight: bold;">${g.totalGuias} guías &bull; ${g.totalPiezas} piezas &bull; ${g.totalVolumen.toFixed(2)} ft³</div>
+              </div>
+              <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                  <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; font-size: 10px; text-transform: uppercase; color: #64748b;">
+                    <th style="padding: 6px 8px;">Destinatario / Cliente</th>
+                    <th style="padding: 6px 8px;">Ciudad</th>
+                    <th style="padding: 6px 8px;">N° Guía(s)</th>
+                    <th style="padding: 6px 8px; text-align: center;">Piezas</th>
+                    <th style="padding: 6px 8px; text-align: center;">Pies Cúbicos</th>
+                    <th style="padding: 6px 8px; text-align: center;">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rowsHtml}
+                  <tr style="background: #eef2ff; font-weight: 900; font-size: 11px; border-top: 2px solid #c7d2fe;">
+                    <td colspan="3" style="padding: 6px 8px; color: #3730a3; text-transform: uppercase;">Subtotal ${g.courierName}</td>
+                    <td style="padding: 6px 8px; text-align: center; color: #0f172a;">${g.totalPiezas}</td>
+                    <td style="padding: 6px 8px; text-align: center; color: #4338ca;">${g.totalVolumen.toFixed(2)} ft³</td>
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          `;
+        });
+
+        const pw = window.open('', '_blank', 'width=980,height=800');
+        if (!pw) {
+          showToast('Permita las ventanas emergentes para imprimir el reporte', 'error');
+          return;
+        }
+
+        pw.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='UTF-8'>
+  <title>Facturación y Liquidación - Envías C.A.</title>
+  <style>
+    @page { size: letter portrait; margin: 8mm; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 10px; background: #fff;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      color: #0f172a;
+    }
+    @media print {
+      body { margin: 0; padding: 0; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header Oficial -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 12px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <img src="/logo.png" alt="Envías C.A." style="height: 44px; width: auto; object-fit: contain;" />
+      <div>
+        <h1 style="margin: 0; font-size: 18px; font-weight: 900; letter-spacing: -0.02em; color: #0f172a;">ENVÍAS C.A.</h1>
+        <p style="margin: 1px 0 0 0; font-size: 11px; font-weight: 800; color: #4f46e5; text-transform: uppercase;">Reporte Oficial de Facturación y Liquidación</p>
+        <p style="margin: 1px 0 0 0; font-size: 9px; color: #64748b; font-weight: 600;">Hub Central Barquisimeto &bull; Transporte y Encomiendas Nacionales</p>
+      </div>
+    </div>
+    <!-- Metadatos -->
+    <div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px; width: 230px; font-size: 10px; background: #f8fafc;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+        <span style="font-weight: 700; color: #64748b;">FECHA:</span>
+        <span style="font-weight: 800; font-family: monospace;">${fecha}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+        <span style="font-weight: 700; color: #64748b;">LOTE:</span>
+        <span style="font-weight: 700; font-family: monospace;">${loteLabel}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between;">
+        <span style="font-weight: 700; color: #64748b;">COURIER:</span>
+        <span style="font-weight: 700;">${courierLabel}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resumen KPI -->
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; background: #f1f5f9; padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1;">
+    <div style="text-align: center;">
+      <div style="font-size: 9.5px; font-weight: 800; color: #64748b; text-transform: uppercase;">Total Guías</div>
+      <div style="font-size: 18px; font-weight: 900; color: #0f172a;">${totalGuias}</div>
+    </div>
+    <div style="text-align: center;">
+      <div style="font-size: 9.5px; font-weight: 800; color: #64748b; text-transform: uppercase;">Total Piezas</div>
+      <div style="font-size: 18px; font-weight: 900; color: #0f172a;">${totalPiezas}</div>
+    </div>
+    <div style="text-align: center;">
+      <div style="font-size: 9.5px; font-weight: 800; color: #64748b; text-transform: uppercase;">Pies Cúbicos</div>
+      <div style="font-size: 18px; font-weight: 900; color: #4f46e5;">${totalPies.toFixed(2)} ft³</div>
+    </div>
+    <div style="text-align: center;">
+      <div style="font-size: 9.5px; font-weight: 800; color: #64748b; text-transform: uppercase;">Couriers</div>
+      <div style="font-size: 18px; font-weight: 900; color: #0f172a;">${totalCouriers}</div>
+    </div>
+  </div>
+
+  <!-- Contenido de tablas de Couriers -->
+  ${courierTablesHtml}
+
+  <!-- Gran Total Final -->
+  <div style="margin-top: 14px; page-break-inside: avoid; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 8px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">
+    <span style="font-size: 12px; font-weight: 900; text-transform: uppercase; color: #0f172a;">Gran Total Facturación:</span>
+    <span style="font-size: 13px; font-weight: 900; color: #4338ca;">${totalGuias} Guías &bull; ${totalPiezas} Piezas &bull; ${totalPies.toFixed(2)} ft³</span>
+  </div>
+
+  <!-- Firmas de Aprobación -->
+  <div style="margin-top: 40px; page-break-inside: avoid; display: flex; justify-content: space-around;">
+    <div style="width: 200px; text-align: center; border-top: 1px solid #0f172a; padding-top: 6px;">
+      <div style="font-size: 11px; font-weight: 800; color: #0f172a;">Administración / Facturación</div>
+      <div style="font-size: 9.5px; color: #64748b;">Envías C.A. • Sello Oficial</div>
+    </div>
+    <div style="width: 200px; text-align: center; border-top: 1px solid #0f172a; padding-top: 6px;">
+      <div style="font-size: 11px; font-weight: 800; color: #0f172a;">Representante Courier / Conforme</div>
+      <div style="font-size: 9.5px; color: #64748b;">Recibido y Conforme</div>
+    </div>
+  </div>
+</body>
+</html>`);
+        pw.document.close();
+        pw.focus();
+        setTimeout(() => {
+          pw.print();
+        }, 350);
+      }
+
+      // Descarga oficial del reporte en archivo PDF (jsPDF)
+      function downloadFacturacionPdfDirect() {
+        const filtered = getFilteredFacturacionGuias();
+        if (filtered.length === 0) {
+          showToast('No hay datos de facturación para exportar a PDF', 'error');
+          return;
+        }
+
+        const groups = buildFacturacionCourierGroups(filtered);
+        const totalGuias = filtered.length;
+        const totalPiezas = filtered.reduce((s: number, g: any) => s + (Number(g.piezas) || 0), 0);
+        const totalPies = filtered.reduce((s: number, g: any) => s + (Number(g.pies_cubicos) || 0), 0);
+        const totalCouriers = groups.length;
+
+        const loteSelect = document.getElementById('facturacion-filter-lote') as HTMLSelectElement;
+        const courierSelect = document.getElementById('facturacion-filter-courier') as HTMLSelectElement;
+
+        const loteLabel = loteSelect?.value !== 'ALL' ? (loteSelect?.selectedOptions[0]?.text || loteSelect?.value) : 'Todos los lotes';
+        const courierLabel = courierSelect?.value !== 'ALL' ? courierSelect?.value : 'Todos los couriers';
+        const fecha = new Date().toISOString().split('T')[0];
+
+        const filename = `Facturacion_Envias_${fecha}.pdf`;
+
+        try {
+          downloadFacturacionPdf({
+            loteLabel,
+            courierLabel,
+            fecha,
+            totalGuias,
+            totalPiezas,
+            totalVolumen: totalPies,
+            totalCouriers,
+            courierGroups: groups
+          }, filename);
+          showToast('Reporte de Facturación en PDF descargado exitosamente', 'success');
+        } catch (err) {
+          console.error('Error al generar PDF de facturación con jsPDF:', err);
+          showToast('Error al generar PDF. Abriendo vista de impresión...', 'error');
+          printFacturacionDirect();
+        }
+      }
+
+      (window as any).printFacturacionDirect = printFacturacionDirect;
+      (window as any).downloadFacturacionPdfDirect = downloadFacturacionPdfDirect;
 
       // Modal de Finalizar Ruta Logística
       (window as any).openFinalizarRutaModal = function(driverId: number) {
