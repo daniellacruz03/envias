@@ -50,58 +50,161 @@ const userInitials = currentUser.nombre
       body {
         font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
       }
-      /* Custom scrollbar para la tabla */
-      .custom-scrollbar::-webkit-scrollbar {
-        height: 6px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-track {
-        background: #f8fafc;
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 9999px;
-      }
+
+      /* ---- Custom scrollbar ---- */
+      .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 5px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: #f8fafc; border-radius: 9999px; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+      /* ---- Tab activa: gradiente premium en lugar de negro plano ---- */
       .tab-btn-active {
-        background-color: #0f172a !important;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
         color: #ffffff !important;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
+        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.22), 0 1px 3px rgba(15, 23, 42, 0.15) !important;
       }
 
-      /* Estilos de Impresión Oficial (@media print) */
+      /* ---- KPI Cards: borde izquierdo de acento de color ---- */
+      #kpi-total-card   { border-left: 3px solid #6366f1; }
+      #kpi-contactar-card { border-left: 3px solid #f59e0b; }
+      #kpi-ruta-card    { border-left: 3px solid #6366f1; }
+      #kpi-gps-card     { border-left: 3px solid #10b981; }
+
+      /* ---- Contenedores principales: sombra premium ---- */
+      .premium-card {
+        box-shadow:
+          0 1px 3px rgba(15, 23, 42, 0.04),
+          0 4px 16px rgba(15, 23, 42, 0.06),
+          0 0 0 1px rgba(15, 23, 42, 0.04);
+        transition: box-shadow 0.2s ease;
+      }
+      .premium-card:hover {
+        box-shadow:
+          0 1px 3px rgba(15, 23, 42, 0.05),
+          0 8px 28px rgba(15, 23, 42, 0.09),
+          0 0 0 1px rgba(15, 23, 42, 0.05);
+      }
+
+      /* ---- Filas de tabla: hover más elegante ---- */
+      .shipment-row {
+        transition: background-color 0.15s ease, box-shadow 0.15s ease;
+      }
+      .shipment-row:hover {
+        background-color: #f8fafc !important;
+        box-shadow: inset 3px 0 0 #6366f1;
+      }
+
+      /* ---- Botones de accion en tabla: aparecer en hover ---- */
+      .row-actions { opacity: 0.4; transition: opacity 0.15s ease; }
+      .shipment-row:hover .row-actions { opacity: 1; }
+
+      /* ---- Inputs: focus ring mas premium ---- */
+      input:focus, select:focus, textarea:focus {
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.10), 0 1px 3px rgba(15,23,42,0.06) !important;
+      }
+
+      /* ---- Header: borde inferior con gradiente ---- */
+      header::after {
+        content: '';
+        display: block;
+        position: absolute;
+        bottom: -1px;
+        left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.3) 30%, rgba(99,102,241,0.15) 70%, transparent 100%);
+        pointer-events: none;
+      }
+      header { position: relative; }
+
+      /* ---- Barra de tabs: fondo con sutil gradiente ---- */
+      .views-tabs-bar {
+        background: linear-gradient(180deg, #f1f5f9 0%, #e9edf2 100%) !important;
+        box-shadow: inset 0 1px 2px rgba(15,23,42,0.06) !important;
+      }
+
+      /* ---- Dropdown autocomplete: glassmorphism ---- */
+      #destinatario-autocomplete-dropdown {
+        backdrop-filter: blur(12px) saturate(180%) !important;
+        box-shadow: 0 8px 32px rgba(15,23,42,0.14), 0 2px 8px rgba(15,23,42,0.08), 0 0 0 1px rgba(15,23,42,0.06) !important;
+      }
+
+      /* ---- Seccion de carga rapida: gradiente de fondo muy sutil ---- */
+      #form-carga-section {
+        background: linear-gradient(160deg, #ffffff 80%, #f5f3ff 100%) !important;
+      }
+
+      /* ---- Tablero de control: fondo del header de seccion ---- */
+      .tablero-header {
+        background: linear-gradient(180deg, rgba(248,250,252,0.8) 0%, rgba(241,245,249,0.4) 100%) !important;
+      }
+
+      /* ---- Toast notifications: mas premium ---- */
+      .toast-item {
+        backdrop-filter: blur(8px);
+        box-shadow: 0 4px 20px rgba(15,23,42,0.16), 0 1px 4px rgba(15,23,42,0.10) !important;
+      }
+
+      /* ================================================ */
+      /* TOOLTIPS PREMIUM — CSS puro, sin JS              */
+      /* ================================================ */
+      [data-tooltip] {
+        position: relative;
+      }
+      [data-tooltip]::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: calc(100% + 9px);
+        left: 50%;
+        transform: translateX(-50%) translateY(4px);
+        background: #0f172a;
+        color: #f1f5f9;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.4;
+        white-space: nowrap;
+        padding: 5px 10px;
+        border-radius: 8px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.18s ease, transform 0.18s ease;
+        z-index: 9999;
+        box-shadow: 0 4px 14px rgba(15,23,42,0.25);
+        letter-spacing: 0.01em;
+      }
+      [data-tooltip]::before {
+        content: '';
+        position: absolute;
+        bottom: calc(100% + 4px);
+        left: 50%;
+        transform: translateX(-50%) translateY(4px);
+        border: 5px solid transparent;
+        border-top-color: #0f172a;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.18s ease, transform 0.18s ease;
+        z-index: 9999;
+      }
+      [data-tooltip]:hover::after,
+      [data-tooltip]:hover::before {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+      /* Variante de advertencia (mantenimiento) */
+      [data-tooltip-warn]::after {
+        background: #1e1b4b;
+        border: 1px solid rgba(99,102,241,0.3);
+      }
+      [data-tooltip-warn]::before {
+        border-top-color: #1e1b4b;
+      }
+
+      /* ---- Estilos de Impresion Oficial (@media print) ---- */
       @media print {
-        @page {
-          size: letter portrait;
-          margin: 4mm 5mm 4mm 5mm;
-        }
-        html, body {
-          background: #ffffff !important;
-          color: #000000 !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          width: 100% !important;
-        }
-        body * {
-          visibility: hidden !important;
-        }
-        #listin-print-wrapper, #listin-print-wrapper * {
-          visibility: visible !important;
-        }
-        #listin-print-wrapper {
-          position: absolute !important;
-          left: 0 !important;
-          top: 0 !important;
-          width: 100% !important;
-          max-width: 100% !important;
-          min-height: auto !important;
-          margin: 0 !important;
-          padding: 2mm 3mm !important;
-          background: #ffffff !important;
-          box-shadow: none !important;
-          border: none !important;
-          border-radius: 0 !important;
-          color: #000000 !important;
-          z-index: 9999999 !important;
-        }
+        @page { size: letter portrait; margin: 4mm 5mm 4mm 5mm; }
+        html, body { background: #ffffff !important; color: #000000 !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+        body * { visibility: hidden !important; }
+        #listin-print-wrapper, #listin-print-wrapper * { visibility: visible !important; }
+        #listin-print-wrapper { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; max-width: 100% !important; min-height: auto !important; margin: 0 !important; padding: 2mm 3mm !important; background: #ffffff !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; color: #000000 !important; z-index: 9999999 !important; }
       }
 
       /* ============================================ */
@@ -109,301 +212,75 @@ const userInitials = currentUser.nombre
       /* Solo activo en pantallas < 768px (< md)      */
       /* ============================================ */
       @media (max-width: 767px) {
-
-        /* --- HEADER --- */
         header { padding-left: 1rem !important; padding-right: 1rem !important; }
         header p { display: none; }
-
-        /* --- MAIN CONTENT --- */
         main { padding: 0.75rem !important; gap: 0.75rem !important; }
         main > * + * { margin-top: 0.75rem; }
-
-        /* --- KPIs: 2x2 compactos --- */
         section.grid { gap: 0.5rem !important; }
-
-        /* --- FORMULARIO DE CARGA RÁPIDA --- */
         section form.grid { gap: 0.75rem !important; }
-
-        /* --- BARRA DE LOTES DARK: scroll horizontal, sin wrap --- */
-        .lotes-control-bar {
-          overflow-x: auto !important;
-          flex-wrap: nowrap !important;
-          -webkit-overflow-scrolling: touch;
-          padding-bottom: 2px;
-          scrollbar-width: none;
-        }
+        .lotes-control-bar { overflow-x: auto !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; padding-bottom: 2px; scrollbar-width: none; }
         .lotes-control-bar::-webkit-scrollbar { display: none; }
-
-        /* Banner de lote activo: wrap y compacto */
-        #banner-active-lote > div {
-          flex-direction: column !important;
-          gap: 0.5rem !important;
-        }
-        #banner-active-lote .flex.items-center.gap-2\.5 {
-          flex-wrap: wrap !important;
-          gap: 0.375rem !important;
-        }
+        #banner-active-lote > div { flex-direction: column !important; gap: 0.5rem !important; }
+        #banner-active-lote .flex.items-center.gap-2\.5 { flex-wrap: wrap !important; gap: 0.375rem !important; }
         #banner-active-lote span.font-mono { font-size: 0.65rem !important; }
-
-        /* --- BARRA DARK DE RELACIÓN DE DESPACHO --- */
-        .despacho-bar {
-          flex-direction: column !important;
-          gap: 0.75rem !important;
-          padding: 0.75rem !important;
-        }
-        .despacho-bar .lotes-pill-row {
-          overflow-x: auto;
-          flex-wrap: nowrap !important;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: none;
-          padding-bottom: 2px;
-          width: 100%;
-        }
+        .despacho-bar { flex-direction: column !important; gap: 0.75rem !important; padding: 0.75rem !important; }
+        .despacho-bar .lotes-pill-row { overflow-x: auto; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; width: 100%; }
         .despacho-bar .lotes-pill-row::-webkit-scrollbar { display: none; }
-        /* Ocultar texto en píldoras de filtro rápido en la dark bar */
         .despacho-bar .lotes-pill-row button span:not(.badge-pill) { font-size: 0.65rem !important; }
-        /* Select y botón archivar: full width en móvil */
-        .despacho-bar-actions {
-          flex-direction: column !important;
-          width: 100% !important;
-        }
-        .despacho-bar-actions select,
-        .despacho-bar-actions button { width: 100% !important; max-width: 100% !important; }
-
-        /* --- TÍTULO + BOTÓN PLANIFICAR RUTA --- */
-        .title-planner-row {
-          flex-direction: row !important;
-          flex-wrap: wrap !important;
-          gap: 0.5rem !important;
-        }
+        .despacho-bar-actions { flex-direction: column !important; width: 100% !important; }
+        .despacho-bar-actions select, .despacho-bar-actions button { width: 100% !important; max-width: 100% !important; }
+        .title-planner-row { flex-direction: row !important; flex-wrap: wrap !important; gap: 0.5rem !important; }
         .title-planner-row button span { font-size: 0.65rem !important; }
         .title-planner-row button { padding: 0.375rem 0.75rem !important; }
-
-        /* --- TABS DE VISTA: scroll horizontal, SOLO ÍCONOS en móvil --- */
-        .views-tabs-bar {
-          overflow-x: auto !important;
-          flex-wrap: nowrap !important;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: none;
-          gap: 0.25rem !important;
-          padding: 0.375rem !important;
-        }
+        .views-tabs-bar { overflow-x: auto !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; gap: 0.25rem !important; padding: 0.375rem !important; }
         .views-tabs-bar::-webkit-scrollbar { display: none; }
-        /* Ocultar el texto de cada tab, dejar solo el ícono */
         .views-tabs-bar button > span:not([id]) { display: none !important; }
-        /* Pills de conteo: también más pequeñas */
-        .views-tabs-bar button [id*="-pill"], 
-        .views-tabs-bar button [id*="-count"] { font-size: 0.5rem !important; padding: 0.1rem 0.35rem !important; }
-        /* Botón GPS extra fuera de tabs: ocultar texto */
+        .views-tabs-bar button [id*="-pill"], .views-tabs-bar button [id*="-count"] { font-size: 0.5rem !important; padding: 0.1rem 0.35rem !important; }
         #btn-open-global-gps-assign > span { display: none !important; }
         #btn-open-global-gps-assign { padding: 0.5rem !important; }
-        /* Tabs: padding uniforme solo icono */
-        .views-tabs-bar button { 
-          padding: 0.5rem !important; 
-          min-width: 2.25rem !important;
-          flex-shrink: 0 !important;
-        }
-
-        /* --- FILTROS: apilados en columna, full width --- */
-        .filters-row {
-          flex-direction: column !important;
-          gap: 0.5rem !important;
-        }
+        .views-tabs-bar button { padding: 0.5rem !important; min-width: 2.25rem !important; flex-shrink: 0 !important; }
+        .filters-row { flex-direction: column !important; gap: 0.5rem !important; }
         .filters-row > * { width: 100% !important; min-width: 0 !important; flex: 1 1 auto !important; }
         .filters-row .relative { min-width: 0 !important; }
         #search-input { width: 100% !important; }
-        #filter-ciudad, #filter-empresa, #filter-estado, #filter-listin {
-          width: 100% !important;
-          min-width: 0 !important;
-        }
-
-        /* --- TABLA: scroll horizontal contenido --- */
+        #filter-ciudad, #filter-empresa, #filter-estado, #filter-listin { width: 100% !important; min-width: 0 !important; }
         #view-container-table { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
         #view-container-table table { min-width: 600px; }
-        #view-container-table th, #view-container-table td { 
-          padding: 0.5rem 0.625rem !important; 
-          font-size: 0.625rem !important;
-          white-space: nowrap;
-        }
-        /* Ocultar columnas menos críticas en móvil */
-        #view-container-table thead th:nth-child(6),
-        #view-container-table tbody td:nth-child(6) { display: none; }
-
-        /* --- VIEWS DE CIUDADES Y CHOFERES --- */
+        #view-container-table th, #view-container-table td { padding: 0.5rem 0.625rem !important; font-size: 0.625rem !important; white-space: nowrap; }
+        #view-container-table thead th:nth-child(6), #view-container-table tbody td:nth-child(6) { display: none; }
         #view-container-cities, #view-container-drivers { padding: 0.75rem !important; gap: 0.75rem !important; }
-
-        /* --- MAPA: ajustar la barra superior --- */
         #view-container-mapa .bg-white.p-4 { flex-direction: column !important; gap: 0.75rem !important; }
         #view-container-mapa .bg-white.p-4 > div:last-child { flex-direction: column !important; align-items: stretch !important; }
         #view-container-mapa .bg-white.p-4 button { width: 100% !important; justify-content: center !important; }
-
-        /* Controles sobre el mapa: scroll horizontal */
         #view-container-mapa .p-3\.5 { padding: 0.625rem !important; }
-        #view-container-mapa .p-3\.5 > div:first-child { 
-          overflow-x: auto;
-          flex-wrap: nowrap !important;
-          scrollbar-width: none;
-          -webkit-overflow-scrolling: touch;
-        }
+        #view-container-mapa .p-3\.5 > div:first-child { overflow-x: auto; flex-wrap: nowrap !important; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         #view-container-mapa .p-3\.5 > div:first-child::-webkit-scrollbar { display: none; }
         #view-container-mapa .p-3\.5 button { white-space: nowrap; flex-shrink: 0; }
-
-        /* Mapa: altura fija en móvil */
         #mapa-leaflet { min-height: 55vh !important; }
-
-        /* --- MODAL PLANIFICADOR: full-screen en móvil --- */
-        #route-planner-modal {
-          padding: 0 !important;
-          align-items: flex-end !important; /* drawer desde abajo */
-        }
-        #route-planner-modal > div {
-          max-width: 100% !important;
-          width: 100% !important;
-          max-height: 93vh !important;
-          border-bottom-left-radius: 0 !important;
-          border-bottom-right-radius: 0 !important;
-          border-top-left-radius: 1.25rem !important;
-          border-top-right-radius: 1.25rem !important;
-        }
-        /* Footer del modal: botones apilados */
-        #route-planner-modal > div > div:last-child {
-          flex-direction: column !important;
-          gap: 0.5rem !important;
-          padding: 0.875rem 1rem !important;
-        }
-        #route-planner-modal > div > div:last-child > div:last-child {
-          width: 100% !important;
-          flex-direction: column !important;
-          gap: 0.5rem !important;
-        }
-        #route-planner-modal > div > div:last-child button {
-          width: 100% !important;
-          justify-content: center !important;
-        }
-        /* Header del modal: más compacto */
-        #route-planner-modal > div > div:first-child {
-          padding: 0.75rem 1rem !important;
-        }
-        /* Contenido desplazable: padding reducido */
-        #route-planner-modal .flex-1.overflow-y-auto {
-          padding: 0.875rem 1rem !important;
-        }
-        /* Botones de acción del circuito: full width apilados */
-        #route-planner-modal #btn-optimize-circuit,
-        #route-planner-modal #btn-manual-order,
-        #route-planner-modal #btn-toggle-route-map {
-          flex: 1 1 auto !important;
-          justify-content: center !important;
-        }
-
-        /* --- BOTÓN PLANIFICAR RUTA: restaurar visibilidad en móvil --- */
-        .title-planner-row button span { 
-          display: inline !important;
-          font-size: 0.65rem !important;
-        }
-        .title-planner-row button { 
-          padding: 0.4rem 0.75rem !important;
-          white-space: nowrap !important;
-        }
-
-        /* --- GPS ASSIGN MODAL: full-screen en móvil --- */
-        #gps-assign-modal {
-          padding: 0 !important;
-          align-items: flex-end !important;
-        }
-        #gps-assign-modal > div {
-          max-width: 100% !important;
-          width: 100% !important;
-          max-height: 93vh !important;
-          border-bottom-left-radius: 0 !important;
-          border-bottom-right-radius: 0 !important;
-          border-top-left-radius: 1.25rem !important;
-          border-top-right-radius: 1.25rem !important;
-        }
-
-        /* --- HISTORIAL Y LISTÍN --- */
+        #route-planner-modal { padding: 0 !important; align-items: flex-end !important; }
+        #route-planner-modal > div { max-width: 100% !important; width: 100% !important; max-height: 93vh !important; border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; border-top-left-radius: 1.25rem !important; border-top-right-radius: 1.25rem !important; }
+        #route-planner-modal > div > div:last-child { flex-direction: column !important; gap: 0.5rem !important; padding: 0.875rem 1rem !important; }
+        #route-planner-modal > div > div:last-child > div:last-child { width: 100% !important; flex-direction: column !important; gap: 0.5rem !important; }
+        #route-planner-modal > div > div:last-child button { width: 100% !important; justify-content: center !important; }
+        #route-planner-modal > div > div:first-child { padding: 0.75rem 1rem !important; }
+        #route-planner-modal .flex-1.overflow-y-auto { padding: 0.875rem 1rem !important; }
+        #route-planner-modal #btn-optimize-circuit, #route-planner-modal #btn-manual-order, #route-planner-modal #btn-toggle-route-map { flex: 1 1 auto !important; justify-content: center !important; }
+        .title-planner-row button span { display: inline !important; font-size: 0.65rem !important; }
+        .title-planner-row button { padding: 0.4rem 0.75rem !important; white-space: nowrap !important; }
+        #gps-assign-modal { padding: 0 !important; align-items: flex-end !important; }
+        #gps-assign-modal > div { max-width: 100% !important; width: 100% !important; max-height: 93vh !important; border-bottom-left-radius: 0 !important; border-bottom-right-radius: 0 !important; border-top-left-radius: 1.25rem !important; border-top-right-radius: 1.25rem !important; }
         #view-container-historial, #view-container-listin { padding: 0.75rem !important; }
-
-        /* ================================================================ */
-        /* --- PLANIFICADOR DE RUTAS: correcciones completas para móvil --- */
-        /* ================================================================ */
-
-        /* Chips de zonas y lotes: scroll táctil y altura razonable */
-        #planner-lote-chips,
-        #planner-zone-chips {
-          max-height: 6.5rem !important;
-          -webkit-overflow-scrolling: touch !important;
-          overflow-y: auto !important;
-          touch-action: pan-y !important;
-        }
-
-        /* Chips individuales: tap targets más grandes */
-        #planner-lote-chips button,
-        #planner-zone-chips button {
-          min-height: 1.875rem !important;
-          padding: 0.25rem 0.625rem !important;
-          font-size: 0.7rem !important;
-        }
-
-        /* Lista de paradas: menor altura y touch-scroll */
-        #planner-stops-list {
-          max-height: 9rem !important;
-          -webkit-overflow-scrolling: touch !important;
-          touch-action: pan-y !important;
-        }
-
-        /* Mapa interno del planificador: más compacto en móvil */
-        #planner-full-route-map {
-          height: 10rem !important;
-        }
-
-        /* Dropdowns de autocompletado de coordenadas: altura limitada */
-        #start-autocomplete-dropdown,
-        #end-autocomplete-dropdown {
-          max-height: 9rem !important;
-          -webkit-overflow-scrolling: touch !important;
-        }
-
-        /* Contenido desplazable principal del modal: touch scroll */
-        #route-planner-modal .flex-1.overflow-y-auto {
-          -webkit-overflow-scrolling: touch !important;
-          touch-action: pan-y !important;
-        }
-
-        /* Métricas del circuito: 2 columnas siempre (ya tiene grid-cols-2 sm:grid-cols-4) */
-        #route-planner-modal .grid.grid-cols-2 {
-          grid-template-columns: repeat(2, 1fr) !important;
-        }
-
-        /* Sección 4 (chofer/lote): full-col en móvil (ya OK con grid-cols-1) */
-
-        /* Separadores de sección: texto más pequeño */
-        #route-planner-modal .text-xs.font-extrabold.uppercase.tracking-wider {
-          font-size: 0.6rem !important;
-          letter-spacing: 0.05em !important;
-        }
-
-        /* Botones de acción del circuito: fila scrollable horizontal */
-        #route-planner-modal #btn-optimize-circuit,
-        #route-planner-modal #btn-manual-order {
-          font-size: 0.65rem !important;
-          padding: 0.5rem 0.875rem !important;
-        }
-
-        /* Google Maps por Tramos: scroll horizontal */
-        #planner-gmaps-batch-buttons {
-          overflow-x: auto !important;
-          flex-wrap: nowrap !important;
-          -webkit-overflow-scrolling: touch !important;
-          padding-bottom: 0.25rem !important;
-        }
-
-        /* Listín: scroll táctil en la lista jerárquica */
-        #listin-hierarchy-list {
-          max-height: 55vh !important;
-          -webkit-overflow-scrolling: touch !important;
-          touch-action: pan-y !important;
-        }
+        #planner-lote-chips, #planner-zone-chips { max-height: 6.5rem !important; -webkit-overflow-scrolling: touch !important; overflow-y: auto !important; touch-action: pan-y !important; }
+        #planner-lote-chips button, #planner-zone-chips button { min-height: 1.875rem !important; padding: 0.25rem 0.625rem !important; font-size: 0.7rem !important; }
+        #planner-stops-list { max-height: 9rem !important; -webkit-overflow-scrolling: touch !important; touch-action: pan-y !important; }
+        #planner-full-route-map { height: 10rem !important; }
+        #start-autocomplete-dropdown, #end-autocomplete-dropdown { max-height: 9rem !important; -webkit-overflow-scrolling: touch !important; }
+        #route-planner-modal .flex-1.overflow-y-auto { -webkit-overflow-scrolling: touch !important; touch-action: pan-y !important; }
+        #route-planner-modal .grid.grid-cols-2 { grid-template-columns: repeat(2, 1fr) !important; }
+        #route-planner-modal .text-xs.font-extrabold.uppercase.tracking-wider { font-size: 0.6rem !important; letter-spacing: 0.05em !important; }
+        #route-planner-modal #btn-optimize-circuit, #route-planner-modal #btn-manual-order { font-size: 0.65rem !important; padding: 0.5rem 0.875rem !important; }
+        #planner-gmaps-batch-buttons { overflow-x: auto !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch !important; padding-bottom: 0.25rem !important; }
+        #listin-hierarchy-list { max-height: 55vh !important; -webkit-overflow-scrolling: touch !important; touch-action: pan-y !important; }
       } /* fin @media (max-width: 767px) */
     </style>
   </head>
@@ -414,33 +291,26 @@ const userInitials = currentUser.nombre
     <!-- ========================================== -->
     <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 py-3.5 flex items-center justify-between">
       <div class="flex items-center gap-4">
-        <!-- Logo & Marca -->
+        <!-- Logo & Marca FLEETos -->
         <div class="flex items-center gap-3">
           <img 
             src="/logo.png" 
-            alt="Envías C.A." 
+            alt="Envias C.A." 
             class="h-8 sm:h-9 w-auto object-contain mix-blend-multiply filter contrast-[1.20] brightness-[0.96]"
             loading="eager"
           />
           <div class="border-l border-slate-200 pl-3">
             <div class="flex items-center gap-2">
+              <span class="text-sm font-black tracking-tight text-slate-900 leading-none">fleet<span class="text-indigo-600">OS</span></span>
               <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-900 text-white tracking-wider uppercase">Central</span>
-              <span class="text-xs font-semibold text-slate-700 hidden sm:inline">Logística</span>
             </div>
-            <p class="text-[11px] text-slate-400 font-medium">Panel de Despacho y Envíos</p>
+            <p class="text-[11px] text-slate-400 font-medium">Panel de Despacho y Envios</p>
           </div>
         </div>
       </div>
 
         <!-- Estado Operativo y Perfil -->
       <div class="flex items-center gap-3 sm:gap-6">
-        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50/80 border border-emerald-200/60 text-xs font-semibold text-emerald-700">
-          <span class="relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-          </span>
-          Panel Operativo Activo
-        </div>
 
         <!-- Usuario Conectado y Cerrar Sesión -->
         <div class="flex items-center gap-3">
@@ -473,30 +343,27 @@ const userInitials = currentUser.nombre
     <!-- ========================================== -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
       
-      <!-- Métricas Rápidas (KPIs) -->
       <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
-          <p class="text-xs font-medium text-slate-500">Total de Guías</p>
+        <div id="kpi-total-card" class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm premium-card">
+          <p class="text-xs font-medium text-slate-500">Total de Guias</p>
           <p id="kpi-total" class="text-2xl font-extrabold text-slate-900 mt-1">0</p>
         </div>
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+        <div id="kpi-contactar-card" class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm premium-card">
           <p class="text-xs font-medium text-slate-500">Por Contactar</p>
           <p id="kpi-contactar" class="text-2xl font-extrabold text-amber-600 mt-1">0</p>
         </div>
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
-          <p class="text-xs font-medium text-slate-500">En Ruta / Tránsito</p>
+        <div id="kpi-ruta-card" class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm premium-card">
+          <p class="text-xs font-medium text-slate-500">En Ruta / Transito</p>
           <p id="kpi-ruta" class="text-2xl font-extrabold text-indigo-600 mt-1">0</p>
         </div>
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm">
+        <div id="kpi-gps-card" class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm premium-card">
           <p class="text-xs font-medium text-slate-500">GPS Confirmado</p>
           <p id="kpi-gps" class="text-2xl font-extrabold text-emerald-600 mt-1">0</p>
         </div>
       </section>
 
-      <!-- ========================================== -->
-      <!-- 2. FORMULARIO DE CARGA RÁPIDA DE GUÍAS     -->
-      <!-- ========================================== -->
-      <section class="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-sm">
+      <!-- 2. FORMULARIO DE CARGA RAPIDA DE GUIAS -->
+      <section id="form-carga-section" class="bg-white border border-slate-200/80 rounded-2xl p-5 sm:p-6 shadow-sm premium-card">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 mb-4 gap-2">
           <div>
             <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
@@ -783,38 +650,36 @@ const userInitials = currentUser.nombre
         </form>
       </section>
 
-      <!-- ========================================== -->
-      <!-- 3. TABLERO DE CONTROL Y MODOS DE VISTA     -->
-      <!-- ========================================== -->
-      <section class="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+      <!-- 3. TABLERO DE CONTROL Y MODOS DE VISTA -->
+      <section class="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col premium-card">
         
         <!-- Barra Superior de Control y Switcher de Modos -->
-        <div class="p-4 sm:p-5 border-b border-slate-200/80 flex flex-col gap-3.5 bg-slate-50/40">
+        <div class="tablero-header p-4 sm:p-5 border-b border-slate-200/80 flex flex-col gap-3.5">
           
           <!-- ============================================================ -->
           <!-- BARRA DE CONTROL: RELACIONES DE DESPACHO & SEMANAS OPERATIVAS -->
           <!-- ============================================================ -->
-          <div class="despacho-bar bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 text-white rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3 border border-slate-700/60">
+          <div class="despacho-bar bg-gradient-to-r from-slate-700 via-slate-800 to-slate-700 rounded-2xl p-3 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3 border border-slate-600/50" style="box-shadow: 0 2px 12px rgba(15,23,42,0.14), 0 1px 3px rgba(15,23,42,0.10);">
             <div class="flex items-center gap-3 min-w-0">
-              <div class="w-10 h-10 rounded-xl bg-white/10 text-indigo-300 flex items-center justify-center shrink-0 border border-white/10 shadow-inner">
-                <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0 border border-white/10">
+                <svg class="w-5 h-5 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                 </svg>
               </div>
               <div class="min-w-0">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <h4 class="text-xs sm:text-sm font-black tracking-tight text-white">Relación de Despacho & Lotes</h4>
-                  <span id="active-lote-badge" class="text-[10px] font-mono font-bold bg-indigo-500/30 text-indigo-200 border border-indigo-400/40 px-2.5 py-0.5 rounded-full shadow-2xs">
+                  <h4 class="text-xs sm:text-sm font-black tracking-tight text-white">Relacion de Despacho & Lotes</h4>
+                  <span id="active-lote-badge" class="text-[10px] font-mono font-bold bg-white/15 text-slate-200 border border-white/20 px-2.5 py-0.5 rounded-full">
                     Consolidado Activo
                   </span>
                 </div>
-                <p class="text-[11px] text-slate-300 font-medium truncate">Filtra la carga de la semana actual y supervisa las colas de ruta pendientes</p>
+                <p class="text-[11px] text-slate-400 font-medium truncate">Filtra la carga de la semana actual y supervisa las colas de ruta pendientes</p>
               </div>
             </div>
 
             <div class="lotes-pill-row flex flex-wrap items-center gap-2 sm:gap-2.5 shrink-0">
-              <!-- Selector de Píldoras de Filtro Rápido -->
-              <div class="lotes-control-bar flex items-center p-1 bg-black/40 border border-white/10 rounded-xl text-xs font-semibold gap-1">
+              <!-- Selector de Pildoras de Filtro Rapido -->
+              <div class="lotes-control-bar flex items-center p-1 bg-black/30 border border-white/10 rounded-xl text-xs font-semibold gap-1">
                 <button
                   type="button"
                   id="btn-lote-all"
@@ -827,16 +692,16 @@ const userInitials = currentUser.nombre
                   type="button"
                   id="btn-lote-current"
                   onclick="window.setLoteFilter('CURRENT_WEEK')"
-                  class="px-3 py-1.5 rounded-lg font-semibold text-slate-300 hover:text-white transition-all cursor-pointer flex items-center gap-1.5"
+                  class="px-3 py-1.5 rounded-lg font-semibold text-slate-300 hover:text-white hover:bg-white/10 transition-all cursor-pointer flex items-center gap-1.5"
                 >
                   <span>Carga Actual</span>
-                  <span id="badge-count-current-week" class="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-500/40 text-indigo-200 font-mono font-bold">0</span>
+                  <span id="badge-count-current-week" class="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-500/50 text-indigo-200 font-mono font-bold">0</span>
                 </button>
                 <button
                   type="button"
                   id="btn-lote-past"
                   onclick="window.setLoteFilter('PENDING_PAST')"
-                  class="px-3 py-1.5 rounded-lg font-bold text-amber-300 hover:text-amber-200 transition-all cursor-pointer flex items-center gap-1.5"
+                  class="px-3 py-1.5 rounded-lg font-bold text-amber-300 hover:text-amber-200 hover:bg-white/10 transition-all cursor-pointer flex items-center gap-1.5"
                 >
                   <svg class="w-3 h-3 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
@@ -846,26 +711,26 @@ const userInitials = currentUser.nombre
                 </button>
               </div>
 
-              <!-- Selector Dropdown de Lotes Específicos -->
+              <!-- Selector Dropdown de Lotes Especificos -->
               <div class="despacho-bar-actions flex flex-wrap items-center gap-2">
               <select
                 id="filter-lote-select"
-                aria-label="Filtrar por lote específico"
+                aria-label="Filtrar por lote especifico"
                 onchange="window.setLoteFilter(this.value)"
-                class="text-xs bg-slate-800/90 border border-slate-600 text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 cursor-pointer max-w-[200px] font-medium"
+                class="text-xs bg-slate-700 border border-slate-600 text-white rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 cursor-pointer max-w-[200px] font-medium"
               >
                 <option value="ALL">Todos los Lotes</option>
                 <option value="CURRENT_WEEK">Carga Semana Actual</option>
                 <option value="PENDING_PAST">Pendientes Rezagadas</option>
               </select>
 
-              <!-- Botón: Gestionar / Agregar Lote Manualmente & Editar Fecha -->
+              <!-- Boton: Gestionar / Agregar Lote Manualmente & Editar Fecha -->
               <button
                 type="button"
                 id="btn-open-gestion-lotes"
                 onclick="window.openGestionLotesModal()"
                 class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer shrink-0"
-                title="Crear lotes manualmente, editar fecha de despacho o reasignar guías"
+                title="Crear lotes manualmente, editar fecha de despacho o reasignar guias"
               >
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
@@ -873,13 +738,13 @@ const userInitials = currentUser.nombre
                 <span>Agregar Lote</span>
               </button>
 
-              <!-- Botón Rápido: Archivar Entregadas -->
+              <!-- Boton Rapido: Archivar Entregadas -->
               <button
                 type="button"
                 id="btn-archive-delivered-batch"
                 onclick="window.archivarEntregadas()"
                 class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all cursor-pointer shrink-0"
-                title="Archivar guías entregadas al histórico de forma individual o grupal"
+                title="Archivar guias entregadas al historico de forma individual o grupal"
               >
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
@@ -900,11 +765,11 @@ const userInitials = currentUser.nombre
               </span>
             </div>
 
-            <!-- Botón Principal: Abrir Planificador de Rutas (Spoke Style) -->
+            <!-- Boton Principal: Planificar Ruta Spoke (temporalmente oculto) -->
             <button
               type="button"
               onclick="window.openRoutePlannerModal()"
-              class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-black active:scale-95 text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer shrink-0"
+              class="hidden px-4 py-2 rounded-xl bg-slate-900 hover:bg-black active:scale-95 text-white font-bold text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer shrink-0"
               title="Planificar secuencia de paradas de chofer"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -920,6 +785,7 @@ const userInitials = currentUser.nombre
               <button
                 type="button"
                 id="btn-view-table"
+                data-tooltip="Ver y buscar todas las guias activas"
                 class="tab-btn-active px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -931,6 +797,7 @@ const userInitials = currentUser.nombre
               <button
                 type="button"
                 id="btn-view-cities"
+                data-tooltip="Organizar envios por destino geografico"
                 class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -943,6 +810,8 @@ const userInitials = currentUser.nombre
               <button
                 type="button"
                 id="btn-view-drivers"
+                data-tooltip="Proximamente — mejorando esta seccion"
+                data-tooltip-warn
                 class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -955,6 +824,7 @@ const userInitials = currentUser.nombre
               <button
                 type="button"
                 id="btn-view-mapa"
+                data-tooltip="Mapa satelital con coordenadas GPS confirmadas"
                 class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -968,6 +838,7 @@ const userInitials = currentUser.nombre
               <button
                 type="button"
                 id="btn-view-directorio"
+                data-tooltip="Base de datos de clientes frecuentes"
                 class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -980,13 +851,15 @@ const userInitials = currentUser.nombre
               <button
                 type="button"
                 id="btn-view-escaneos"
+                data-tooltip="Proximamente — mejorando esta seccion"
+                data-tooltip-warn
                 class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span>Revisar Guías</span>
+                <span>Revisar Guias</span>
                 <span id="escaneos-count-pill" class="text-[10px] bg-slate-300/80 px-2 py-0.5 rounded-full font-bold hidden">0</span>
               </button>
 
@@ -994,8 +867,8 @@ const userInitials = currentUser.nombre
                 type="button"
                 id="btn-open-global-gps-assign"
                 onclick="window.openGpsAssignModal()"
+                data-tooltip="Guias pendientes de coordenadas GPS"
                 class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900 border border-slate-200/80 bg-white hover:bg-slate-50 shadow-2xs"
-                title="Asignar o pegar coordenadas GPS para clientes que no pudieron confirmarlas"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -1008,18 +881,20 @@ const userInitials = currentUser.nombre
               <button
                 type="button"
                 id="btn-view-listin"
+                data-tooltip="Generador de listines de despacho en PDF"
                 class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <span>Crear Listín</span>
+                <span>Crear Listin</span>
                 <span id="listin-count-pill" class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">PDF</span>
               </button>
 
               <button
                 type="button"
                 id="btn-view-historial"
+                data-tooltip="Guias archivadas y rutas cerradas"
                 class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1032,6 +907,7 @@ const userInitials = currentUser.nombre
               <button
                 type="button"
                 id="btn-view-sinfoto"
+                data-tooltip="Entregas confirmadas sin comprobante fotografico"
                 class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1044,19 +920,20 @@ const userInitials = currentUser.nombre
               <button
                 type="button"
                 id="btn-view-facturacion"
+                data-tooltip="Resumen de cobros agrupado por courier"
                 class="px-3.5 py-2 rounded-xl transition-all flex items-center gap-2 cursor-pointer text-slate-600 hover:text-slate-900"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M4 19h16a2 2 0 002-2V7a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                <span>Facturación</span>
+                <span>Facturacion</span>
                 <span class="text-[10px] bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-bold">PDF</span>
               </button>
             </div>
           </div>
 
           <!-- Fila 3: Filtros y Buscador Espaciosos -->
-          <div class="filters-row flex flex-wrap items-center gap-3 pt-1">
+          <div id="global-filters-row" class="filters-row flex flex-wrap items-center gap-3 pt-1">
             <!-- Buscador -->
             <div class="relative flex-1 min-w-[240px]">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1912,6 +1789,65 @@ const userInitials = currentUser.nombre
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </div>
+            </div>
+          </div>
+
+          <!-- Toggle: Incluir guias archivadas -->
+          <div class="flex items-center justify-between bg-amber-50 border border-amber-200/80 rounded-2xl px-4 py-2.5 shadow-xs">
+            <div class="flex items-center gap-2.5">
+              <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2L19 8M10 12v4M14 12v4" />
+              </svg>
+              <div>
+                <p class="text-xs font-bold text-amber-800">Incluir guias archivadas</p>
+                <p class="text-[10px] text-amber-600 font-medium">Muestra tambien las guias que fueron movidas al historico</p>
+              </div>
+              <span id="facturacion-archivadas-badge" class="hidden text-[10px] font-black px-2 py-0.5 rounded-full bg-amber-200 text-amber-800"></span>
+            </div>
+            <button
+              id="btn-facturacion-toggle-archivadas"
+              type="button"
+              onclick="window.toggleFacturacionArchivadas()"
+              class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-slate-300 transition-colors duration-200 ease-in-out focus:outline-none"
+              role="switch"
+              aria-checked="false"
+              title="Activar/desactivar guias archivadas en facturacion"
+            >
+              <span id="facturacion-archivadas-thumb" class="pointer-events-none inline-block h-4 w-4 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+            </button>
+          </div>
+
+          <!-- Selector de Ciudades -->
+          <div id="facturacion-city-chips-container" class="pt-3 border-t border-slate-100 bg-white px-3.5 pb-3.5 rounded-b-2xl -mt-2 border border-t-0 border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center gap-2 flex-wrap flex-1">
+              <div class="flex items-center gap-1.5 shrink-0 text-slate-700">
+                <svg class="w-4 h-4 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span class="text-[11px] font-extrabold uppercase tracking-wider">Ciudades a incluir:</span>
+              </div>
+              <div id="facturacion-city-chips-list" class="flex flex-wrap items-center gap-1.5">
+                <!-- Chips dinamicos de ciudades -->
+              </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0 self-end md:self-auto">
+              <button
+                type="button"
+                onclick="window.selectAllFacturacionCities()"
+                class="px-2.5 py-1 rounded-lg bg-violet-50 hover:bg-violet-100 text-violet-700 font-bold text-[11px] transition-colors cursor-pointer"
+                title="Seleccionar todas las ciudades"
+              >
+                Seleccionar Todas
+              </button>
+              <button
+                type="button"
+                onclick="window.clearFacturacionCities()"
+                class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 font-bold text-[11px] transition-colors cursor-pointer"
+                title="Deseleccionar ciudades"
+              >
+                Limpiar
+              </button>
             </div>
           </div>
 
@@ -5248,8 +5184,15 @@ const userInitials = currentUser.nombre
               (window as any).loadSinfotoData();
             }
 
-            // Facturación: refresco silencioso en tiempo real
+            // Facturacion: refresco silencioso en tiempo real
             if (currentViewMode === 'facturacion') {
+              if (facturacionIncluirArchivadas) {
+                // Si el toggle de archivadas esta activo, recargar su dataset propio
+                await loadFacturacionShipments();
+              } else {
+                // Sincronizar dataset activo con shipments globales
+                facturacionShipments = [...shipments];
+              }
               (window as any).renderFacturacionView();
             }
           }
@@ -8120,7 +8063,17 @@ const userInitials = currentUser.nombre
           btnViewHistorial?.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewSinfoto?.classList.remove('tab-btn-active', 'text-slate-600');
           btnViewFacturacion?.classList.remove('tab-btn-active', 'text-slate-600');
-          
+
+          // Barra de filtros globales: solo visible en Lista General
+          const globalFiltersRow = document.getElementById('global-filters-row');
+          if (globalFiltersRow) {
+            if (currentViewMode === 'table') {
+              globalFiltersRow.classList.remove('hidden');
+            } else {
+              globalFiltersRow.classList.add('hidden');
+            }
+          }
+
           viewContainerTable.classList.add('hidden');
           viewContainerCities.classList.add('hidden');
           viewContainerDrivers.classList.add('hidden');
@@ -8253,9 +8206,76 @@ const userInitials = currentUser.nombre
         });
 
         btnViewDrivers.addEventListener('click', () => {
+          // MODO MANTENIMIENTO TEMPORAL — funciones conservadas intactas
           currentViewMode = 'drivers';
           updateTabStyles();
           renderViews();
+          // Sobrescribir contenido del contenedor con pantalla de mantenimiento
+          if (viewContainerDrivers) {
+            viewContainerDrivers.innerHTML = `
+              <div class="flex flex-col items-center justify-center py-24 px-6 text-center gap-6">
+                <div class="relative">
+                  <div class="w-20 h-20 rounded-3xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shadow-inner">
+                    <svg class="w-10 h-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <span class="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center">
+                    <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </span>
+                </div>
+                <div class="space-y-2 max-w-xs">
+                  <h3 class="text-base font-black text-slate-800">Estamos mejorando esta seccion</h3>
+                  <p class="text-sm text-slate-500 leading-relaxed">El modulo de Estado de Choferes esta temporalmente en mantenimiento. Volvera muy pronto con una experiencia mejorada.</p>
+                </div>
+                <div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 border border-amber-200">
+                  <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span class="text-xs font-semibold text-amber-700">Proximamente disponible</span>
+                </div>
+              </div>
+            `;
+          }
+        });
+
+        btnViewEscaneos?.addEventListener('click', () => {
+          // MODO MANTENIMIENTO TEMPORAL — funciones conservadas intactas
+          currentViewMode = 'escaneos';
+          updateTabStyles();
+          if (viewContainerEscaneos) {
+            viewContainerEscaneos.classList.remove('hidden');
+            viewContainerEscaneos.innerHTML = `
+              <div class="flex flex-col items-center justify-center py-24 px-6 text-center gap-6">
+                <div class="relative">
+                  <div class="w-20 h-20 rounded-3xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shadow-inner">
+                    <svg class="w-10 h-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <span class="absolute -top-1 -right-1 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center">
+                    <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </span>
+                </div>
+                <div class="space-y-2 max-w-xs">
+                  <h3 class="text-base font-black text-slate-800">Estamos mejorando esta seccion</h3>
+                  <p class="text-sm text-slate-500 leading-relaxed">El modulo de Revision de Guias esta temporalmente en mantenimiento. Volvera muy pronto con una experiencia mejorada.</p>
+                </div>
+                <div class="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-50 border border-amber-200">
+                  <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span class="text-xs font-semibold text-amber-700">Proximamente disponible</span>
+                </div>
+              </div>
+            `;
+          }
         });
 
         btnViewMapa?.addEventListener('click', () => {
@@ -8268,12 +8288,6 @@ const userInitials = currentUser.nombre
           currentViewMode = 'directorio';
           updateTabStyles();
           renderDirectorioView();
-        });
-
-        btnViewEscaneos?.addEventListener('click', () => {
-          currentViewMode = 'escaneos';
-          updateTabStyles();
-          loadAndRenderEscaneos();
         });
 
         btnViewListin?.addEventListener('click', () => {
@@ -10545,15 +10559,83 @@ _Envías C.A. • Transporte y Logística Nacional_`;
       // MÓDULO: FACTURACIÓN POR COURIER Y EMPRESA
       // ============================================
 
+      let facturacionSelectedCities: Set<string> = new Set();
+      let facturacionIncluirArchivadas: boolean = false;
+      let facturacionShipments: any[] = []; // dataset propio: shipments activos + archivadas si toggle ON
+
+      // Carga (o recarga) el dataset de facturación según el toggle de archivadas
+      async function loadFacturacionShipments(): Promise<void> {
+        try {
+          const url = facturacionIncluirArchivadas
+            ? '/api/guias?incluir_archivadas=true'
+            : '/api/guias';
+          const res = await fetch(url);
+          if (res.ok) {
+            const json = await res.json();
+            if (json.success && Array.isArray(json.data)) {
+              facturacionShipments = json.data;
+
+              // Badge: cuantas archivadas extra hay
+              const badge = document.getElementById('facturacion-archivadas-badge');
+              if (badge) {
+                if (facturacionIncluirArchivadas) {
+                  const archivadasCount = facturacionShipments.filter((g: any) => g.archivada === true).length;
+                  if (archivadasCount > 0) {
+                    badge.textContent = `+${archivadasCount} archivadas`;
+                    badge.classList.remove('hidden');
+                  } else {
+                    badge.classList.add('hidden');
+                  }
+                } else {
+                  badge.classList.add('hidden');
+                }
+              }
+            }
+          }
+        } catch(e) {}
+      }
+
+      // Toggle ON/OFF de archivadas
+      (window as any).toggleFacturacionArchivadas = async function() {
+        facturacionIncluirArchivadas = !facturacionIncluirArchivadas;
+        facturacionSelectedCities.clear();
+        facturacionShipments = []; // forzar recarga
+
+        // Actualizar apariencia del boton toggle
+        const btn = document.getElementById('btn-facturacion-toggle-archivadas');
+        const thumb = document.getElementById('facturacion-archivadas-thumb');
+        if (btn && thumb) {
+          if (facturacionIncluirArchivadas) {
+            btn.classList.remove('bg-slate-300');
+            btn.classList.add('bg-amber-400');
+            thumb.classList.remove('translate-x-0');
+            thumb.classList.add('translate-x-4');
+          } else {
+            btn.classList.remove('bg-amber-400');
+            btn.classList.add('bg-slate-300');
+            thumb.classList.remove('translate-x-4');
+            thumb.classList.add('translate-x-0');
+          }
+        }
+
+        showToast(facturacionIncluirArchivadas ? 'Cargando guias archivadas...' : 'Solo guias activas', 'info');
+        await loadFacturacionShipments();
+        (window as any).renderFacturacionView();
+      };
+
+      (window as any).loadFacturacionShipments = loadFacturacionShipments;
+
       // Llenar selectores de lotes y couriers en Facturación manteniendo selección
       function populateFacturacionFilters() {
         const loteSelect = document.getElementById('facturacion-filter-lote') as HTMLSelectElement;
         const courierSelect = document.getElementById('facturacion-filter-courier') as HTMLSelectElement;
 
-        if (loteSelect && shipments.length > 0) {
+        const fsrc = facturacionShipments.length > 0 ? facturacionShipments : shipments;
+
+        if (loteSelect && fsrc.length > 0) {
           const curVal = loteSelect.value || 'ALL';
           const loteMap: Record<string, number> = {};
-          shipments.forEach((g: any) => {
+          fsrc.forEach((g: any) => {
             const info = getGuiaWeekInfo(g);
             const code = (g.lote_despacho || info.loteCode || '').trim();
             if (code) {
@@ -10571,10 +10653,10 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           }
         }
 
-        if (courierSelect && shipments.length > 0) {
+        if (courierSelect && fsrc.length > 0) {
           const curVal = courierSelect.value || 'ALL';
           const courierMap: Record<string, number> = {};
-          shipments.forEach((g: any) => {
+          fsrc.forEach((g: any) => {
             const c = (g.empresa || 'Sin Courier').trim();
             courierMap[c] = (courierMap[c] || 0) + 1;
           });
@@ -10590,13 +10672,15 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         }
       }
 
-      // Obtener guías filtradas de facturación según lote, courier y buscador
+      // Obtener guias filtradas de facturacion segun lote, courier, ciudades y buscador
       function getFilteredFacturacionGuias(): any[] {
         const loteFilter = (document.getElementById('facturacion-filter-lote') as HTMLSelectElement)?.value || 'ALL';
         const courierFilter = (document.getElementById('facturacion-filter-courier') as HTMLSelectElement)?.value || 'ALL';
         const q = ((document.getElementById('facturacion-search') as HTMLInputElement)?.value || '').toLowerCase().trim();
 
-        return shipments.filter((g: any) => {
+        // Usar dataset propio (con o sin archivadas segun toggle)
+        const fsrc = facturacionShipments.length > 0 ? facturacionShipments : shipments;
+        return fsrc.filter((g: any) => {
           const weekInfo = getGuiaWeekInfo(g);
           const gLote = (g.lote_despacho || weekInfo.loteCode || '').trim();
           const gCourier = (g.empresa || 'Sin Courier').trim();
@@ -10609,6 +10693,12 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           // Filtro courier
           if (courierFilter !== 'ALL') {
             if (gCourier !== courierFilter) return false;
+          }
+
+          // Filtro ciudades seleccionadas
+          if (facturacionSelectedCities.size > 0) {
+            const gCiudad = (g.ciudad_destino || '').trim();
+            if (!facturacionSelectedCities.has(gCiudad)) return false;
           }
 
           // Filtro buscador
@@ -10686,7 +10776,12 @@ _Envías C.A. • Transporte y Logística Nacional_`;
         if (!listEl || !emptyEl || !totalesEl) return;
 
         // Actualizar opciones de filtros si llegaron nuevos datos
+        // Lazy-init: si facturacionShipments esta vacio, usar los shipments activos globales
+        if (facturacionShipments.length === 0) {
+          facturacionShipments = [...shipments];
+        }
         populateFacturacionFilters();
+        renderFacturacionCityChips();
 
         const filtered = getFilteredFacturacionGuias();
 
@@ -10810,6 +10905,92 @@ _Envías C.A. • Transporte y Logística Nacional_`;
             </div>
           `;
         }).join('');
+      };
+
+      // Render de chips de ciudades en Facturación
+      function renderFacturacionCityChips() {
+        const listEl = document.getElementById('facturacion-city-chips-list');
+        if (!listEl) return;
+
+        // Construir mapa de ciudades a partir de guías filtradas por lote/courier/buscador (sin filtro de ciudad)
+        const loteFilter = (document.getElementById('facturacion-filter-lote') as HTMLSelectElement)?.value || 'ALL';
+        const courierFilter = (document.getElementById('facturacion-filter-courier') as HTMLSelectElement)?.value || 'ALL';
+        const q = ((document.getElementById('facturacion-search') as HTMLInputElement)?.value || '').toLowerCase().trim();
+
+        const fsrcChips = facturacionShipments.length > 0 ? facturacionShipments : shipments;
+        const baseFiltered = fsrcChips.filter((g: any) => {
+          const weekInfo = getGuiaWeekInfo(g);
+          const gLote = (g.lote_despacho || weekInfo.loteCode || '').trim();
+          const gCourier = (g.empresa || 'Sin Courier').trim();
+          if (loteFilter !== 'ALL' && gLote !== loteFilter && g.lote_despacho !== loteFilter) return false;
+          if (courierFilter !== 'ALL' && gCourier !== courierFilter) return false;
+          if (q) {
+            const searchable = [g.empresa, g.destinatario, g.id_guia, g.ciudad_destino, g.chofer_nombre, gLote].join(' ').toLowerCase();
+            if (!searchable.includes(q)) return false;
+          }
+          return true;
+        });
+
+        const cityCountsMap = new Map<string, number>();
+        baseFiltered.forEach((g: any) => {
+          const city = (g.ciudad_destino || 'Sin Ciudad').trim();
+          if (city) cityCountsMap.set(city, (cityCountsMap.get(city) || 0) + 1);
+        });
+
+        const sortedCities = Array.from(cityCountsMap.entries()).sort((a, b) => b[1] - a[1]);
+
+        if (sortedCities.length === 0) {
+          listEl.innerHTML = `<span class="text-xs text-slate-400 font-medium">No hay ciudades registradas</span>`;
+          return;
+        }
+
+        listEl.innerHTML = sortedCities.map(([city, count]) => {
+          const isSelected = facturacionSelectedCities.has(city);
+          return `
+            <button
+              type="button"
+              onclick="window.toggleFacturacionCityChip('${city.replace(/'/g, "\\'")}')" 
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold border transition-all cursor-pointer select-none active:scale-95 ${
+                isSelected
+                  ? 'bg-violet-600 border-violet-700 text-white shadow-xs ring-2 ring-violet-500/25'
+                  : 'bg-slate-50 border-slate-200/90 text-slate-700 hover:border-violet-300 hover:bg-white hover:text-violet-900'
+              }"
+              title="${isSelected ? 'Deseleccionar ' + city : 'Incluir ' + city + ' en la facturación'}"
+            >
+              ${isSelected ? `
+                <svg class="w-3.5 h-3.5 text-violet-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+              ` : ''}
+              <span>${city}</span>
+              <span class="px-1.5 py-0.2 rounded-full font-mono text-[10px] font-black ${isSelected ? 'bg-violet-500 text-white' : 'bg-slate-200/80 text-slate-700'}">${count}</span>
+            </button>
+          `;
+        }).join('');
+      }
+
+      (window as any).toggleFacturacionCityChip = function(cityName: string) {
+        if (facturacionSelectedCities.has(cityName)) {
+          facturacionSelectedCities.delete(cityName);
+        } else {
+          facturacionSelectedCities.add(cityName);
+        }
+        (window as any).renderFacturacionView();
+      };
+
+      (window as any).selectAllFacturacionCities = function() {
+        shipments.forEach((g: any) => {
+          const city = (g.ciudad_destino || 'Sin Ciudad').trim();
+          if (city) facturacionSelectedCities.add(city);
+        });
+        showToast('Todas las ciudades seleccionadas para facturación', 'info');
+        (window as any).renderFacturacionView();
+      };
+
+      (window as any).clearFacturacionCities = function() {
+        facturacionSelectedCities.clear();
+        showToast('Filtro de ciudades restablecido', 'info');
+        (window as any).renderFacturacionView();
       };
 
       // Impresión directa / Guardar como PDF en navegador
