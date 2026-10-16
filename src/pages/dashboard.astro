@@ -10657,17 +10657,28 @@ _Envías C.A. • Transporte y Logística Nacional_`;
           }
         }
 
-        if (courierSelect && fsrc.length > 0) {
+        if (courierSelect) {
           const curVal = courierSelect.value || 'ALL';
+          // Catálogo completo de empresas (igual que en registro de guías)
+          const catalogEmpresas = [
+            'Troop', 'Crazy cargo', 'Cargo King', 'JJ', 'Greymar', 'Ajbp',
+            'Global jats', 'Su descarga', 'Rima cargo', 'Dina cargo',
+            'Send logístics', 'Alas cargo', 'Aexpress', 'Priority', 'Alpi',
+            'Venexcargo', 'DBL', '2BC', 'Lupo', 'Conavenca', 'Convencargo',
+            'Global parcel', 'PGP Logístics'
+          ];
           const courierMap: Record<string, number> = {};
           fsrc.forEach((g: any) => {
             const c = (g.empresa || 'Sin Courier').trim();
             courierMap[c] = (courierMap[c] || 0) + 1;
           });
-          const sortedCouriers = Object.keys(courierMap).sort((a, b) => a.localeCompare(b));
+          // Fusionar catálogo + couriers encontrados en datos (por si existe alguno fuera del catálogo)
+          const allCouriers = new Set([...catalogEmpresas, ...Object.keys(courierMap)]);
+          const sortedCouriers = Array.from(allCouriers).sort((a, b) => a.localeCompare(b));
           let opts = '<option value="ALL">Todos los couriers</option>';
           sortedCouriers.forEach(c => {
-            opts += `<option value="${c}">${c} (${courierMap[c]} guías)</option>`;
+            const count = courierMap[c] || 0;
+            opts += `<option value="${c}">${c} (${count} guías)</option>`;
           });
           courierSelect.innerHTML = opts;
           if (Array.from(courierSelect.options).some(o => o.value === curVal)) {
