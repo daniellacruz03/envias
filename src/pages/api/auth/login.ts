@@ -20,7 +20,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     // Buscar en PostgreSQL por email, alias/prefijo, teléfono o nombre
     const result = await query(`
-      SELECT id, nombre, telefono, rol, email, password
+      SELECT id, nombre, telefono, rol, email, password, activo
       FROM usuarios
       WHERE LOWER(email) = LOWER($1) 
          OR telefono = $1 
@@ -40,6 +40,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     const user = result.rows[0];
+
+    // Verificar si el usuario está inactivo o deshabilitado
+    if (user.activo === false) {
+      return new Response(JSON.stringify({
+        ok: false,
+        error: 'Tu cuenta ha sido deshabilitada. Contacta al administrador.'
+      }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     // Verificación de contraseña
     if (user.password !== password) {

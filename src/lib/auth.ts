@@ -8,7 +8,7 @@ export interface UserSession {
   telefono: string | null;
 }
 
-const COOKIE_NAME = 'user_session';
+const COOKIE_NAME = 'envias_session_v2';
 
 export function getUserFromCookies(cookies: AstroCookies): UserSession | null {
   try {
