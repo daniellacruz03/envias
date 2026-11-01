@@ -1,18 +1,12 @@
-import type { APIRoute } from 'astro';
-import { clearUserSessionCookie } from '../../../lib/auth';
+﻿// SERVICIO SUSPENDIDO
+const SUSPENDED = new Response(
+  JSON.stringify({ error: 'Servicio suspendido temporalmente.' }),
+  { status: 503, headers: { 'Content-Type': 'application/json', 'Retry-After': '86400' } }
+);
 
-export const POST: APIRoute = async ({ cookies }) => {
-  clearUserSessionCookie(cookies);
-  return new Response(JSON.stringify({
-    ok: true,
-    message: 'Sesión cerrada con éxito'
-  }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' }
-  });
-};
-
-export const GET: APIRoute = async ({ cookies, redirect }) => {
-  clearUserSessionCookie(cookies);
-  return redirect('/login', 302);
-};
+export const ALL = () => SUSPENDED;
+export const GET = () => SUSPENDED;
+export const POST = () => SUSPENDED;
+export const PUT = () => SUSPENDED;
+export const PATCH = () => SUSPENDED;
+export const DELETE = () => SUSPENDED;

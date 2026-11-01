@@ -1,24 +1,12 @@
-import type { APIRoute } from 'astro';
-import { getUserFromCookies } from '../../../lib/auth';
+﻿// SERVICIO SUSPENDIDO
+const SUSPENDED = new Response(
+  JSON.stringify({ error: 'Servicio suspendido temporalmente.' }),
+  { status: 503, headers: { 'Content-Type': 'application/json', 'Retry-After': '86400' } }
+);
 
-export const GET: APIRoute = async ({ cookies }) => {
-  const user = getUserFromCookies(cookies);
-
-  if (!user) {
-    return new Response(JSON.stringify({
-      ok: false,
-      error: 'No autenticado'
-    }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
-
-  return new Response(JSON.stringify({
-    ok: true,
-    user
-  }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' }
-  });
-};
+export const ALL = () => SUSPENDED;
+export const GET = () => SUSPENDED;
+export const POST = () => SUSPENDED;
+export const PUT = () => SUSPENDED;
+export const PATCH = () => SUSPENDED;
+export const DELETE = () => SUSPENDED;
